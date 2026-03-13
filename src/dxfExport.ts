@@ -473,6 +473,38 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
       const separatorDxfY = -(firstHandleY - 6);
       dxf.addLine("EasySchematic-Devices", ax, separatorDxfY, ax + w, separatorDxfY);
     }
+
+    // Section separators — detect when port.section changes within inputs/outputs
+    const portsWithHandles: { port: typeof node.data.ports[number]; handleY: number }[] = [];
+    for (const port of node.data.ports) {
+      // Find the handle Y for this port
+      const handleId = port.direction === "bidirectional" ? `${port.id}-in` : port.id;
+      const hp = handles.find((h) => h.id === handleId);
+      if (hp) portsWithHandles.push({ port, handleY: hp.absY });
+    }
+
+    // Group by direction, draw separators where section changes
+    for (const dir of ["input", "output", "bidirectional"] as const) {
+      const dirPorts = portsWithHandles.filter((p) => p.port.direction === dir);
+      let lastSection: string | undefined;
+      for (const { port, handleY } of dirPorts) {
+        if (port.section && port.section !== lastSection && lastSection !== undefined) {
+          // Draw separator line between previous port and this one
+          const sepY = -(handleY - 6);
+          if (dir === "input") {
+            dxf.addLine("EasySchematic-Devices", ax, sepY, ax + w / 2, sepY, 8);
+            dxf.addText("EasySchematic-Labels", ax + 4, sepY + 1, 3, port.section, 8);
+          } else if (dir === "output") {
+            dxf.addLine("EasySchematic-Devices", ax + w / 2, sepY, ax + w, sepY, 8);
+            dxf.addTextRight("EasySchematic-Labels", ax + w - 4, sepY + 1, 3, port.section, 8);
+          } else {
+            dxf.addLine("EasySchematic-Devices", ax, sepY, ax + w, sepY, 8);
+            dxf.addText("EasySchematic-Labels", ax + w / 2 - 10, sepY + 1, 3, port.section, 8);
+          }
+        }
+        lastSection = port.section;
+      }
+    }
   }
 
   // --- Connections (from SVG paths in the DOM) ---

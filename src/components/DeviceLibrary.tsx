@@ -3,6 +3,7 @@ import { DEVICE_TEMPLATES } from "../deviceLibrary";
 import { SIGNAL_LABELS } from "../types";
 import type { DeviceTemplate } from "../types";
 import { useSchematicStore } from "../store";
+import RouterCreator from "./RouterCreator";
 
 const CATEGORIES: { label: string; types: string[] }[] = [
   { label: "Sources", types: ["camera", "ptz-camera", "graphics", "computer"] },
@@ -157,6 +158,7 @@ export default function DeviceLibrary() {
   const customTemplates = useSchematicStore((s) => s.customTemplates);
   const removeCustomTemplate = useSchematicStore((s) => s.removeCustomTemplate);
   const [search, setSearch] = useState("");
+  const [showRouterCreator, setShowRouterCreator] = useState(false);
 
   const query = search.trim();
 
@@ -229,6 +231,23 @@ export default function DeviceLibrary() {
           </div>
         )}
       </div>
+
+      {/* Quick Create */}
+      <div className="px-2 py-1.5 border-b border-[var(--color-border)]">
+        <button
+          onClick={() => setShowRouterCreator(true)}
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-dashed border-blue-400/50 bg-blue-50/50 hover:bg-blue-50 text-xs text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <rect x="1" y="3" width="14" height="10" rx="1.5" />
+            <line x1="1" y1="8" x2="15" y2="8" />
+            <line x1="5.5" y1="3" x2="5.5" y2="13" />
+          </svg>
+          Quick Create Router
+        </button>
+      </div>
+
+      {showRouterCreator && <RouterCreator onClose={() => setShowRouterCreator(false)} />}
 
       {/* Device list */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">

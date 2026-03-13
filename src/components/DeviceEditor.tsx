@@ -17,6 +17,7 @@ interface PortDraft {
   label: string;
   signalType: SignalType;
   direction: PortDirection;
+  section?: string;
 }
 
 function newPortDraft(direction: PortDirection): PortDraft {
@@ -57,6 +58,7 @@ export default function DeviceEditor() {
         label: p.label,
         signalType: p.signalType,
         direction: p.direction,
+        section: p.section,
       })),
     );
   }, [node]);
@@ -110,6 +112,20 @@ export default function DeviceEditor() {
     setPorts(ports.map((p) => (p.id === id ? { ...p, ...updates } : p)));
   };
 
+  const bulkAddPorts = (direction: PortDirection, prefix: string, start: number, count: number, signalType: SignalType, section: string) => {
+    const newPorts: PortDraft[] = [];
+    for (let i = 0; i < count; i++) {
+      newPorts.push({
+        id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${i}`,
+        label: `${prefix} ${start + i}`,
+        signalType,
+        direction,
+        section: section || undefined,
+      });
+    }
+    setPorts([...ports, ...newPorts]);
+  };
+
   // Drag-and-drop: move a port to a new position/section
   const movePortTo = useCallback(
     (portId: string, targetDirection: PortDirection, targetIndex: number) => {
@@ -117,26 +133,21 @@ export default function DeviceEditor() {
         const port = prev.find((p) => p.id === portId);
         if (!port) return prev;
 
-        // Remove port from current position
         const without = prev.filter((p) => p.id !== portId);
         const updated = { ...port, direction: targetDirection };
 
-        // Find insertion point: get ports of target direction and insert at targetIndex
         const sectionPorts = without.filter((p) => p.direction === targetDirection);
         const insertAfterId = targetIndex > 0 ? sectionPorts[targetIndex - 1]?.id : null;
 
         if (sectionPorts.length === 0 || targetIndex === 0) {
-          // Insert before first port of this direction, or at end if none exist
           const firstOfSection = without.findIndex((p) => p.direction === targetDirection);
           if (firstOfSection === -1) {
-            // No ports of this direction — append at end
             return [...without, updated];
           }
           without.splice(firstOfSection, 0, updated);
           return [...without];
         }
 
-        // Insert after the port at targetIndex - 1
         const insertAfterIdx = without.findIndex((p) => p.id === insertAfterId);
         without.splice(insertAfterIdx + 1, 0, updated);
         return [...without];
@@ -162,7 +173,7 @@ export default function DeviceEditor() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={close}>
       <div
-        className="bg-white border border-[var(--color-border)] rounded-lg shadow-2xl w-[520px] max-h-[85vh] flex flex-col"
+        className="bg-white border border-[var(--color-border)] rounded-lg shadow-2xl w-[560px] max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -202,6 +213,7 @@ export default function DeviceEditor() {
             direction="input"
             ports={inputs}
             onAdd={() => addPort("input")}
+            onBulkAdd={bulkAddPorts}
             onRemove={removePort}
             onUpdate={updatePort}
             draggedPortId={draggedPortId}
@@ -216,6 +228,7 @@ export default function DeviceEditor() {
             direction="output"
             ports={outputs}
             onAdd={() => addPort("output")}
+            onBulkAdd={bulkAddPorts}
             onRemove={removePort}
             onUpdate={updatePort}
             draggedPortId={draggedPortId}
@@ -230,6 +243,7 @@ export default function DeviceEditor() {
             direction="bidirectional"
             ports={bidir}
             onAdd={() => addPort("bidirectional")}
+            onBulkAdd={bulkAddPorts}
             onRemove={removePort}
             onUpdate={updatePort}
             draggedPortId={draggedPortId}
@@ -279,11 +293,105 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function BulkAddForm({
+  direction,
+  onBulkAdd,
+  onClose,
+}: {
+  direction: PortDirection;
+  onBulkAdd: (direction: PortDirection, prefix: string, start: number, count: number, signalType: SignalType, section: string) => void;
+  onClose: () => void;
+}) {
+  const [prefix, setPrefix] = useState("Input");
+  const [start, setStart] = useState(1);
+  const [count, setCount] = useState(8);
+  const [signalType, setSignalType] = useState<SignalType>("sdi");
+  const [section, setSection] = useState("");
+
+  const handleSubmit = () => {
+    if (count < 1 || !prefix.trim()) return;
+    onBulkAdd(direction, prefix.trim(), start, count, signalType, section.trim());
+    onClose();
+  };
+
+  return (
+    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-2 space-y-2 mb-2">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <input
+          className="w-20 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          value={prefix}
+          onChange={(e) => setPrefix(e.target.value)}
+          placeholder="Prefix"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+        <div className="flex items-center gap-0.5">
+          <span className="text-[10px] text-[var(--color-text-muted)]">from</span>
+          <input
+            type="number"
+            className="w-12 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            value={start}
+            onChange={(e) => setStart(parseInt(e.target.value) || 1)}
+            min={0}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div className="flex items-center gap-0.5">
+          <span className="text-[10px] text-[var(--color-text-muted)]">&times;</span>
+          <input
+            type="number"
+            className="w-12 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            value={count}
+            onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+            min={1}
+            max={200}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+        <select
+          className="bg-white border border-[var(--color-border)] rounded px-1 py-1 text-xs outline-none focus:border-blue-500 cursor-pointer"
+          value={signalType}
+          onChange={(e) => setSignalType(e.target.value as SignalType)}
+        >
+          {ALL_SIGNAL_TYPES.map((t) => (
+            <option key={t} value={t}>{SIGNAL_LABELS[t]}</option>
+          ))}
+        </select>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] text-[var(--color-text-muted)]">Section:</span>
+        <input
+          className="flex-1 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          value={section}
+          onChange={(e) => setSection(e.target.value)}
+          placeholder="(optional)"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+        <button
+          onClick={handleSubmit}
+          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors cursor-pointer"
+        >
+          Add
+        </button>
+        <button
+          onClick={onClose}
+          className="px-2 py-1 text-xs rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] border border-[var(--color-border)] transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+      <div className="text-[10px] text-[var(--color-text-muted)]">
+        Preview: {prefix} {start}, {prefix} {start + 1}, ... {prefix} {start + count - 1}
+      </div>
+    </div>
+  );
+}
+
 function PortSection({
   title,
   direction,
   ports,
   onAdd,
+  onBulkAdd,
   onRemove,
   onUpdate,
   draggedPortId,
@@ -296,6 +404,7 @@ function PortSection({
   direction: PortDirection;
   ports: PortDraft[];
   onAdd: () => void;
+  onBulkAdd: (direction: PortDirection, prefix: string, start: number, count: number, signalType: SignalType, section: string) => void;
   onRemove: (id: string) => void;
   onUpdate: (id: string, updates: Partial<PortDraft>) => void;
   draggedPortId: string | null;
@@ -305,11 +414,11 @@ function PortSection({
   onDragEnd: () => void;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
 
   const handleSectionDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    // If dragging over the empty area of the section, target end of list
     if (ports.length === 0) {
       setDropTarget({ direction, index: 0 });
     }
@@ -321,7 +430,6 @@ function PortSection({
   };
 
   const handleSectionDragLeave = (e: DragEvent) => {
-    // Only clear if leaving the section entirely
     if (sectionRef.current && !sectionRef.current.contains(e.relatedTarget as Node)) {
       if (dropTarget?.direction === direction) {
         setDropTarget(null);
@@ -330,6 +438,20 @@ function PortSection({
   };
 
   const showDropIndicator = dropTarget?.direction === direction;
+
+  // Group ports by section for visual grouping in editor
+  const groups: { section: string | undefined; ports: PortDraft[] }[] = [];
+  for (const port of ports) {
+    const lastGroup = groups[groups.length - 1];
+    if (lastGroup && lastGroup.section === port.section) {
+      lastGroup.ports.push(port);
+    } else {
+      groups.push({ section: port.section, ports: [port] });
+    }
+  }
+
+  // Track running index across groups for drop targeting
+  let runningIndex = 0;
 
   return (
     <div
@@ -342,13 +464,30 @@ function PortSection({
         <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
           {title}
         </span>
-        <button
-          onClick={onAdd}
-          className="text-[10px] text-blue-600 hover:text-blue-500 cursor-pointer"
-        >
-          + Add
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowBulkAdd(!showBulkAdd)}
+            className="text-[10px] text-blue-600 hover:text-blue-500 cursor-pointer"
+          >
+            + Bulk Add
+          </button>
+          <button
+            onClick={onAdd}
+            className="text-[10px] text-blue-600 hover:text-blue-500 cursor-pointer"
+          >
+            + Add
+          </button>
+        </div>
       </div>
+
+      {showBulkAdd && (
+        <BulkAddForm
+          direction={direction}
+          onBulkAdd={onBulkAdd}
+          onClose={() => setShowBulkAdd(false)}
+        />
+      )}
+
       {ports.length === 0 && !showDropIndicator && (
         <div className="text-[10px] text-[var(--color-text-muted)] italic px-1 py-2">
           No {title.toLowerCase()} — click &quot;+ Add&quot; or drag a port here
@@ -357,23 +496,38 @@ function PortSection({
       {ports.length === 0 && showDropIndicator && (
         <div className="h-1 bg-blue-500 rounded-full my-1" />
       )}
+
       <div className="space-y-0">
-        {ports.map((port, i) => (
-          <PortRow
-            key={port.id}
-            port={port}
-            index={i}
-            direction={direction}
-            onRemove={() => onRemove(port.id)}
-            onUpdate={(u) => onUpdate(port.id, u)}
-            isDragging={draggedPortId === port.id}
-            setDraggedPortId={setDraggedPortId}
-            dropTarget={dropTarget}
-            setDropTarget={setDropTarget}
-            onDragEnd={onDragEnd}
-            isLast={i === ports.length - 1}
-          />
-        ))}
+        {groups.map((group, gi) => {
+          const startIndex = runningIndex;
+          runningIndex += group.ports.length;
+
+          return (
+            <div key={gi}>
+              {group.section && (
+                <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider bg-[var(--color-surface)] px-1.5 py-0.5 mt-1 mb-0.5 rounded border-b border-[var(--color-border)]/30">
+                  {group.section}
+                </div>
+              )}
+              {group.ports.map((port, i) => (
+                <PortRow
+                  key={port.id}
+                  port={port}
+                  index={startIndex + i}
+                  direction={direction}
+                  onRemove={() => onRemove(port.id)}
+                  onUpdate={(u) => onUpdate(port.id, u)}
+                  isDragging={draggedPortId === port.id}
+                  setDraggedPortId={setDraggedPortId}
+                  dropTarget={dropTarget}
+                  setDropTarget={setDropTarget}
+                  onDragEnd={onDragEnd}
+                  isLast={startIndex + i === ports.length - 1}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -405,6 +559,7 @@ function PortRow({
   isLast: boolean;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const [showSection, setShowSection] = useState(false);
 
   const handleDragStart = (e: DragEvent) => {
     e.dataTransfer.setData(MIME, port.id);
@@ -487,6 +642,19 @@ function PortRow({
           ))}
         </select>
 
+        {/* Section badge */}
+        <button
+          onClick={() => setShowSection(!showSection)}
+          className={`text-[9px] px-1 py-0.5 rounded cursor-pointer transition-colors shrink-0 ${
+            port.section
+              ? "bg-blue-100 text-blue-600 hover:bg-blue-200"
+              : "text-[var(--color-text-muted)] hover:text-[var(--color-text)] opacity-0 group-hover:opacity-100"
+          }`}
+          title="Set section group"
+        >
+          {port.section || "§"}
+        </button>
+
         <button
           onClick={onRemove}
           className="text-red-400/60 hover:text-red-500 text-sm cursor-pointer px-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -495,6 +663,30 @@ function PortRow({
           &times;
         </button>
       </div>
+
+      {showSection && (
+        <div className="flex items-center gap-1.5 pl-6 pb-1">
+          <span className="text-[9px] text-[var(--color-text-muted)]">Section:</span>
+          <input
+            className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
+            value={port.section || ""}
+            onChange={(e) => onUpdate({ section: e.target.value || undefined })}
+            placeholder="e.g. Cameras"
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Enter") setShowSection(false);
+            }}
+            autoFocus
+          />
+          <button
+            onClick={() => setShowSection(false)}
+            className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
       {showIndicatorAfter && (
         <div className="h-0.5 bg-blue-500 rounded-full my-0.5" />
       )}

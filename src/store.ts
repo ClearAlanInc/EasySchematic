@@ -713,6 +713,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       name: state.schematicName,
       nodes: state.nodes,
       edges: state.edges,
+      customTemplates: state.customTemplates.length > 0 ? state.customTemplates : undefined,
     };
   },
 
@@ -720,6 +721,17 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const nodes = data.nodes ?? [];
     const edges = data.edges ?? [];
     syncCounters(nodes, edges);
+    // Merge imported custom templates with existing ones (avoid duplicates by deviceType)
+    if (data.customTemplates?.length) {
+      const existing = get().customTemplates;
+      const existingTypes = new Set(existing.map((t) => t.deviceType));
+      const newTemplates = data.customTemplates.filter((t) => !existingTypes.has(t.deviceType));
+      if (newTemplates.length > 0) {
+        const merged = [...existing, ...newTemplates];
+        set({ customTemplates: merged });
+        saveCustomTemplates(merged);
+      }
+    }
     set({
       nodes,
       edges,

@@ -28,6 +28,7 @@ export interface Port {
   label: string;
   signalType: SignalType;
   direction: PortDirection;
+  section?: string;
 }
 
 export interface DeviceData {
@@ -72,6 +73,7 @@ export interface SchematicFile {
   name: string;
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
+  customTemplates?: DeviceTemplate[];
 }
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {
