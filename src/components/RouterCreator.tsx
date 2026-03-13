@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useReactFlow } from "@xyflow/react";
 import { SIGNAL_LABELS, type SignalType, type Port, type DeviceTemplate } from "../types";
 import { useSchematicStore } from "../store";
 
@@ -41,7 +40,6 @@ function buildPorts(sections: SectionDef[], direction: "input" | "output"): Port
 }
 
 export default function RouterCreator({ onClose }: { onClose: () => void }) {
-  const { getViewport } = useReactFlow();
   const addDevice = useSchematicStore((s) => s.addDevice);
   const addCustomTemplate = useSchematicStore((s) => s.addCustomTemplate);
 
@@ -76,10 +74,8 @@ export default function RouterCreator({ onClose }: { onClose: () => void }) {
 
   const handleCreateOnCanvas = () => {
     const template = buildTemplate();
-    const vp = getViewport();
-    const centerX = (-vp.x + window.innerWidth / 2) / vp.zoom;
-    const centerY = (-vp.y + window.innerHeight / 2) / vp.zoom;
-    addDevice(template, { x: centerX - 90, y: centerY - 100 });
+    // Place at a reasonable default; user can drag to reposition
+    addDevice(template, { x: 200, y: 100 });
     onClose();
   };
 
