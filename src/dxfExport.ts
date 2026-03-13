@@ -430,14 +430,10 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
     for (const hp of handles) {
       // Handle IDs: for bidirectional ports, format is "portId-in" or "portId-out"
       let portId = hp.id;
-      let isBidirIn = false;
-      let isBidirOut = false;
       if (portId.endsWith("-in")) {
         portId = portId.slice(0, -3);
-        isBidirIn = true;
       } else if (portId.endsWith("-out")) {
         portId = portId.slice(0, -4);
-        isBidirOut = true;
       }
 
       const port = portMap.get(portId);
