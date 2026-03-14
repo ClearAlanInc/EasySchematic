@@ -68,8 +68,8 @@ function getHandlePositions(
     if (handle.id) {
       result.push({
         id: handle.id,
-        absX: absX + handle.x + handle.width / 2,
-        absY: absY + handle.y + handle.height / 2,
+        absX: Math.round(absX + handle.x + handle.width / 2),
+        absY: Math.round(absY + handle.y + handle.height / 2),
       });
     }
   }
@@ -77,8 +77,8 @@ function getHandlePositions(
     if (handle.id) {
       result.push({
         id: handle.id,
-        absX: absX + handle.x + handle.width / 2,
-        absY: absY + handle.y + handle.height / 2,
+        absX: Math.round(absX + handle.x + handle.width / 2),
+        absY: Math.round(absY + handle.y + handle.height / 2),
       });
     }
   }
@@ -555,10 +555,10 @@ export function routeAllEdges(
     }
   }
 
-  // Build obstacles once
-  const obs = buildObstacles(nodes, "", "", (n) =>
-    getAbsPos(n as SchematicNode, nodes),
-  );
+  // Build obstacles once (all devices)
+  const getAbsPosAdapter = (n: typeof nodes[number]) =>
+    getAbsPos(n as SchematicNode, nodes);
+  const obs = buildObstacles(nodes, [], getAbsPosAdapter);
 
   // Resolve edge endpoints
   const edgeEndpoints: EdgeEndpoints[] = [];
@@ -608,7 +608,7 @@ export function routeAllEdges(
     // Build penalties from all edges routed so far
     const penalties = buildPenaltyZones(routeStates);
 
-    const result = computeEdgePath(
+    let result = computeEdgePath(
       ep.sourceX,
       ep.sourceY,
       ep.targetX,
@@ -618,6 +618,27 @@ export function routeAllEdges(
       ep.stubSpread,
       penalties.length > 0 ? penalties : undefined,
     );
+
+    // If A* fails (often because endpoint devices' padded rects block the corridor),
+    // retry with endpoint devices excluded from obstacles so the edge can route
+    // through the visible gap between the devices it connects.
+    if (!result) {
+      const relaxedObs = buildObstacles(
+        nodes,
+        [ep.edge.source, ep.edge.target],
+        getAbsPosAdapter,
+      );
+      result = computeEdgePath(
+        ep.sourceX,
+        ep.sourceY,
+        ep.targetX,
+        ep.targetY,
+        relaxedObs.rects,
+        0,
+        ep.stubSpread,
+        penalties.length > 0 ? penalties : undefined,
+      );
+    }
 
     if (result) {
       const segments = extractSegments(result.waypoints);
@@ -632,17 +653,25 @@ export function routeAllEdges(
         status: "good",
       });
     } else {
-      // Fallback: straight line
+      // Fallback: orthogonal L-shape (never draw a diagonal)
+      // Go right from source, then vertical to target Y, then into target
+      const midX = Math.max(ep.sourceX, ep.targetX) + 40;
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
+        { x: midX, y: ep.sourceY },
+        { x: midX, y: ep.targetY },
         { x: ep.targetX, y: ep.targetY },
       ];
+      const simplified = wp; // Already minimal waypoints
+      const svgPath = simplified.map((p, i) =>
+        i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
+      ).join(" ");
       routeStates.push({
         edgeId: ep.edge.id,
-        waypoints: wp,
-        segments: extractSegments(wp),
-        svgPath: `M ${ep.sourceX} ${ep.sourceY} L ${ep.targetX} ${ep.targetY}`,
-        labelX: (ep.sourceX + ep.targetX) / 2,
+        waypoints: simplified,
+        segments: extractSegments(simplified),
+        svgPath,
+        labelX: midX,
         labelY: (ep.sourceY + ep.targetY) / 2,
         turns: "fallback",
         status: "good",
@@ -684,7 +713,7 @@ export function routeAllEdges(
       );
       const penalties = buildPenaltyZones(goodEdges);
 
-      const result = computeEdgePath(
+      let result = computeEdgePath(
         ep.sourceX,
         ep.sourceY,
         ep.targetX,
@@ -694,6 +723,24 @@ export function routeAllEdges(
         ep.stubSpread,
         penalties,
       );
+
+      if (!result) {
+        const relaxedObs = buildObstacles(
+          nodes,
+          [ep.edge.source, ep.edge.target],
+          getAbsPosAdapter,
+        );
+        result = computeEdgePath(
+          ep.sourceX,
+          ep.sourceY,
+          ep.targetX,
+          ep.targetY,
+          relaxedObs.rects,
+          0,
+          ep.stubSpread,
+          penalties,
+        );
+      }
 
       if (!result) continue;
 

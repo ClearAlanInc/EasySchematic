@@ -59,13 +59,13 @@ const EARLY_TURN_BIAS = 30; // Extra cost for turning far from target (spreads v
 
 export function buildObstacles(
   nodes: readonly { id: string; position: { x: number; y: number }; parentId?: string; measured?: { width?: number; height?: number }; type?: string }[],
-  _sourceId: string,
-  _targetId: string,
+  excludeIds: string[],
   getAbsPos: (node: typeof nodes[number]) => { x: number; y: number },
 ): { rects: Rect[] } {
   const rects: Rect[] = [];
   for (const n of nodes) {
     if (n.type === "room" || n.type === "note") continue;
+    if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);
     const w = n.measured?.width ?? 180;
     const h = n.measured?.height ?? 60;
@@ -541,20 +541,20 @@ export function computeEdgePath(
   // Skip obstacles that contain the source or target handle (the endpoint devices).
   const ALIGN_TOLERANCE = 2;
   if (Math.abs(sourceY - targetY) <= ALIGN_TOLERANCE && sourceX < targetX) {
-    const midY = (sourceY + targetY) / 2;
+    // Snap both endpoints to the same Y to prevent slightly diagonal lines
+    const alignedY = Math.round((sourceY + targetY) / 2);
     const blocked = obstacles.some((r) => {
       // Skip obstacles containing the source or target point (endpoint devices)
       const containsSource = sourceX >= r.left && sourceX <= r.right && sourceY >= r.top && sourceY <= r.bottom;
       const containsTarget = targetX >= r.left && targetX <= r.right && targetY >= r.top && targetY <= r.bottom;
       if (containsSource || containsTarget) return false;
-      return midY >= r.top && midY <= r.bottom && targetX >= r.left && sourceX <= r.right;
+      return alignedY >= r.top && alignedY <= r.bottom && targetX >= r.left && sourceX <= r.right;
     });
     if (!blocked) {
-      const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+      const path = `M ${sourceX} ${alignedY} L ${targetX} ${alignedY}`;
       const labelX = (sourceX + targetX) / 2;
-      const labelY = (sourceY + targetY) / 2;
-      const waypoints: Point[] = [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }];
-      return { path, labelX, labelY, turns: "straight", waypoints };
+      const waypoints: Point[] = [{ x: sourceX, y: alignedY }, { x: targetX, y: alignedY }];
+      return { path, labelX, labelY: alignedY, turns: "straight", waypoints };
     }
   }
 
