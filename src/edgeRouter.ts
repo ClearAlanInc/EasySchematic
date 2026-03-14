@@ -556,7 +556,7 @@ export function routeAllEdges(
   }
 
   // Build obstacles once (all devices)
-  const getAbsPosAdapter = (n: typeof nodes[number]) =>
+  const getAbsPosAdapter = (n: { id: string; position: { x: number; y: number }; parentId?: string }) =>
     getAbsPos(n as SchematicNode, nodes);
   const obs = buildObstacles(nodes, [], getAbsPosAdapter);
 
