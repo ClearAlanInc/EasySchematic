@@ -6,6 +6,7 @@ import { useSchematicStore } from "../store";
 import RouterCreator from "./RouterCreator";
 
 const APP_VERSION = __APP_VERSION__;
+const BUILD_HASH = __BUILD_HASH__;
 
 const CATEGORIES: { label: string; types: string[] }[] = [
   { label: "Sources", types: ["camera", "ptz-camera", "graphics", "computer"] },
@@ -303,7 +304,7 @@ export default function DeviceLibrary() {
 
       {/* Version */}
       <div className="px-3 py-1.5 border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-muted)]">
-        v{APP_VERSION}
+        v{APP_VERSION} ({BUILD_HASH})
       </div>
     </div>
   );
