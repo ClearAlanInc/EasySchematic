@@ -16,8 +16,10 @@ import type {
   Port,
   SchematicFile,
 } from "./types";
+import type { ReactFlowInstance } from "@xyflow/react";
 import { computeAlignment, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
+import { routeAllEdges, type RoutedEdge } from "./edgeRouter";
 
 const STORAGE_KEY = "easyschematic-autosave";
 const TEMPLATES_KEY = "easyschematic-custom-templates";
@@ -81,6 +83,10 @@ interface SchematicState {
   // Custom templates
   addCustomTemplate: (template: DeviceTemplate) => void;
   removeCustomTemplate: (deviceType: string) => void;
+
+  // Centralized edge routing
+  routedEdges: Record<string, RoutedEdge>;
+  recomputeRoutes: (rfInstance: ReactFlowInstance) => void;
 
   // Debug
   debugEdges: boolean;
@@ -252,6 +258,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   schematicName: "Untitled Schematic",
   editingNodeId: null,
   customTemplates: loadCustomTemplates(),
+  routedEdges: {},
   debugEdges: false,
   isDragging: false,
 
@@ -811,6 +818,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   setSchematicName: (name) => {
     set({ schematicName: name });
     get().saveToLocalStorage();
+  },
+
+  recomputeRoutes: (rfInstance) => {
+    const state = get();
+    const results = routeAllEdges(state.nodes, state.edges, rfInstance, state.debugEdges);
+    set({ routedEdges: results });
   },
 
   toggleDebugEdges: () => {

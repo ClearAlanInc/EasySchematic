@@ -60,7 +60,8 @@ function SchematicCanvas() {
     loadFromLocalStorage,
   } = useSchematicStore();
 
-  const { screenToFlowPosition } = useReactFlow();
+  const rfInstance = useReactFlow();
+  const { screenToFlowPosition } = rfInstance;
 
   // Space-held state for pan-on-drag (Vectorworks-style)
   const [spaceHeld, setSpaceHeld] = useState(false);
@@ -78,6 +79,30 @@ function SchematicCanvas() {
   useEffect(() => {
     loadFromLocalStorage();
   }, [loadFromLocalStorage]);
+
+  // Recompute edge routes when nodes/edges change (but not during drag)
+  const isDragging = useSchematicStore((s) => s.isDragging);
+  const debugEdges = useSchematicStore((s) => s.debugEdges);
+  const nodeCount = useSchematicStore((s) => s.nodes.length);
+  const edgeCount = useSchematicStore((s) => s.edges.length);
+  // Digest of node positions + sizes to detect moves
+  const nodeDigest = useSchematicStore((s) =>
+    s.nodes.map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${n.measured?.width ?? 0},${n.measured?.height ?? 0}`).join("|"),
+  );
+  // Digest of edge connectivity
+  const edgeDigest = useSchematicStore((s) =>
+    s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}`).join("|"),
+  );
+
+  useEffect(() => {
+    if (isDragging) return;
+    if (nodeCount === 0 && edgeCount === 0) return;
+    // Small delay to let React Flow measure handles after changes
+    const timer = setTimeout(() => {
+      useSchematicStore.getState().recomputeRoutes(rfInstance);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -384,6 +409,25 @@ function SchematicCanvas() {
       snapGrid={[GRID_SIZE, GRID_SIZE]}
     >
       <SnapGuides guides={snapGuides} />
+      {debugEdges && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex gap-2">
+          <button
+            className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded shadow-lg hover:bg-blue-700 font-mono"
+            onClick={() => {
+              const report = (window as unknown as Record<string, unknown>).__routingReport;
+              if (report) {
+                navigator.clipboard.writeText(JSON.stringify(report, null, 2)).then(() => {
+                  console.log("📋 Routing report copied to clipboard");
+                });
+              } else {
+                console.log("No routing report — move a node to trigger routing");
+              }
+            }}
+          >
+            📋 Copy Routing Report
+          </button>
+        </div>
+      )}
       <Background variant={BackgroundVariant.Dots} gap={GRID_SIZE} size={1} color="#d4d4d4" />
       <Controls position="bottom-right" />
       <MiniMap

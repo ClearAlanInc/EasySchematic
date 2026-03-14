@@ -1,0 +1,746 @@
+/**
+ * Centralized iterative edge routing engine.
+ * Routes all edges with awareness of each other to avoid shared segments.
+ *
+ * Pure algorithm — no React dependencies.
+ */
+
+import type { ReactFlowInstance } from "@xyflow/react";
+import type { SchematicNode, ConnectionEdge } from "./types";
+import {
+  buildObstacles,
+  computeEdgePath,
+  type PenaltyZone,
+} from "./pathfinding";
+
+// ---------- Types ----------
+
+export interface RoutedEdge {
+  edgeId: string;
+  svgPath: string;
+  waypoints: Point[];
+  segments: Segment[];
+  labelX: number;
+  labelY: number;
+  turns: string;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Segment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  axis: "h" | "v";
+}
+
+interface HandlePos {
+  id: string;
+  absX: number;
+  absY: number;
+}
+
+// ---------- Constants ----------
+
+const SEPARATION_THRESHOLD = 8;
+const MAX_ITERATIONS = 5;
+const STUB_GAP = 6;
+
+// ---------- Handle resolution ----------
+
+function getHandlePositions(
+  nodeId: string,
+  rfInstance: ReactFlowInstance,
+): HandlePos[] {
+  const internal = rfInstance.getInternalNode(nodeId);
+  if (!internal) return [];
+
+  const absX = internal.internals.positionAbsolute.x;
+  const absY = internal.internals.positionAbsolute.y;
+  const bounds = internal.internals.handleBounds;
+  const result: HandlePos[] = [];
+
+  for (const handle of bounds?.source ?? []) {
+    if (handle.id) {
+      result.push({
+        id: handle.id,
+        absX: absX + handle.x + handle.width / 2,
+        absY: absY + handle.y + handle.height / 2,
+      });
+    }
+  }
+  for (const handle of bounds?.target ?? []) {
+    if (handle.id) {
+      result.push({
+        id: handle.id,
+        absX: absX + handle.x + handle.width / 2,
+        absY: absY + handle.y + handle.height / 2,
+      });
+    }
+  }
+  return result;
+}
+
+function getAbsPos(node: SchematicNode, nodes: SchematicNode[]) {
+  let x = node.position.x;
+  let y = node.position.y;
+  if (node.parentId) {
+    const parent = nodes.find((n) => n.id === node.parentId);
+    if (parent) {
+      x += parent.position.x;
+      y += parent.position.y;
+    }
+  }
+  return { x, y };
+}
+
+// ---------- Stub spread (moved from OffsetEdge) ----------
+
+function computeStubSpread(
+  edgeId: string,
+  sourceNodeId: string,
+  edges: ConnectionEdge[],
+  nodes: SchematicNode[],
+): number {
+  const allFromSource: { edgeId: string; handleY: number }[] = [];
+  for (const e of edges) {
+    if (e.source !== sourceNodeId) continue;
+    const tgt = nodes.find((n) => n.id === e.target);
+    if (!tgt) continue;
+    const tgtPos = getAbsPos(tgt, nodes);
+    const tgtH = tgt.measured?.height ?? 80;
+    allFromSource.push({ edgeId: e.id, handleY: tgtPos.y + tgtH / 2 });
+  }
+
+  if (allFromSource.length <= 1) return 0;
+
+  allFromSource.sort(
+    (a, b) => a.handleY - b.handleY || a.edgeId.localeCompare(b.edgeId),
+  );
+  const index = allFromSource.findIndex((e) => e.edgeId === edgeId);
+  const mid = (allFromSource.length - 1) / 2;
+  return (index - mid) * STUB_GAP;
+}
+
+// ---------- Segment extraction ----------
+
+export function extractSegments(waypoints: Point[]): Segment[] {
+  const segs: Segment[] = [];
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const a = waypoints[i];
+    const b = waypoints[i + 1];
+    if (a.x === b.x && a.y === b.y) continue;
+    const axis: "h" | "v" = a.y === b.y ? "h" : "v";
+    segs.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, axis });
+  }
+  return segs;
+}
+
+// ---------- Violation detection ----------
+
+/** Do two perpendicular segments actually cross? */
+function segmentsCross(a: Segment, b: Segment): boolean {
+  if (a.axis === b.axis) return false;
+  // Ensure h is horizontal, v is vertical
+  const h = a.axis === "h" ? a : b;
+  const v = a.axis === "v" ? a : b;
+  const hY = h.y1;
+  const hMinX = Math.min(h.x1, h.x2);
+  const hMaxX = Math.max(h.x1, h.x2);
+  const vX = v.x1;
+  const vMinY = Math.min(v.y1, v.y2);
+  const vMaxY = Math.max(v.y1, v.y2);
+  return vX > hMinX && vX < hMaxX && hY > vMinY && hY < vMaxY;
+}
+
+function segmentsOverlap(a: Segment, b: Segment): boolean {
+  if (a.axis !== b.axis) return false;
+
+  if (a.axis === "v") {
+    // Vertical segments: close in X, overlapping Y range
+    if (Math.abs(a.x1 - b.x1) >= SEPARATION_THRESHOLD) return false;
+    const aMinY = Math.min(a.y1, a.y2);
+    const aMaxY = Math.max(a.y1, a.y2);
+    const bMinY = Math.min(b.y1, b.y2);
+    const bMaxY = Math.max(b.y1, b.y2);
+    const overlapLen = Math.min(aMaxY, bMaxY) - Math.max(aMinY, bMinY);
+    return overlapLen > SEPARATION_THRESHOLD;
+  } else {
+    // Horizontal segments: close in Y, overlapping X range
+    if (Math.abs(a.y1 - b.y1) >= SEPARATION_THRESHOLD) return false;
+    const aMinX = Math.min(a.x1, a.x2);
+    const aMaxX = Math.max(a.x1, a.x2);
+    const bMinX = Math.min(b.x1, b.x2);
+    const bMaxX = Math.max(b.x1, b.x2);
+    const overlapLen = Math.min(aMaxX, bMaxX) - Math.max(aMinX, bMinX);
+    return overlapLen > SEPARATION_THRESHOLD;
+  }
+}
+
+export function findViolations(
+  allEdges: { edgeId: string; segments: Segment[] }[],
+): Set<string> {
+  const bad = new Set<string>();
+  // Track per-edge crossing counts: how many times each edge crosses
+  // the SAME other edge. Weaving through one edge (2+ crossings) is
+  // much worse than crossing two different edges once each.
+  const pairCrossings = new Map<string, Map<string, number>>();
+  for (const e of allEdges) {
+    pairCrossings.set(e.edgeId, new Map());
+  }
+
+  for (let i = 0; i < allEdges.length; i++) {
+    for (let j = i + 1; j < allEdges.length; j++) {
+      const a = allEdges[i];
+      const b = allEdges[j];
+      let hasOverlap = false;
+      let crossCount = 0;
+      for (const sa of a.segments) {
+        for (const sb of b.segments) {
+          if (segmentsOverlap(sa, sb)) hasOverlap = true;
+          if (segmentsCross(sa, sb)) crossCount++;
+        }
+      }
+
+      if (hasOverlap) {
+        bad.add(a.edgeId);
+        bad.add(b.edgeId);
+      }
+
+      if (crossCount > 0) {
+        pairCrossings.get(a.edgeId)!.set(b.edgeId, crossCount);
+        pairCrossings.get(b.edgeId)!.set(a.edgeId, crossCount);
+
+        // Crossing the same edge 2+ times is always a violation (weaving)
+        if (crossCount >= 2) {
+          bad.add(a.edgeId);
+          bad.add(b.edgeId);
+        }
+      }
+    }
+  }
+
+  // An edge that crosses 3+ distinct other edges is also flagged —
+  // likely has a cleaner route available
+  for (const e of allEdges) {
+    const crosses = pairCrossings.get(e.edgeId)!;
+    if (crosses.size >= 3) {
+      bad.add(e.edgeId);
+    }
+  }
+
+  return bad;
+}
+
+// ---------- Penalty zone construction ----------
+
+export function buildPenaltyZones(
+  goodEdges: { segments: Segment[] }[],
+): PenaltyZone[] {
+  const zones: PenaltyZone[] = [];
+  for (const edge of goodEdges) {
+    for (const seg of edge.segments) {
+      if (seg.axis === "v") {
+        zones.push({
+          axis: "v",
+          coordinate: seg.x1,
+          rangeMin: Math.min(seg.y1, seg.y2),
+          rangeMax: Math.max(seg.y1, seg.y2),
+        });
+      } else {
+        zones.push({
+          axis: "h",
+          coordinate: seg.y1,
+          rangeMin: Math.min(seg.x1, seg.x2),
+          rangeMax: Math.max(seg.x1, seg.x2),
+        });
+      }
+    }
+  }
+  return zones;
+}
+
+// ---------- Debug reporting ----------
+
+interface EdgeEndpoints {
+  edge: ConnectionEdge;
+  sourceX: number;
+  sourceY: number;
+  targetX: number;
+  targetY: number;
+  stubSpread: number;
+}
+
+interface RouteState {
+  edgeId: string;
+  waypoints: Point[];
+  segments: Segment[];
+  svgPath: string;
+  labelX: number;
+  labelY: number;
+  turns: string;
+  status: "good" | "bad";
+}
+
+function logRoutingReport(
+  routeStates: RouteState[],
+  edgeEndpoints: EdgeEndpoints[],
+) {
+  const allEdges = routeStates.map((rs) => ({
+    edgeId: rs.edgeId,
+    segments: rs.segments,
+  }));
+
+  // Build full crossing matrix
+  const crossings: {
+    edgeA: string;
+    edgeB: string;
+    count: number;
+    points: string[];
+  }[] = [];
+
+  for (let i = 0; i < allEdges.length; i++) {
+    for (let j = i + 1; j < allEdges.length; j++) {
+      const a = allEdges[i];
+      const b = allEdges[j];
+      let crossCount = 0;
+      const crossPts: string[] = [];
+      for (const sa of a.segments) {
+        for (const sb of b.segments) {
+          if (segmentsCross(sa, sb)) {
+            crossCount++;
+            // Find intersection point
+            const h = sa.axis === "h" ? sa : sb;
+            const v = sa.axis === "v" ? sa : sb;
+            crossPts.push(`(${v.x1}, ${h.y1})`);
+          }
+        }
+      }
+      if (crossCount > 0) {
+        crossings.push({
+          edgeA: a.edgeId,
+          edgeB: b.edgeId,
+          count: crossCount,
+          points: crossPts,
+        });
+      }
+    }
+  }
+
+  // Build overlap list
+  const overlaps: { edgeA: string; edgeB: string; axis: string }[] = [];
+  for (let i = 0; i < allEdges.length; i++) {
+    for (let j = i + 1; j < allEdges.length; j++) {
+      for (const sa of allEdges[i].segments) {
+        for (const sb of allEdges[j].segments) {
+          if (segmentsOverlap(sa, sb)) {
+            overlaps.push({
+              edgeA: allEdges[i].edgeId,
+              edgeB: allEdges[j].edgeId,
+              axis: sa.axis,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Per-edge crossing summary
+  const edgeCrossingSummary = new Map<
+    string,
+    { total: number; pairs: Map<string, number> }
+  >();
+  for (const rs of routeStates) {
+    edgeCrossingSummary.set(rs.edgeId, { total: 0, pairs: new Map() });
+  }
+  for (const c of crossings) {
+    const a = edgeCrossingSummary.get(c.edgeA)!;
+    const b = edgeCrossingSummary.get(c.edgeB)!;
+    a.total += c.count;
+    a.pairs.set(c.edgeB, c.count);
+    b.total += c.count;
+    b.pairs.set(c.edgeA, c.count);
+  }
+
+  // Sort edges by total crossings (worst offenders first)
+  const sorted = [...edgeCrossingSummary.entries()].sort(
+    (a, b) => b[1].total - a[1].total,
+  );
+
+  // Double-crossings (weaving) — edges that cross the SAME edge 2+ times
+  const weaves = crossings.filter((c) => c.count >= 2);
+
+  console.group(
+    `%c🔀 Edge Routing Report — ${routeStates.length} edges`,
+    "font-weight:bold; font-size:14px; color:#4fc3f7",
+  );
+
+  // Routing order table
+  const orderData = edgeEndpoints.map((ep, i) => ({
+    "#": i,
+    edge: ep.edge.id,
+    src: `(${Math.round(ep.sourceX)}, ${Math.round(ep.sourceY)})`,
+    tgt: `(${Math.round(ep.targetX)}, ${Math.round(ep.targetY)})`,
+    xSpan: Math.round(Math.abs(ep.targetX - ep.sourceX)),
+    stub: ep.stubSpread,
+  }));
+  console.log("%cRouting order:", "font-weight:bold; color:#81c784");
+  console.table(orderData);
+
+  // Vertical segments per edge (the key diagnostic)
+  console.log(
+    "%cVertical segments (X corridors):",
+    "font-weight:bold; color:#81c784",
+  );
+  for (const rs of routeStates) {
+    const vSegs = rs.segments.filter((s) => s.axis === "v");
+    if (vSegs.length === 0) continue;
+    const desc = vSegs
+      .map(
+        (s) =>
+          `x=${Math.round(s.x1)} y=[${Math.round(Math.min(s.y1, s.y2))}..${Math.round(Math.max(s.y1, s.y2))}]`,
+      )
+      .join(", ");
+    console.log(`  ${rs.edgeId}: ${desc}`);
+  }
+
+  // Crossing summary
+  if (crossings.length > 0) {
+    console.log(
+      "%cCrossings:",
+      "font-weight:bold; color:#ffb74d",
+    );
+    for (const c of crossings) {
+      const icon = c.count >= 2 ? "⚠️ WEAVE" : "✕";
+      console.log(
+        `  ${icon} ${c.edgeA} × ${c.edgeB}: ${c.count}x at ${c.points.join(", ")}`,
+      );
+    }
+  } else {
+    console.log("%c✓ No crossings!", "font-weight:bold; color:#66bb6a");
+  }
+
+  // Overlaps
+  if (overlaps.length > 0) {
+    console.log(
+      "%cOverlaps (shared segments):",
+      "font-weight:bold; color:#ef5350",
+    );
+    for (const o of overlaps) {
+      console.log(`  ${o.edgeA} ↔ ${o.edgeB} (${o.axis})`);
+    }
+  }
+
+  // Weaving (the worst kind of violation)
+  if (weaves.length > 0) {
+    console.log(
+      "%c⚠️ Double-crossings (weaving):",
+      "font-weight:bold; color:#ef5350; font-size:13px",
+    );
+    for (const w of weaves) {
+      const epA = edgeEndpoints.find((e) => e.edge.id === w.edgeA);
+      const epB = edgeEndpoints.find((e) => e.edge.id === w.edgeB);
+      console.log(
+        `  ${w.edgeA} ↔ ${w.edgeB}: ${w.count} crossings at ${w.points.join(", ")}`,
+      );
+      if (epA) {
+        const rsA = routeStates.find((r) => r.edgeId === w.edgeA);
+        console.log(
+          `    ${w.edgeA}: src=(${Math.round(epA.sourceX)},${Math.round(epA.sourceY)}) tgt=(${Math.round(epA.targetX)},${Math.round(epA.targetY)}) turns=[${rsA?.turns}]`,
+        );
+      }
+      if (epB) {
+        const rsB = routeStates.find((r) => r.edgeId === w.edgeB);
+        console.log(
+          `    ${w.edgeB}: src=(${Math.round(epB.sourceX)},${Math.round(epB.sourceY)}) tgt=(${Math.round(epB.targetX)},${Math.round(epB.targetY)}) turns=[${rsB?.turns}]`,
+        );
+      }
+    }
+  }
+
+  // Worst offenders
+  const worstOffenders = sorted.filter(([, v]) => v.total > 0);
+  if (worstOffenders.length > 0) {
+    console.log(
+      "%cWorst offenders (by total crossings):",
+      "font-weight:bold; color:#ffb74d",
+    );
+    for (const [edgeId, summary] of worstOffenders.slice(0, 10)) {
+      const pairStr = [...summary.pairs.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([id, n]) => `${id}(${n}x)`)
+        .join(", ");
+      console.log(`  ${edgeId}: ${summary.total} crossings — ${pairStr}`);
+    }
+  }
+
+  const totalCrossings = crossings.reduce((sum, c) => sum + c.count, 0);
+  const totalWeaves = weaves.reduce((sum, w) => sum + w.count, 0);
+  console.log(
+    `%cSummary: ${totalCrossings} total crossings, ${totalWeaves} weave crossings, ${overlaps.length} overlaps`,
+    `font-weight:bold; color:${totalWeaves > 0 ? "#ef5350" : totalCrossings > 0 ? "#ffb74d" : "#66bb6a"}`,
+  );
+
+  console.groupEnd();
+
+  // Stash compact report on window for Ctrl+Shift+B clipboard copy
+  const report = {
+    edgeCount: routeStates.length,
+    routingOrder: orderData,
+    verticalSegments: routeStates
+      .map((rs) => {
+        const vSegs = rs.segments.filter((s) => s.axis === "v");
+        if (vSegs.length === 0) return null;
+        return {
+          edge: rs.edgeId,
+          corridors: vSegs.map((s) => ({
+            x: Math.round(s.x1),
+            yMin: Math.round(Math.min(s.y1, s.y2)),
+            yMax: Math.round(Math.max(s.y1, s.y2)),
+          })),
+        };
+      })
+      .filter(Boolean),
+    crossings: crossings.map((c) => ({
+      edges: [c.edgeA, c.edgeB],
+      count: c.count,
+      at: c.points,
+      weave: c.count >= 2,
+    })),
+    overlaps,
+    worstOffenders: worstOffenders.slice(0, 10).map(([edgeId, summary]) => ({
+      edge: edgeId,
+      totalCrossings: summary.total,
+      pairs: Object.fromEntries(summary.pairs),
+    })),
+    summary: { totalCrossings, weaves: totalWeaves, overlaps: overlaps.length },
+    edges: routeStates.map((rs) => {
+      const ep = edgeEndpoints.find((e) => e.edge.id === rs.edgeId);
+      return {
+        id: rs.edgeId,
+        src: ep
+          ? { x: Math.round(ep.sourceX), y: Math.round(ep.sourceY) }
+          : null,
+        tgt: ep
+          ? { x: Math.round(ep.targetX), y: Math.round(ep.targetY) }
+          : null,
+        turns: rs.turns,
+        waypoints: rs.waypoints.map((p) => ({
+          x: Math.round(p.x),
+          y: Math.round(p.y),
+        })),
+      };
+    }),
+  };
+  (window as unknown as Record<string, unknown>).__routingReport = report;
+}
+
+// ---------- Main routing function ----------
+
+export function routeAllEdges(
+  nodes: SchematicNode[],
+  edges: ConnectionEdge[],
+  rfInstance: ReactFlowInstance,
+  debug?: boolean,
+): Record<string, RoutedEdge> {
+  // Build handle position map
+  const handleMap = new Map<string, HandlePos>();
+  for (const node of nodes) {
+    for (const hp of getHandlePositions(node.id, rfInstance)) {
+      handleMap.set(`${node.id}:${hp.id}`, hp);
+    }
+  }
+
+  // Build obstacles once
+  const obs = buildObstacles(nodes, "", "", (n) =>
+    getAbsPos(n as SchematicNode, nodes),
+  );
+
+  // Resolve edge endpoints
+  const edgeEndpoints: EdgeEndpoints[] = [];
+  for (const edge of edges) {
+    const srcHandle = handleMap.get(
+      `${edge.source}:${edge.sourceHandle}`,
+    );
+    const tgtHandle = handleMap.get(
+      `${edge.target}:${edge.targetHandle}`,
+    );
+
+    if (!srcHandle || !tgtHandle) continue; // node not measured yet
+
+    const stubSpread = computeStubSpread(edge.id, edge.source, edges, nodes);
+
+    edgeEndpoints.push({
+      edge,
+      sourceX: srcHandle.absX,
+      sourceY: srcHandle.absY,
+      targetX: tgtHandle.absX,
+      targetY: tgtHandle.absY,
+      stubSpread,
+    });
+  }
+
+  // Sort edges top-to-bottom, left-to-right by source position.
+  // Edges routed first claim corridors; later edges route around them.
+  // For same Y, go left to right. Use min(sourceY, targetY) as primary key
+  // so edges near the top of the canvas get priority.
+  edgeEndpoints.sort((a, b) => {
+    const aY = Math.min(a.sourceY, a.targetY);
+    const bY = Math.min(b.sourceY, b.targetY);
+    if (aY !== bY) return aY - bY;
+    const aX = Math.min(a.sourceX, a.targetX);
+    const bX = Math.min(b.sourceX, b.targetX);
+    return aX - bX;
+  });
+
+  const results: Record<string, RoutedEdge> = {};
+
+  // PHASE 1 — Incremental routing (each edge aware of previously routed edges)
+  // Edges are sorted top-to-bottom so upper edges claim corridors first,
+  // and subsequent edges route around them via penalty zones.
+  const routeStates: RouteState[] = [];
+
+  for (const ep of edgeEndpoints) {
+    // Build penalties from all edges routed so far
+    const penalties = buildPenaltyZones(routeStates);
+
+    const result = computeEdgePath(
+      ep.sourceX,
+      ep.sourceY,
+      ep.targetX,
+      ep.targetY,
+      obs.rects,
+      0,
+      ep.stubSpread,
+      penalties.length > 0 ? penalties : undefined,
+    );
+
+    if (result) {
+      const segments = extractSegments(result.waypoints);
+      routeStates.push({
+        edgeId: ep.edge.id,
+        waypoints: result.waypoints,
+        segments,
+        svgPath: result.path,
+        labelX: result.labelX,
+        labelY: result.labelY,
+        turns: result.turns,
+        status: "good",
+      });
+    } else {
+      // Fallback: straight line
+      const wp: Point[] = [
+        { x: ep.sourceX, y: ep.sourceY },
+        { x: ep.targetX, y: ep.targetY },
+      ];
+      routeStates.push({
+        edgeId: ep.edge.id,
+        waypoints: wp,
+        segments: extractSegments(wp),
+        svgPath: `M ${ep.sourceX} ${ep.sourceY} L ${ep.targetX} ${ep.targetY}`,
+        labelX: (ep.sourceX + ep.targetX) / 2,
+        labelY: (ep.sourceY + ep.targetY) / 2,
+        turns: "fallback",
+        status: "good",
+      });
+    }
+  }
+
+  // PHASE 2 — Violation detection
+  const badIds = findViolations(
+    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments })),
+  );
+  for (const rs of routeStates) {
+    if (badIds.has(rs.edgeId)) {
+      rs.status = "bad";
+    }
+  }
+
+  // PHASE 3 — Iterative re-routing
+  for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
+    const badEdges = routeStates.filter((rs) => rs.status === "bad");
+    if (badEdges.length === 0) break;
+
+    // Sort: fewer violations first, shorter edges first
+    badEdges.sort((a, b) => {
+      const aLen = a.waypoints.length;
+      const bLen = b.waypoints.length;
+      return aLen - bLen;
+    });
+
+    let anyImproved = false;
+
+    for (const bad of badEdges) {
+      const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
+      if (!ep) continue;
+
+      // Build penalty zones from good edges' segments
+      const goodEdges = routeStates.filter(
+        (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
+      );
+      const penalties = buildPenaltyZones(goodEdges);
+
+      const result = computeEdgePath(
+        ep.sourceX,
+        ep.sourceY,
+        ep.targetX,
+        ep.targetY,
+        obs.rects,
+        0,
+        ep.stubSpread,
+        penalties,
+      );
+
+      if (!result) continue;
+
+      const newSegments = extractSegments(result.waypoints);
+
+      // Check if new route has violations against all other edges
+      const otherEdges = routeStates
+        .filter((rs) => rs.edgeId !== bad.edgeId)
+        .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments }));
+
+      const newViolations = findViolations([
+        { edgeId: bad.edgeId, segments: newSegments },
+        ...otherEdges,
+      ]);
+
+      if (!newViolations.has(bad.edgeId)) {
+        // Improved — update and mark good
+        bad.waypoints = result.waypoints;
+        bad.segments = newSegments;
+        bad.svgPath = result.path;
+        bad.labelX = result.labelX;
+        bad.labelY = result.labelY;
+        bad.turns = result.turns;
+        bad.status = "good";
+        anyImproved = true;
+      }
+    }
+
+    if (!anyImproved) break; // stuck
+  }
+
+  // Build final results
+  for (const rs of routeStates) {
+    results[rs.edgeId] = {
+      edgeId: rs.edgeId,
+      svgPath: rs.svgPath,
+      waypoints: rs.waypoints,
+      segments: rs.segments,
+      labelX: rs.labelX,
+      labelY: rs.labelY,
+      turns: rs.turns,
+    };
+  }
+
+  if (debug) {
+    logRoutingReport(routeStates, edgeEndpoints);
+  }
+
+  return results;
+}

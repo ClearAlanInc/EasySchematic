@@ -2,16 +2,14 @@
  * A* orthogonal edge routing on a sparse event-coordinate grid.
  * Pure algorithm — no React dependencies.
  *
- * Priority rules:
- *  1. Never intersect a device node (hard constraint — blocked cells)
- *  2. Never intersect a parallel line (handled by overlapOffset in OffsetEdge)
- *  3. Prefer crossing a perpendicular line over a massive detour
+ * See ROUTING_RULES.md for the full aesthetic ruleset.
  *
  * Key design decisions:
  *  - Direction-aware A* state: (x, y, dir) prevents the closed set from
  *    rejecting better arrivals from a different direction.
- *  - Offset edges route A* at the actual offset position (no post-hoc shift),
- *    eliminating overshoot jog patterns and invalid-through-obstacle paths.
+ *  - Must arrive at goal horizontally (R2) — vertical arrivals rejected.
+ *  - Post-hoc (X, Y) offset on interior waypoints separates parallel edges
+ *    in both axes. Jog segments at stubs maintain orthogonality (R3).
  */
 
 // ---------- Types ----------
@@ -23,9 +21,16 @@ export interface Rect {
   bottom: number;
 }
 
-interface Point {
+export interface Point {
   x: number;
   y: number;
+}
+
+export interface PenaltyZone {
+  axis: "h" | "v";
+  coordinate: number;  // the X (for vertical seg) or Y (for horizontal seg)
+  rangeMin: number;     // start of segment
+  rangeMax: number;     // end of segment
 }
 
 interface GridNode {
@@ -45,6 +50,10 @@ const STUB = 30; // Minimum horizontal distance from handle before first turn
 const TURN_PENALTY = 100; // Penalty for changing direction (strongly prefer fewer turns)
 const CORNER_RADIUS = 8;
 const ESCAPE_MARGIN = 40; // Grid lines beyond the overall bounding box
+const SEPARATION_PX = 10; // Offset distance for penalty zone grid lines
+const PROXIMITY_PENALTY = 50; // Extra A* cost when near a penalty zone (parallel)
+const CROSSING_PENALTY = 120; // Extra A* cost when crossing a penalty zone (perpendicular)
+const EARLY_TURN_BIAS = 30; // Extra cost for turning far from target (spreads vertical segments)
 
 // ---------- Obstacles ----------
 
@@ -86,6 +95,7 @@ export function buildSparseGrid(
   ty: number,
   obstacles: Rect[],
   forceOpen?: { x: number; y: number }[],
+  penalties?: PenaltyZone[],
 ): SparseGrid {
   const xSet = new Set<number>();
   const ySet = new Set<number>();
@@ -109,6 +119,25 @@ export function buildSparseGrid(
     ySet.add(r.bottom);
     ySet.add(r.top - GAP);
     ySet.add(r.bottom + GAP);
+  }
+
+  // Inject penalty zone coordinates as additional grid lines so A* can route around them
+  if (penalties) {
+    for (const pz of penalties) {
+      if (pz.axis === "v") {
+        // Vertical penalty: add offset X lines on both sides
+        xSet.add(pz.coordinate - SEPARATION_PX);
+        xSet.add(pz.coordinate + SEPARATION_PX);
+        ySet.add(pz.rangeMin);
+        ySet.add(pz.rangeMax);
+      } else {
+        // Horizontal penalty: add offset Y lines on both sides
+        ySet.add(pz.coordinate - SEPARATION_PX);
+        ySet.add(pz.coordinate + SEPARATION_PX);
+        xSet.add(pz.rangeMin);
+        xSet.add(pz.rangeMax);
+      }
+    }
   }
 
   // Escape coords beyond overall bounding box (so paths can route around everything)
@@ -222,6 +251,7 @@ export function astarOrthogonal(
   endX: number,
   endY: number,
   obstacles: Rect[],
+  penalties?: PenaltyZone[],
 ): Point[] | null {
   const { xs, ys, blocked } = grid;
 
@@ -262,6 +292,11 @@ export function astarOrthogonal(
     if (dy > 0 && dx === 0 && dir !== 1 && dir !== 3 && dir >= 0) {
       h += TURN_PENALTY;
     }
+    // Must arrive at goal horizontally — if aligned on both axes but moving
+    // vertically, we'll need a turn to approach horizontally
+    if (dx === 0 && dy === 0 && (dir === 1 || dir === 3)) {
+      h += TURN_PENALTY;
+    }
     return h;
   };
 
@@ -289,7 +324,9 @@ export function astarOrthogonal(
     const current = open.pop()!;
     const ck = stateKey(current.xi, current.yi, current.dir);
 
-    if (current.xi === exi && current.yi === eyi) {
+    // Only accept arrival at goal when moving horizontally (dir 0=RIGHT or 2=LEFT)
+    // This ensures edges always connect to handles from the side, never vertically
+    if (current.xi === exi && current.yi === eyi && (current.dir === 0 || current.dir === 2)) {
       const path: Point[] = [];
       let node: GridNode | null = current;
       while (node) {
@@ -322,8 +359,63 @@ export function astarOrthogonal(
       const dist = Math.abs(nx - cx) + Math.abs(ny - cy);
       let g = current.g + dist;
 
-      if (d !== current.dir) {
+      if (d !== current.dir && current.dir >= 0) {
         g += TURN_PENALTY;
+
+        // Bias: prefer turns closer to target — penalize early turns.
+        // This spreads vertical segments across X corridors instead of
+        // clustering them all at the same X coordinate.
+        const totalXSpan = Math.abs(goalX - startX);
+        if (totalXSpan > 0) {
+          const distFromTarget = Math.abs(cx - goalX);
+          g += EARLY_TURN_BIAS * (distFromTarget / totalXSpan);
+        }
+      }
+
+      // Penalty zone proximity cost: penalize segments that run parallel
+      // and close to an existing good edge's segment
+      if (penalties) {
+        for (const pz of penalties) {
+          if (pz.axis === "v" && (d === 1 || d === 3)) {
+            // Moving vertically — check if X is close to a vertical penalty
+            if (Math.abs(nx - pz.coordinate) < SEPARATION_PX) {
+              const segMinY = Math.min(cy, ny);
+              const segMaxY = Math.max(cy, ny);
+              if (segMaxY > pz.rangeMin && segMinY < pz.rangeMax) {
+                g += PROXIMITY_PENALTY;
+              }
+            }
+          } else if (pz.axis === "h" && (d === 0 || d === 2)) {
+            // Moving horizontally — check if Y is close to a horizontal penalty
+            if (Math.abs(ny - pz.coordinate) < SEPARATION_PX) {
+              const segMinX = Math.min(cx, nx);
+              const segMaxX = Math.max(cx, nx);
+              if (segMaxX > pz.rangeMin && segMinX < pz.rangeMax) {
+                g += PROXIMITY_PENALTY;
+              }
+            }
+          }
+          // Crossing penalty: moving perpendicular across a penalty zone's segment.
+          // Uses <= on upper bound so crossings are detected even when the penalty
+          // coordinate is itself a grid line (from overlapping penalty zone offsets).
+          if (pz.axis === "v" && (d === 0 || d === 2)) {
+            // Moving horizontally — does this step cross a vertical segment?
+            const minX = Math.min(cx, nx);
+            const maxX = Math.max(cx, nx);
+            if (pz.coordinate > minX && pz.coordinate <= maxX &&
+                cy >= pz.rangeMin && cy <= pz.rangeMax) {
+              g += CROSSING_PENALTY;
+            }
+          } else if (pz.axis === "h" && (d === 1 || d === 3)) {
+            // Moving vertically — does this step cross a horizontal segment?
+            const minY = Math.min(cy, ny);
+            const maxY = Math.max(cy, ny);
+            if (pz.coordinate > minY && pz.coordinate <= maxY &&
+                cx >= pz.rangeMin && cx <= pz.rangeMax) {
+              g += CROSSING_PENALTY;
+            }
+          }
+        }
       }
 
       const prev = bestG.get(nk);
@@ -442,7 +534,8 @@ export function computeEdgePath(
   obstacles: Rect[],
   offset: number,
   stubSpread: number = 0,
-): { path: string; labelX: number; labelY: number; turns: string } | null {
+  penalties?: PenaltyZone[],
+): { path: string; labelX: number; labelY: number; turns: string; waypoints: Point[] } | null {
   // Short-circuit: if source and target are at (nearly) the same Y and the direct
   // horizontal path is unobstructed, just draw a straight line — no stubs, no offset.
   // Skip obstacles that contain the source or target handle (the endpoint devices).
@@ -460,7 +553,8 @@ export function computeEdgePath(
       const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
       const labelX = (sourceX + targetX) / 2;
       const labelY = (sourceY + targetY) / 2;
-      return { path, labelX, labelY, turns: "straight" };
+      const waypoints: Point[] = [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }];
+      return { path, labelX, labelY, turns: "straight", waypoints };
     }
   }
 
@@ -486,9 +580,9 @@ export function computeEdgePath(
     { x: stubSX, y: sourceY },
     { x: stubTX, y: targetY },
   ];
-  const grid = buildSparseGrid(stubSX, sourceY, stubTX, targetY, obstacles, forceOpen);
+  const grid = buildSparseGrid(stubSX, sourceY, stubTX, targetY, obstacles, forceOpen, penalties);
 
-  const rawPath = astarOrthogonal(grid, stubSX, sourceY, stubTX, targetY, obstacles);
+  const rawPath = astarOrthogonal(grid, stubSX, sourceY, stubTX, targetY, obstacles, penalties);
   if (!rawPath) {
     return null;
   }
@@ -498,16 +592,36 @@ export function computeEdgePath(
 
   // Build the full waypoint list.
   // Endpoints (handle positions) are pinned — they must land exactly on the handle.
-  // Interior waypoints get X-shifted by offset to separate parallel edges.
-  // This moves vertical segments left/right without adding turns.
+  // Interior waypoints are shifted by (offset, offset) to separate parallel edges.
+  // X-shift separates shared vertical segments, Y-shift separates shared horizontal
+  // segments (common in wrap-around edges that cross the full canvas).
+  // Jog segments at the stubs maintain orthogonality: the first and last interior
+  // points stay at handle Y, with a short vertical step to the offset Y.
   const waypoints: Point[] = [];
 
   // 1. Source handle (pinned, no offset)
   waypoints.push({ x: sourceX, y: sourceY });
 
-  // 2. Interior A* path with X-offset applied
-  for (const p of interior) {
-    waypoints.push({ x: p.x + offset, y: p.y });
+  // 2. Interior A* path with offset applied
+  for (let i = 0; i < interior.length; i++) {
+    const p = interior[i];
+    if (i === 0) {
+      // Source stub: stay at handle Y, shift X only
+      waypoints.push({ x: p.x + offset, y: p.y });
+      // Jog to offset Y (skip if offset is 0 or only one interior point)
+      if (offset !== 0 && interior.length > 2) {
+        waypoints.push({ x: p.x + offset, y: p.y + offset });
+      }
+    } else if (i === interior.length - 1) {
+      // Target stub: jog back from offset Y to handle Y
+      if (offset !== 0 && interior.length > 2) {
+        waypoints.push({ x: p.x + offset, y: p.y + offset });
+      }
+      waypoints.push({ x: p.x + offset, y: p.y });
+    } else {
+      // Middle interior: shift both X and Y
+      waypoints.push({ x: p.x + offset, y: p.y + offset });
+    }
   }
 
   // 3. Target handle (pinned, no offset)
@@ -531,5 +645,5 @@ export function computeEdgePath(
     ? simplified.slice(1, -1).map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(" → ")
     : "straight";
 
-  return { path, labelX, labelY, turns };
+  return { path, labelX, labelY, turns, waypoints: simplified };
 }
