@@ -26,7 +26,7 @@ import DeviceLibrary from "./components/DeviceLibrary";
 import DeviceEditor from "./components/DeviceEditor";
 import Toolbar from "./components/Toolbar";
 import { computeSnap, enforceMinSpacing, type GuideLine } from "./snapUtils";
-import type { ConnectionEdge, DeviceTemplate, SchematicNode } from "./types";
+import type { DeviceTemplate, SchematicNode } from "./types";
 
 const nodeTypes: NodeTypes = {
   device: DeviceNodeComponent,
@@ -374,7 +374,7 @@ function SchematicCanvas() {
 
   // Click-to-connect: first click on a handle
   const onClickConnectStart = useCallback(
-    (event: MouseEvent, params: { nodeId: string; handleId: string | null; handleType: string }) => {
+    (event: MouseEvent | TouchEvent, params: { nodeId: string; handleId: string | null; handleType: string }) => {
       isClickConnectMode.current = true;
       startPreviewTracking(event, params.nodeId, params.handleId, params.handleType);
     },
