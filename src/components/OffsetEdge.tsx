@@ -138,9 +138,7 @@ function OffsetEdgeComponent({
       const src = state.nodes.find((n) => n.id === e.source);
       const tgt = state.nodes.find((n) => n.id === e.target);
       if (!src || !tgt) continue;
-      const srcPos = getAbsPos(src, state.nodes);
       const tgtPos = getAbsPos(tgt, state.nodes);
-      const srcH = src.measured?.height ?? 80;
       const tgtH = tgt.measured?.height ?? 80;
       // Use target center Y as differentiator (where the edge is heading)
       allFromSource.push({ edgeId: e.id, handleY: tgtPos.y + tgtH / 2 });

@@ -50,8 +50,8 @@ const ESCAPE_MARGIN = 40; // Grid lines beyond the overall bounding box
 
 export function buildObstacles(
   nodes: readonly { id: string; position: { x: number; y: number }; parentId?: string; measured?: { width?: number; height?: number }; type?: string }[],
-  sourceId: string,
-  targetId: string,
+  _sourceId: string,
+  _targetId: string,
   getAbsPos: (node: typeof nodes[number]) => { x: number; y: number },
 ): { rects: Rect[] } {
   const rects: Rect[] = [];
