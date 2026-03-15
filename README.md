@@ -4,7 +4,7 @@
 
 <h1 align="center">EasySchematic</h1>
 
-<p align="center">A drag-and-drop AV signal flow diagram tool for designing and documenting audio/video system hook-ups. Built for broadcast, live production, and AV integration workflows.</p>
+<p align="center">A drag-and-drop AV signal flow diagram tool for designing and documenting audio/video system hook-ups.<br>Built for broadcast, live production, and AV integration workflows.</p>
 
 <p align="center"><b><a href="https://easyschematic.live">Try it live →</a></b> · <b><a href="https://docs.easyschematic.live">Documentation →</a></b></p>
 
