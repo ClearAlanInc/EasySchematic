@@ -83,6 +83,37 @@ export interface TitleBlock {
   engineer: string;
   date: string;
   drawingTitle: string;
+  company: string;
+  revision: string;
+  logo: string;
+}
+
+export type CellContentType = "field" | "static" | "logo" | "pageNumber";
+
+export interface TitleBlockCell {
+  id: string;
+  row: number;
+  col: number;
+  rowSpan: number;
+  colSpan: number;
+  content:
+    | { type: "field"; field: keyof TitleBlock }
+    | { type: "static"; text: string }
+    | { type: "logo" }
+    | { type: "pageNumber" };
+  fontSize: number;
+  fontWeight: "normal" | "bold";
+  fontFamily: "sans-serif" | "serif" | "monospace";
+  align: "left" | "center" | "right";
+  color: string;
+}
+
+export interface TitleBlockLayout {
+  columns: number[];
+  rows: number[];
+  cells: TitleBlockCell[];
+  widthIn: number;
+  heightIn: number;
 }
 
 export interface SchematicFile {
@@ -96,6 +127,7 @@ export interface SchematicFile {
   printOrientation?: "landscape" | "portrait";
   printScale?: number;
   titleBlock?: TitleBlock;
+  titleBlockLayout?: TitleBlockLayout;
 }
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {

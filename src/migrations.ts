@@ -10,7 +10,9 @@
  *   3. Update package.json version to 0.<new schema version>.0
  */
 
-export const CURRENT_SCHEMA_VERSION = 3;
+import { createDefaultLayout } from "./titleBlockLayout";
+
+export const CURRENT_SCHEMA_VERSION = 6;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -28,6 +30,33 @@ const migrations: Record<number, Migration> = {
       data.titleBlock.drawingTitle ??= "";
     }
     data.version = 3;
+    return data;
+  },
+  3: (data) => {
+    // v3 → v4: add company, revision, logo to titleBlock
+    if (data.titleBlock) {
+      data.titleBlock.company ??= "";
+      data.titleBlock.revision ??= "";
+      data.titleBlock.logo ??= "";
+    }
+    data.version = 4;
+    return data;
+  },
+  4: (data) => {
+    // v4 → v5: add titleBlockLayout with default grid layout
+    data.titleBlockLayout ??= createDefaultLayout();
+    data.version = 5;
+    return data;
+  },
+  5: (data) => {
+    // v5 → v6: titleBlockLayout.widthFraction → widthIn (fixed inches)
+    if (data.titleBlockLayout) {
+      const frac = data.titleBlockLayout.widthFraction ?? 0.3;
+      // Convert fraction to approximate inches (assuming 11" landscape - 0.8" margins)
+      data.titleBlockLayout.widthIn = Math.round(frac * 10.2 * 4) / 4; // round to nearest 0.25"
+      delete data.titleBlockLayout.widthFraction;
+    }
+    data.version = 6;
     return data;
   },
 };

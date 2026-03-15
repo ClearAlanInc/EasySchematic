@@ -5,9 +5,10 @@ import {
   type PaperSize,
   type Orientation,
   PAGE_MARGIN_IN,
-  TITLE_BLOCK_HEIGHT_IN,
 } from "./printConfig";
 import { computePageGrid } from "./printPageGrid";
+import type { TitleBlock, TitleBlockLayout } from "./types";
+import { computeCellRects } from "./titleBlockLayout";
 
 const DPI = 96;
 const PIXEL_RATIO = 2;
@@ -51,53 +52,180 @@ function removeLoadingOverlay() {
   document.getElementById("pdf-export-overlay")?.remove();
 }
 
+const PDF_FONT_MAP: Record<string, string> = {
+  "sans-serif": "helvetica",
+  "serif": "times",
+  "monospace": "courier",
+};
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ];
+}
+
 function drawTitleBlock(
   doc: jsPDF,
   pageWIn: number,
   pageHIn: number,
-  schematicName: string,
+  tb: TitleBlock,
+  layout: TitleBlockLayout,
   pageNum: number,
   totalPages: number,
 ) {
   const margin = PAGE_MARGIN_IN;
-  const tbHeight = TITLE_BLOCK_HEIGHT_IN;
+  const tbHeight = layout.heightIn;
   const tbTop = pageHIn - margin - tbHeight;
-  const tbLeft = margin;
-  const tbWidth = pageWIn - 2 * margin;
+  const fullTbWidth = pageWIn - 2 * margin;
+  const tbWidth = Math.min(layout.widthIn, fullTbWidth);
+  const tbLeft = margin + fullTbWidth - tbWidth;
+
+  const cellRects = computeCellRects(layout);
+  const pad = 0.05;
 
   // Border
   doc.setDrawColor(100, 100, 100);
-  doc.setLineWidth(0.01);
+  doc.setLineWidth(0.005);
   doc.rect(tbLeft, tbTop, tbWidth, tbHeight);
 
-  // Divider line at 60% from left
-  const divX = tbLeft + tbWidth * 0.6;
-  doc.line(divX, tbTop, divX, tbTop + tbHeight);
+  // Cumulative positions
+  const colStarts: number[] = [0];
+  for (let i = 0; i < layout.columns.length; i++) {
+    colStarts.push(colStarts[i] + layout.columns[i]);
+  }
+  const rowStarts: number[] = [0];
+  for (let i = 0; i < layout.rows.length; i++) {
+    rowStarts.push(rowStarts[i] + layout.rows[i]);
+  }
 
-  // Left section: schematic name + subtitle
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(31, 41, 55);
-  doc.text(schematicName, tbLeft + 0.1, tbTop + 0.2);
+  // Build skip sets for merged cells
+  const skipHLines = new Set<string>();
+  const skipVLines = new Set<string>();
+  for (const cell of layout.cells) {
+    for (let r = cell.row + 1; r < cell.row + cell.rowSpan; r++) {
+      for (let c = cell.col; c < cell.col + cell.colSpan; c++) {
+        skipHLines.add(`${r},${c}`);
+      }
+    }
+    for (let c = cell.col + 1; c < cell.col + cell.colSpan; c++) {
+      for (let r = cell.row; r < cell.row + cell.rowSpan; r++) {
+        skipVLines.add(`${c},${r}`);
+      }
+    }
+  }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(107, 114, 128);
-  doc.text("AV Signal Flow Diagram", tbLeft + 0.1, tbTop + 0.35);
+  // Horizontal grid lines
+  for (let ri = 1; ri < layout.rows.length; ri++) {
+    const y = tbTop + rowStarts[ri] * tbHeight;
+    let segStart: number | null = null;
+    for (let c = 0; c < layout.columns.length; c++) {
+      if (skipHLines.has(`${ri},${c}`)) {
+        if (segStart !== null) {
+          doc.line(tbLeft + colStarts[segStart] * tbWidth, y, tbLeft + colStarts[c] * tbWidth, y);
+          segStart = null;
+        }
+      } else {
+        if (segStart === null) segStart = c;
+      }
+    }
+    if (segStart !== null) {
+      doc.line(tbLeft + colStarts[segStart] * tbWidth, y, tbLeft + tbWidth, y);
+    }
+  }
 
-  // Right section: date, page number, credit
-  const rightX = divX + 0.1;
-  const today = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // Vertical grid lines
+  for (let ci = 1; ci < layout.columns.length; ci++) {
+    const x = tbLeft + colStarts[ci] * tbWidth;
+    let segStart: number | null = null;
+    for (let r = 0; r < layout.rows.length; r++) {
+      if (skipVLines.has(`${ci},${r}`)) {
+        if (segStart !== null) {
+          doc.line(x, tbTop + rowStarts[segStart] * tbHeight, x, tbTop + rowStarts[r] * tbHeight);
+          segStart = null;
+        }
+      } else {
+        if (segStart === null) segStart = r;
+      }
+    }
+    if (segStart !== null) {
+      doc.line(x, tbTop + rowStarts[segStart] * tbHeight, x, tbTop + tbHeight);
+    }
+  }
 
-  doc.setFontSize(7);
-  doc.setTextColor(107, 114, 128);
-  doc.text(today, rightX, tbTop + 0.15);
-  doc.text(`Page ${pageNum} of ${totalPages}`, rightX, tbTop + 0.28);
-  doc.text("EasySchematic", rightX, tbTop + 0.41);
+  // Cell content
+  for (const cell of layout.cells) {
+    const rect = cellRects.get(cell.id);
+    if (!rect) continue;
+
+    const cellX = tbLeft + rect.x * tbWidth;
+    const cellY = tbTop + rect.y * tbHeight;
+    const cellW = rect.w * tbWidth;
+    const cellH = rect.h * tbHeight;
+
+    const fontName = PDF_FONT_MAP[cell.fontFamily] ?? "helvetica";
+    const fontStyle = cell.fontWeight === "bold" ? "bold" : "normal";
+
+    if (cell.content.type === "logo") {
+      if (tb.logo) {
+        try {
+          const logoPad = 0.03;
+          doc.addImage(
+            tb.logo,
+            "PNG",
+            cellX + logoPad,
+            cellY + logoPad,
+            cellW - logoPad * 2,
+            cellH - logoPad * 2,
+          );
+        } catch {
+          // Logo rendering failed — skip silently
+        }
+      }
+      continue;
+    }
+
+    let text: string;
+    let color = cell.color;
+    switch (cell.content.type) {
+      case "field": {
+        const value = tb[cell.content.field];
+        text = value || "";
+        if (!value) continue; // Don't render empty fields in PDF
+        break;
+      }
+      case "static":
+        text = cell.content.text;
+        color = cell.color;
+        break;
+      case "pageNumber":
+        text = `Page ${pageNum} / ${totalPages}`;
+        break;
+    }
+
+    doc.setFont(fontName, fontStyle);
+    doc.setFontSize(cell.fontSize);
+    const [r, g, b] = hexToRgb(color);
+    doc.setTextColor(r, g, b);
+
+    let textX: number;
+    let align: "left" | "center" | "right";
+    if (cell.align === "center") {
+      textX = cellX + cellW / 2;
+      align = "center";
+    } else if (cell.align === "right") {
+      textX = cellX + cellW - pad;
+      align = "right";
+    } else {
+      textX = cellX + pad;
+      align = "left";
+    }
+
+    const textY = cellY + cellH / 2 + (cell.fontSize / 72) * 0.35;
+    doc.text(text, textX, textY, { align });
+  }
 }
 
 export async function exportPdf(
@@ -105,12 +233,13 @@ export async function exportPdf(
   paperSize: PaperSize,
   orientation: Orientation,
   scale: number,
-  schematicName: string,
+  titleBlock: TitleBlock,
+  layout: TitleBlockLayout,
 ): Promise<void> {
   const nodes = rfInstance.getNodes();
   if (nodes.length === 0) return;
 
-  const pages = computePageGrid(paperSize, orientation, scale, nodes);
+  const pages = computePageGrid(paperSize, orientation, scale, nodes, layout.heightIn);
 
   if (pages.length === 0) return;
 
@@ -153,7 +282,10 @@ export async function exportPdf(
 
   // Content area dimensions in real pixels for capture
   const contentWPx = (pageWIn - 2 * PAGE_MARGIN_IN) * DPI;
-  const contentHPx = (pageHIn - 2 * PAGE_MARGIN_IN - TITLE_BLOCK_HEIGHT_IN) * DPI;
+  const contentHPx = (pageHIn - 2 * PAGE_MARGIN_IN - layout.heightIn) * DPI;
+
+  // Derive a filename from the title block
+  const fileName = (titleBlock.drawingTitle || titleBlock.showName || "Schematic").replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic";
 
   try {
     for (let i = 0; i < pages.length; i++) {
@@ -199,17 +331,16 @@ export async function exportPdf(
 
       // Add image to PDF page
       const imgWidthIn = pageWIn - 2 * PAGE_MARGIN_IN;
-      const imgHeightIn = pageHIn - 2 * PAGE_MARGIN_IN - TITLE_BLOCK_HEIGHT_IN;
+      const imgHeightIn = pageHIn - 2 * PAGE_MARGIN_IN - layout.heightIn;
       doc.addImage(dataUrl, "PNG", PAGE_MARGIN_IN, PAGE_MARGIN_IN, imgWidthIn, imgHeightIn);
 
       // Draw title block with vector text
-      drawTitleBlock(doc, pageWIn, pageHIn, schematicName, i + 1, pages.length);
+      drawTitleBlock(doc, pageWIn, pageHIn, titleBlock, layout, i + 1, pages.length);
     }
 
     // Save the PDF
     updateProgress("Saving PDF...");
-    const safeName = schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic";
-    doc.save(`${safeName}.pdf`);
+    doc.save(`${fileName}.pdf`);
   } finally {
     // Restore everything
     document.documentElement.removeAttribute("data-pdf-capturing");

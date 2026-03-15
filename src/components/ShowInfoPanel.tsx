@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSchematicStore } from "../store";
 import type { TitleBlock } from "../types";
+import TitleBlockDialog from "./TitleBlockDialog";
 
 const FIELDS: { key: keyof TitleBlock; label: string; placeholder: string }[] = [
   { key: "showName", label: "Show / Project", placeholder: "e.g. Morning News Live" },
@@ -13,6 +14,7 @@ const FIELDS: { key: keyof TitleBlock; label: string; placeholder: string }[] = 
 
 export default function ShowInfoPanel() {
   const [collapsed, setCollapsed] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
   const titleBlock = useSchematicStore((s) => s.titleBlock);
   const setTitleBlock = useSchematicStore((s) => s.setTitleBlock);
 
@@ -76,7 +78,17 @@ export default function ShowInfoPanel() {
             onBlur={(v) => handleBlur(key, v)}
           />
         ))}
+
+        {/* Customize button */}
+        <button
+          onClick={() => setShowEditor(true)}
+          className="w-full mt-2 px-2 py-1.5 text-[10px] uppercase tracking-wider rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
+        >
+          Customize Title Block...
+        </button>
       </div>
+
+      {showEditor && <TitleBlockDialog onClose={() => setShowEditor(false)} />}
     </div>
   );
 }

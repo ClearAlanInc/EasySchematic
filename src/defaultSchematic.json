@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 6,
   "name": "Untitled Schematic",
   "nodes": [
     {
@@ -46,7 +46,7 @@
         "width": 738,
         "height": 1992
       },
-      "selected": true,
+      "selected": false,
       "dragging": false,
       "width": 738,
       "height": 1992,
@@ -2238,6 +2238,186 @@
     "designer": "Some Guy",
     "engineer": "Some Underpaid Guy",
     "drawingTitle": "Signal Flow Schematic",
-    "date": "3/15/2026"
+    "date": "3/15/2026",
+    "company": "",
+    "revision": "",
+    "logo": ""
+  },
+  "titleBlockLayout": {
+    "columns": [
+      0.35,
+      0.65
+    ],
+    "rows": [
+      0.16666666666666669,
+      0.16666666666666669,
+      0.16666666666666669,
+      0.16666666666666669,
+      0.16666666666666669,
+      0.16666666666666669
+    ],
+    "heightIn": 1,
+    "cells": [
+      {
+        "id": "cell-1",
+        "row": 0,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 2,
+        "content": {
+          "type": "field",
+          "field": "showName"
+        },
+        "fontSize": 9,
+        "fontWeight": "bold",
+        "fontFamily": "sans-serif",
+        "align": "center",
+        "color": "#1e293b"
+      },
+      {
+        "id": "cell-2",
+        "row": 1,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 2,
+        "content": {
+          "type": "field",
+          "field": "venue"
+        },
+        "fontSize": 7.5,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "center",
+        "color": "#475569"
+      },
+      {
+        "id": "cell-3",
+        "row": 2,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "static",
+          "text": "Designer:"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#000000"
+      },
+      {
+        "id": "cell-4",
+        "row": 2,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "designer"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "cell-5",
+        "row": 3,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "static",
+          "text": "Engineer:"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#000000"
+      },
+      {
+        "id": "cell-6",
+        "row": 3,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "engineer"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "cell-7",
+        "row": 4,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "static",
+          "text": "Date:"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#000000"
+      },
+      {
+        "id": "cell-8",
+        "row": 4,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "date"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "cell-9",
+        "row": 5,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "drawingTitle"
+        },
+        "fontSize": 7,
+        "fontWeight": "bold",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "cell-10",
+        "row": 5,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "pageNumber"
+        },
+        "fontSize": 7,
+        "fontWeight": "bold",
+        "fontFamily": "sans-serif",
+        "align": "center",
+        "color": "#475569"
+      }
+    ],
+    "widthIn": 3
   }
 }

@@ -11,23 +11,23 @@ function PrintViewBar() {
   const printPaperId = useSchematicStore((s) => s.printPaperId);
   const printOrientation = useSchematicStore((s) => s.printOrientation);
   const printScale = useSchematicStore((s) => s.printScale);
-  const schematicName = useSchematicStore((s) => s.schematicName);
+  const titleBlock = useSchematicStore((s) => s.titleBlock);
+  const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   // Subscribe to node positions so page count updates when nodes move
   useSchematicStore((s) =>
     s.nodes.map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${n.measured?.width ?? 0},${n.measured?.height ?? 0}`).join("|"),
   );
-  const setPrintView = useSchematicStore((s) => s.setPrintView);
   const setPrintPaperId = useSchematicStore((s) => s.setPrintPaperId);
   const setPrintOrientation = useSchematicStore((s) => s.setPrintOrientation);
   const setPrintScale = useSchematicStore((s) => s.setPrintScale);
 
   const paperSize = PAPER_SIZES.find((p) => p.id === printPaperId) ?? PAPER_SIZES[2];
   const nodes = rfInstance.getNodes();
-  const pages = computePageGrid(paperSize, printOrientation, printScale, nodes);
+  const pages = computePageGrid(paperSize, printOrientation, printScale, nodes, titleBlockLayout.heightIn);
 
   const handleExportPdf = useCallback(async () => {
-    await exportPdf(rfInstance, paperSize, printOrientation, printScale, schematicName);
-  }, [rfInstance, paperSize, printOrientation, printScale, schematicName]);
+    await exportPdf(rfInstance, paperSize, printOrientation, printScale, titleBlock, titleBlockLayout);
+  }, [rfInstance, paperSize, printOrientation, printScale, titleBlock, titleBlockLayout]);
 
   // Group paper sizes by category
   const categories = new Map<string, typeof PAPER_SIZES>();
@@ -113,14 +113,6 @@ function PrintViewBar() {
         onClick={handleExportPdf}
       >
         Export PDF
-      </button>
-
-      {/* Exit */}
-      <button
-        className="px-2.5 py-1 text-xs rounded bg-white text-gray-600 hover:bg-gray-50 border border-gray-300 cursor-pointer"
-        onClick={() => setPrintView(false)}
-      >
-        Exit Print View
       </button>
 
     </div>

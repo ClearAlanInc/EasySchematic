@@ -5,6 +5,7 @@ import {
   TITLE_BLOCK_HEIGHT_IN,
 } from "./printConfig";
 
+
 const DPI = 96;
 
 export interface PageRect {
@@ -85,6 +86,7 @@ export function computePageGrid(
   orientation: Orientation,
   scale: number,
   nodes: NodeInfo[],
+  titleBlockHeightIn: number = TITLE_BLOCK_HEIGHT_IN,
 ): PageRect[] {
   if (nodes.length === 0) return [];
 
@@ -119,7 +121,7 @@ export function computePageGrid(
 
   // Margins and title block in canvas pixels
   const marginPx = (PAGE_MARGIN_IN * DPI) / scale;
-  const titleBlockPx = (TITLE_BLOCK_HEIGHT_IN * DPI) / scale;
+  const titleBlockPx = (titleBlockHeightIn * DPI) / scale;
 
   // Printable content area per page
   const contentW = pageWidthPx - 2 * marginPx;

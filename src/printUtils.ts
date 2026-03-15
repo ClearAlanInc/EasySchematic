@@ -14,6 +14,7 @@ export function executePrint(
   paperSize: PaperSize,
   orientation: Orientation,
   scale: number,
+  titleBlockHeightIn: number = TITLE_BLOCK_HEIGHT_IN,
 ) {
   // Resolve paper dimensions based on orientation
   const pageW =
@@ -28,7 +29,7 @@ export function executePrint(
   // Printable area in pixels
   const printableW = (pageW - 2 * PAGE_MARGIN_IN) * DPI;
   const printableH =
-    (pageH - 2 * PAGE_MARGIN_IN - TITLE_BLOCK_HEIGHT_IN) * DPI;
+    (pageH - 2 * PAGE_MARGIN_IN - titleBlockHeightIn) * DPI;
 
   // Inject @page rule
   const existingStyle = document.getElementById(STYLE_ID);
@@ -113,6 +114,7 @@ export function executePrint(
 export function getPrintableArea(
   paperSize: PaperSize,
   orientation: Orientation,
+  titleBlockHeightIn: number = TITLE_BLOCK_HEIGHT_IN,
 ) {
   const pageW =
     orientation === "landscape"
@@ -124,6 +126,6 @@ export function getPrintableArea(
       : Math.max(paperSize.widthIn, paperSize.heightIn);
 
   const printableW = pageW - 2 * PAGE_MARGIN_IN;
-  const printableH = pageH - 2 * PAGE_MARGIN_IN - TITLE_BLOCK_HEIGHT_IN;
+  const printableH = pageH - 2 * PAGE_MARGIN_IN - titleBlockHeightIn;
   return { pageW, pageH, printableW, printableH };
 }

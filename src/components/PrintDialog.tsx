@@ -92,7 +92,8 @@ export default function PrintDialog({ onClose }: PrintDialogProps) {
                 paper,
                 state.printOrientation,
                 state.printScale,
-                state.schematicName,
+                state.titleBlock,
+                state.titleBlockLayout,
               );
             }}
             className={btnClass}

@@ -664,21 +664,24 @@ function SchematicCanvas() {
 }
 
 function PrintTitleBlock() {
-  const schematicName = useSchematicStore((s) => s.schematicName);
+  const titleBlock = useSchematicStore((s) => s.titleBlock);
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
+  const showLine = [titleBlock.company, titleBlock.showName, titleBlock.venue].filter(Boolean).join(" — ");
+
   return (
     <div className="print-title-block hidden justify-between items-end px-4 py-2 border-b-[3px] border-double border-gray-800">
       <div>
-        <div className="text-lg font-bold text-gray-900">{schematicName}</div>
-        <div className="text-xs text-gray-500">AV Signal Flow Diagram</div>
+        <div className="text-lg font-bold text-gray-900">{titleBlock.drawingTitle || titleBlock.showName || "Untitled"}</div>
+        {showLine && <div className="text-xs text-gray-500">{showLine}</div>}
       </div>
       <div className="text-[10px] text-gray-400 text-right leading-relaxed">
-        <div>{today}</div>
+        <div>{titleBlock.designer && `Designer: ${titleBlock.designer}`}</div>
+        <div>{titleBlock.date || today}</div>
         <div>EasySchematic</div>
       </div>
     </div>

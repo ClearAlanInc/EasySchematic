@@ -17,6 +17,7 @@ export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(schematicName);
+  const printView = useSchematicStore((s) => s.printView);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   const handleExport = useCallback(() => {
@@ -107,8 +108,8 @@ export default function Toolbar() {
       <div className="w-px h-5 bg-[var(--color-border)]" />
       <AlignmentMenu />
       <div className="w-px h-5 bg-[var(--color-border)]" />
-      <ToolbarButton onClick={() => useSchematicStore.getState().setPrintView(true)} title="Toggle print view with page boundaries">
-        Print View
+      <ToolbarButton onClick={() => useSchematicStore.getState().setPrintView(!printView)} title="Toggle print view with page boundaries">
+        {printView ? "Infinite View" : "Print View"}
       </ToolbarButton>
       <ToolbarButton onClick={() => setShowPrintDialog(true)} title="Export PNG/SVG/DXF">
         Export

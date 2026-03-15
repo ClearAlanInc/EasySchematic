@@ -3,7 +3,8 @@ import { useViewport, useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { computePageGrid, type PageRect } from "../printPageGrid";
 import { PAPER_SIZES } from "../printConfig";
-import type { TitleBlock } from "../types";
+import type { TitleBlock, TitleBlockLayout } from "../types";
+import { computeCellRects } from "../titleBlockLayout";
 
 function PageBoundaryOverlay() {
   const { x: vx, y: vy, zoom } = useViewport();
@@ -13,6 +14,7 @@ function PageBoundaryOverlay() {
   const printOrientation = useSchematicStore((s) => s.printOrientation);
   const printScale = useSchematicStore((s) => s.printScale);
   const titleBlock = useSchematicStore((s) => s.titleBlock);
+  const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   // Subscribe to node positions so the overlay re-renders when nodes move
   useSchematicStore((s) =>
     s.nodes.map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${n.measured?.width ?? 0},${n.measured?.height ?? 0}`).join("|"),
@@ -21,7 +23,7 @@ function PageBoundaryOverlay() {
   const paperSize = PAPER_SIZES.find((p) => p.id === printPaperId) ?? PAPER_SIZES[2]; // tabloid default
   const nodes = rfInstance.getNodes();
 
-  const pages = computePageGrid(paperSize, printOrientation, printScale, nodes);
+  const pages = computePageGrid(paperSize, printOrientation, printScale, nodes, titleBlockLayout.heightIn);
 
   if (pages.length === 0) return null;
 
@@ -49,22 +51,30 @@ function PageBoundaryOverlay() {
         }}
       >
         {pages.map((p) => (
-          <PageOverlay key={p.index} page={p} zoom={zoom} titleBlock={titleBlock} totalPages={totalPages} />
+          <PageOverlay key={p.index} page={p} zoom={zoom} titleBlock={titleBlock} layout={titleBlockLayout} totalPages={totalPages} />
         ))}
       </svg>
     </div>
   );
 }
 
+const FONT_FAMILY_MAP: Record<string, string> = {
+  "sans-serif": "system-ui, sans-serif",
+  "serif": "Georgia, serif",
+  "monospace": "'Courier New', monospace",
+};
+
 function PageOverlay({
   page: p,
   zoom,
   titleBlock: tb,
+  layout,
   totalPages,
 }: {
   page: PageRect;
   zoom: number;
   titleBlock: TitleBlock;
+  layout: TitleBlockLayout;
   totalPages: number;
 }) {
   const fontSize = 14 / zoom;
@@ -76,26 +86,43 @@ function PageOverlay({
   const tbHeight = (p.y + p.heightPx) - tbTop - marginPx;
   const hasTitleBlock = tbHeight > 0;
 
-  // Title block sizing — 6 rows, 30% of content width, anchored bottom-right
-  const rowH = tbHeight / 6;
-  const tbBoxW = p.contentW * 0.3;
+  // Title block width from layout (fixed inches → canvas pixels)
+  const pxPerIn = marginPx / 0.4; // PAGE_MARGIN_IN = 0.4
+  const tbBoxW = Math.min(layout.widthIn * pxPerIn, p.contentW);
   const tbBoxX = p.contentX + p.contentW - tbBoxW;
-  const stroke = 0.5 / zoom;
+  const pxPerPt = pxPerIn / 72; // convert font points to page pixels
+  const stroke = 0.5 * pxPerPt; // scale with page, not screen
 
-  // Font sizes scaled to zoom
-  const tbShowSize = 9 / zoom;
-  const tbVenueSize = 7.5 / zoom;
-  const tbTextSize = 7 / zoom;
-  const tbPageSize = 7 / zoom;
+  const cellRects = computeCellRects(layout);
+  const pad = 3 * pxPerPt;
 
-  // Column positions for rows 3-5 (label | value)
-  const col1X = tbBoxX;
-  const col2X = tbBoxX + tbBoxW * 0.35;
+  // Build a set of grid lines that should NOT be drawn (inside merged cells)
+  const skipHLines = new Set<string>(); // "row,colStart,colEnd"
+  const skipVLines = new Set<string>(); // "col,rowStart,rowEnd"
+  for (const cell of layout.cells) {
+    // Skip horizontal lines inside merged cells
+    for (let r = cell.row + 1; r < cell.row + cell.rowSpan; r++) {
+      for (let c = cell.col; c < cell.col + cell.colSpan; c++) {
+        skipHLines.add(`${r},${c}`);
+      }
+    }
+    // Skip vertical lines inside merged cells
+    for (let c = cell.col + 1; c < cell.col + cell.colSpan; c++) {
+      for (let r = cell.row; r < cell.row + cell.rowSpan; r++) {
+        skipVLines.add(`${c},${r}`);
+      }
+    }
+  }
 
-  // Row 6 split: drawing title (left) | page number (right)
-  const pageColX = tbBoxX + tbBoxW * 0.75;
-
-  const pad = 4 / zoom; // text inset padding
+  // Cumulative column/row positions (fractional)
+  const colStarts: number[] = [0];
+  for (let i = 0; i < layout.columns.length; i++) {
+    colStarts.push(colStarts[i] + layout.columns[i]);
+  }
+  const rowStarts: number[] = [0];
+  for (let i = 0; i < layout.rows.length; i++) {
+    rowStarts.push(rowStarts[i] + layout.rows[i]);
+  }
 
   return (
     <g>
@@ -121,7 +148,7 @@ function PageOverlay({
         strokeWidth={1 / zoom}
       />
 
-      {/* Title block — bottom-right box */}
+      {/* Title block */}
       {hasTitleBlock && (
         <g>
           {/* Outer border */}
@@ -135,146 +162,147 @@ function PageOverlay({
             strokeWidth={stroke}
           />
 
-          {/* Row dividers (between all 6 rows) */}
-          {[1, 2, 3, 4, 5].map((i) => (
-            <line
-              key={i}
-              x1={tbBoxX}
-              y1={tbTop + rowH * i}
-              x2={tbBoxX + tbBoxW}
-              y2={tbTop + rowH * i}
-              stroke="#000000"
-              strokeWidth={stroke}
-            />
-          ))}
+          {/* Horizontal grid lines (between rows) */}
+          {rowStarts.slice(1, -1).map((frac, i) => {
+            const rowIdx = i + 1;
+            // Find segments where line should be drawn (skip merged)
+            const segments: [number, number][] = [];
+            let segStart: number | null = null;
+            for (let c = 0; c < layout.columns.length; c++) {
+              if (skipHLines.has(`${rowIdx},${c}`)) {
+                if (segStart !== null) {
+                  segments.push([segStart, c]);
+                  segStart = null;
+                }
+              } else {
+                if (segStart === null) segStart = c;
+              }
+            }
+            if (segStart !== null) segments.push([segStart, layout.columns.length]);
 
-          {/* Column divider for rows 3-5 (label | value) */}
-          <line
-            x1={col2X}
-            y1={tbTop + rowH * 2}
-            x2={col2X}
-            y2={tbTop + rowH * 5}
-            stroke="#000000"
-            strokeWidth={stroke}
-          />
+            return segments.map(([sc, ec]) => (
+              <line
+                key={`h-${rowIdx}-${sc}-${ec}`}
+                x1={tbBoxX + colStarts[sc] * tbBoxW}
+                y1={tbTop + frac * tbHeight}
+                x2={tbBoxX + colStarts[ec] * tbBoxW}
+                y2={tbTop + frac * tbHeight}
+                stroke="#000000"
+                strokeWidth={stroke}
+              />
+            ));
+          })}
 
-          {/* Column divider for row 6 (drawing title | page number) */}
-          <line
-            x1={pageColX}
-            y1={tbTop + rowH * 5}
-            x2={pageColX}
-            y2={tbTop + tbHeight}
-            stroke="#000000"
-            strokeWidth={stroke}
-          />
+          {/* Vertical grid lines (between columns) */}
+          {colStarts.slice(1, -1).map((frac, i) => {
+            const colIdx = i + 1;
+            const segments: [number, number][] = [];
+            let segStart: number | null = null;
+            for (let r = 0; r < layout.rows.length; r++) {
+              if (skipVLines.has(`${colIdx},${r}`)) {
+                if (segStart !== null) {
+                  segments.push([segStart, r]);
+                  segStart = null;
+                }
+              } else {
+                if (segStart === null) segStart = r;
+              }
+            }
+            if (segStart !== null) segments.push([segStart, layout.rows.length]);
 
-          {/* Row 1: Show Name (full width, centered, bold) */}
-          <text
-            x={tbBoxX + tbBoxW / 2}
-            y={tbTop + rowH * 0.5 + tbShowSize * 0.35}
-            textAnchor="middle"
-            fill={tb.showName ? "#1e293b" : "#9ca3af"}
-            fontSize={tbShowSize}
-            fontFamily="system-ui, sans-serif"
-            fontWeight="600"
-          >
-            {tb.showName || "Show Name"}
-          </text>
+            return segments.map(([sr, er]) => (
+              <line
+                key={`v-${colIdx}-${sr}-${er}`}
+                x1={tbBoxX + frac * tbBoxW}
+                y1={tbTop + rowStarts[sr] * tbHeight}
+                x2={tbBoxX + frac * tbBoxW}
+                y2={tbTop + rowStarts[er] * tbHeight}
+                stroke="#000000"
+                strokeWidth={stroke}
+              />
+            ));
+          })}
 
-          {/* Row 2: Venue (full width, centered) */}
-          <text
-            x={tbBoxX + tbBoxW / 2}
-            y={tbTop + rowH * 1.5 + tbVenueSize * 0.35}
-            textAnchor="middle"
-            fill={tb.venue ? "#475569" : "#9ca3af"}
-            fontSize={tbVenueSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            {tb.venue || "Venue"}
-          </text>
+          {/* Cell content */}
+          {layout.cells.map((cell) => {
+            const rect = cellRects.get(cell.id);
+            if (!rect) return null;
 
-          {/* Row 3: Designer */}
-          <text
-            x={col1X + pad}
-            y={tbTop + rowH * 2.5 + tbTextSize * 0.35}
-            fill="#000000"
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            Designer:
-          </text>
-          <text
-            x={col2X + pad}
-            y={tbTop + rowH * 2.5 + tbTextSize * 0.35}
-            fill={tb.designer ? "#1e293b" : "#9ca3af"}
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            {tb.designer || "\u2014"}
-          </text>
+            const cellX = tbBoxX + rect.x * tbBoxW;
+            const cellY = tbTop + rect.y * tbHeight;
+            const cellW = rect.w * tbBoxW;
+            const cellH = rect.h * tbHeight;
+            const cellFontSize = cell.fontSize * pxPerPt;
+            const fontFamily = FONT_FAMILY_MAP[cell.fontFamily] ?? "system-ui, sans-serif";
 
-          {/* Row 4: Engineer */}
-          <text
-            x={col1X + pad}
-            y={tbTop + rowH * 3.5 + tbTextSize * 0.35}
-            fill="#000000"
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            Engineer:
-          </text>
-          <text
-            x={col2X + pad}
-            y={tbTop + rowH * 3.5 + tbTextSize * 0.35}
-            fill={tb.engineer ? "#1e293b" : "#9ca3af"}
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            {tb.engineer || "\u2014"}
-          </text>
+            let textContent: string;
+            let fillColor = cell.color;
+            let isPlaceholder = false;
 
-          {/* Row 5: Date */}
-          <text
-            x={col1X + pad}
-            y={tbTop + rowH * 4.5 + tbTextSize * 0.35}
-            fill="#000000"
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            Date:
-          </text>
-          <text
-            x={col2X + pad}
-            y={tbTop + rowH * 4.5 + tbTextSize * 0.35}
-            fill={tb.date ? "#1e293b" : "#9ca3af"}
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-          >
-            {tb.date || "\u2014"}
-          </text>
+            switch (cell.content.type) {
+              case "field": {
+                const value = tb[cell.content.field];
+                if (value) {
+                  textContent = value;
+                } else {
+                  textContent = cell.content.field;
+                  fillColor = "#9ca3af";
+                  isPlaceholder = true;
+                }
+                break;
+              }
+              case "static":
+                textContent = cell.content.text;
+                break;
+              case "pageNumber":
+                textContent = `Page ${p.index + 1} / ${totalPages}`;
+                break;
+              case "logo":
+                return tb.logo ? (
+                  <image
+                    key={cell.id}
+                    href={tb.logo}
+                    x={cellX + pad}
+                    y={cellY + pad}
+                    width={cellW - pad * 2}
+                    height={cellH - pad * 2}
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                ) : null;
+            }
 
-          {/* Row 6: Drawing Title (left) + Page Number (right) */}
-          <text
-            x={col1X + pad}
-            y={tbTop + rowH * 5.5 + tbTextSize * 0.35}
-            fill={tb.drawingTitle ? "#1e293b" : "#9ca3af"}
-            fontSize={tbTextSize}
-            fontFamily="system-ui, sans-serif"
-            fontWeight="600"
-          >
-            {tb.drawingTitle || "Drawing Title"}
-          </text>
-          <text
-            x={pageColX + (tbBoxX + tbBoxW - pageColX) / 2}
-            y={tbTop + rowH * 5.5 + tbPageSize * 0.35}
-            textAnchor="middle"
-            fill="#475569"
-            fontSize={tbPageSize}
-            fontFamily="system-ui, sans-serif"
-            fontWeight="600"
-          >
-            {`Page ${p.index + 1} / ${totalPages}`}
-          </text>
+            // Compute text position based on alignment
+            let textX: number;
+            let anchor: "start" | "middle" | "end";
+            if (cell.align === "center") {
+              textX = cellX + cellW / 2;
+              anchor = "middle";
+            } else if (cell.align === "right") {
+              textX = cellX + cellW - pad;
+              anchor = "end";
+            } else {
+              textX = cellX + pad;
+              anchor = "start";
+            }
+
+            const textY = cellY + cellH / 2 + cellFontSize * 0.35;
+
+            return (
+              <text
+                key={cell.id}
+                x={textX}
+                y={textY}
+                textAnchor={anchor}
+                fill={fillColor}
+                fontSize={cellFontSize}
+                fontFamily={fontFamily}
+                fontWeight={cell.fontWeight === "bold" ? "600" : "normal"}
+                fontStyle={isPlaceholder ? "italic" : undefined}
+              >
+                {textContent}
+              </text>
+            );
+          })}
         </g>
       )}
 
