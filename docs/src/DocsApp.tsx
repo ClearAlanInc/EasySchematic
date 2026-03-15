@@ -1,0 +1,49 @@
+import { useState, useEffect } from "react";
+import Layout from "./components/Layout";
+import OverviewPage from "./pages/Overview";
+import GettingStartedPage from "./pages/GettingStarted";
+import DevicesAndPortsPage from "./pages/DevicesAndPorts";
+import ConnectionsPage from "./pages/Connections";
+import EdgeRoutingPage from "./pages/EdgeRouting";
+import RoomsAndGroupingPage from "./pages/RoomsAndGrouping";
+import DeviceLibraryPage from "./pages/DeviceLibrary";
+import ImportExportPage from "./pages/ImportExport";
+
+const routes: Record<string, { title: string; component: React.FC }> = {
+  "": { title: "Overview", component: OverviewPage },
+  overview: { title: "Overview", component: OverviewPage },
+  "getting-started": { title: "Getting Started", component: GettingStartedPage },
+  "devices-and-ports": { title: "Devices & Ports", component: DevicesAndPortsPage },
+  connections: { title: "Connections", component: ConnectionsPage },
+  "connection-routing": { title: "Connection Routing", component: EdgeRoutingPage },
+  "rooms-and-grouping": { title: "Rooms & Grouping", component: RoomsAndGroupingPage },
+  "device-library": { title: "Device Library", component: DeviceLibraryPage },
+  "import-export": { title: "Import / Export", component: ImportExportPage },
+};
+
+function getHash() {
+  return window.location.hash.replace(/^#\/?/, "");
+}
+
+export default function DocsApp() {
+  const [hash, setHash] = useState(getHash);
+
+  useEffect(() => {
+    const onHashChange = () => setHash(getHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const route = routes[hash] ?? routes[""];
+  const Page = route.component;
+
+  useEffect(() => {
+    document.title = `${route.title} — EasySchematic Docs`;
+  }, [route.title]);
+
+  return (
+    <Layout>
+      <Page />
+    </Layout>
+  );
+}
