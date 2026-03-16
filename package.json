@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "generate-fallback": "npx tsx api/seed/generate-fallback.ts",
+    "build": "npm run generate-fallback && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

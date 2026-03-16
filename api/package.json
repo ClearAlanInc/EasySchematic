@@ -1,0 +1,21 @@
+{
+  "name": "easyschematic-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "seed:local": "npx tsx seed/seed.ts",
+    "seed:remote": "npx tsx seed/seed.ts --remote",
+    "generate-fallback": "npx tsx seed/generate-fallback.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250312.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.9.3",
+    "wrangler": "^4.73.0"
+  }
+}

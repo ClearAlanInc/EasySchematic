@@ -1,0 +1,3973 @@
+[
+  {
+    "id": "c0a80101-0001-4000-8000-000000000001",
+    "deviceType": "camera",
+    "label": "Camera",
+    "ports": [
+      {
+        "id": "port-1",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-3",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-4",
+        "label": "Genlock In",
+        "signalType": "genlock",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-5",
+        "label": "Return In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-6",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0002-4000-8000-000000000002",
+    "deviceType": "switcher",
+    "label": "Video Switcher",
+    "ports": [
+      {
+        "id": "port-7",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-8",
+        "label": "SDI In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-9",
+        "label": "SDI In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-10",
+        "label": "SDI In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-11",
+        "label": "PGM Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-12",
+        "label": "PVW Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-13",
+        "label": "AUX Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-14",
+        "label": "Multiview",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-15",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0003-4000-8000-000000000003",
+    "deviceType": "monitor",
+    "label": "Monitor",
+    "ports": [
+      {
+        "id": "port-16",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-17",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-18",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-19",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0004-4000-8000-000000000004",
+    "deviceType": "tv",
+    "label": "TV",
+    "searchTerms": [
+      "television",
+      "display",
+      "screen"
+    ],
+    "ports": [
+      {
+        "id": "port-20",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-21",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0005-4000-8000-000000000005",
+    "deviceType": "audio-mixer",
+    "label": "Audio Mixer",
+    "ports": [
+      {
+        "id": "port-22",
+        "label": "Analog In 1",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-23",
+        "label": "Analog In 2",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-24",
+        "label": "Dante In",
+        "signalType": "dante",
+        "direction": "input",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-25",
+        "label": "AES In",
+        "signalType": "aes",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-26",
+        "label": "PGM Out",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-27",
+        "label": "AUX Out",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-28",
+        "label": "Dante Out",
+        "signalType": "dante",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-29",
+        "label": "AES Out",
+        "signalType": "aes",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-30",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0006-4000-8000-000000000006",
+    "deviceType": "converter",
+    "label": "BMD SDI→HDMI",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Micro Converter SDI to HDMI 3G",
+    "searchTerms": [
+      "blackmagic",
+      "micro converter",
+      "microconverter"
+    ],
+    "ports": [
+      {
+        "id": "port-31",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-32",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-33",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0007-4000-8000-000000000007",
+    "deviceType": "converter",
+    "label": "BMD HDMI→SDI",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Micro Converter HDMI to SDI 3G",
+    "searchTerms": [
+      "blackmagic",
+      "micro converter",
+      "microconverter"
+    ],
+    "ports": [
+      {
+        "id": "port-34",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-35",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-36",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0008-4000-8000-000000000008",
+    "deviceType": "converter",
+    "label": "Decimator MD-LX",
+    "manufacturer": "Decimator Design",
+    "modelNumber": "MD-LX",
+    "searchTerms": [
+      "decimator",
+      "cross converter",
+      "bidirectional"
+    ],
+    "ports": [
+      {
+        "id": "port-37",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-38",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-39",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-40",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0009-4000-8000-000000000009",
+    "deviceType": "converter",
+    "label": "BMD BiDir SDI/HDMI 3G",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Micro Converter BiDirectional SDI/HDMI 3G",
+    "searchTerms": [
+      "blackmagic",
+      "micro converter",
+      "bidirectional",
+      "3g"
+    ],
+    "ports": [
+      {
+        "id": "port-41",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-42",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-43",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-44",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000a-4000-8000-000000000010",
+    "deviceType": "converter",
+    "label": "AJA FiDO-4T",
+    "manufacturer": "AJA",
+    "modelNumber": "FiDO-4T",
+    "searchTerms": [
+      "aja",
+      "fido",
+      "fiber",
+      "transmitter",
+      "quad"
+    ],
+    "ports": [
+      {
+        "id": "port-45",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-46",
+        "label": "SDI In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-47",
+        "label": "SDI In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-48",
+        "label": "SDI In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-49",
+        "label": "Fiber Out 1",
+        "signalType": "fiber",
+        "direction": "output",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-50",
+        "label": "Fiber Out 2",
+        "signalType": "fiber",
+        "direction": "output",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-51",
+        "label": "Fiber Out 3",
+        "signalType": "fiber",
+        "direction": "output",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-52",
+        "label": "Fiber Out 4",
+        "signalType": "fiber",
+        "direction": "output",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-53",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000b-4000-8000-000000000011",
+    "deviceType": "converter",
+    "label": "AJA FiDO-4R",
+    "manufacturer": "AJA",
+    "modelNumber": "FiDO-4R",
+    "searchTerms": [
+      "aja",
+      "fido",
+      "fiber",
+      "receiver",
+      "quad"
+    ],
+    "ports": [
+      {
+        "id": "port-54",
+        "label": "Fiber In 1",
+        "signalType": "fiber",
+        "direction": "input",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-55",
+        "label": "Fiber In 2",
+        "signalType": "fiber",
+        "direction": "input",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-56",
+        "label": "Fiber In 3",
+        "signalType": "fiber",
+        "direction": "input",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-57",
+        "label": "Fiber In 4",
+        "signalType": "fiber",
+        "direction": "input",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-58",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-59",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-60",
+        "label": "SDI Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-61",
+        "label": "SDI Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-62",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000c-4000-8000-000000000012",
+    "deviceType": "converter",
+    "label": "AJA FiDO-T",
+    "manufacturer": "AJA",
+    "modelNumber": "FiDO-T",
+    "searchTerms": [
+      "aja",
+      "fido",
+      "fiber",
+      "transmitter",
+      "single"
+    ],
+    "ports": [
+      {
+        "id": "port-63",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-64",
+        "label": "Fiber Out",
+        "signalType": "fiber",
+        "direction": "output",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-65",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000d-4000-8000-000000000013",
+    "deviceType": "converter",
+    "label": "AJA FiDO-R",
+    "manufacturer": "AJA",
+    "modelNumber": "FiDO-R",
+    "searchTerms": [
+      "aja",
+      "fido",
+      "fiber",
+      "receiver",
+      "single"
+    ],
+    "ports": [
+      {
+        "id": "port-66",
+        "label": "Fiber In",
+        "signalType": "fiber",
+        "direction": "input",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-67",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-68",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000e-4000-8000-000000000014",
+    "deviceType": "converter",
+    "label": "Datavideo DAC-70",
+    "manufacturer": "Datavideo",
+    "modelNumber": "DAC-70",
+    "searchTerms": [
+      "datavideo",
+      "cross converter",
+      "dac",
+      "vga"
+    ],
+    "ports": [
+      {
+        "id": "port-69",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-70",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-71",
+        "label": "VGA In",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-72",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-73",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-74",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-75",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-76",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-000f-4000-8000-000000000015",
+    "deviceType": "scaler",
+    "label": "Decimator MD-HX",
+    "manufacturer": "Decimator Design",
+    "modelNumber": "MD-HX",
+    "searchTerms": [
+      "decimator",
+      "cross converter",
+      "scaler",
+      "upconverter",
+      "downconverter"
+    ],
+    "ports": [
+      {
+        "id": "port-77",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-78",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-79",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-80",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-81",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0010-4000-8000-000000000016",
+    "deviceType": "scaler",
+    "label": "Extron DSC 301 HD",
+    "manufacturer": "Extron",
+    "modelNumber": "DSC 301 HD",
+    "searchTerms": [
+      "extron",
+      "presentation scaler",
+      "vga",
+      "scan converter"
+    ],
+    "ports": [
+      {
+        "id": "port-82",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-83",
+        "label": "VGA In",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-84",
+        "label": "Composite In",
+        "signalType": "composite",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-85",
+        "label": "Audio In 1",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-86",
+        "label": "Audio In 2",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-87",
+        "label": "Audio In 3",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-88",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-89",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-90",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0011-4000-8000-000000000017",
+    "deviceType": "converter",
+    "label": "Converter",
+    "ports": [
+      {
+        "id": "port-91",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-92",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0012-4000-8000-000000000018",
+    "deviceType": "ndi-encoder",
+    "label": "NDI Encoder",
+    "ports": [
+      {
+        "id": "port-93",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-94",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-95",
+        "label": "NDI Out",
+        "signalType": "ndi",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-96",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-97",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0013-4000-8000-000000000019",
+    "deviceType": "ndi-decoder",
+    "label": "NDI Decoder",
+    "ports": [
+      {
+        "id": "port-98",
+        "label": "NDI In",
+        "signalType": "ndi",
+        "direction": "input",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-99",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-100",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-101",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-102",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0014-4000-8000-000000000020",
+    "deviceType": "router",
+    "label": "SDI Router",
+    "ports": [
+      {
+        "id": "port-103",
+        "label": "In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-104",
+        "label": "In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-105",
+        "label": "In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-106",
+        "label": "In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-107",
+        "label": "Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-108",
+        "label": "Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-109",
+        "label": "Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-110",
+        "label": "Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-111",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0015-4000-8000-000000000021",
+    "deviceType": "router",
+    "label": "BMD Videohub 20x20",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Smart Videohub 20x20",
+    "searchTerms": [
+      "blackmagic",
+      "smart videohub",
+      "videohub",
+      "20x20",
+      "matrix"
+    ],
+    "ports": [
+      {
+        "id": "port-112",
+        "label": "In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-113",
+        "label": "In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-114",
+        "label": "In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-115",
+        "label": "In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-116",
+        "label": "In 5",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-117",
+        "label": "In 6",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-118",
+        "label": "In 7",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-119",
+        "label": "In 8",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-120",
+        "label": "In 9",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-121",
+        "label": "In 10",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-122",
+        "label": "In 11",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-123",
+        "label": "In 12",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-124",
+        "label": "In 13",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-125",
+        "label": "In 14",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-126",
+        "label": "In 15",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-127",
+        "label": "In 16",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-128",
+        "label": "In 17",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-129",
+        "label": "In 18",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-130",
+        "label": "In 19",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-131",
+        "label": "In 20",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-132",
+        "label": "Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-133",
+        "label": "Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-134",
+        "label": "Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-135",
+        "label": "Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-136",
+        "label": "Out 5",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-137",
+        "label": "Out 6",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-138",
+        "label": "Out 7",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-139",
+        "label": "Out 8",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-140",
+        "label": "Out 9",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-141",
+        "label": "Out 10",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-142",
+        "label": "Out 11",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-143",
+        "label": "Out 12",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-144",
+        "label": "Out 13",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-145",
+        "label": "Out 14",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-146",
+        "label": "Out 15",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-147",
+        "label": "Out 16",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-148",
+        "label": "Out 17",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-149",
+        "label": "Out 18",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-150",
+        "label": "Out 19",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-151",
+        "label": "Out 20",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-152",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-153",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0016-4000-8000-000000000022",
+    "deviceType": "router",
+    "label": "BMD CleanSwitch 12x12",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "CleanSwitch 12x12",
+    "searchTerms": [
+      "blackmagic",
+      "videohub",
+      "cleanswitch",
+      "clean switch",
+      "12x12"
+    ],
+    "ports": [
+      {
+        "id": "port-154",
+        "label": "In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-155",
+        "label": "In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-156",
+        "label": "In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-157",
+        "label": "In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-158",
+        "label": "In 5",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-159",
+        "label": "In 6",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-160",
+        "label": "In 7",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-161",
+        "label": "In 8",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-162",
+        "label": "In 9",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-163",
+        "label": "In 10",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-164",
+        "label": "In 11",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-165",
+        "label": "In 12",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-166",
+        "label": "Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-167",
+        "label": "Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-168",
+        "label": "Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-169",
+        "label": "Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-170",
+        "label": "Out 5",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-171",
+        "label": "Out 6",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-172",
+        "label": "Out 7",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-173",
+        "label": "Out 8",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-174",
+        "label": "Out 9",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-175",
+        "label": "Out 10",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-176",
+        "label": "Out 11",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-177",
+        "label": "Out 12",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-178",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-179",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0017-4000-8000-000000000023",
+    "deviceType": "router",
+    "label": "Kramer VS-88H2",
+    "manufacturer": "Kramer",
+    "modelNumber": "VS-88H2",
+    "searchTerms": [
+      "kramer",
+      "hdmi",
+      "matrix",
+      "8x8",
+      "switcher"
+    ],
+    "ports": [
+      {
+        "id": "port-180",
+        "label": "HDMI In 1",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-181",
+        "label": "HDMI In 2",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-182",
+        "label": "HDMI In 3",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-183",
+        "label": "HDMI In 4",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-184",
+        "label": "HDMI In 5",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-185",
+        "label": "HDMI In 6",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-186",
+        "label": "HDMI In 7",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-187",
+        "label": "HDMI In 8",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-188",
+        "label": "HDMI Out 1",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-189",
+        "label": "HDMI Out 2",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-190",
+        "label": "HDMI Out 3",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-191",
+        "label": "HDMI Out 4",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-192",
+        "label": "HDMI Out 5",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-193",
+        "label": "HDMI Out 6",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-194",
+        "label": "HDMI Out 7",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-195",
+        "label": "HDMI Out 8",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-196",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-197",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-198",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0018-4000-8000-000000000024",
+    "deviceType": "multiviewer",
+    "label": "Multiviewer",
+    "ports": [
+      {
+        "id": "port-199",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-200",
+        "label": "SDI In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-201",
+        "label": "SDI In 3",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-202",
+        "label": "SDI In 4",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-203",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-204",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-205",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0019-4000-8000-000000000025",
+    "deviceType": "frame-sync",
+    "label": "Frame Sync",
+    "ports": [
+      {
+        "id": "port-206",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-207",
+        "label": "Ref In",
+        "signalType": "genlock",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-208",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001a-4000-8000-000000000026",
+    "deviceType": "recorder",
+    "label": "Recorder",
+    "ports": [
+      {
+        "id": "port-209",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-210",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-211",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001b-4000-8000-000000000027",
+    "deviceType": "recorder",
+    "label": "BMD HyperDeck Extreme",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "HyperDeck Extreme 8K HDR",
+    "searchTerms": [
+      "blackmagic",
+      "hyperdeck",
+      "4k",
+      "hdr",
+      "recorder",
+      "player"
+    ],
+    "ports": [
+      {
+        "id": "port-212",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-213",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-214",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-215",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-216",
+        "label": "SDI Monitor",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-217",
+        "label": "RS-422",
+        "signalType": "rs422",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-218",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-219",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001c-4000-8000-000000000028",
+    "deviceType": "graphics",
+    "label": "Graphics Generator",
+    "ports": [
+      {
+        "id": "port-220",
+        "label": "SDI Fill",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-221",
+        "label": "SDI Key",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-222",
+        "label": "NDI Out",
+        "signalType": "ndi",
+        "direction": "output",
+        "connectorType": "rj45"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001d-4000-8000-000000000029",
+    "deviceType": "da",
+    "label": "Distribution Amp",
+    "ports": [
+      {
+        "id": "port-223",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-224",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-225",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-226",
+        "label": "SDI Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-227",
+        "label": "SDI Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001e-4000-8000-000000000030",
+    "deviceType": "adapter",
+    "label": "TB → HDMI Adapter",
+    "searchTerms": [
+      "thunderbolt",
+      "usb-c",
+      "dongle"
+    ],
+    "ports": [
+      {
+        "id": "port-228",
+        "label": "TB In",
+        "signalType": "thunderbolt",
+        "direction": "input",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-229",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-001f-4000-8000-000000000031",
+    "deviceType": "adapter",
+    "label": "BMD UltraStudio 4K Mini",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "UltraStudio 4K Mini",
+    "searchTerms": [
+      "blackmagic",
+      "ultrastudio",
+      "capture",
+      "playback",
+      "thunderbolt"
+    ],
+    "ports": [
+      {
+        "id": "port-230",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-231",
+        "label": "SDI In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-232",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-233",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-234",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-235",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-236",
+        "label": "Thunderbolt 3",
+        "signalType": "thunderbolt",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-237",
+        "label": "RS-422",
+        "signalType": "rs422",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0020-4000-8000-000000000032",
+    "deviceType": "video-wall-controller",
+    "label": "Datapath FX4 SDI",
+    "manufacturer": "Datapath",
+    "modelNumber": "FX4 SDI",
+    "searchTerms": [
+      "datapath",
+      "video wall"
+    ],
+    "ports": [
+      {
+        "id": "port-238",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-239",
+        "label": "DP In",
+        "signalType": "displayport",
+        "direction": "input",
+        "connectorType": "displayport"
+      },
+      {
+        "id": "port-240",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-241",
+        "label": "Genlock In",
+        "signalType": "genlock",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-242",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-243",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-244",
+        "label": "SDI Out 3",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-245",
+        "label": "SDI Out 4",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-246",
+        "label": "DP Loop",
+        "signalType": "displayport",
+        "direction": "output",
+        "connectorType": "displayport"
+      },
+      {
+        "id": "port-247",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0021-4000-8000-000000000033",
+    "deviceType": "video-wall-controller",
+    "label": "Datapath FX4 HDMI",
+    "manufacturer": "Datapath",
+    "modelNumber": "FX4 HDMI",
+    "ports": [
+      {
+        "id": "port-248",
+        "label": "DP In",
+        "signalType": "displayport",
+        "direction": "input",
+        "connectorType": "displayport"
+      },
+      {
+        "id": "port-249",
+        "label": "HDMI In 1",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-250",
+        "label": "HDMI In 2",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-251",
+        "label": "Genlock In",
+        "signalType": "genlock",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-252",
+        "label": "HDMI Out 1",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-253",
+        "label": "HDMI Out 2",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-254",
+        "label": "HDMI Out 3",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-255",
+        "label": "HDMI Out 4",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-256",
+        "label": "DP Loop",
+        "signalType": "displayport",
+        "direction": "output",
+        "connectorType": "displayport"
+      },
+      {
+        "id": "port-257",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0022-4000-8000-000000000034",
+    "deviceType": "projector",
+    "label": "Panasonic DZ13K",
+    "manufacturer": "Panasonic",
+    "modelNumber": "PT-DZ13K",
+    "ports": [
+      {
+        "id": "port-258",
+        "label": "RGBHV In (BNC)",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-259",
+        "label": "RGB In (VGA)",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-260",
+        "label": "DVI-D In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-261",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-262",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-263",
+        "label": "SDI In 2 (3G)",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-264",
+        "label": "Composite In",
+        "signalType": "composite",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-265",
+        "label": "RS-232 In",
+        "signalType": "serial",
+        "direction": "input",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-266",
+        "label": "LAN",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-267",
+        "label": "RS-232 Out",
+        "signalType": "serial",
+        "direction": "output",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-268",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0023-4000-8000-000000000035",
+    "deviceType": "projector",
+    "label": "Panasonic RZ21K",
+    "manufacturer": "Panasonic",
+    "modelNumber": "PT-RZ21K",
+    "searchTerms": [
+      "panasonic",
+      "laser",
+      "dlp",
+      "21k",
+      "projector"
+    ],
+    "ports": [
+      {
+        "id": "port-269",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-270",
+        "label": "DVI-D In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-271",
+        "label": "SDI In 1",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-272",
+        "label": "SDI In 2",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-273",
+        "label": "HDBaseT In",
+        "signalType": "hdbaset",
+        "direction": "input",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-274",
+        "label": "VGA In",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-275",
+        "label": "RGB BNC In",
+        "signalType": "vga",
+        "direction": "input",
+        "connectorType": "vga"
+      },
+      {
+        "id": "port-276",
+        "label": "RS-232 In",
+        "signalType": "serial",
+        "direction": "input",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-277",
+        "label": "LAN",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-278",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0024-4000-8000-000000000036",
+    "deviceType": "computer",
+    "label": "Mac Studio (M4)",
+    "manufacturer": "Apple",
+    "modelNumber": "Mac Studio (M4)",
+    "ports": [
+      {
+        "id": "port-279",
+        "label": "TB5 1",
+        "signalType": "thunderbolt",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-280",
+        "label": "TB5 2",
+        "signalType": "thunderbolt",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-281",
+        "label": "TB5 3",
+        "signalType": "thunderbolt",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-282",
+        "label": "TB5 4",
+        "signalType": "thunderbolt",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-283",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-284",
+        "label": "USB-A 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-285",
+        "label": "USB-A 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-286",
+        "label": "USB-C Front 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-287",
+        "label": "USB-C Front 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-288",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-289",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0025-4000-8000-000000000037",
+    "deviceType": "network-switch",
+    "label": "Ethernet Switch (4-port)",
+    "searchTerms": [
+      "switch",
+      "network",
+      "poe"
+    ],
+    "ports": [
+      {
+        "id": "port-290",
+        "label": "Port 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-291",
+        "label": "Port 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-292",
+        "label": "Port 3",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-293",
+        "label": "Port 4",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-294",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0026-4000-8000-000000000038",
+    "deviceType": "network-switch",
+    "label": "Ethernet Switch (8-port)",
+    "searchTerms": [
+      "switch",
+      "network",
+      "poe"
+    ],
+    "ports": [
+      {
+        "id": "port-295",
+        "label": "Port 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-296",
+        "label": "Port 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-297",
+        "label": "Port 3",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-298",
+        "label": "Port 4",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-299",
+        "label": "Port 5",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-300",
+        "label": "Port 6",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-301",
+        "label": "Port 7",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-302",
+        "label": "Port 8",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-303",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0027-4000-8000-000000000039",
+    "deviceType": "computer",
+    "label": "Computer",
+    "searchTerms": [
+      "pc",
+      "laptop",
+      "desktop"
+    ],
+    "ports": [
+      {
+        "id": "port-304",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-305",
+        "label": "USB-C",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-306",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-307",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0028-4000-8000-000000000040",
+    "deviceType": "mouse",
+    "label": "Mouse",
+    "searchTerms": [
+      "mouse",
+      "pointer",
+      "trackpad"
+    ],
+    "ports": [
+      {
+        "id": "port-308",
+        "label": "USB-A",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0029-4000-8000-000000000041",
+    "deviceType": "keyboard",
+    "label": "Keyboard",
+    "searchTerms": [
+      "keyboard",
+      "keypad"
+    ],
+    "ports": [
+      {
+        "id": "port-309",
+        "label": "USB-A",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-002a-4000-8000-000000000042",
+    "deviceType": "ptz-camera",
+    "label": "PTZOptics Move SE",
+    "manufacturer": "PTZOptics",
+    "modelNumber": "Move SE",
+    "searchTerms": [
+      "ptz",
+      "ptzoptics",
+      "pt30x",
+      "move se"
+    ],
+    "ports": [
+      {
+        "id": "port-310",
+        "label": "3.5mm Audio In",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "trs-eighth"
+      },
+      {
+        "id": "port-311",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-312",
+        "label": "RS-232 In",
+        "signalType": "serial",
+        "direction": "input",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-313",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-314",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-315",
+        "label": "USB-C Out",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-316",
+        "label": "RS-232 Out",
+        "signalType": "serial",
+        "direction": "output",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-317",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-002b-4000-8000-000000000043",
+    "deviceType": "kvm-extender",
+    "label": "Adder XDIP",
+    "manufacturer": "Adder",
+    "modelNumber": "XDIP",
+    "ports": [
+      {
+        "id": "port-318",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-319",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-320",
+        "label": "USB-B (Computer)",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-b"
+      },
+      {
+        "id": "port-321",
+        "label": "USB-A 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-322",
+        "label": "USB-A 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-323",
+        "label": "USB-A 3",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-324",
+        "label": "Audio In",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-325",
+        "label": "Audio Out",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-326",
+        "label": "Network",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-327",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ],
+    "searchTerms": [
+      "Adder",
+      "AdderLink",
+      "XDIP",
+      "KVM",
+      "extender",
+      "IP",
+      "matrix"
+    ]
+  },
+  {
+    "id": "c0a80101-002c-4000-8000-000000000044",
+    "deviceType": "hdbaset-extender",
+    "label": "Extron DTP T HD2 4K",
+    "manufacturer": "Extron",
+    "modelNumber": "DTP T HD2 4K 230",
+    "searchTerms": [
+      "extron",
+      "dtp",
+      "hdbaset",
+      "transmitter",
+      "extender"
+    ],
+    "ports": [
+      {
+        "id": "port-328",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-329",
+        "label": "HDMI Loop",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-330",
+        "label": "HDBaseT Out",
+        "signalType": "hdbaset",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-331",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-332",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-002d-4000-8000-000000000045",
+    "deviceType": "hdbaset-extender",
+    "label": "Extron DTP R HD2 4K",
+    "manufacturer": "Extron",
+    "modelNumber": "DTP R HD2 4K 230",
+    "searchTerms": [
+      "extron",
+      "dtp",
+      "hdbaset",
+      "receiver",
+      "extender"
+    ],
+    "ports": [
+      {
+        "id": "port-333",
+        "label": "HDBaseT In",
+        "signalType": "hdbaset",
+        "direction": "input",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-334",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-335",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-336",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-002e-4000-8000-000000000046",
+    "deviceType": "wireless-video",
+    "label": "Teradek Bolt 4K TX",
+    "manufacturer": "Teradek",
+    "modelNumber": "Bolt 4K 750 TX",
+    "searchTerms": [
+      "teradek",
+      "bolt",
+      "wireless",
+      "transmitter",
+      "zero delay"
+    ],
+    "ports": [
+      {
+        "id": "port-337",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-338",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-339",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-340",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-002f-4000-8000-000000000047",
+    "deviceType": "wireless-video",
+    "label": "Teradek Bolt 4K RX",
+    "manufacturer": "Teradek",
+    "modelNumber": "Bolt 4K 750 RX",
+    "searchTerms": [
+      "teradek",
+      "bolt",
+      "wireless",
+      "receiver",
+      "zero delay"
+    ],
+    "ports": [
+      {
+        "id": "port-341",
+        "label": "SDI Out 1",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-342",
+        "label": "SDI Out 2",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-343",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-344",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0030-4000-8000-000000000048",
+    "deviceType": "intercom",
+    "label": "ClearCom FreeSpeak II",
+    "manufacturer": "Clear-Com",
+    "modelNumber": "FreeSpeak II Base Station",
+    "searchTerms": [
+      "clearcom",
+      "clear-com",
+      "freespeak",
+      "wireless intercom",
+      "base station"
+    ],
+    "ports": [
+      {
+        "id": "port-345",
+        "label": "Partyline 1",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-346",
+        "label": "Partyline 2",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-347",
+        "label": "Partyline 3",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-348",
+        "label": "Partyline 4",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-349",
+        "label": "4-Wire 1",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-350",
+        "label": "4-Wire 2",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-351",
+        "label": "Program In",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-352",
+        "label": "Stage Announce",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-353",
+        "label": "GPIO",
+        "signalType": "gpio",
+        "direction": "bidirectional",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-354",
+        "label": "LAN 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-355",
+        "label": "LAN 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-356",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0031-4000-8000-000000000049",
+    "deviceType": "audio-embedder",
+    "label": "BMD SDI→Audio 12G",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Teranex Mini SDI to Audio 12G",
+    "searchTerms": [
+      "blackmagic",
+      "teranex",
+      "de-embedder",
+      "deembed",
+      "audio extract"
+    ],
+    "ports": [
+      {
+        "id": "port-357",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-358",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-359",
+        "label": "Analog Out L",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-360",
+        "label": "Analog Out R",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-361",
+        "label": "AES Out 1-2",
+        "signalType": "aes",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-362",
+        "label": "AES Out 3-4",
+        "signalType": "aes",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-363",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0032-4000-8000-000000000050",
+    "deviceType": "audio-embedder",
+    "label": "BMD Audio→SDI 12G",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "Teranex Mini Audio to SDI 12G",
+    "searchTerms": [
+      "blackmagic",
+      "teranex",
+      "embedder",
+      "audio embed"
+    ],
+    "ports": [
+      {
+        "id": "port-364",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-365",
+        "label": "Analog In L",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-366",
+        "label": "Analog In R",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-367",
+        "label": "AES In 1-2",
+        "signalType": "aes",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-368",
+        "label": "AES In 3-4",
+        "signalType": "aes",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-369",
+        "label": "SDI Out",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-370",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0033-4000-8000-000000000051",
+    "deviceType": "streaming-encoder",
+    "label": "Teradek Prism Flex",
+    "manufacturer": "Teradek",
+    "modelNumber": "Prism Flex",
+    "searchTerms": [
+      "teradek",
+      "prism",
+      "streaming",
+      "encoder",
+      "rtmp",
+      "srt",
+      "hevc"
+    ],
+    "ports": [
+      {
+        "id": "port-371",
+        "label": "SDI In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-372",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-373",
+        "label": "SDI Loop",
+        "signalType": "sdi",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-374",
+        "label": "Ethernet 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-375",
+        "label": "Ethernet 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-376",
+        "label": "USB 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-377",
+        "label": "USB 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-378",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0034-4000-8000-000000000052",
+    "deviceType": "media-player",
+    "label": "BrightSign XD1035",
+    "manufacturer": "BrightSign",
+    "modelNumber": "XD1035",
+    "searchTerms": [
+      "brightsign",
+      "digital signage",
+      "media player",
+      "signage"
+    ],
+    "ports": [
+      {
+        "id": "port-379",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-380",
+        "label": "Audio Out",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "trs-eighth"
+      },
+      {
+        "id": "port-381",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-382",
+        "label": "USB-A",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-383",
+        "label": "USB-C",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-384",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-385",
+        "label": "GPIO",
+        "signalType": "gpio",
+        "direction": "bidirectional",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-386",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0035-4000-8000-000000000053",
+    "deviceType": "wireless-mic-receiver",
+    "label": "Shure ULXD4Q",
+    "manufacturer": "Shure",
+    "modelNumber": "ULXD4Q",
+    "searchTerms": [
+      "shure",
+      "ulx-d",
+      "wireless",
+      "microphone",
+      "receiver",
+      "quad"
+    ],
+    "ports": [
+      {
+        "id": "port-387",
+        "label": "Analog Out 1",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-388",
+        "label": "Analog Out 2",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-389",
+        "label": "Analog Out 3",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-390",
+        "label": "Analog Out 4",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-391",
+        "label": "Dante 1",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-392",
+        "label": "Dante 2",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-393",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0036-4000-8000-000000000054",
+    "deviceType": "wireless-mic-receiver",
+    "label": "Sennheiser EW-DX EM 4",
+    "manufacturer": "Sennheiser",
+    "modelNumber": "EW-DX EM 4 Dante",
+    "searchTerms": [
+      "sennheiser",
+      "ew-dx",
+      "wireless",
+      "microphone",
+      "receiver",
+      "dante"
+    ],
+    "ports": [
+      {
+        "id": "port-394",
+        "label": "Analog Out 1",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-395",
+        "label": "Analog Out 2",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-396",
+        "label": "Analog Out 3",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-397",
+        "label": "Analog Out 4",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-398",
+        "label": "Dante 1",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-399",
+        "label": "Dante 2",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-400",
+        "label": "Ethernet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-401",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0037-4000-8000-000000000055",
+    "deviceType": "audio-interface",
+    "label": "Focusrite RedNet A16R",
+    "manufacturer": "Focusrite",
+    "modelNumber": "RedNet A16R MkII",
+    "searchTerms": [
+      "focusrite",
+      "rednet",
+      "dante",
+      "audio interface",
+      "a16r"
+    ],
+    "ports": [
+      {
+        "id": "port-402",
+        "label": "Analog In 1-8",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-403",
+        "label": "Analog In 9-16",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-404",
+        "label": "AES In",
+        "signalType": "aes",
+        "direction": "input",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-405",
+        "label": "Analog Out 1-8",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-406",
+        "label": "Analog Out 9-16",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-407",
+        "label": "AES Out",
+        "signalType": "aes",
+        "direction": "output",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-408",
+        "label": "Dante Primary",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-409",
+        "label": "Dante Secondary",
+        "signalType": "dante",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-410",
+        "label": "Word Clock In",
+        "signalType": "genlock",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-411",
+        "label": "Word Clock Out",
+        "signalType": "genlock",
+        "direction": "output",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-412",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0038-4000-8000-000000000056",
+    "deviceType": "control-processor",
+    "label": "Crestron CP4N",
+    "manufacturer": "Crestron",
+    "modelNumber": "CP4N",
+    "searchTerms": [
+      "crestron",
+      "control",
+      "processor",
+      "automation",
+      "cp4"
+    ],
+    "ports": [
+      {
+        "id": "port-413",
+        "label": "LAN",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-414",
+        "label": "Control Subnet",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-415",
+        "label": "COM (RS-232)",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-416",
+        "label": "IR/Serial",
+        "signalType": "serial",
+        "direction": "output",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-417",
+        "label": "Relay",
+        "signalType": "gpio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-418",
+        "label": "Versiport I/O",
+        "signalType": "gpio",
+        "direction": "bidirectional",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-419",
+        "label": "Cresnet",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "db9"
+      },
+      {
+        "id": "port-420",
+        "label": "USB",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-421",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-0039-4000-8000-000000000057",
+    "deviceType": "tally-system",
+    "label": "BMD GPI & Tally",
+    "manufacturer": "Blackmagic Design",
+    "modelNumber": "GPI and Tally Interface",
+    "searchTerms": [
+      "blackmagic",
+      "tally",
+      "gpi",
+      "gpio",
+      "indicator"
+    ],
+    "ports": [
+      {
+        "id": "port-422",
+        "label": "Ethernet In",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-423",
+        "label": "Ethernet Loop",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-424",
+        "label": "GPI In (8ch)",
+        "signalType": "gpio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-425",
+        "label": "GPI Out (8ch)",
+        "signalType": "gpio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-426",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-003a-4000-8000-000000000058",
+    "deviceType": "av-over-ip",
+    "label": "Crestron DM-NVX-351",
+    "manufacturer": "Crestron",
+    "modelNumber": "DM-NVX-351",
+    "searchTerms": [
+      "crestron",
+      "nvx",
+      "av-over-ip",
+      "networked av",
+      "encoder",
+      "decoder"
+    ],
+    "ports": [
+      {
+        "id": "port-427",
+        "label": "HDMI In 1",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-428",
+        "label": "HDMI In 2",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-429",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-430",
+        "label": "Ethernet 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-431",
+        "label": "Ethernet 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-432",
+        "label": "SFP",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "sfp"
+      },
+      {
+        "id": "port-433",
+        "label": "Analog Audio",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-434",
+        "label": "USB Host",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-435",
+        "label": "USB Device",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-436",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-003b-4000-8000-000000000059",
+    "deviceType": "power-distribution",
+    "label": "Power Strip",
+    "searchTerms": [
+      "power strip",
+      "power bar",
+      "outlet strip",
+      "surge protector"
+    ],
+    "ports": [
+      {
+        "id": "port-437",
+        "label": "AC In",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-438",
+        "label": "Out 1",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-439",
+        "label": "Out 2",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-440",
+        "label": "Out 3",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-441",
+        "label": "Out 4",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-442",
+        "label": "Out 5",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-443",
+        "label": "Out 6",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      }
+    ]
+  },
+  {
+    "id": "c0a80101-003c-4000-8000-000000000060",
+    "deviceType": "power-distribution",
+    "label": "Rack PDU",
+    "searchTerms": [
+      "pdu",
+      "power distribution",
+      "rack power"
+    ],
+    "ports": [
+      {
+        "id": "port-444",
+        "label": "AC In",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-445",
+        "label": "Out 1",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-446",
+        "label": "Out 2",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-447",
+        "label": "Out 3",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-448",
+        "label": "Out 4",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-449",
+        "label": "Out 5",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-450",
+        "label": "Out 6",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-451",
+        "label": "Out 7",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-452",
+        "label": "Out 8",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-453",
+        "label": "Out 9",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-454",
+        "label": "Out 10",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-455",
+        "label": "Out 11",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      },
+      {
+        "id": "port-456",
+        "label": "Out 12",
+        "signalType": "power",
+        "direction": "output",
+        "connectorType": "edison"
+      }
+    ]
+  }
+]

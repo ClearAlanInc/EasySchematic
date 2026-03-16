@@ -1,0 +1,8 @@
+name = "easyschematic-api"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[[d1_databases]]
+binding = "easyschematic_db"
+database_name = "easyschematic-db"
+database_id = "26615646-10b7-4af7-86ed-c5f57d1b4243"

@@ -1,5 +1,5 @@
-import { type DragEvent, useState, useMemo } from "react";
-import { DEVICE_TEMPLATES } from "../deviceLibrary";
+import { type DragEvent, useState, useMemo, useEffect } from "react";
+import { getBundledTemplates, fetchTemplates } from "../templateApi";
 import { SIGNAL_LABELS } from "../types";
 import type { DeviceTemplate } from "../types";
 import { useSchematicStore } from "../store";
@@ -173,6 +173,11 @@ export default function DeviceLibrary() {
   const [search, setSearch] = useState("");
   const [showRouterCreator, setShowRouterCreator] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [templates, setTemplates] = useState(getBundledTemplates);
+
+  useEffect(() => {
+    fetchTemplates().then(setTemplates).catch(() => {});
+  }, []);
 
   const query = search.trim();
 
@@ -187,7 +192,7 @@ export default function DeviceLibrary() {
   const filteredCategories = useMemo(
     () =>
       CATEGORIES.map((cat) => {
-        const all = DEVICE_TEMPLATES.filter((t) =>
+        const all = templates.filter((t) =>
           cat.types.includes(t.deviceType),
         );
         const filtered = query
@@ -196,7 +201,7 @@ export default function DeviceLibrary() {
         const sorted = filtered.toSorted((a, b) => a.label.localeCompare(b.label));
         return { ...cat, templates: sorted };
       }),
-    [query],
+    [templates, query],
   );
 
   const totalResults = filteredCustom.length +
