@@ -53,8 +53,9 @@ const CORNER_RADIUS = 8;
 const ESCAPE_MARGIN = 40; // Grid lines beyond the overall bounding box
 const SEPARATION_PX = 10; // Offset distance for penalty zone grid lines
 const CROSS_TYPE_SEPARATION = 20; // Wider separation between edges of different signal types
-const PROXIMITY_PENALTY = 50; // Extra A* cost when near a penalty zone (parallel)
-const CROSSING_PENALTY = 120; // Extra A* cost when crossing a penalty zone (perpendicular)
+const PROXIMITY_PENALTY = 150; // Extra A* cost when near a different-signal-type edge (parallel)
+const SAME_TYPE_PROXIMITY = 20; // Gentle nudge for same-signal edges — allows clustering in adjacent corridors
+const CROSSING_PENALTY = 500; // Extra A* cost when crossing a penalty zone (perpendicular)
 const EARLY_TURN_BIAS = 30; // Extra cost for turning far from target (spreads vertical segments)
 
 // ---------- Obstacles ----------
@@ -409,13 +410,16 @@ export function astarOrthogonal(
         for (const pz of penalties) {
           const crossType = currentSignalType && pz.signalType && pz.signalType !== currentSignalType;
           const proxThreshold = crossType ? CROSS_TYPE_SEPARATION : SEPARATION_PX;
+          // Same-signal edges get a gentle proximity penalty (allows clustering),
+          // different-signal edges get a strong penalty (forces separation into lanes).
+          const proxPenalty = crossType ? PROXIMITY_PENALTY : SAME_TYPE_PROXIMITY;
           if (pz.axis === "v" && (d === 1 || d === 3)) {
             // Moving vertically — check if X is close to a vertical penalty
             if (Math.abs(nx - pz.coordinate) < proxThreshold) {
               const segMinY = Math.min(cy, ny);
               const segMaxY = Math.max(cy, ny);
               if (segMaxY > pz.rangeMin && segMinY < pz.rangeMax) {
-                g += PROXIMITY_PENALTY;
+                g += proxPenalty;
               }
             }
           } else if (pz.axis === "h" && (d === 0 || d === 2)) {
@@ -424,7 +428,7 @@ export function astarOrthogonal(
               const segMinX = Math.min(cx, nx);
               const segMaxX = Math.max(cx, nx);
               if (segMaxX > pz.rangeMin && segMinX < pz.rangeMax) {
-                g += PROXIMITY_PENALTY;
+                g += proxPenalty;
               }
             }
           }

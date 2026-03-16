@@ -207,7 +207,7 @@ function segmentsOverlap(a: Segment, b: Segment): boolean {
 }
 
 export function findViolations(
-  allEdges: { edgeId: string; segments: Segment[] }[],
+  allEdges: { edgeId: string; segments: Segment[]; signalType?: string }[],
 ): Set<string> {
   const bad = new Set<string>();
   // Track per-edge crossing counts: how many times each edge crosses
@@ -242,6 +242,13 @@ export function findViolations(
 
         // Crossing the same edge 2+ times is always a violation (weaving)
         if (crossCount >= 2) {
+          bad.add(a.edgeId);
+          bad.add(b.edgeId);
+        }
+
+        // Even a single crossing between same-signal edges looks wrong
+        // (identical colors make crossings very visible)
+        if (crossCount >= 1 && a.signalType && a.signalType === b.signalType) {
           bad.add(a.edgeId);
           bad.add(b.edgeId);
         }
@@ -612,16 +619,39 @@ export function routeAllEdges(
     });
   }
 
-  // Sort edges top-to-bottom, left-to-right by source position.
-  // Edges routed first claim corridors; later edges route around them.
-  // For same Y, go left to right. Use min(sourceY, targetY) as primary key
-  // so edges near the top of the canvas get priority.
-  // Manual edges route first (clean slate — they claim corridors with priority),
-  // then auto edges route around them. Within each group, sort top-to-bottom.
+  // Sort order determines corridor priority — edges routed first claim corridors,
+  // later edges route around them via penalty zones.
+  // 1. Manual edges first (user-placed handles get priority)
+  // 2. Smallest Y-change first — edges with less vertical adjustment need
+  //    the most direct (inner) corridor. Larger-change edges fan out around
+  //    them, naturally creating non-crossing fan patterns from shared sources.
+  // 3. Top-to-bottom, left-to-right as tiebreaker.
+  // Count edges per signal type — types with more edges route first
+  // to establish primary corridor patterns. Smaller groups route around them.
+  const signalTypeCounts = new Map<string, number>();
+  for (const ep of edgeEndpoints) {
+    const sig = ep.edge.data?.signalType ?? "";
+    signalTypeCounts.set(sig, (signalTypeCounts.get(sig) ?? 0) + 1);
+  }
+
   edgeEndpoints.sort((a, b) => {
     const aManual = a.edge.data?.manualWaypoints?.length ? 1 : 0;
     const bManual = b.edge.data?.manualWaypoints?.length ? 1 : 0;
     if (aManual !== bManual) return bManual - aManual; // manual first
+    // Group by signal type — most common type routes first to establish
+    // primary corridors. Same-signal edges route consecutively for clustering.
+    const aSig = a.edge.data?.signalType ?? "";
+    const bSig = b.edge.data?.signalType ?? "";
+    if (aSig !== bSig) {
+      const aCount = signalTypeCounts.get(aSig) ?? 0;
+      const bCount = signalTypeCounts.get(bSig) ?? 0;
+      if (aCount !== bCount) return bCount - aCount; // more edges first
+      return aSig < bSig ? -1 : 1; // alphabetical tiebreaker
+    }
+    // Smallest Y change routes first (inner corridor)
+    const aYRange = Math.abs(a.targetY - a.sourceY);
+    const bYRange = Math.abs(b.targetY - b.sourceY);
+    if (aYRange !== bYRange) return aYRange - bYRange;
     const aY = Math.min(a.sourceY, a.targetY);
     const bY = Math.min(b.sourceY, b.targetY);
     if (aY !== bY) return aY - bY;
@@ -868,7 +898,7 @@ export function routeAllEdges(
 
   // PHASE 2 — Violation detection
   const badIds = findViolations(
-    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments })),
+    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
   );
   for (const rs of routeStates) {
     if (badIds.has(rs.edgeId) && !rs.turns.startsWith("manual")) {
@@ -877,89 +907,90 @@ export function routeAllEdges(
   }
 
   // PHASE 3 — Iterative re-routing
+  // Helper to attempt re-routing a single bad edge
+  const tryReroute = (bad: RouteState): boolean => {
+    const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
+    if (!ep) return false;
+
+    const goodEdges = routeStates.filter(
+      (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
+    );
+    const penalties = buildPenaltyZones(goodEdges);
+    const sigType = ep.edge.data?.signalType;
+
+    let result = computeEdgePath(
+      ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+      obs.rects, 0, ep.stubSpread, penalties, sigType,
+    );
+
+    if (!result) {
+      const relaxedObs = buildObstacles(
+        nodes, [ep.edge.source, ep.edge.target], getAbsPosAdapter,
+      );
+      result = computeEdgePath(
+        ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+        relaxedObs.rects, 0, ep.stubSpread, penalties, sigType,
+      );
+    }
+
+    if (!result) return false;
+
+    const newSegments = extractSegments(result.waypoints);
+    const goodEdgeSegments = routeStates
+      .filter((rs) => rs.status === "good" && rs.edgeId !== bad.edgeId)
+      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType }));
+
+    const newViolations = findViolations([
+      { edgeId: bad.edgeId, segments: newSegments, signalType: sigType },
+      ...goodEdgeSegments,
+    ]);
+
+    if (!newViolations.has(bad.edgeId)) {
+      bad.waypoints = result.waypoints;
+      bad.segments = newSegments;
+      bad.svgPath = result.path;
+      bad.labelX = result.labelX;
+      bad.labelY = result.labelY;
+      bad.turns = result.turns;
+      bad.status = "good";
+      return true;
+    }
+    return false;
+  };
+
   for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
     const badEdges = routeStates.filter((rs) => rs.status === "bad");
     if (badEdges.length === 0) break;
 
-    // Sort: fewer violations first, shorter edges first
-    badEdges.sort((a, b) => {
-      const aLen = a.waypoints.length;
-      const bLen = b.waypoints.length;
-      return aLen - bLen;
-    });
-
-    let anyImproved = false;
-
-    for (const bad of badEdges) {
-      const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
-      if (!ep) continue;
-
-      // Build penalty zones from good edges' segments
-      const goodEdges = routeStates.filter(
-        (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
-      );
-      const penalties = buildPenaltyZones(goodEdges);
-      const sigType = ep.edge.data?.signalType;
-
-      let result = computeEdgePath(
-        ep.sourceX,
-        ep.sourceY,
-        ep.targetX,
-        ep.targetY,
-        obs.rects,
-        0,
-        ep.stubSpread,
-        penalties,
-        sigType,
-      );
-
-      if (!result) {
-        const relaxedObs = buildObstacles(
-          nodes,
-          [ep.edge.source, ep.edge.target],
-          getAbsPosAdapter,
-        );
-        result = computeEdgePath(
-          ep.sourceX,
-          ep.sourceY,
-          ep.targetX,
-          ep.targetY,
-          relaxedObs.rects,
-          0,
-          ep.stubSpread,
-          penalties,
-          sigType,
-        );
-      }
-
-      if (!result) continue;
-
-      const newSegments = extractSegments(result.waypoints);
-
-      // Check if new route has violations against all other edges
-      const otherEdges = routeStates
-        .filter((rs) => rs.edgeId !== bad.edgeId)
-        .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments }));
-
-      const newViolations = findViolations([
-        { edgeId: bad.edgeId, segments: newSegments },
-        ...otherEdges,
-      ]);
-
-      if (!newViolations.has(bad.edgeId)) {
-        // Improved — update and mark good
-        bad.waypoints = result.waypoints;
-        bad.segments = newSegments;
-        bad.svgPath = result.path;
-        bad.labelX = result.labelX;
-        bad.labelY = result.labelY;
-        bad.turns = result.turns;
-        bad.status = "good";
-        anyImproved = true;
-      }
+    // Alternate sort order: even iterations shortest-first, odd iterations longest-first.
+    // This breaks deadlocks where the first-routed edge claims a corridor that
+    // forces the second edge to cross it.
+    if (iter % 2 === 0) {
+      badEdges.sort((a, b) => a.waypoints.length - b.waypoints.length);
+    } else {
+      badEdges.sort((a, b) => b.waypoints.length - a.waypoints.length);
     }
 
-    if (!anyImproved) break; // stuck
+    let anyImproved = false;
+    for (const bad of badEdges) {
+      if (tryReroute(bad)) anyImproved = true;
+    }
+
+    if (!anyImproved) {
+      // Stuck — try resetting all bad edges' status so they route against
+      // each other from scratch. Pick a different "winner" by reversing
+      // the order: the last bad edge gets to go first with a clean slate.
+      const stillBad = routeStates.filter((rs) => rs.status === "bad");
+      if (stillBad.length < 2) break; // single bad edge can't unstick itself
+
+      // Reverse order and re-try each one
+      stillBad.reverse();
+      let unstuck = false;
+      for (const bad of stillBad) {
+        if (tryReroute(bad)) unstuck = true;
+      }
+      if (!unstuck) break; // truly stuck
+    }
   }
 
   // Build final results
