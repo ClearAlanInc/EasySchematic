@@ -12,7 +12,7 @@
 
 ### Canvas & Devices
 
-- **28 built-in device templates** across 11 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Networking, KVM/Extenders
+- **60 built-in device templates** across 11 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Networking, KVM/Extenders
 - **Custom device templates** — save modified devices for reuse
 - **Quick-create routers** — generate routers with configurable input/output counts and signal type
 - **Notes** — text annotations on the canvas
@@ -25,8 +25,9 @@
 
 - **Click-to-connect** — click a source handle, preview line follows cursor, snaps to nearby valid targets (green = valid, red = incompatible signal type), click target to connect or click device body to auto-connect first compatible port
 - **Drag-to-connect** with the same preview/snap/validity behavior
-- **Smart edge routing** — A* pathfinding avoids node crossings with automatic parallel edge nesting
-- **19 signal types**, all color-coded (see below)
+- **Smart edge routing** — A* pathfinding avoids device crossings with automatic parallel edge nesting
+- **Manual route editing** — right-click a connection to add draggable waypoint handles; A* routes each leg between handles while other connections yield
+- **21 signal types**, all color-coded (see below)
 
 ### Ports
 
@@ -46,9 +47,11 @@
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Power · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
+
+**View options** — hide connections by signal type, toggle device type labels on/off
 
 ### Save & Export
 
@@ -103,6 +106,8 @@ Output goes to `dist/` — deploy as a static site anywhere.
 | `Ctrl+Z` | Undo |
 | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
 | Double-click device | Open device editor |
+| Right-click connection | Add/remove routing handles, reset route |
+| `Ctrl+B` | Toggle routing debug overlay |
 
 ## License
 
