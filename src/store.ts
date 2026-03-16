@@ -126,6 +126,10 @@ interface SchematicState {
   signalColors: Partial<Record<SignalType, string>> | undefined;
   setSignalColors: (colors: Record<SignalType, string>) => void;
 
+  // Report layouts (pack list PDF settings, etc.)
+  reportLayouts: Record<string, unknown>;
+  setReportLayout: (key: string, layout: unknown) => void;
+
   // View options
   hiddenSignalTypes: string;
   hideDeviceTypes: boolean;
@@ -313,6 +317,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
+  reportLayouts: {},
   hiddenSignalTypes: "",
   hideDeviceTypes: false,
 
@@ -377,6 +382,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ports: clonePorts(template.ports),
         color: template.color,
         baseLabel: template.label,
+        model: template.label,
       },
     };
     set({ nodes: renumberNodes([...get().nodes, newNode]) });
@@ -830,6 +836,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setReportLayout: (key, layout) => {
+    set({ reportLayouts: { ...get().reportLayouts, [key]: layout } });
+    get().saveToLocalStorage();
+  },
+
   showAllSignalTypes: () => {
     set({ hiddenSignalTypes: "" });
     get().saveToLocalStorage();
@@ -850,6 +861,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       titleBlockLayout: state.titleBlockLayout,
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
       hideDeviceTypes: state.hideDeviceTypes || undefined,
+      reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -885,6 +897,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
             hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
             hideDeviceTypes: data.hideDeviceTypes ?? false,
+            reportLayouts: data.reportLayouts ?? {},
           });
         });
         return false;
@@ -908,6 +921,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
         hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
         hideDeviceTypes: data.hideDeviceTypes ?? false,
+        reportLayouts: data.reportLayouts ?? {},
       });
       return true;
     } catch {
@@ -931,6 +945,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       titleBlockLayout: state.titleBlockLayout,
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
       hideDeviceTypes: state.hideDeviceTypes || undefined,
+      reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
     };
   },
 
@@ -967,6 +982,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
       hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
       hideDeviceTypes: data.hideDeviceTypes ?? false,
+      reportLayouts: data.reportLayouts ?? {},
     });
     get().saveToLocalStorage();
   },
@@ -980,6 +996,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       titleBlockLayout: createDefaultLayout(),
       hiddenSignalTypes: "",
       hideDeviceTypes: false,
+      reportLayouts: {},
     });
     get().saveToLocalStorage();
   },

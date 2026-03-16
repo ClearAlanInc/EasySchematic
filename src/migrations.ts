@@ -12,7 +12,7 @@
 
 import { createDefaultLayout } from "./titleBlockLayout";
 
-export const CURRENT_SCHEMA_VERSION = 8;
+export const CURRENT_SCHEMA_VERSION = 10;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -70,6 +70,25 @@ const migrations: Record<number, Migration> = {
   7: (data) => {
     // v7 → v8: add optional hiddenSignalTypes and hideDeviceTypes (both default to empty/false)
     data.version = 8;
+    return data;
+  },
+  8: (data) => {
+    // v8 → v9: add permanent `model` field to device nodes (template identity for pack lists)
+    // Backfill from baseLabel if present (device still auto-numbered), otherwise from label
+    if (data.nodes) {
+      for (const node of data.nodes) {
+        if (node.type === "device" && node.data) {
+          node.data.model ??= node.data.baseLabel ?? node.data.label;
+        }
+      }
+    }
+    data.version = 9;
+    return data;
+  },
+  9: (data) => {
+    // v9 → v10: add reportLayouts for persisting report print preview settings
+    data.reportLayouts ??= {};
+    data.version = 10;
     return data;
   },
 };

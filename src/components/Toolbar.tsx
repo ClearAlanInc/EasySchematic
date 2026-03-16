@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { useSchematicStore } from "../store";
 import type { SchematicFile } from "../types";
 import PrintDialog from "./PrintDialog";
+import PackListDialog from "./PackListDialog";
 import AlignmentMenu from "./AlignmentMenu";
 
 export default function Toolbar() {
@@ -19,6 +20,7 @@ export default function Toolbar() {
   const [nameValue, setNameValue] = useState(schematicName);
   const printView = useSchematicStore((s) => s.printView);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showPackListDialog, setShowPackListDialog] = useState(false);
 
   const handleExport = useCallback(() => {
     const data = exportToJSON();
@@ -114,6 +116,9 @@ export default function Toolbar() {
       <ToolbarButton onClick={() => setShowPrintDialog(true)} title="Export PNG/SVG/DXF">
         Export
       </ToolbarButton>
+      <ToolbarButton onClick={() => setShowPackListDialog(true)} title="Generate pack list / BOM">
+        Pack List
+      </ToolbarButton>
       <div className="w-px h-5 bg-[var(--color-border)]" />
       <a
         href="https://docs.easyschematic.live"
@@ -138,6 +143,9 @@ export default function Toolbar() {
 
       {showPrintDialog && (
         <PrintDialog onClose={() => setShowPrintDialog(false)} />
+      )}
+      {showPackListDialog && (
+        <PackListDialog onClose={() => setShowPackListDialog(false)} />
       )}
     </div>
   );

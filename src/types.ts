@@ -42,6 +42,9 @@ export interface DeviceData {
   /** Original template label — present while device participates in auto-numbering.
    *  Cleared when the user gives the device a custom name. */
   baseLabel?: string;
+  /** Permanent template identity — what the device *is* (e.g. "BMD SDI→HDMI").
+   *  Never cleared on rename. Used for pack list grouping. */
+  model?: string;
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -140,6 +143,8 @@ export interface SchematicFile {
   titleBlockLayout?: TitleBlockLayout;
   hiddenSignalTypes?: SignalType[];
   hideDeviceTypes?: boolean;
+  // Report layout preferences (pack list PDF, etc.) keyed by report ID
+  reportLayouts?: Record<string, unknown>;
 }
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {
