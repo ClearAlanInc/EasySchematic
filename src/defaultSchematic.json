@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "name": "Untitled Schematic",
   "nodes": [
     {
@@ -31,8 +31,8 @@
       "id": "room-4",
       "type": "room",
       "position": {
-        "x": 2580,
-        "y": 60
+        "x": 2400,
+        "y": 140
       },
       "data": {
         "label": "Stage"
@@ -44,19 +44,19 @@
       "zIndex": -1,
       "measured": {
         "width": 738,
-        "height": 1992
+        "height": 2012
       },
       "selected": false,
       "dragging": false,
       "width": 738,
-      "height": 1992,
+      "height": 2012,
       "resizing": false
     },
     {
       "id": "room-3",
       "type": "room",
       "position": {
-        "x": 160,
+        "x": 100,
         "y": 180
       },
       "data": {
@@ -158,7 +158,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 242
+        "height": 251
       },
       "parentId": "room-3",
       "selected": false,
@@ -192,7 +192,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -226,7 +226,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -315,7 +315,7 @@
       "parentId": "room-4",
       "measured": {
         "width": 180,
-        "height": 222
+        "height": 211
       },
       "selected": false,
       "dragging": false
@@ -348,7 +348,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -382,7 +382,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -416,7 +416,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -450,7 +450,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -484,7 +484,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -518,7 +518,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -529,7 +529,7 @@
       "type": "device",
       "position": {
         "x": 420,
-        "y": 840
+        "y": 860
       },
       "data": {
         "label": "TV 7",
@@ -552,7 +552,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -586,7 +586,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-4",
       "selected": false,
@@ -668,7 +668,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 142
+        "height": 151
       },
       "parentId": "room-3",
       "selected": false,
@@ -750,7 +750,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 142
+        "height": 151
       },
       "parentId": "room-3",
       "selected": false,
@@ -790,7 +790,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -830,7 +830,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -870,7 +870,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -910,7 +910,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -950,7 +950,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -990,7 +990,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1001,7 +1001,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 840
+        "y": 860
       },
       "data": {
         "label": "BMD SDI→HDMI 7",
@@ -1030,7 +1030,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1070,7 +1070,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1146,7 +1146,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 202
+        "height": 211
       },
       "parentId": "room-3",
       "selected": false,
@@ -1216,7 +1216,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 122
+        "height": 131
       },
       "parentId": "room-4",
       "selected": false,
@@ -1227,7 +1227,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 1820
+        "y": 1840
       },
       "data": {
         "label": "PTZOptics Move SE 2",
@@ -1286,7 +1286,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 122
+        "height": 131
       },
       "parentId": "room-4",
       "selected": false,
@@ -1338,7 +1338,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 122
+        "height": 131
       },
       "parentId": "room-5",
       "selected": false,
@@ -1383,7 +1383,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 102
+        "height": 111
       },
       "parentId": "room-5",
       "selected": false,
@@ -1428,7 +1428,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 102
+        "height": 111
       },
       "parentId": "room-5",
       "selected": false,
@@ -1462,7 +1462,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -1507,7 +1507,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1517,7 +1517,7 @@
       "id": "device-71",
       "type": "device",
       "position": {
-        "x": 420,
+        "x": 400,
         "y": 100
       },
       "data": {
@@ -1535,7 +1535,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -1545,7 +1545,7 @@
       "id": "device-72",
       "type": "device",
       "position": {
-        "x": 420,
+        "x": 400,
         "y": 220
       },
       "data": {
@@ -1562,7 +1562,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 62
+        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -1573,7 +1573,7 @@
       "type": "device",
       "position": {
         "x": 1220,
-        "y": 400
+        "y": 420
       },
       "data": {
         "label": "BMD HDMI→SDI",
@@ -1602,7 +1602,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "parentId": "room-3",
       "selected": false,
@@ -1647,7 +1647,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1692,7 +1692,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1702,23 +1702,23 @@
       "id": "note-1",
       "type": "note",
       "position": {
-        "x": 420,
-        "y": 1100
+        "x": 100,
+        "y": 460
       },
       "data": {
-        "html": "<font size=\"5\">WELCOME TO EasySchematic!</font>"
+        "html": "<div><font size=\"4\"><b>Welcome to EasySchematic!</b></font></div><div><br></div><div><b>Getting started:</b></div><div>• Drag devices from the library on the left</div><div>• Click an output port, then click an input to connect</div><div>• Right-click a connection to add routing handles</div><div>• Double-click a device to edit its ports</div><div><br></div><div><b>Useful shortcuts:</b></div><div>• Space + drag to pan</div><div>• Ctrl+Z / Ctrl+Shift+Z to undo/redo</div><div>• Delete key to remove selected items</div><div><br></div><div>Your work auto-saves to your browser. Use <b>Save</b> to export a file and <b>Load</b> to import one.</div><div><br></div><div>Full docs at <b>docs.easyschematic.live</b></div>"
       },
       "style": {
-        "width": 200,
-        "height": 100
+        "width": 380,
+        "height": 340
       },
       "measured": {
-        "width": 380,
-        "height": 60
+        "width": 480,
+        "height": 300
       },
-      "selected": false,
-      "width": 380,
-      "height": 60,
+      "selected": true,
+      "width": 480,
+      "height": 300,
       "resizing": false,
       "dragging": false,
       "parentId": "room-3"
@@ -1762,7 +1762,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 82
+        "height": 91
       },
       "selected": false,
       "dragging": false,
@@ -1849,7 +1849,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 242
+        "height": 251
       },
       "parentId": "room-3",
       "selected": false,
@@ -2379,7 +2379,8 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      }
+      },
+      "selected": false
     },
     {
       "id": "edge-73",
@@ -2393,7 +2394,8 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      }
+      },
+      "selected": false
     }
   ],
   "printPaperId": "arch-d",
@@ -2402,8 +2404,8 @@
   "titleBlock": {
     "showName": "The Best Show Ever",
     "venue": "The Worst Venue Ever",
-    "designer": "Some Guy",
-    "engineer": "Some Underpaid Guy",
+    "designer": "Some Nerd",
+    "engineer": "Underpaid Geek",
     "drawingTitle": "Signal Flow Schematic",
     "date": "3/15/2026",
     "company": "",
@@ -2603,5 +2605,9 @@
       }
     ],
     "widthIn": 3
-  }
+  },
+  "hiddenSignalTypes": [
+    "power",
+    "serial"
+  ]
 }
