@@ -58,16 +58,16 @@ export default function GettingStartedPage() {
       </p>
       <ul>
         <li>
-          <strong>File → Export JSON</strong> — saves a <code>.json</code> file you can re-import later
+          <strong>Save</strong> — exports a <code>.json</code> file you can re-import later
         </li>
         <li>
-          <strong>File → Export PNG/SVG</strong> — image export for documentation
+          <strong>Export → PNG/SVG</strong> — image export for documentation
         </li>
         <li>
-          <strong>File → Export DXF</strong> — CAD-compatible export for Vectorworks and other tools
+          <strong>Export → DXF</strong> — CAD-compatible export for Vectorworks and other tools
         </li>
         <li>
-          <strong>File → Export PDF</strong> — multi-page document matching your Print View settings
+          <strong>Export → PDF</strong> — multi-page document matching your Print View settings
         </li>
       </ul>
     </>

@@ -11,7 +11,7 @@ export default function ImportExportPage() {
 
       <h3>Export</h3>
       <p>
-        <strong>File → Export JSON</strong> saves a <code>.json</code> file with:
+        Click <strong>Save</strong> in the toolbar to export a <code>.json</code> file with:
       </p>
       <ul>
         <li>Schema version (for forward compatibility)</li>
@@ -26,7 +26,7 @@ export default function ImportExportPage() {
 
       <h3>Import</h3>
       <p>
-        <strong>File → Import JSON</strong> loads a previously exported file. Schema migrations run automatically if
+        Click <strong>Load</strong> in the toolbar to import a previously exported file. Schema migrations run automatically if
         the file was saved with an older version.
       </p>
 
@@ -78,13 +78,10 @@ export default function ImportExportPage() {
         the title block. See <a href="#/printing">Printing &amp; Title Block</a> for page setup details.
       </p>
 
-      <h2>Print</h2>
       <p>
-        <strong>File → Print</strong> opens the browser's print dialog with a clean layout optimized for your Print View
-        settings. For full details on page setup, title block configuration, and PDF export,
+        For full details on page setup, title block configuration, and PDF export,
         see <a href="#/printing">Printing &amp; Title Block</a>.
       </p>
-      <p>For best results, enable "Background graphics" in your browser's print settings.</p>
     </>
   );
 }

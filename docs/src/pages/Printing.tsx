@@ -62,16 +62,10 @@ export default function PrintingPage() {
         <li>Merge cells with row and column spans</li>
       </ul>
 
-      <h2>Printing</h2>
-      <p>
-        <strong>File → Print</strong> opens your browser's print dialog. For accurate colors, make sure to
-        enable <strong>"Background graphics"</strong> in your browser's print settings.
-      </p>
-
       <h2>PDF export</h2>
       <p>
-        <strong>File → Export PDF</strong> generates a multi-page PDF document matching your Print View settings. Each
-        page includes the title block. This is the best option for sharing print-ready schematics.
+        Click <strong>Export</strong> in the toolbar, then choose <strong>Export PDF</strong> to generate a multi-page PDF
+        document matching your Print View settings. Each page includes the title block.
       </p>
     </>
   );
