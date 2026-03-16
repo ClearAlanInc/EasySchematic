@@ -12,7 +12,7 @@
 
 import { createDefaultLayout } from "./titleBlockLayout";
 
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -57,6 +57,19 @@ const migrations: Record<number, Migration> = {
       delete data.titleBlockLayout.widthFraction;
     }
     data.version = 6;
+    return data;
+  },
+  6: (data) => {
+    // v6 → v7: add customFields array to titleBlock
+    if (data.titleBlock) {
+      data.titleBlock.customFields ??= [];
+    }
+    data.version = 7;
+    return data;
+  },
+  7: (data) => {
+    // v7 → v8: add optional hiddenSignalTypes and hideDeviceTypes (both default to empty/false)
+    data.version = 8;
     return data;
   },
 };

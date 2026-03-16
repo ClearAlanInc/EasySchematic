@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSchematicStore } from "../store";
-import type { TitleBlock } from "../types";
 import TitleBlockDialog from "./TitleBlockDialog";
 
-const FIELDS: { key: keyof TitleBlock; label: string; placeholder: string }[] = [
+const FIELDS: { key: string; label: string; placeholder: string }[] = [
   { key: "showName", label: "Show / Project", placeholder: "e.g. Morning News Live" },
   { key: "venue", label: "Venue / Location", placeholder: "e.g. Studio A, Building 2" },
   { key: "designer", label: "Designer", placeholder: "Name" },
@@ -19,10 +18,57 @@ export default function ShowInfoPanel() {
   const setTitleBlock = useSchematicStore((s) => s.setTitleBlock);
 
   const handleBlur = useCallback(
-    (key: keyof TitleBlock, value: string) => {
-      if (value !== titleBlock[key]) {
+    (key: string, value: string) => {
+      if (value !== (titleBlock as unknown as Record<string, string>)[key]) {
         setTitleBlock({ ...titleBlock, [key]: value });
       }
+    },
+    [titleBlock, setTitleBlock],
+  );
+
+  const handleCustomFieldBlur = useCallback(
+    (id: string, value: string) => {
+      const cf = titleBlock.customFields.find((f) => f.id === id);
+      if (cf && cf.value !== value) {
+        setTitleBlock({
+          ...titleBlock,
+          customFields: titleBlock.customFields.map((f) =>
+            f.id === id ? { ...f, value } : f,
+          ),
+        });
+      }
+    },
+    [titleBlock, setTitleBlock],
+  );
+
+  const addCustomField = useCallback(() => {
+    setTitleBlock({
+      ...titleBlock,
+      customFields: [
+        ...titleBlock.customFields,
+        { id: `custom-${Date.now()}`, label: "New Field", value: "" },
+      ],
+    });
+  }, [titleBlock, setTitleBlock]);
+
+  const removeCustomField = useCallback(
+    (id: string) => {
+      setTitleBlock({
+        ...titleBlock,
+        customFields: titleBlock.customFields.filter((f) => f.id !== id),
+      });
+    },
+    [titleBlock, setTitleBlock],
+  );
+
+  const renameCustomField = useCallback(
+    (id: string, label: string) => {
+      setTitleBlock({
+        ...titleBlock,
+        customFields: titleBlock.customFields.map((f) =>
+          f.id === id ? { ...f, label } : f,
+        ),
+      });
     },
     [titleBlock, setTitleBlock],
   );
@@ -74,15 +120,49 @@ export default function ShowInfoPanel() {
             key={key}
             label={label}
             placeholder={placeholder}
-            value={titleBlock[key]}
+            value={(titleBlock as unknown as Record<string, string>)[key] ?? ""}
             onBlur={(v) => handleBlur(key, v)}
           />
         ))}
 
+        {/* Custom fields */}
+        {titleBlock.customFields?.map((cf) => (
+          <div key={cf.id}>
+            <div className="flex items-center gap-0.5 mb-0.5">
+              <input
+                className="flex-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] bg-transparent border-b border-transparent focus:border-blue-400 outline-none min-w-0"
+                value={cf.label}
+                onChange={(e) => renameCustomField(cf.id, e.target.value)}
+              />
+              <button
+                onClick={() => removeCustomField(cf.id)}
+                className="text-[10px] text-red-400 hover:text-red-600 cursor-pointer px-0.5 shrink-0"
+                title="Remove field"
+              >
+                &times;
+              </button>
+            </div>
+            <FieldInput
+              label=""
+              placeholder="Value"
+              value={cf.value}
+              onBlur={(v) => handleCustomFieldBlur(cf.id, v)}
+              hideLabel
+            />
+          </div>
+        ))}
+
+        <button
+          onClick={addCustomField}
+          className="w-full mt-1 px-2 py-1 text-[10px] rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:border-[var(--color-text-muted)] transition-colors cursor-pointer"
+        >
+          + Add Field
+        </button>
+
         {/* Customize button */}
         <button
           onClick={() => setShowEditor(true)}
-          className="w-full mt-2 px-2 py-1.5 text-[10px] uppercase tracking-wider rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
+          className="w-full mt-1 px-2 py-1.5 text-[10px] uppercase tracking-wider rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
         >
           Customize Title Block...
         </button>
@@ -98,11 +178,13 @@ function FieldInput({
   placeholder,
   value,
   onBlur,
+  hideLabel,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onBlur: (value: string) => void;
+  hideLabel?: boolean;
 }) {
   const [draft, setDraft] = useState(value);
 
@@ -113,9 +195,11 @@ function FieldInput({
 
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
-        {label}
-      </label>
+      {!hideLabel && label && (
+        <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+          {label}
+        </label>
+      )}
       <input
         className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500"
         value={draft}

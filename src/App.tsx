@@ -23,6 +23,7 @@ import DeviceLibrary from "./components/DeviceLibrary";
 import DeviceEditor from "./components/DeviceEditor";
 import SignalColorPanel from "./components/SignalColorPanel";
 import ShowInfoPanel from "./components/ShowInfoPanel";
+import ViewOptionsPanel from "./components/ViewOptionsPanel";
 import Toolbar from "./components/Toolbar";
 import { computeSnap, enforceMinSpacing, type GuideLine } from "./snapUtils";
 import type { DeviceTemplate, SchematicNode } from "./types";
@@ -118,6 +119,7 @@ function SchematicCanvas() {
   const isDragging = useSchematicStore((s) => s.isDragging);
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const printView = useSchematicStore((s) => s.printView);
+  const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const nodeCount = useSchematicStore((s) => s.nodes.length);
   const edgeCount = useSchematicStore((s) => s.edges.length);
   // Digest of node positions + sizes to detect moves
@@ -129,6 +131,13 @@ function SchematicCanvas() {
     s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}`).join("|"),
   );
 
+  // Filter out edges whose signal type is hidden (presentation-only — store edges stay complete)
+  const visibleEdges = useMemo(() => {
+    if (!hiddenSignalTypesStr) return edges;
+    const hidden = new Set(hiddenSignalTypesStr.split(","));
+    return edges.filter((e) => !hidden.has(e.data?.signalType ?? ""));
+  }, [edges, hiddenSignalTypesStr]);
+
   useEffect(() => {
     if (isDragging) return;
     if (nodeCount === 0 && edgeCount === 0) return;
@@ -137,7 +146,7 @@ function SchematicCanvas() {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
     }, 50);
     return () => clearTimeout(timer);
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -527,7 +536,7 @@ function SchematicCanvas() {
   return (
     <ReactFlow
       nodes={nodes}
-      edges={edges}
+      edges={visibleEdges}
       onNodesChange={onNodesChange}
       onNodeDragStart={onNodeDragStart}
       onNodeDrag={onNodeDrag}
@@ -706,6 +715,7 @@ export default function App() {
           <SchematicCanvas />
         </div>
         <div data-print-hide className="flex">
+          <ViewOptionsPanel />
           <ShowInfoPanel />
           <SignalColorPanel />
         </div>

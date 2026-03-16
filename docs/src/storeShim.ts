@@ -27,6 +27,8 @@ export interface DemoStoreState {
   debugEdges: boolean;
   isDragging: boolean;
   signalColors: Partial<Record<SignalType, string>> | undefined;
+  hiddenSignalTypes: string;
+  hideDeviceTypes: boolean;
 
   onNodesChange: OnNodesChange<SchematicNode>;
   onEdgesChange: OnEdgesChange<ConnectionEdge>;
@@ -62,6 +64,9 @@ export interface DemoStoreState {
   toggleDebugEdges: () => void;
 
   setSignalColors: (colors: Record<SignalType, string>) => void;
+  toggleSignalTypeVisibility: (type: SignalType) => void;
+  setHideDeviceTypes: (hide: boolean) => void;
+  showAllSignalTypes: () => void;
 
   saveToLocalStorage: () => void;
   loadFromLocalStorage: () => boolean;

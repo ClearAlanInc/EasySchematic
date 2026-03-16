@@ -37,12 +37,17 @@ function OffsetEdgeComponent({
     ly = Number(parts[2]);
     turns = parts[3];
   } else {
-    // Fallback before first recompute
-    edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
-    lx = (sourceX + targetX) / 2;
-    ly = (sourceY + targetY) / 2;
+    // No route yet — render an invisible zero-length edge so React Flow
+    // has a valid SVG element (returning null crashes its internal measurement)
+    edgePath = `M ${sourceX} ${sourceY} L ${sourceX} ${sourceY}`;
+    lx = sourceX;
+    ly = sourceY;
     turns = "pending";
   }
+
+  const edgeStyle = routeStr
+    ? { ...style, strokeWidth: selected ? 3 : 2 }
+    : { ...style, strokeWidth: 0, opacity: 0 };
 
   // Show label at both source and target ends so it's visible even if the path goes behind a device
   const debugLabel = debugEdges ? (
@@ -111,10 +116,7 @@ function OffsetEdgeComponent({
         path={edgePath}
         labelX={lx}
         labelY={ly}
-        style={{
-          ...style,
-          strokeWidth: selected ? 3 : 2,
-        }}
+        style={edgeStyle}
         markerEnd={markerEnd}
       />
       {debugLabel}

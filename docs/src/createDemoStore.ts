@@ -42,6 +42,8 @@ export function createDemoStore(
     debugEdges: false,
     isDragging: false,
     signalColors: undefined,
+    hiddenSignalTypes: "",
+    hideDeviceTypes: false,
 
     onNodesChange: (changes) => {
       set({
@@ -126,6 +128,9 @@ export function createDemoStore(
     },
     toggleDebugEdges: () => {},
     setSignalColors: () => {},
+    toggleSignalTypeVisibility: () => {},
+    setHideDeviceTypes: () => {},
+    showAllSignalTypes: () => {},
     saveToLocalStorage: () => {},
     loadFromLocalStorage: () => false,
     exportToJSON: () => ({}),

@@ -24,6 +24,18 @@ function buildColumnItems(ports: Port[]): ColumnItem[] {
 
 function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) {
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
+  const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
+  const hideDeviceTypes = useSchematicStore((s) => s.hideDeviceTypes);
+
+  const hiddenSignalTypes = useMemo(
+    () => (hiddenSignalTypesStr ? new Set(hiddenSignalTypesStr.split(",")) : null),
+    [hiddenSignalTypesStr],
+  );
+
+  const visiblePorts = useMemo(
+    () => hiddenSignalTypes ? data.ports.filter((p) => !hiddenSignalTypes.has(p.signalType)) : data.ports,
+    [data.ports, hiddenSignalTypes],
+  );
 
   const connectedHandleStr = useSchematicStore((s) => {
     const ids: string[] = [];
@@ -35,9 +47,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   });
   const connectedHandles = new Set(connectedHandleStr ? connectedHandleStr.split(",") : []);
 
-  const inputs = data.ports.filter((p) => p.direction === "input");
-  const outputs = data.ports.filter((p) => p.direction === "output");
-  const bidirectional = data.ports.filter((p) => p.direction === "bidirectional");
+  const inputs = visiblePorts.filter((p) => p.direction === "input");
+  const outputs = visiblePorts.filter((p) => p.direction === "output");
+  const bidirectional = visiblePorts.filter((p) => p.direction === "bidirectional");
 
   const inputItems = useMemo(() => buildColumnItems(inputs), [inputs]);
   const outputItems = useMemo(() => buildColumnItems(outputs), [outputs]);
@@ -61,9 +73,11 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         <div className="text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight">
           {data.label}
         </div>
-        <div className="text-[10px] text-[var(--color-text-muted)] capitalize leading-tight">
-          {data.deviceType.replace(/-/g, " ")}
-        </div>
+        {!hideDeviceTypes && (
+          <div className="text-[10px] text-[var(--color-text-muted)] capitalize leading-tight">
+            {data.deviceType.replace(/-/g, " ")}
+          </div>
+        )}
       </div>
 
       {/* Input/Output Ports — two independent columns */}

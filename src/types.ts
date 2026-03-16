@@ -76,6 +76,12 @@ export interface DeviceTemplate {
   searchTerms?: string[];
 }
 
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface TitleBlock {
   showName: string;
   venue: string;
@@ -86,6 +92,7 @@ export interface TitleBlock {
   company: string;
   revision: string;
   logo: string;
+  customFields: CustomField[];
 }
 
 export type CellContentType = "field" | "static" | "logo" | "pageNumber";
@@ -97,7 +104,7 @@ export interface TitleBlockCell {
   rowSpan: number;
   colSpan: number;
   content:
-    | { type: "field"; field: keyof TitleBlock }
+    | { type: "field"; field: string }
     | { type: "static"; text: string }
     | { type: "logo" }
     | { type: "pageNumber" };
@@ -128,6 +135,8 @@ export interface SchematicFile {
   printScale?: number;
   titleBlock?: TitleBlock;
   titleBlockLayout?: TitleBlockLayout;
+  hiddenSignalTypes?: SignalType[];
+  hideDeviceTypes?: boolean;
 }
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {

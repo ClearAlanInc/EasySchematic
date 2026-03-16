@@ -121,6 +121,13 @@ interface SchematicState {
   signalColors: Partial<Record<SignalType, string>> | undefined;
   setSignalColors: (colors: Record<SignalType, string>) => void;
 
+  // View options
+  hiddenSignalTypes: string;
+  hideDeviceTypes: boolean;
+  toggleSignalTypeVisibility: (type: SignalType) => void;
+  setHideDeviceTypes: (hide: boolean) => void;
+  showAllSignalTypes: () => void;
+
   // Persistence
   saveToLocalStorage: () => void;
   loadFromLocalStorage: () => boolean;
@@ -297,9 +304,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   printPaperId: "arch-d",
   printOrientation: "landscape" as Orientation,
   printScale: 1.0,
-  titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "" },
+  titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
+  hiddenSignalTypes: "",
+  hideDeviceTypes: false,
 
   onNodesChange: (changes) => {
     const updated = applyNodeChanges(changes, get().nodes) as SchematicNode[];
@@ -550,14 +559,22 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     if (!canSource || !canTarget) return false;
     if (sourcePort.signalType !== targetPort.signalType) return false;
 
-    // Don't allow duplicate connections to same target handle
-    const duplicate = state.edges.some(
+    // Don't allow multiple connections to the same handle (input or output)
+    const duplicateTarget = state.edges.some(
       (e) =>
         e.id !== _reconnectingEdgeId &&
         e.target === connection.target &&
         e.targetHandle === connection.targetHandle,
     );
-    if (duplicate) return false;
+    if (duplicateTarget) return false;
+
+    const duplicateSource = state.edges.some(
+      (e) =>
+        e.id !== _reconnectingEdgeId &&
+        e.source === connection.source &&
+        e.sourceHandle === connection.sourceHandle,
+    );
+    if (duplicateSource) return false;
 
     // For bidirectional ports, block the opposite side if one side is already connected
     if (sourcePort.direction === "bidirectional" && connection.sourceHandle) {
@@ -792,6 +809,26 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  toggleSignalTypeVisibility: (type) => {
+    const current = get().hiddenSignalTypes;
+    const set_ = new Set(current ? current.split(",").filter(Boolean) : []);
+    if (set_.has(type)) set_.delete(type);
+    else set_.add(type);
+    const next = [...set_].sort().join(",");
+    set({ hiddenSignalTypes: next });
+    get().saveToLocalStorage();
+  },
+
+  setHideDeviceTypes: (hide) => {
+    set({ hideDeviceTypes: hide });
+    get().saveToLocalStorage();
+  },
+
+  showAllSignalTypes: () => {
+    set({ hiddenSignalTypes: "" });
+    get().saveToLocalStorage();
+  },
+
   saveToLocalStorage: () => {
     const state = get();
     const data: SchematicFile = {
@@ -805,6 +842,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printScale: state.printScale,
       titleBlock: state.titleBlock,
       titleBlockLayout: state.titleBlockLayout,
+      hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
+      hideDeviceTypes: state.hideDeviceTypes || undefined,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -836,8 +875,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             printPaperId: data.printPaperId ?? "arch-d",
             printOrientation: data.printOrientation ?? "landscape",
             printScale: data.printScale ?? 1.0,
-            titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "" },
+            titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
+            hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
+            hideDeviceTypes: data.hideDeviceTypes ?? false,
           });
         });
         return false;
@@ -857,8 +898,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         printPaperId: data.printPaperId ?? "arch-d",
         printOrientation: data.printOrientation ?? "landscape",
         printScale: data.printScale ?? 1.0,
-        titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "" },
+        titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
+        hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
+        hideDeviceTypes: data.hideDeviceTypes ?? false,
       });
       return true;
     } catch {
@@ -880,6 +923,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printScale: state.printScale,
       titleBlock: state.titleBlock,
       titleBlockLayout: state.titleBlockLayout,
+      hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
+      hideDeviceTypes: state.hideDeviceTypes || undefined,
     };
   },
 
@@ -912,8 +957,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printPaperId: data.printPaperId ?? "arch-d",
       printOrientation: data.printOrientation ?? "landscape",
       printScale: data.printScale ?? 1.0,
-      titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "" },
+      titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
+      hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
+      hideDeviceTypes: data.hideDeviceTypes ?? false,
     });
     get().saveToLocalStorage();
   },
@@ -923,8 +970,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes: [],
       edges: [],
       schematicName: "Untitled Schematic",
-      titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "" },
+      titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: createDefaultLayout(),
+      hiddenSignalTypes: "",
+      hideDeviceTypes: false,
     });
     get().saveToLocalStorage();
   },
@@ -936,7 +985,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   recomputeRoutes: (rfInstance) => {
     const state = get();
-    const results = routeAllEdges(state.nodes, state.edges, rfInstance, state.debugEdges);
+    const hiddenSet = state.hiddenSignalTypes ? new Set(state.hiddenSignalTypes.split(",")) : null;
+    const visibleEdges = hiddenSet
+      ? state.edges.filter((e) => !hiddenSet.has(e.data?.signalType ?? ""))
+      : state.edges;
+    const results = routeAllEdges(state.nodes, visibleEdges, rfInstance, state.debugEdges);
     set({ routedEdges: results });
   },
 
