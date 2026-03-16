@@ -20,6 +20,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI Out", "hdmi", "output"),
       port("Genlock In", "genlock", "input"),
       port("Return In", "sdi", "input"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Switchers
@@ -35,6 +36,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("PVW Out", "sdi", "output"),
       port("AUX Out", "sdi", "output"),
       port("Multiview", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Monitors
@@ -45,6 +47,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
       port("SDI Loop", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // TV
@@ -54,6 +57,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     searchTerms: ["television", "display", "screen"],
     ports: [
       port("HDMI In", "hdmi", "input"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Audio Mixer
@@ -69,6 +73,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("AUX Out", "analog-audio", "output"),
       port("Dante Out", "dante", "output"),
       port("AES Out", "aes", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Blackmagic Micro Converter SDI to HDMI
@@ -131,6 +136,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Fiber Out 2", "fiber", "output"),
       port("Fiber Out 3", "fiber", "output"),
       port("Fiber Out 4", "fiber", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // AJA FiDO-4R — Quad Fiber to SDI Receiver
@@ -147,6 +153,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI Out 2", "sdi", "output"),
       port("SDI Out 3", "sdi", "output"),
       port("SDI Out 4", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // AJA FiDO-T — Single SDI to Fiber Transmitter
@@ -179,11 +186,12 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
-      port("VGA In", "custom", "input"),
+      port("VGA In", "vga", "input"),
       port("SDI Out 1", "sdi", "output"),
       port("SDI Out 2", "sdi", "output"),
       port("HDMI Out", "hdmi", "output"),
       port("SDI Loop", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Decimator MD-HX — Scaler / Cross Converter
@@ -206,13 +214,14 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     searchTerms: ["extron", "presentation scaler", "vga", "scan converter"],
     ports: [
       port("HDMI In", "hdmi", "input"),
-      port("VGA In", "custom", "input"),
-      port("Composite In", "custom", "input"),
+      port("VGA In", "vga", "input"),
+      port("Composite In", "composite", "input"),
       port("Audio In 1", "analog-audio", "input"),
       port("Audio In 2", "analog-audio", "input"),
       port("Audio In 3", "analog-audio", "input"),
       port("HDMI Out", "hdmi", "output"),
       port("RS-232", "serial", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Converter
@@ -233,6 +242,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI In", "hdmi", "input"),
       port("NDI Out", "ndi", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // NDI Decoder
@@ -244,6 +254,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Ethernet", "ethernet", "bidirectional"),
       port("SDI Out", "sdi", "output"),
       port("HDMI Out", "hdmi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Router
@@ -259,6 +270,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Out 2", "sdi", "output"),
       port("Out 3", "sdi", "output"),
       port("Out 4", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Blackmagic Smart Videohub 20x20
@@ -308,6 +320,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Out 19", "sdi", "output"),
       port("Out 20", "sdi", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Blackmagic CleanSwitch 12x12
@@ -341,6 +354,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Out 11", "sdi", "output"),
       port("Out 12", "sdi", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Kramer VS-88H2 — 8x8 HDMI Matrix Switcher
@@ -367,6 +381,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI Out 8", "hdmi", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("RS-232", "serial", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Multiviewer
@@ -380,6 +395,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI In 4", "sdi", "input"),
       port("HDMI Out", "hdmi", "output"),
       port("SDI Out", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Frame Sync
@@ -415,6 +431,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI Monitor", "sdi", "output"),
       port("RS-422", "rs422", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Graphics
@@ -450,6 +467,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     ],
   },
   // Blackmagic UltraStudio 4K Mini
+  // (bus-powered — no AC power port)
   {
     deviceType: "adapter",
     label: "BMD UltraStudio 4K Mini",
@@ -480,6 +498,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI Out 3", "sdi", "output"),
       port("SDI Out 4", "sdi", "output"),
       port("DP Loop", "displayport", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Datapath FX4 HDMI — Video Wall Controller
@@ -496,6 +515,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI Out 3", "hdmi", "output"),
       port("HDMI Out 4", "hdmi", "output"),
       port("DP Loop", "displayport", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Panasonic PT-DZ13K — Large Venue Projector
@@ -503,16 +523,17 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     deviceType: "projector",
     label: "Panasonic DZ13K",
     ports: [
-      port("RGBHV In (BNC)", "custom", "input"),
-      port("RGB In (VGA)", "custom", "input"),
+      port("RGBHV In (BNC)", "vga", "input"),
+      port("RGB In (VGA)", "vga", "input"),
       port("DVI-D In", "hdmi", "input"),
       port("HDMI In", "hdmi", "input"),
       port("SDI In 1", "sdi", "input"),
       port("SDI In 2 (3G)", "sdi", "input"),
-      port("Composite In", "custom", "input"),
+      port("Composite In", "composite", "input"),
       port("RS-232 In", "serial", "input"),
       port("LAN", "ethernet", "bidirectional"),
       port("RS-232 Out", "serial", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Panasonic PT-RZ21K — Large Venue Laser Projector
@@ -526,10 +547,11 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI In 1", "sdi", "input"),
       port("SDI In 2", "sdi", "input"),
       port("HDBaseT In", "hdbaset", "input"),
-      port("VGA In", "custom", "input"),
-      port("RGB BNC In", "custom", "input"),
+      port("VGA In", "vga", "input"),
+      port("RGB BNC In", "vga", "input"),
       port("RS-232 In", "serial", "input"),
       port("LAN", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Mac Studio (M4)
@@ -537,16 +559,17 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     deviceType: "computer",
     label: "Mac Studio (M4)",
     ports: [
-      port("TB5 1", "thunderbolt", "output"),
-      port("TB5 2", "thunderbolt", "output"),
-      port("TB5 3", "thunderbolt", "output"),
-      port("TB5 4", "thunderbolt", "output"),
+      port("TB5 1", "thunderbolt", "bidirectional"),
+      port("TB5 2", "thunderbolt", "bidirectional"),
+      port("TB5 3", "thunderbolt", "bidirectional"),
+      port("TB5 4", "thunderbolt", "bidirectional"),
       port("HDMI Out", "hdmi", "output"),
       port("USB-A 1", "usb", "bidirectional"),
       port("USB-A 2", "usb", "bidirectional"),
       port("USB-C Front 1", "usb", "bidirectional"),
       port("USB-C Front 2", "usb", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Ethernet Switch (4-port)
@@ -559,6 +582,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Port 2", "ethernet", "bidirectional"),
       port("Port 3", "ethernet", "bidirectional"),
       port("Port 4", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Ethernet Switch (8-port)
@@ -575,6 +599,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Port 6", "ethernet", "bidirectional"),
       port("Port 7", "ethernet", "bidirectional"),
       port("Port 8", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Computer (Generic)
@@ -586,6 +611,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI Out", "hdmi", "output"),
       port("USB-C", "usb", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Mouse
@@ -613,12 +639,13 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     searchTerms: ["ptz", "ptzoptics", "pt30x", "move se"],
     ports: [
       port("3.5mm Audio In", "analog-audio", "input"),
-      port("Ethernet", "ethernet", "input"),
+      port("Ethernet", "ethernet", "bidirectional"),
       port("RS-232 In", "serial", "input"),
       port("SDI Out", "sdi", "output"),
       port("HDMI Out", "hdmi", "output"),
       port("USB-C Out", "usb", "bidirectional"),
       port("RS-232 Out", "serial", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -636,6 +663,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Audio In", "analog-audio", "input"),
       port("Audio Out", "analog-audio", "output"),
       port("Network", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
     searchTerms: ["Adder", "AdderLink", "XDIP", "KVM", "extender", "IP", "matrix"],
   },
@@ -651,6 +679,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDMI Loop", "hdmi", "output"),
       port("HDBaseT Out", "hdbaset", "output"),
       port("RS-232", "serial", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Extron DTP R HD2 4K 230 — HDBaseT Receiver
@@ -662,6 +691,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("HDBaseT In", "hdbaset", "input"),
       port("HDMI Out", "hdmi", "output"),
       port("RS-232", "serial", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -675,6 +705,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
       port("SDI Loop", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Teradek Bolt 4K 750 RX — Wireless Video Receiver
@@ -686,6 +717,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("SDI Out 1", "sdi", "output"),
       port("SDI Out 2", "sdi", "output"),
       port("HDMI Out", "hdmi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -707,6 +739,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("GPIO", "gpio", "bidirectional"),
       port("LAN 1", "ethernet", "bidirectional"),
       port("LAN 2", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -723,6 +756,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Analog Out R", "analog-audio", "output"),
       port("AES Out 1-2", "aes", "output"),
       port("AES Out 3-4", "aes", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
   // BMD Teranex Mini Audio to SDI 12G — Audio Embedder
@@ -737,6 +771,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("AES In 1-2", "aes", "input"),
       port("AES In 3-4", "aes", "input"),
       port("SDI Out", "sdi", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -754,6 +789,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Ethernet 2", "ethernet", "bidirectional"),
       port("USB 1", "usb", "bidirectional"),
       port("USB 2", "usb", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -771,6 +807,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("USB-C", "usb", "bidirectional"),
       port("RS-232", "serial", "bidirectional"),
       port("GPIO", "gpio", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -787,6 +824,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Analog Out 4", "analog-audio", "output"),
       port("Dante 1", "dante", "bidirectional"),
       port("Dante 2", "dante", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // Sennheiser EW-DX EM 4 Dante — Quad Wireless Mic Receiver
@@ -802,6 +840,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Dante 1", "dante", "bidirectional"),
       port("Dante 2", "dante", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -822,6 +861,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Dante Secondary", "dante", "bidirectional"),
       port("Word Clock In", "genlock", "input"),
       port("Word Clock Out", "genlock", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -838,8 +878,9 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("IR/Serial", "serial", "output"),
       port("Relay", "gpio", "output"),
       port("Versiport I/O", "gpio", "bidirectional"),
-      port("Cresnet", "custom", "bidirectional"),
+      port("Cresnet", "serial", "bidirectional"),
       port("USB", "usb", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -854,6 +895,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Ethernet Loop", "ethernet", "bidirectional"),
       port("GPI In (8ch)", "gpio", "input"),
       port("GPI Out (8ch)", "gpio", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 
@@ -873,6 +915,43 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       port("Analog Audio", "analog-audio", "bidirectional"),
       port("USB Host", "usb", "bidirectional"),
       port("USB Device", "usb", "bidirectional"),
+      port("AC Power", "power", "input"),
+    ],
+  },
+
+  // Power Distribution
+  {
+    deviceType: "power-distribution",
+    label: "Power Strip",
+    searchTerms: ["power strip", "power bar", "outlet strip", "surge protector"],
+    ports: [
+      port("AC In", "power", "input"),
+      port("Out 1", "power", "output"),
+      port("Out 2", "power", "output"),
+      port("Out 3", "power", "output"),
+      port("Out 4", "power", "output"),
+      port("Out 5", "power", "output"),
+      port("Out 6", "power", "output"),
+    ],
+  },
+  {
+    deviceType: "power-distribution",
+    label: "Rack PDU",
+    searchTerms: ["pdu", "power distribution", "rack power"],
+    ports: [
+      port("AC In", "power", "input"),
+      port("Out 1", "power", "output"),
+      port("Out 2", "power", "output"),
+      port("Out 3", "power", "output"),
+      port("Out 4", "power", "output"),
+      port("Out 5", "power", "output"),
+      port("Out 6", "power", "output"),
+      port("Out 7", "power", "output"),
+      port("Out 8", "power", "output"),
+      port("Out 9", "power", "output"),
+      port("Out 10", "power", "output"),
+      port("Out 11", "power", "output"),
+      port("Out 12", "power", "output"),
     ],
   },
 ];

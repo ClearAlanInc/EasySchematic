@@ -25,6 +25,8 @@
   --color-rs422: #6d28d9;     /* deep violet — machine control */
   --color-serial: #525252;    /* gray — generic serial */
   --color-thunderbolt: #4f46e5; /* indigo — high-speed */
+  --color-composite: #ca8a04; /* yellow — classic yellow RCA */
+  --color-vga: #0369a1;       /* dark sky blue — classic VGA blue */
   --color-power: #a16207;     /* dark amber — electrical */
   --color-custom: #64748b;    /* cool gray */
 }

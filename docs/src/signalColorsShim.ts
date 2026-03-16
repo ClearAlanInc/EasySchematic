@@ -21,6 +21,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   rs422: "#6d28d9",
   serial: "#525252",
   thunderbolt: "#4f46e5",
+  composite: "#ca8a04",
+  vga: "#0369a1",
   power: "#a16207",
   custom: "#64748b",
 };

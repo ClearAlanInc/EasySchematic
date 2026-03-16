@@ -18,6 +18,8 @@ export type SignalType =
   | "rs422"
   | "serial"
   | "thunderbolt"
+  | "composite"
+  | "vga"
   | "power"
   | "custom";
 
@@ -157,6 +159,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   rs422: "var(--color-rs422)",
   serial: "var(--color-serial)",
   thunderbolt: "var(--color-thunderbolt)",
+  composite: "var(--color-composite)",
+  vga: "var(--color-vga)",
   power: "var(--color-power)",
   custom: "var(--color-custom)",
 };
@@ -179,6 +183,8 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   rs422: "RS-422",
   serial: "Serial",
   thunderbolt: "Thunderbolt",
+  composite: "Composite",
+  vga: "VGA",
   power: "Power",
   custom: "Custom",
 };

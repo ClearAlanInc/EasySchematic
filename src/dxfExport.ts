@@ -21,6 +21,8 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   rs422: 174,      // deep violet
   serial: 8,       // gray
   thunderbolt: 174, // indigo
+  composite: 40,   // yellow
+  vga: 150,        // dark sky blue
   power: 46,       // dark amber
   custom: 9,       // cool gray
 };

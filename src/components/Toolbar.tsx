@@ -114,6 +114,19 @@ export default function Toolbar() {
       <ToolbarButton onClick={() => setShowPrintDialog(true)} title="Export PNG/SVG/DXF">
         Export
       </ToolbarButton>
+      <div className="w-px h-5 bg-[var(--color-border)]" />
+      <a
+        href="https://docs.easyschematic.live"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="px-2.5 py-1 text-xs rounded bg-white text-[var(--color-text)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] transition-colors cursor-pointer inline-flex items-center gap-1"
+        title="Open documentation"
+      >
+        Docs
+        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <path d="M3.5 1.5h7m0 0v7m0-7L2 10" />
+        </svg>
+      </a>
 
       <input
         ref={fileInputRef}

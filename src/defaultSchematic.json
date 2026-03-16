@@ -92,25 +92,25 @@
             "id": "p1773360118182-0",
             "label": "TB5 1",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773360118182-1",
             "label": "TB5 2",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773360118182-2",
             "label": "TB5 3",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773360118182-3",
             "label": "TB5 4",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773360118182-4",
@@ -147,6 +147,12 @@
             "label": "USB-A 2",
             "signalType": "usb",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-33",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -240,13 +246,13 @@
           {
             "id": "p1773360337151-0",
             "label": "RGBHV In (BNC)",
-            "signalType": "custom",
+            "signalType": "vga",
             "direction": "input"
           },
           {
             "id": "p1773360337151-1",
             "label": "RGB In (VGA)",
-            "signalType": "custom",
+            "signalType": "vga",
             "direction": "input"
           },
           {
@@ -276,7 +282,7 @@
           {
             "id": "p1773360337151-6",
             "label": "Composite In",
-            "signalType": "custom",
+            "signalType": "composite",
             "direction": "input"
           },
           {
@@ -289,13 +295,19 @@
             "id": "p1773360337151-8",
             "label": "LAN",
             "signalType": "ethernet",
-            "direction": "input"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773360337151-9",
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-38",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "Panasonic DZ13K"
@@ -323,6 +335,12 @@
             "id": "p1773360347184-0",
             "label": "HDMI In",
             "signalType": "hdmi",
+            "direction": "input"
+          },
+          {
+            "id": "pw-device-39",
+            "label": "AC Power",
+            "signalType": "power",
             "direction": "input"
           }
         ],
@@ -352,6 +370,12 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input"
+          },
+          {
+            "id": "pw-device-40",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "TV"
@@ -379,6 +403,12 @@
             "id": "p1773360350057-0",
             "label": "HDMI In",
             "signalType": "hdmi",
+            "direction": "input"
+          },
+          {
+            "id": "pw-device-41",
+            "label": "AC Power",
+            "signalType": "power",
             "direction": "input"
           }
         ],
@@ -408,6 +438,12 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input"
+          },
+          {
+            "id": "pw-device-42",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "TV"
@@ -435,6 +471,12 @@
             "id": "p1773360350504-0",
             "label": "HDMI In",
             "signalType": "hdmi",
+            "direction": "input"
+          },
+          {
+            "id": "pw-device-43",
+            "label": "AC Power",
+            "signalType": "power",
             "direction": "input"
           }
         ],
@@ -464,6 +506,12 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input"
+          },
+          {
+            "id": "pw-device-44",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "TV"
@@ -492,6 +540,12 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input"
+          },
+          {
+            "id": "pw-device-45",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "TV"
@@ -519,6 +573,12 @@
             "id": "p1773360351528-0",
             "label": "HDMI In",
             "signalType": "hdmi",
+            "direction": "input"
+          },
+          {
+            "id": "pw-device-46",
+            "label": "AC Power",
+            "signalType": "power",
             "direction": "input"
           }
         ],
@@ -596,6 +656,12 @@
             "label": "DP Loop",
             "signalType": "displayport",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-47",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "Datapath FX4 SDI"
@@ -672,6 +738,12 @@
             "label": "DP Loop",
             "signalType": "displayport",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-48",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "Datapath FX4 SDI"
@@ -1062,6 +1134,12 @@
             "label": "Port 8",
             "signalType": "ethernet",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-60",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "Ethernet Switch (8-port)"
@@ -1095,7 +1173,7 @@
             "id": "p1773416243486-1",
             "label": "Ethernet",
             "signalType": "ethernet",
-            "direction": "input"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773416243486-2",
@@ -1126,6 +1204,12 @@
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-61",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "PTZOptics Move SE"
@@ -1159,7 +1243,7 @@
             "id": "p1773416246636-1",
             "label": "Ethernet",
             "signalType": "ethernet",
-            "direction": "input"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773416246636-2",
@@ -1190,6 +1274,12 @@
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-62",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "PTZOptics Move SE"
@@ -1236,6 +1326,12 @@
             "label": "Port 4",
             "signalType": "ethernet",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-63",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ],
         "baseLabel": "Ethernet Switch (4-port)"
@@ -1276,6 +1372,12 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-64",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1315,6 +1417,12 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-65",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1388,6 +1496,12 @@
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-70",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1522,6 +1636,12 @@
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-74",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1561,6 +1681,12 @@
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-75",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1625,6 +1751,12 @@
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output"
+          },
+          {
+            "id": "pw-device-76",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1651,25 +1783,25 @@
             "id": "p1773508594582-0",
             "label": "TB5 1",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773508594582-1",
             "label": "TB5 2",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773508594582-2",
             "label": "TB5 3",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773508594582-3",
             "label": "TB5 4",
             "signalType": "thunderbolt",
-            "direction": "output"
+            "direction": "bidirectional"
           },
           {
             "id": "p1773508594582-4",
@@ -1706,6 +1838,12 @@
             "label": "USB-A 2",
             "signalType": "usb",
             "direction": "bidirectional"
+          },
+          {
+            "id": "pw-device-77",
+            "label": "AC Power",
+            "signalType": "power",
+            "direction": "input"
           }
         ]
       },
@@ -1723,7 +1861,7 @@
       "id": "edge-14",
       "source": "device-33",
       "target": "device-36",
-      "sourceHandle": "p1773360118182-0",
+      "sourceHandle": "p1773360118182-0-out",
       "targetHandle": "p1773360222505-0",
       "data": {
         "signalType": "thunderbolt"
@@ -1963,7 +2101,7 @@
       "id": "edge-34",
       "source": "device-33",
       "target": "device-37",
-      "sourceHandle": "p1773360118182-1",
+      "sourceHandle": "p1773360118182-1-out",
       "targetHandle": "p1773360225872-0",
       "data": {
         "signalType": "thunderbolt"
@@ -1994,7 +2132,7 @@
       "source": "device-60",
       "target": "device-62",
       "sourceHandle": "p1773415859541-6-out",
-      "targetHandle": "p1773416246636-1",
+      "targetHandle": "p1773416246636-1-in",
       "data": {
         "signalType": "ethernet"
       },
@@ -2009,7 +2147,7 @@
       "source": "device-60",
       "target": "device-38",
       "sourceHandle": "p1773415859541-4-out",
-      "targetHandle": "p1773360337151-8",
+      "targetHandle": "p1773360337151-8-in",
       "data": {
         "signalType": "ethernet"
       },
@@ -2189,7 +2327,7 @@
       "source": "device-60",
       "target": "device-61",
       "sourceHandle": "p1773415859541-5-out",
-      "targetHandle": "p1773416243486-1",
+      "targetHandle": "p1773416243486-1-in",
       "data": {
         "signalType": "ethernet"
       },
@@ -2218,7 +2356,7 @@
       "id": "edge-57",
       "source": "device-33",
       "target": "device-69",
-      "sourceHandle": "p1773360118182-2",
+      "sourceHandle": "p1773360118182-2-out",
       "targetHandle": "p1773418162658-0",
       "data": {
         "signalType": "thunderbolt"
