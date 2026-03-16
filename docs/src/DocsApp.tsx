@@ -10,6 +10,7 @@ import DeviceLibraryPage from "./pages/DeviceLibrary";
 import ImportExportPage from "./pages/ImportExport";
 import NotesPage from "./pages/Notes";
 import PrintingPage from "./pages/Printing";
+import PackListPage from "./pages/PackList";
 
 const routes: Record<string, { title: string; component: React.FC }> = {
   "": { title: "Overview", component: OverviewPage },
@@ -21,6 +22,7 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   "rooms-and-grouping": { title: "Rooms & Grouping", component: RoomsAndGroupingPage },
   notes: { title: "Notes", component: NotesPage },
   "device-library": { title: "Device Library", component: DeviceLibraryPage },
+  "pack-list": { title: "Pack List & Reports", component: PackListPage },
   printing: { title: "Printing & Title Block", component: PrintingPage },
   "import-export": { title: "Import / Export", component: ImportExportPage },
 };

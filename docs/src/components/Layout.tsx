@@ -11,6 +11,7 @@ const navItems = [
     { hash: "notes", label: "Notes" },
     { hash: "device-library", label: "Device Library" },
   ]},
+  { hash: "pack-list", label: "Pack List & Reports" },
   { hash: "printing", label: "Printing & Title Block" },
   { hash: "import-export", label: "Import / Export" },
 ];

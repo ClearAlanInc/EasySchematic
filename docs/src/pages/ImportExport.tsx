@@ -22,6 +22,7 @@ export default function ImportExportPage() {
         <li>Signal color customizations (if any)</li>
         <li>Print settings (paper size, orientation, scale)</li>
         <li>Title block data and layout</li>
+        <li>Report layout preferences (pack list column visibility, sorting, header/footer layout)</li>
       </ul>
 
       <h3>Import</h3>

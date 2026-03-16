@@ -53,6 +53,16 @@ SDI · HDMI · NDI · Dante · Analog Audio · AES · USB · Ethernet · Fiber �
 
 **View options** — hide connections by signal type, toggle device type labels on/off
 
+### Pack List & Reports
+
+- **Pack list** — auto-generated bill of materials from your schematic (devices + cables)
+- **Print preview** — WYSIWYG report editor with interactive header/footer grid, column visibility, grouping, sorting
+- **Multi-page preview** with accurate page breaks, page navigation, zoom, and "Page X of Y" numbering
+- **Header/footer grid editor** — assign fields (show name, venue, date, etc.), static text, logo, or page numbers to cells; merge, resize, add/delete rows and columns via right-click
+- **CSV export** for spreadsheet use
+- **PDF export** matching the preview layout exactly
+- Layout preferences saved per-schematic
+
 ### Save & Export
 
 - **Auto-save** to browser localStorage
