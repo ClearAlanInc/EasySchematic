@@ -191,10 +191,12 @@ export async function fetchSubmission(id: string): Promise<Submission> {
   return res.json();
 }
 
-export async function approveSubmission(id: string): Promise<void> {
+export async function approveSubmission(id: string, data?: Omit<DeviceTemplate, "id" | "version">): Promise<void> {
   const res = await fetch(`${API_URL}/submissions/${id}/approve`, {
     method: "POST",
+    headers: data ? { "Content-Type": "application/json" } : {},
     credentials: "include",
+    body: data ? JSON.stringify({ data }) : undefined,
   });
   if (!res.ok) throw new Error(`Failed to approve: ${res.status}`);
 }

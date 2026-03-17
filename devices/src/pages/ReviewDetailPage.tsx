@@ -5,6 +5,7 @@ import type { DeviceTemplate, Port } from "../../../src/types";
 import { CONNECTOR_LABELS } from "../../../src/types";
 import StatusBadge from "../components/StatusBadge";
 import SignalBadge from "../components/SignalBadge";
+import PortEditor from "../components/PortEditor";
 
 export default function ReviewDetailPage({ id }: { id: string }) {
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -15,6 +16,15 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   const [showReject, setShowReject] = useState(false);
   const [acting, setActing] = useState(false);
   const [done, setDone] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState("");
+  const [editDeviceType, setEditDeviceType] = useState("");
+  const [editManufacturer, setEditManufacturer] = useState("");
+  const [editModelNumber, setEditModelNumber] = useState("");
+  const [editReferenceUrl, setEditReferenceUrl] = useState("");
+  const [editSearchTerms, setEditSearchTerms] = useState("");
+  const [editColor, setEditColor] = useState("");
+  const [editPorts, setEditPorts] = useState<Port[]>([]);
 
   useEffect(() => {
     fetchSubmission(id)
@@ -33,10 +43,37 @@ export default function ReviewDetailPage({ id }: { id: string }) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleApprove = async () => {
+  const startEditing = () => {
+    if (!submission) return;
+    const d = submission.data;
+    setEditLabel(d.label ?? "");
+    setEditDeviceType(d.deviceType ?? "");
+    setEditManufacturer(d.manufacturer ?? "");
+    setEditModelNumber(d.modelNumber ?? "");
+    setEditReferenceUrl(d.referenceUrl ?? "");
+    setEditSearchTerms(d.searchTerms?.join(", ") ?? "");
+    setEditColor(d.color ?? "");
+    setEditPorts((d.ports ?? []) as Port[]);
+    setEditing(true);
+  };
+
+  const handleApprove = async (withEdits?: boolean) => {
     setActing(true);
     try {
-      await approveSubmission(id);
+      let editedData: Omit<DeviceTemplate, "id" | "version"> | undefined;
+      if (withEdits) {
+        editedData = {
+          label: editLabel.trim(),
+          deviceType: editDeviceType.trim(),
+          ports: editPorts,
+          ...(editManufacturer.trim() && { manufacturer: editManufacturer.trim() }),
+          ...(editModelNumber.trim() && { modelNumber: editModelNumber.trim() }),
+          ...(editReferenceUrl.trim() && { referenceUrl: editReferenceUrl.trim() }),
+          ...(editColor.trim() && { color: editColor.trim() }),
+          ...(editSearchTerms.trim() && { searchTerms: editSearchTerms.split(",").map((s) => s.trim()).filter(Boolean) }),
+        };
+      }
+      await approveSubmission(id, editedData);
       setDone("approved");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to approve");
@@ -114,8 +151,61 @@ export default function ReviewDetailPage({ id }: { id: string }) {
         </div>
       )}
 
+      {/* Edit mode */}
+      {editing && submission.status === "pending" && (
+        <div className="mb-8 border border-blue-200 rounded-lg p-6 bg-blue-50/50">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">Edit Before Approving</h2>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <label className="col-span-2">
+              <span className="block text-sm font-medium text-slate-700 mb-1">Label *</span>
+              <input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
+              <input value={editDeviceType} onChange={(e) => setEditDeviceType(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer</span>
+              <input value={editManufacturer} onChange={(e) => setEditManufacturer(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Model Number</span>
+              <input value={editModelNumber} onChange={(e) => setEditModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label className="col-span-2">
+              <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL</span>
+              <input value={editReferenceUrl} onChange={(e) => setEditReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product-page" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
+              <input value={editSearchTerms} onChange={(e) => setEditSearchTerms(e.target.value)} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Color</span>
+              <div className="flex items-center gap-2">
+                <input value={editColor} onChange={(e) => setEditColor(e.target.value)} placeholder="#3b82f6" className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                {editColor && <span className="w-8 h-8 rounded border border-slate-200" style={{ backgroundColor: editColor }} />}
+              </div>
+            </label>
+          </div>
+          <PortEditor ports={editPorts} onChange={setEditPorts} />
+          <div className="flex items-center gap-3 mt-6 pt-4 border-t border-blue-200">
+            <button
+              onClick={() => handleApprove(true)}
+              disabled={acting}
+              className="px-6 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              {acting ? "Approving..." : "Approve with Edits"}
+            </button>
+            <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">
+              Cancel Edit
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
-      {submission.status === "pending" && (
+      {submission.status === "pending" && !editing && (
         <div className="border-t border-slate-200 pt-6">
           {showReject ? (
             <div className="space-y-3">
@@ -145,11 +235,17 @@ export default function ReviewDetailPage({ id }: { id: string }) {
           ) : (
             <div className="flex items-center gap-3">
               <button
-                onClick={handleApprove}
+                onClick={() => handleApprove()}
                 disabled={acting}
                 className="px-6 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
                 {acting ? "Approving..." : "Approve"}
+              </button>
+              <button
+                onClick={startEditing}
+                className="px-6 py-2 rounded-lg border border-blue-300 text-blue-600 text-sm font-medium hover:bg-blue-50 transition-colors"
+              >
+                Edit & Approve
               </button>
               <button
                 onClick={() => setShowReject(true)}

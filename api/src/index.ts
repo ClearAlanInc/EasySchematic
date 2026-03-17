@@ -324,7 +324,17 @@ app.post("/submissions/:id/approve", async (c) => {
   if (!row) return c.json({ error: "Pending submission not found" }, 404);
 
   const submission = row as unknown as SubmissionRow;
-  const data = JSON.parse(submission.data);
+
+  // Allow moderator to override submission data with edits
+  const body = await c.req.json<{ data?: unknown }>().catch(() => ({}) as { data?: unknown });
+  let data = JSON.parse(submission.data);
+  if (body.data) {
+    const validation = validateTemplate(body.data);
+    if (!validation.ok) {
+      return c.json({ error: validation.error }, 400);
+    }
+    data = body.data;
+  }
 
   if (submission.action === "create") {
     // Create new template with attribution
