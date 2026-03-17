@@ -52,8 +52,9 @@ export default function SubmitPage({ id }: Props) {
   const handleSubmit = async () => {
     if (!label.trim()) { setError("Label is required"); return; }
     if (!deviceType.trim()) { setError("Device type is required"); return; }
-    if (!referenceUrl.trim()) { setError("Reference URL is required"); return; }
-    if (!referenceUrl.trim().startsWith("https://")) { setError("Reference URL must start with https://"); return; }
+    const isGeneric = manufacturer.trim().toLowerCase() === "generic" || !manufacturer.trim();
+    if (!referenceUrl.trim() && !isGeneric) { setError("Reference URL is required (unless manufacturer is Generic or blank)"); return; }
+    if (referenceUrl.trim() && !referenceUrl.trim().startsWith("https://")) { setError("Reference URL must start with https://"); return; }
 
     setSaving(true);
     setError("");
@@ -62,7 +63,7 @@ export default function SubmitPage({ id }: Props) {
       label: label.trim(),
       deviceType: deviceType.trim(),
       ports,
-      referenceUrl: referenceUrl.trim(),
+      ...(referenceUrl.trim() && { referenceUrl: referenceUrl.trim() }),
       ...(manufacturer.trim() && { manufacturer: manufacturer.trim() }),
       ...(modelNumber.trim() && { modelNumber: modelNumber.trim() }),
       ...(color.trim() && { color: color.trim() }),
@@ -135,9 +136,9 @@ export default function SubmitPage({ id }: Props) {
           <input value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label className="col-span-2">
-          <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL *</span>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL {manufacturer.trim().toLowerCase() !== "generic" && manufacturer.trim() ? "*" : ""}</span>
           <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product-page" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Link to the manufacturer's product page for verification</span>
+          <span className="text-xs text-slate-400 mt-1 block">{manufacturer.trim().toLowerCase() === "generic" || !manufacturer.trim() ? "Optional for generic devices" : "Link to the manufacturer's product page for verification"}</span>
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
