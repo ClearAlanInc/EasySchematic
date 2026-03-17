@@ -483,7 +483,7 @@ app.get("/contributors", async (c) => {
   // Only expose name (or anonymized email) — not full email
   const contributors = (results as unknown as { id: string; name: string | null; email: string; approved_count: number }[]).map((r) => ({
     id: r.id,
-    name: r.name || anonymizeEmail(r.email),
+    name: r.name || "Awesome Community Member",
     approvedCount: r.approved_count,
   }));
 
