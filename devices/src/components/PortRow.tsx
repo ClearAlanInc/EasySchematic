@@ -1,6 +1,8 @@
 import type { Port, SignalType, ConnectorType } from "../../../src/types";
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "../../../src/types";
 
+const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
+
 const SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
 const CONNECTOR_TYPES = Object.keys(CONNECTOR_LABELS) as ConnectorType[];
 
@@ -58,6 +60,17 @@ export default function PortRow({ port, selected, onSelect, onChange, onRemove, 
           className="w-24 px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="Section"
         />
+        {NETWORK_SIGNAL_TYPES.has(port.signalType) && (
+          <label className="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap" title="Port has an IP address / network stack">
+            <input
+              type="checkbox"
+              checked={port.addressable !== false}
+              onChange={(e) => onChange({ addressable: e.target.checked ? undefined : false })}
+              className="cursor-pointer"
+            />
+            Addr
+          </label>
+        )}
         <div className="flex flex-col">
           <button onClick={onMoveUp} className="text-slate-400 hover:text-slate-600 text-xs leading-none" title="Move up">&#9650;</button>
           <button onClick={onMoveDown} className="text-slate-400 hover:text-slate-600 text-xs leading-none" title="Move down">&#9660;</button>

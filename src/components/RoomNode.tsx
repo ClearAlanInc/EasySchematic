@@ -1,7 +1,7 @@
 import { memo, useState, useCallback } from "react";
 import { NodeResizer, type NodeProps } from "@xyflow/react";
 import type { RoomNode as RoomNodeType, SchematicNode } from "../types";
-import { useSchematicStore, GRID_SIZE } from "../store";
+import { useSchematicStore } from "../store";
 import { computeResizeSnap } from "../snapUtils";
 
 function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {

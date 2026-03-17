@@ -66,6 +66,7 @@ export interface Port {
   connectorType?: ConnectorType;
   capabilities?: PortCapabilities;
   networkConfig?: PortNetworkConfig;
+  addressable?: boolean;
   activeConfig?: PortActiveConfig;
 }
 

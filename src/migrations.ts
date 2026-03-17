@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 12;
+export const CURRENT_SCHEMA_VERSION = 13;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -123,6 +123,22 @@ const migrations: Record<number, Migration> = {
   11: (data) => {
     // v11 → v12: add optional templatePresets (no data transform needed)
     data.version = 12;
+    return data;
+  },
+  12: (data) => {
+    // v12 → v13: add addressable flag to ports
+    // Network switch ports are pass-through (non-addressable)
+    const NET_SIGNALS = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
+    for (const node of data.nodes ?? []) {
+      if (node.type === "device" && node.data?.deviceType === "network-switch") {
+        for (const p of node.data.ports ?? []) {
+          if (NET_SIGNALS.has(p.signalType)) {
+            p.addressable = false;
+          }
+        }
+      }
+    }
+    data.version = 13;
     return data;
   },
 };

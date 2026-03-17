@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import type { Port, SignalType, PortDirection, ConnectorType } from "../../../src/types";
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "../../../src/types";
+
+const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
 import PortRow from "./PortRow";
 
 const SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
@@ -268,7 +270,7 @@ export default function PortEditor({ ports, onChange }: PortEditorProps) {
           <div className="flex flex-wrap items-end gap-2">
             <label className="text-xs">
               <span className="block text-indigo-600 mb-1">Signal</span>
-              <select defaultValue="" onChange={(e) => { if (e.target.value) { applyToSelected({ signalType: e.target.value as SignalType }); e.target.value = ""; } }} className="px-2 py-1 rounded border border-indigo-200 text-sm">
+              <select defaultValue="" onChange={(e) => { if (e.target.value) { const st = e.target.value as SignalType; const updates: Partial<Port> = { signalType: st }; if (!NETWORK_SIGNAL_TYPES.has(st)) updates.addressable = undefined; applyToSelected(updates); e.target.value = ""; } }} className="px-2 py-1 rounded border border-indigo-200 text-sm">
                 <option value="" disabled>Change...</option>
                 {SIGNAL_TYPES.map((s) => <option key={s} value={s}>{SIGNAL_LABELS[s]}</option>)}
               </select>

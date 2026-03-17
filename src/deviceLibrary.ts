@@ -7,14 +7,17 @@ function port(
   signalType: Port["signalType"],
   direction: Port["direction"],
   connectorType?: ConnectorType,
+  addressable?: boolean,
 ): Port {
-  return {
+  const p: Port = {
     id: `port-${++portIdCounter}`,
     label,
     signalType,
     direction,
     connectorType: connectorType ?? DEFAULT_CONNECTOR[signalType],
   };
+  if (addressable !== undefined) p.addressable = addressable;
+  return p;
 }
 
 /** Generate a sequence of numbered ports (for routers, matrices, etc.) */
@@ -698,10 +701,10 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Ethernet Switch (4-port)",
     searchTerms: ["switch", "network", "poe"],
     ports: [
-      port("Port 1", "ethernet", "bidirectional"),
-      port("Port 2", "ethernet", "bidirectional"),
-      port("Port 3", "ethernet", "bidirectional"),
-      port("Port 4", "ethernet", "bidirectional"),
+      port("Port 1", "ethernet", "bidirectional", undefined, false),
+      port("Port 2", "ethernet", "bidirectional", undefined, false),
+      port("Port 3", "ethernet", "bidirectional", undefined, false),
+      port("Port 4", "ethernet", "bidirectional", undefined, false),
       port("AC Power", "power", "input"),
     ],
   },
@@ -712,14 +715,14 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Ethernet Switch (8-port)",
     searchTerms: ["switch", "network", "poe"],
     ports: [
-      port("Port 1", "ethernet", "bidirectional"),
-      port("Port 2", "ethernet", "bidirectional"),
-      port("Port 3", "ethernet", "bidirectional"),
-      port("Port 4", "ethernet", "bidirectional"),
-      port("Port 5", "ethernet", "bidirectional"),
-      port("Port 6", "ethernet", "bidirectional"),
-      port("Port 7", "ethernet", "bidirectional"),
-      port("Port 8", "ethernet", "bidirectional"),
+      port("Port 1", "ethernet", "bidirectional", undefined, false),
+      port("Port 2", "ethernet", "bidirectional", undefined, false),
+      port("Port 3", "ethernet", "bidirectional", undefined, false),
+      port("Port 4", "ethernet", "bidirectional", undefined, false),
+      port("Port 5", "ethernet", "bidirectional", undefined, false),
+      port("Port 6", "ethernet", "bidirectional", undefined, false),
+      port("Port 7", "ethernet", "bidirectional", undefined, false),
+      port("Port 8", "ethernet", "bidirectional", undefined, false),
       port("AC Power", "power", "input"),
     ],
   },

@@ -640,7 +640,7 @@ function BulkAddForm({
 function PortVisibilitySection({
   showAllPorts,
   setShowAllPorts,
-  hiddenPorts,
+  hiddenPorts: _hiddenPorts,
   setHiddenPorts,
   ports,
   node,
@@ -1115,12 +1115,25 @@ function PortRow({
         </div>
       )}
 
-      {/* Network Config (collapsible, only for network signal types) */}
+      {/* Network Config (collapsible, only for addressable network signal types) */}
       {NETWORK_SIGNAL_TYPES.has(port.signalType) && (
-        <PortNetworkSection
-          config={port.networkConfig}
-          onChange={(nc) => onUpdate({ networkConfig: nc })}
-        />
+        <>
+          <label className="pl-6 flex items-center gap-1 text-[9px] text-[var(--color-text-muted)]">
+            <input
+              type="checkbox"
+              checked={port.addressable !== false}
+              onChange={(e) => onUpdate({ addressable: e.target.checked ? undefined : false })}
+              className="cursor-pointer"
+            />
+            Addressable (has IP)
+          </label>
+          {port.addressable !== false && (
+            <PortNetworkSection
+              config={port.networkConfig}
+              onChange={(nc) => onUpdate({ networkConfig: nc })}
+            />
+          )}
+        </>
       )}
 
       {/* Capabilities (collapsible, only for video signal types) */}
