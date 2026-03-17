@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import type { Port } from "../../../src/types";
-import { fetchTemplate, createSubmission } from "../api";
+import { fetchTemplate, createSubmission, fetchDeviceTypes, fetchSearchTerms } from "../api";
 import PortEditor from "../components/PortEditor";
+import AutocompleteInput from "../components/AutocompleteInput";
+import TagAutocompleteInput from "../components/TagAutocompleteInput";
 
 interface Props {
   id?: string; // existing template ID for edit suggestions
@@ -20,8 +22,15 @@ export default function SubmitPage({ id }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
+  const [knownSearchTerms, setKnownSearchTerms] = useState<string[]>([]);
 
   const isEdit = !!id;
+
+  useEffect(() => {
+    fetchDeviceTypes().then(setDeviceTypes);
+    fetchSearchTerms().then(setKnownSearchTerms);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -115,7 +124,7 @@ export default function SubmitPage({ id }: Props) {
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
-          <input value={deviceType} onChange={(e) => setDeviceType(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <AutocompleteInput value={deviceType} onChange={setDeviceType} suggestions={deviceTypes} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer</span>
@@ -132,7 +141,7 @@ export default function SubmitPage({ id }: Props) {
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
-          <input value={searchTerms} onChange={(e) => setSearchTerms(e.target.value)} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <TagAutocompleteInput value={searchTerms} onChange={setSearchTerms} suggestions={knownSearchTerms} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Color</span>

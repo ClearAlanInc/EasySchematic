@@ -492,6 +492,26 @@ app.get("/contributors", async (c) => {
 
 // ==================== TEMPLATE ENDPOINTS ====================
 
+app.get("/templates/device-types", async (c) => {
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT DISTINCT device_type FROM templates ORDER BY device_type")
+    .all();
+  return c.json(results.map((r) => (r as { device_type: string }).device_type), 200, CACHE_HEADERS);
+});
+
+app.get("/templates/search-terms", async (c) => {
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT search_terms FROM templates WHERE search_terms IS NOT NULL")
+    .all();
+  const allTerms = new Set<string>();
+  for (const row of results) {
+    const terms = JSON.parse((row as { search_terms: string }).search_terms) as string[];
+    for (const t of terms) allTerms.add(t.toLowerCase());
+  }
+  const sorted = [...allTerms].sort();
+  return c.json(sorted, 200, CACHE_HEADERS);
+});
+
 app.get("/templates", async (c) => {
   const { results } = await c.env.easyschematic_db
     .prepare("SELECT * FROM templates ORDER BY sort_order, label")

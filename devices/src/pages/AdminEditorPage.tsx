@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import type { DeviceTemplate, Port } from "../../../src/types";
-import { fetchTemplate, createTemplate, updateTemplate, deleteTemplate, getAdminToken, clearAdminToken } from "../api";
+import { fetchTemplate, createTemplate, updateTemplate, deleteTemplate, getAdminToken, clearAdminToken, fetchDeviceTypes, fetchSearchTerms } from "../api";
 import AuthGate from "../components/AuthGate";
 import PortEditor from "../components/PortEditor";
+import AutocompleteInput from "../components/AutocompleteInput";
+import TagAutocompleteInput from "../components/TagAutocompleteInput";
 
 function Editor({ id }: { id?: string }) {
   const [label, setLabel] = useState("");
@@ -18,8 +20,15 @@ function Editor({ id }: { id?: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
+  const [knownSearchTerms, setKnownSearchTerms] = useState<string[]>([]);
 
   const isEdit = !!id;
+
+  useEffect(() => {
+    fetchDeviceTypes().then(setDeviceTypes);
+    fetchSearchTerms().then(setKnownSearchTerms);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -109,7 +118,7 @@ function Editor({ id }: { id?: string }) {
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
-          <input value={deviceType} onChange={(e) => setDeviceType(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <AutocompleteInput value={deviceType} onChange={setDeviceType} suggestions={deviceTypes} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer</span>
@@ -125,7 +134,7 @@ function Editor({ id }: { id?: string }) {
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
-          <input value={searchTerms} onChange={(e) => setSearchTerms(e.target.value)} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <TagAutocompleteInput value={searchTerms} onChange={setSearchTerms} suggestions={knownSearchTerms} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Color</span>

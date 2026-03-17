@@ -16,6 +16,18 @@ export async function fetchTemplate(id: string): Promise<DeviceTemplate> {
   return res.json();
 }
 
+export async function fetchDeviceTypes(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/templates/device-types`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function fetchSearchTerms(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/templates/search-terms`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 // ==================== TEMPLATES (admin token) ====================
 
 export async function createTemplate(template: Omit<DeviceTemplate, "id" | "version">, token: string): Promise<DeviceTemplate> {
