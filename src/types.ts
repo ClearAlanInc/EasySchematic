@@ -16,6 +16,14 @@ export interface PortNetworkConfig {
   dhcp?: boolean;
 }
 
+export interface DhcpServerConfig {
+  enabled: boolean;
+  rangeStart?: string;   // e.g. "192.168.1.100"
+  rangeEnd?: string;     // e.g. "192.168.1.200"
+  subnetMask?: string;   // e.g. "255.255.255.0"
+  gateway?: string;      // e.g. "192.168.1.1"
+}
+
 export interface PortCapabilities {
   maxResolution?: string;
   maxFrameRate?: number;
@@ -88,6 +96,7 @@ export interface DeviceData {
   modelNumber?: string;
   showAllPorts?: boolean;
   hiddenPorts?: string[];
+  dhcpServer?: DhcpServerConfig;
 }
 
 export type DeviceNode = Node<DeviceData, "device">;

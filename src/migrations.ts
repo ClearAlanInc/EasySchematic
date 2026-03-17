@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 13;
+export const CURRENT_SCHEMA_VERSION = 14;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -123,6 +123,11 @@ const migrations: Record<number, Migration> = {
   11: (data) => {
     // v11 → v12: add optional templatePresets (no data transform needed)
     data.version = 12;
+    return data;
+  },
+  13: (data) => {
+    // v13 → v14: dhcpServer added as optional field on DeviceData — no transform needed
+    data.version = 14;
     return data;
   },
   12: (data) => {

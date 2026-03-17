@@ -12,9 +12,12 @@ import {
   type PortCapabilities,
   type DeviceData,
   type DeviceNode,
+  type DhcpServerConfig,
 } from "../types";
 import { DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES } from "../connectorTypes";
 import { getBundledTemplates } from "../templateApi";
+import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
+import IpInput from "./IpInput";
 
 const ALL_SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
 const ALL_CONNECTOR_TYPES = Object.keys(CONNECTOR_LABELS) as ConnectorType[];
@@ -67,6 +70,9 @@ export default function DeviceEditor() {
   const [hiddenPorts, setHiddenPorts] = useState<string[]>([]);
   const [portVisOpen, setPortVisOpen] = useState(false);
 
+  // DHCP server config
+  const [dhcpServer, setDhcpServer] = useState<DhcpServerConfig | undefined>(undefined);
+
   // Drag state — which port is being dragged and where it would drop
   const [draggedPortId, setDraggedPortId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ direction: PortDirection; index: number } | null>(null);
@@ -91,6 +97,7 @@ export default function DeviceEditor() {
     setShowAllPorts(node.data.showAllPorts ?? false);
     setHiddenPorts(node.data.hiddenPorts ?? []);
     setPortVisOpen(false);
+    setDhcpServer(node.data.dhcpServer ? { ...node.data.dhcpServer } : undefined);
   }, [node]);
 
   const close = useCallback(() => setEditingNodeId(null), [setEditingNodeId]);
@@ -128,10 +135,12 @@ export default function DeviceEditor() {
       ...(existing?.model ? { model: existing.model } : {}),
       ...(showAllPorts ? { showAllPorts: true } : {}),
       ...(finalHiddenPorts.length > 0 ? { hiddenPorts: finalHiddenPorts } : {}),
+      // Always persist dhcpServer if set (preserves range config when toggling off)
+      ...(dhcpServer ? { dhcpServer } : {}),
     };
     updateDevice(editingNodeId, data);
     close();
-  }, [editingNodeId, ports, label, deviceType, color, node, updateDevice, close, showAllPorts, hiddenPorts]);
+  }, [editingNodeId, ports, label, deviceType, color, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer]);
 
   const handleSaveAsTemplate = useCallback(() => {
     const finalPorts: Port[] = ports
@@ -426,6 +435,9 @@ export default function DeviceEditor() {
             open={portVisOpen}
             setOpen={setPortVisOpen}
           />
+
+          {/* DHCP Server */}
+          <DhcpServerSection dhcpServer={dhcpServer} onChange={setDhcpServer} />
 
           <PortSection
             title="Inputs"
@@ -1132,6 +1144,7 @@ function PortRow({
             <PortNetworkSection
               config={port.networkConfig}
               onChange={(nc) => onUpdate({ networkConfig: nc })}
+              portId={port.id}
             />
           )}
         </>
@@ -1155,13 +1168,31 @@ function PortRow({
 function PortNetworkSection({
   config,
   onChange,
+  portId,
 }: {
   config?: PortNetworkConfig;
   onChange: (config: PortNetworkConfig) => void;
+  portId: string;
 }) {
   const [open, setOpen] = useState(false);
   const c = config ?? {};
   const hasData = c.ip || c.subnetMask || c.gateway || c.vlan || c.dhcp;
+
+  // Duplicate IP detection
+  const nodes = useSchematicStore((s) => s.nodes);
+  const editingNodeId = useSchematicStore((s) => s.editingNodeId);
+  const duplicateWarning = useMemo(() => {
+    const ip = c.ip?.trim();
+    if (!ip) return undefined;
+    const dupes = findDuplicateIps(nodes);
+    const entries = dupes.get(ip);
+    if (!entries) return undefined;
+    const others = entries.filter((e) => !(e.nodeId === editingNodeId && e.portId === portId));
+    if (others.length === 0) return undefined;
+    return `Duplicate IP — also used by: ${others.map((e) => `${e.deviceLabel} (${e.portLabel})`).join(", ")}`;
+  }, [nodes, c.ip, editingNodeId, portId]);
+
+  const vlanInvalid = c.vlan != null && !isValidVlan(c.vlan);
 
   return (
     <div className="pl-6 mb-0.5">
@@ -1184,38 +1215,140 @@ function PortNetworkSection({
             />
             DHCP
           </label>
-          <input
-            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+          <IpInput
             value={c.ip ?? ""}
-            onChange={(e) => onChange({ ...c, ip: e.target.value || undefined })}
+            onChange={(v) => {
+              const update: typeof c = { ...c, ip: v || undefined };
+              if (v && isValidIpv4(v) && !c.subnetMask) update.subnetMask = "255.255.255.0";
+              onChange(update);
+            }}
             placeholder="IP Address"
             disabled={c.dhcp}
-            onKeyDown={(e) => e.stopPropagation()}
+            duplicateWarning={duplicateWarning}
           />
-          <input
-            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+          <IpInput
             value={c.subnetMask ?? ""}
-            onChange={(e) => onChange({ ...c, subnetMask: e.target.value || undefined })}
+            onChange={(v) => onChange({ ...c, subnetMask: v || undefined })}
             placeholder="Subnet Mask"
             disabled={c.dhcp}
-            onKeyDown={(e) => e.stopPropagation()}
+            validate={isValidSubnetMask}
           />
-          <input
-            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+          <IpInput
             value={c.gateway ?? ""}
-            onChange={(e) => onChange({ ...c, gateway: e.target.value || undefined })}
+            onChange={(v) => onChange({ ...c, gateway: v || undefined })}
             placeholder="Gateway"
             disabled={c.dhcp}
-            onKeyDown={(e) => e.stopPropagation()}
           />
           <input
-            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+            className={`bg-[var(--color-surface)] border rounded px-1 py-0.5 text-[10px] outline-none ${
+              vlanInvalid ? "border-red-400" : "border-[var(--color-border)] focus:border-blue-500"
+            }`}
             type="number"
             value={c.vlan ?? ""}
             onChange={(e) => onChange({ ...c, vlan: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="VLAN"
+            title={vlanInvalid ? "VLAN must be 1-4094" : undefined}
             onKeyDown={(e) => e.stopPropagation()}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DhcpServerSection({
+  dhcpServer,
+  onChange,
+}: {
+  dhcpServer: DhcpServerConfig | undefined;
+  onChange: (cfg: DhcpServerConfig | undefined) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const cfg = dhcpServer ?? { enabled: false };
+  const enabled = cfg.enabled;
+
+  const startInvalid = cfg.rangeStart ? !isValidIpv4(cfg.rangeStart) : false;
+  const endInvalid = cfg.rangeEnd ? !isValidIpv4(cfg.rangeEnd) : false;
+  const maskInvalid = cfg.subnetMask ? !isValidSubnetMask(cfg.subnetMask) : false;
+  const gatewayInvalid = cfg.gateway ? !isValidIpv4(cfg.gateway) : false;
+
+  const handleToggle = (checked: boolean) => {
+    if (checked) {
+      onChange({ ...cfg, enabled: true });
+    } else {
+      onChange({ ...cfg, enabled: false });
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1 text-[10px] uppercase tracking-wider cursor-pointer transition-colors ${
+          enabled
+            ? "text-blue-600 hover:text-blue-500"
+            : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+        }`}
+      >
+        <span>{open ? "▾" : "▸"}</span>
+        <span>DHCP Server{enabled ? " (active)" : ""}</span>
+      </button>
+      {open && (
+        <div className="mt-2 space-y-2 pl-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => handleToggle(e.target.checked)}
+              className="w-3 h-3 accent-blue-500 cursor-pointer"
+            />
+            <span className="text-xs text-[var(--color-text)]">This device serves DHCP on its network</span>
+          </label>
+          {enabled && (
+            <div className="grid grid-cols-2 gap-1">
+              <div>
+                <IpInput
+                  value={cfg.rangeStart ?? ""}
+                  onChange={(v) => onChange({ ...cfg, rangeStart: v || undefined })}
+                  placeholder="Pool Start"
+                />
+                {startInvalid && (
+                  <div className="text-[9px] text-red-500 mt-0.5">Invalid IP</div>
+                )}
+              </div>
+              <div>
+                <IpInput
+                  value={cfg.rangeEnd ?? ""}
+                  onChange={(v) => onChange({ ...cfg, rangeEnd: v || undefined })}
+                  placeholder="Pool End"
+                />
+                {endInvalid && (
+                  <div className="text-[9px] text-red-500 mt-0.5">Invalid IP</div>
+                )}
+              </div>
+              <div>
+                <IpInput
+                  value={cfg.subnetMask ?? ""}
+                  onChange={(v) => onChange({ ...cfg, subnetMask: v || undefined })}
+                  placeholder="Subnet Mask"
+                  validate={isValidSubnetMask}
+                />
+                {maskInvalid && (
+                  <div className="text-[9px] text-red-500 mt-0.5">Invalid mask</div>
+                )}
+              </div>
+              <div>
+                <IpInput
+                  value={cfg.gateway ?? ""}
+                  onChange={(v) => onChange({ ...cfg, gateway: v || undefined })}
+                  placeholder="Gateway"
+                />
+                {gatewayInvalid && (
+                  <div className="text-[9px] text-red-500 mt-0.5">Invalid IP</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

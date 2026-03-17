@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 14,
   "name": "Untitled Schematic",
   "nodes": [
     {
@@ -7,7 +7,7 @@
       "type": "room",
       "position": {
         "x": 1040,
-        "y": 1498
+        "y": 1500
       },
       "data": {
         "label": "TECH TABLE"
@@ -56,8 +56,8 @@
       "id": "room-3",
       "type": "room",
       "position": {
-        "x": 809,
-        "y": 182
+        "x": 800,
+        "y": 180
       },
       "data": {
         "label": "Booth"
@@ -142,7 +142,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "output",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.3",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "p1773360118182-5",
@@ -322,7 +326,11 @@
             "label": "LAN",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.5",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "p1773360337151-9",
@@ -1200,56 +1208,64 @@
             "label": "Port 1",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-1",
             "label": "Port 2",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-2",
             "label": "Port 3",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-3",
             "label": "Port 4",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-4",
             "label": "Port 5",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-5",
             "label": "Port 6",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-6",
             "label": "Port 7",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773415859541-7",
             "label": "Port 8",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "pw-device-60",
@@ -1293,7 +1309,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.6",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "p1773416243486-2",
@@ -1372,7 +1392,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.7",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "p1773416246636-2",
@@ -1444,28 +1468,32 @@
             "label": "Port 1",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773416490870-1",
             "label": "Port 2",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773416490870-2",
             "label": "Port 3",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "p1773416490870-3",
             "label": "Port 4",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "addressable": false
           },
           {
             "id": "pw-device-63",
@@ -1516,7 +1544,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.2",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "pw-device-64",
@@ -1566,7 +1598,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "bidirectional",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.1",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "pw-device-65",
@@ -2016,7 +2052,11 @@
             "label": "Ethernet",
             "signalType": "ethernet",
             "direction": "output",
-            "connectorType": "rj45"
+            "connectorType": "rj45",
+            "networkConfig": {
+              "ip": "192.168.0.4",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "p1773508594582-8",
@@ -3054,6 +3094,367 @@
       ],
       "orientation": "portrait",
       "paperSize": "letter"
+    },
+    "easyschematic-network-report-layout": {
+      "headerLayout": {
+        "columns": [
+          0.6,
+          0.4
+        ],
+        "rows": [
+          0.55,
+          0.45
+        ],
+        "widthIn": 8,
+        "heightIn": 0.8,
+        "cells": [
+          {
+            "id": "cell-23",
+            "row": 0,
+            "col": 0,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "static",
+              "text": "Network Report"
+            },
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "fontFamily": "sans-serif",
+            "align": "left",
+            "color": "#1e293b"
+          },
+          {
+            "id": "cell-24",
+            "row": 0,
+            "col": 1,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "logo"
+            },
+            "fontSize": 7,
+            "fontWeight": "normal",
+            "fontFamily": "sans-serif",
+            "align": "right",
+            "color": "#1e293b"
+          },
+          {
+            "id": "cell-25",
+            "row": 1,
+            "col": 0,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "field",
+              "field": "showName"
+            },
+            "fontSize": 8,
+            "fontWeight": "normal",
+            "fontFamily": "sans-serif",
+            "align": "left",
+            "color": "#1e293b"
+          },
+          {
+            "id": "cell-26",
+            "row": 1,
+            "col": 1,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "field",
+              "field": "date"
+            },
+            "fontSize": 8,
+            "fontWeight": "normal",
+            "fontFamily": "sans-serif",
+            "align": "right",
+            "color": "#666666"
+          }
+        ]
+      },
+      "headerHeightMm": 22,
+      "footerLayout": {
+        "columns": [
+          0.6,
+          0.4
+        ],
+        "rows": [
+          1
+        ],
+        "widthIn": 8,
+        "heightIn": 0.3,
+        "cells": [
+          {
+            "id": "cell-27",
+            "row": 0,
+            "col": 0,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "static",
+              "text": ""
+            },
+            "fontSize": 7,
+            "fontWeight": "normal",
+            "fontFamily": "sans-serif",
+            "align": "left",
+            "color": "#888888"
+          },
+          {
+            "id": "cell-28",
+            "row": 0,
+            "col": 1,
+            "rowSpan": 1,
+            "colSpan": 1,
+            "content": {
+              "type": "pageNumber"
+            },
+            "fontSize": 7,
+            "fontWeight": "normal",
+            "fontFamily": "sans-serif",
+            "align": "right",
+            "color": "#888888"
+          }
+        ]
+      },
+      "footerHeightMm": 8,
+      "tables": [
+        {
+          "id": "network",
+          "label": "Network Addresses",
+          "columns": [
+            {
+              "key": "deviceLabel",
+              "header": "Device",
+              "widthMm": 40,
+              "visible": true
+            },
+            {
+              "key": "portLabel",
+              "header": "Port",
+              "widthMm": 30,
+              "visible": false
+            },
+            {
+              "key": "room",
+              "header": "Room",
+              "widthMm": 30,
+              "visible": true
+            },
+            {
+              "key": "signalType",
+              "header": "Signal",
+              "widthMm": 25,
+              "visible": true
+            },
+            {
+              "key": "ip",
+              "header": "IP",
+              "widthMm": 32,
+              "visible": true
+            },
+            {
+              "key": "subnetMask",
+              "header": "Subnet",
+              "widthMm": 32,
+              "visible": true
+            },
+            {
+              "key": "gateway",
+              "header": "Gateway",
+              "widthMm": 32,
+              "visible": true
+            },
+            {
+              "key": "vlan",
+              "header": "VLAN",
+              "widthMm": 16,
+              "visible": true
+            },
+            {
+              "key": "dhcp",
+              "header": "DHCP",
+              "widthMm": 14,
+              "visible": true
+            }
+          ],
+          "groupBy": null,
+          "groupByOptions": [
+            {
+              "key": "",
+              "label": "None"
+            },
+            {
+              "key": "room",
+              "label": "Room"
+            },
+            {
+              "key": "signalType",
+              "label": "Signal Type"
+            }
+          ],
+          "sortBy": null,
+          "sortDir": "asc"
+        }
+      ],
+      "orientation": "portrait",
+      "paperSize": "letter"
     }
+  },
+  "globalReportHeaderLayout": {
+    "columns": [
+      0.6,
+      0.4
+    ],
+    "rows": [
+      0.3666666666666667,
+      0.3,
+      0.2766212429035464,
+      0.056712090429786956
+    ],
+    "widthIn": 8,
+    "heightIn": 0.8,
+    "cells": [
+      {
+        "id": "global-h-1",
+        "row": 0,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "static",
+          "text": "Pack List"
+        },
+        "fontSize": 14,
+        "fontWeight": "bold",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "global-h-2",
+        "row": 0,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "logo"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "right",
+        "color": "#1e293b"
+      },
+      {
+        "id": "global-h-3",
+        "row": 1,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "showName"
+        },
+        "fontSize": 8,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "global-h-4",
+        "row": 1,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "date"
+        },
+        "fontSize": 8,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "right",
+        "color": "#666666"
+      },
+      {
+        "id": "global-h-5",
+        "row": 2,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "venue"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      },
+      {
+        "id": "global-h-6",
+        "row": 2,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "static",
+          "text": ""
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#1e293b"
+      }
+    ]
+  },
+  "globalReportFooterLayout": {
+    "columns": [
+      0.6,
+      0.4
+    ],
+    "rows": [
+      1
+    ],
+    "widthIn": 8,
+    "heightIn": 0.3,
+    "cells": [
+      {
+        "id": "global-f-1",
+        "row": 0,
+        "col": 0,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "field",
+          "field": "engineer"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "left",
+        "color": "#888888"
+      },
+      {
+        "id": "global-f-2",
+        "row": 0,
+        "col": 1,
+        "rowSpan": 1,
+        "colSpan": 1,
+        "content": {
+          "type": "pageNumber"
+        },
+        "fontSize": 7,
+        "fontWeight": "normal",
+        "fontFamily": "sans-serif",
+        "align": "right",
+        "color": "#888888"
+      }
+    ]
   }
 }
