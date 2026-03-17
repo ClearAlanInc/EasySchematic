@@ -75,7 +75,10 @@ export default function PortEditor({ ports, onChange }: PortEditorProps) {
         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{label}</h3>
         <div className="flex gap-2">
           <button
-            onClick={() => setBulkOpen(bulkOpen === direction ? null : direction)}
+            onClick={() => {
+              if (bulkOpen === direction) { setBulkOpen(null); }
+              else { setBulkPrefix(direction === "input" ? "IN" : direction === "output" ? "OUT" : "IO"); setBulkOpen(direction); }
+            }}
             className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
           >
             Bulk Add
