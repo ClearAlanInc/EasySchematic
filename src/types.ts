@@ -209,6 +209,8 @@ export interface SchematicFile {
   favoriteTemplates?: string[];
   // Report layout preferences (pack list PDF, etc.) keyed by report ID
   reportLayouts?: Record<string, unknown>;
+  globalReportHeaderLayout?: TitleBlockLayout;
+  globalReportFooterLayout?: TitleBlockLayout;
 }
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {

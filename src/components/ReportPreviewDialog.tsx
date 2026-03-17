@@ -145,6 +145,10 @@ function ReportPreviewDialog({
 }: ReportPreviewDialogProps) {
   const storedLayout = useSchematicStore((s) => s.reportLayouts[reportKey]) as ReportLayout | undefined;
   const setReportLayout = useSchematicStore((s) => s.setReportLayout);
+  const globalHeaderLayout = useSchematicStore((s) => s.globalReportHeaderLayout);
+  const globalFooterLayout = useSchematicStore((s) => s.globalReportFooterLayout);
+  const setGlobalReportHeaderLayout = useSchematicStore((s) => s.setGlobalReportHeaderLayout);
+  const setGlobalReportFooterLayout = useSchematicStore((s) => s.setGlobalReportFooterLayout);
 
   const [layout, setLayout] = useState<ReportLayout>(() => {
     if (storedLayout) return storedLayout;
@@ -198,10 +202,6 @@ function ReportPreviewDialog({
     [],
   );
 
-  const handleExportPdf = useCallback(async () => {
-    await renderReportPdf(layout, titleBlock, tables, filename);
-  }, [layout, titleBlock, tables, filename]);
-
   // Header layout state
   const setHeaderLayout = useCallback(
     (fn: (prev: TitleBlockLayout) => TitleBlockLayout) => {
@@ -224,10 +224,25 @@ function ReportPreviewDialog({
     [],
   );
 
+  // Effective layout: if using global header/footer, substitute them in
+  const useGlobalHeader = (layout.useGlobalHeader ?? false) && globalHeaderLayout != null;
+  const useGlobalFooter = (layout.useGlobalFooter ?? false) && globalFooterLayout != null;
+  const effectiveHeaderLayout = useGlobalHeader ? globalHeaderLayout! : layout.headerLayout;
+  const effectiveFooterLayout = useGlobalFooter ? globalFooterLayout! : layout.footerLayout;
+  const effectiveLayout: ReportLayout = {
+    ...layout,
+    headerLayout: effectiveHeaderLayout,
+    footerLayout: effectiveFooterLayout,
+  };
+
+  const handleExportPdf = useCallback(async () => {
+    await renderReportPdf(effectiveLayout, titleBlock, tables, filename);
+  }, [effectiveLayout, titleBlock, tables, filename]);
+
   // Zoom + pagination
   const [zoom, setZoom] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
-  const pages = useMemo(() => computePages(layout, tables), [layout, tables]);
+  const pages = useMemo(() => computePages(effectiveLayout, tables), [effectiveLayout, tables]);
   const totalPages = pages.length;
   const safePage = Math.min(currentPage, totalPages);
   // Clamp page if layout changes reduce page count
@@ -240,11 +255,11 @@ function ReportPreviewDialog({
 
   const selectedCellData = useMemo(() => {
     if (!selectedGridCell) return null;
-    const cells = selectedGridCell.block === "header" ? layout.headerLayout.cells : layout.footerLayout.cells;
+    const cells = selectedGridCell.block === "header" ? effectiveHeaderLayout.cells : effectiveFooterLayout.cells;
     const cell = cells.find((c) => c.id === selectedGridCell.cellId);
     if (!cell) return null;
     return { cell, block: selectedGridCell.block };
-  }, [selectedGridCell, layout.headerLayout.cells, layout.footerLayout.cells]);
+  }, [selectedGridCell, effectiveHeaderLayout.cells, effectiveFooterLayout.cells]);
 
   const handleSelectHeaderCell = useCallback((id: string | null) => {
     setSelectedGridCell(id ? { block: "header", cellId: id } : null);
@@ -308,17 +323,105 @@ function ReportPreviewDialog({
               </select>
             </SidebarSection>
 
+            {/* Header global/custom toggle */}
+            <SidebarSection title="Header">
+              <div className="flex gap-1">
+                {(["global", "custom"] as const).map((mode) => {
+                  const isActive = mode === "global" ? (layout.useGlobalHeader ?? false) : !(layout.useGlobalHeader ?? false);
+                  return (
+                    <button
+                      key={mode}
+                      className={`flex-1 px-2 py-1 text-xs rounded border cursor-pointer transition-colors ${
+                        isActive
+                          ? "bg-blue-50 border-blue-300 text-blue-700 font-medium"
+                          : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
+                      }`}
+                      onClick={() => {
+                        if (mode === "global") {
+                          if (!globalHeaderLayout) setGlobalReportHeaderLayout(layout.headerLayout);
+                          setLayout((prev) => ({ ...prev, useGlobalHeader: true }));
+                        } else {
+                          setLayout((prev) => ({ ...prev, useGlobalHeader: false }));
+                        }
+                      }}
+                    >
+                      {mode === "global" ? "Global" : "Custom"}
+                    </button>
+                  );
+                })}
+              </div>
+              {(layout.useGlobalHeader ?? false) && globalHeaderLayout && (
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                  Click header cells in the preview to edit the shared template.
+                </p>
+              )}
+            </SidebarSection>
+
+            {/* Footer global/custom toggle */}
+            <SidebarSection title="Footer">
+              <div className="flex gap-1">
+                {(["global", "custom"] as const).map((mode) => {
+                  const isActive = mode === "global" ? (layout.useGlobalFooter ?? false) : !(layout.useGlobalFooter ?? false);
+                  return (
+                    <button
+                      key={mode}
+                      className={`flex-1 px-2 py-1 text-xs rounded border cursor-pointer transition-colors ${
+                        isActive
+                          ? "bg-blue-50 border-blue-300 text-blue-700 font-medium"
+                          : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
+                      }`}
+                      onClick={() => {
+                        if (mode === "global") {
+                          if (!globalFooterLayout) setGlobalReportFooterLayout(layout.footerLayout);
+                          setLayout((prev) => ({ ...prev, useGlobalFooter: true }));
+                        } else {
+                          setLayout((prev) => ({ ...prev, useGlobalFooter: false }));
+                        }
+                      }}
+                    >
+                      {mode === "global" ? "Global" : "Custom"}
+                    </button>
+                  );
+                })}
+              </div>
+              {(layout.useGlobalFooter ?? false) && globalFooterLayout && (
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                  Click footer cells in the preview to edit the shared template.
+                </p>
+              )}
+            </SidebarSection>
+
             {/* Selected cell properties — shows when a header or footer cell is clicked */}
             {selectedCellData && (
               <SidebarSection title={`Selected Cell (${selectedCellData.block})`}>
                 <CellPropertiesPanel
                   cell={selectedCellData.cell}
                   updateCell={(cellId, updates) => {
-                    const setter = selectedCellData.block === "header" ? setHeaderLayout : setFooterLayout;
-                    setter((prev) => ({
-                      ...prev,
-                      cells: prev.cells.map((c) => (c.id === cellId ? { ...c, ...updates } : c)),
-                    }));
+                    if (selectedCellData.block === "header") {
+                      if (useGlobalHeader) {
+                        setGlobalReportHeaderLayout({
+                          ...globalHeaderLayout!,
+                          cells: globalHeaderLayout!.cells.map((c) => c.id === cellId ? { ...c, ...updates } : c),
+                        });
+                      } else {
+                        setHeaderLayout((prev) => ({
+                          ...prev,
+                          cells: prev.cells.map((c) => (c.id === cellId ? { ...c, ...updates } : c)),
+                        }));
+                      }
+                    } else {
+                      if (useGlobalFooter) {
+                        setGlobalReportFooterLayout({
+                          ...globalFooterLayout!,
+                          cells: globalFooterLayout!.cells.map((c) => c.id === cellId ? { ...c, ...updates } : c),
+                        });
+                      } else {
+                        setFooterLayout((prev) => ({
+                          ...prev,
+                          cells: prev.cells.map((c) => (c.id === cellId ? { ...c, ...updates } : c)),
+                        }));
+                      }
+                    }
                   }}
                   titleBlock={titleBlock}
                 />
@@ -457,7 +560,7 @@ function ReportPreviewDialog({
             </div>
             <div className="flex-1 overflow-auto p-6 flex items-start justify-center">
               <PagePreview
-                layout={layout}
+                layout={effectiveLayout}
                 titleBlock={titleBlock}
                 page={pages[safePage - 1] ?? { pageNum: 1, items: [] }}
                 totalPages={totalPages}

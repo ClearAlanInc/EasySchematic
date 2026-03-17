@@ -71,7 +71,10 @@ interface SchematicState {
   alignSelectedNodes: (op: AlignOperation) => void;
   isValidConnection: (connection: Connection) => boolean;
   updateDeviceLabel: (nodeId: string, label: string) => void;
+  batchUpdateDeviceLabels: (changes: { nodeId: string; label: string }[]) => void;
   updateDevice: (nodeId: string, data: DeviceData) => void;
+  /** Patch device data without clearing baseLabel (for spreadsheet edits). */
+  patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
   setEditingNodeId: (id: string | null) => void;
   addRoom: (label: string, position: { x: number; y: number }) => void;
   updateRoomLabel: (nodeId: string, label: string) => void;
@@ -141,6 +144,10 @@ interface SchematicState {
   // Report layouts (pack list PDF settings, etc.)
   reportLayouts: Record<string, unknown>;
   setReportLayout: (key: string, layout: unknown) => void;
+  globalReportHeaderLayout: TitleBlockLayout | null;
+  globalReportFooterLayout: TitleBlockLayout | null;
+  setGlobalReportHeaderLayout: (layout: TitleBlockLayout) => void;
+  setGlobalReportFooterLayout: (layout: TitleBlockLayout) => void;
 
   // View options
   hiddenSignalTypes: string;
@@ -352,6 +359,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
   reportLayouts: {},
+  globalReportHeaderLayout: null,
+  globalReportFooterLayout: null,
   hiddenSignalTypes: "",
   hideDeviceTypes: false,
   hideUnconnectedPorts: false,
@@ -705,6 +714,21 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  batchUpdateDeviceLabels: (changes) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const changeMap = new Map(changes.map((c) => [c.nodeId, c.label]));
+    set({
+      nodes: renumberNodes(state.nodes.map((n) => {
+        if (n.type !== "device") return n;
+        const label = changeMap.get(n.id);
+        if (label === undefined) return n;
+        return { ...n, data: { ...n.data, label, baseLabel: undefined } } as DeviceNode;
+      })),
+    });
+    get().saveToLocalStorage();
+  },
+
   updateDevice: (nodeId, data) => {
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
@@ -713,6 +737,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         if (n.id !== nodeId || n.type !== "device") return n;
         return { ...n, data: { ...data, baseLabel: undefined } } as DeviceNode;
       })),
+    });
+    get().saveToLocalStorage();
+  },
+
+  patchDeviceData: (nodeId, patch) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.id !== nodeId || n.type !== "device") return n;
+        return { ...n, data: { ...n.data, ...patch } } as DeviceNode;
+      }),
     });
     get().saveToLocalStorage();
   },
@@ -954,6 +990,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setGlobalReportHeaderLayout: (layout) => {
+    set({ globalReportHeaderLayout: layout });
+    get().saveToLocalStorage();
+  },
+  setGlobalReportFooterLayout: (layout) => {
+    set({ globalReportFooterLayout: layout });
+    get().saveToLocalStorage();
+  },
+
   showAllSignalTypes: () => {
     set({ hiddenSignalTypes: "" });
     get().saveToLocalStorage();
@@ -999,6 +1044,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
+      globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
+      globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -1039,6 +1086,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             templatePresets: data.templatePresets ?? {},
             favoriteTemplates: data.favoriteTemplates ?? [],
             reportLayouts: data.reportLayouts ?? {},
+            globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
+            globalReportFooterLayout: data.globalReportFooterLayout ?? null,
           });
         });
         return false;
@@ -1067,6 +1116,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         templatePresets: data.templatePresets ?? {},
         favoriteTemplates: data.favoriteTemplates ?? [],
         reportLayouts: data.reportLayouts ?? {},
+        globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
+        globalReportFooterLayout: data.globalReportFooterLayout ?? null,
       });
       return true;
     } catch {
@@ -1095,6 +1146,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
+      globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
+      globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
     };
   },
 
@@ -1136,6 +1189,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: data.templatePresets ?? {},
       favoriteTemplates: data.favoriteTemplates ?? [],
       reportLayouts: data.reportLayouts ?? {},
+      globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
+      globalReportFooterLayout: data.globalReportFooterLayout ?? null,
     });
     get().saveToLocalStorage();
   },
@@ -1156,6 +1211,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: {},
       favoriteTemplates: [],
       reportLayouts: {},
+      globalReportHeaderLayout: null,
+      globalReportFooterLayout: null,
       undoSize: 0,
       redoSize: 0,
     });

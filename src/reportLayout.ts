@@ -31,6 +31,8 @@ export interface ReportLayout {
   tables: ReportTableDef[];
   orientation: "landscape" | "portrait";
   paperSize: PaperSize;
+  useGlobalHeader?: boolean;
+  useGlobalFooter?: boolean;
 }
 
 // ─── Paper Sizes ───
@@ -113,6 +115,59 @@ export function createDefaultPackListFooterLayout(): TitleBlockLayout {
       layoutCell(0, 0, { type: "static", text: "" }, { fontSize: 7, color: "#888888" }),
       layoutCell(0, 1, { type: "pageNumber" }, { fontSize: 7, align: "right", color: "#888888" }),
     ],
+  };
+}
+
+// ─── Network Report Defaults ───
+
+export function createDefaultNetworkReportHeaderLayout(): TitleBlockLayout {
+  return {
+    columns: normalizeSizes([0.6, 0.4]),
+    rows: normalizeSizes([0.55, 0.45]),
+    widthIn: 8,
+    heightIn: 0.8,
+    cells: [
+      layoutCell(0, 0, { type: "static", text: "Network Report" }, { fontSize: 14, fontWeight: "bold" }),
+      layoutCell(0, 1, { type: "logo" }, { align: "right" }),
+      layoutCell(1, 0, { type: "field", field: "showName" }, { fontSize: 8 }),
+      layoutCell(1, 1, { type: "field", field: "date" }, { fontSize: 8, align: "right", color: "#666666" }),
+    ],
+  };
+}
+
+export function createDefaultNetworkReportLayout(): ReportLayout {
+  return {
+    headerLayout: createDefaultNetworkReportHeaderLayout(),
+    headerHeightMm: 22,
+    footerLayout: createDefaultPackListFooterLayout(),
+    footerHeightMm: 8,
+    tables: [
+      {
+        id: "network",
+        label: "Network Addresses",
+        columns: [
+          { key: "deviceLabel", header: "Device",  widthMm: 40, visible: true },
+          { key: "portLabel",   header: "Port",    widthMm: 30, visible: true },
+          { key: "room",        header: "Room",    widthMm: 30, visible: true },
+          { key: "signalType",  header: "Signal",  widthMm: 25, visible: true },
+          { key: "ip",          header: "IP",      widthMm: 32, visible: true },
+          { key: "subnetMask",  header: "Subnet",  widthMm: 32, visible: true },
+          { key: "gateway",     header: "Gateway", widthMm: 32, visible: true },
+          { key: "vlan",        header: "VLAN",    widthMm: 16, visible: true },
+          { key: "dhcp",        header: "DHCP",    widthMm: 14, visible: true },
+        ],
+        groupBy: null,
+        groupByOptions: [
+          { key: "",           label: "None" },
+          { key: "room",       label: "Room" },
+          { key: "signalType", label: "Signal Type" },
+        ],
+        sortBy: null,
+        sortDir: "asc",
+      },
+    ],
+    orientation: "landscape",
+    paperSize: "letter",
   };
 }
 
