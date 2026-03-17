@@ -194,6 +194,10 @@ function SchematicCanvas() {
       } else if ((e.ctrlKey || e.metaKey) && e.key === "a") {
         e.preventDefault();
         useSchematicStore.getState().selectAll();
+      } else if (e.key === "F9") {
+        e.preventDefault();
+        const s = useSchematicStore.getState();
+        s.setPrintView(!s.printView);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {

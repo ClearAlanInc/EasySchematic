@@ -7,6 +7,7 @@ import { exportPdf } from "../pdfExport";
 import { PAPER_SIZES } from "../printConfig";
 import type { SchematicFile } from "../types";
 import PackListDialog from "./PackListDialog";
+import TitleBlockDialog from "./TitleBlockDialog";
 import AlignmentMenu from "./AlignmentMenu";
 
 // ─── Menu data types ─────────────────────────────────────────────
@@ -112,6 +113,7 @@ export default function MenuBar() {
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(schematicName);
   const [showPackListDialog, setShowPackListDialog] = useState(false);
+  const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
 
   // Keep nameValue in sync when schematicName changes externally
   useEffect(() => {
@@ -222,11 +224,6 @@ export default function MenuBar() {
       { type: "separator" },
       { type: "item", label: "Save", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
-      { type: "separator" },
-      { type: "item", label: "Export as PNG", onClick: doExportPng },
-      { type: "item", label: "Export as SVG", onClick: doExportSvg },
-      { type: "item", label: "Export as DXF", onClick: doExportDxf },
-      { type: "item", label: "Export as PDF", onClick: doExportPdf },
     ],
     Edit: [
       { type: "item", label: "Undo", shortcut: "Ctrl+Z", disabled: undoSize === 0, onClick: undo },
@@ -242,6 +239,7 @@ export default function MenuBar() {
       {
         type: "item",
         label: "Print View",
+        shortcut: "F9",
         checked: printView,
         onClick: () => useSchematicStore.getState().setPrintView(!printView),
       },
@@ -253,6 +251,14 @@ export default function MenuBar() {
         checked: useSchematicStore.getState().debugEdges,
         onClick: () => useSchematicStore.getState().toggleDebugEdges(),
       },
+    ],
+    Export: [
+      { type: "item", label: "Export as PNG", onClick: doExportPng },
+      { type: "item", label: "Export as SVG", onClick: doExportSvg },
+      { type: "item", label: "Export as DXF", onClick: doExportDxf },
+      { type: "item", label: "Export as PDF", onClick: doExportPdf },
+      { type: "separator" },
+      { type: "item", label: "Title Block...", onClick: () => setShowTitleBlockDialog(true) },
     ],
     Reports: [
       { type: "item", label: "Pack List...", onClick: () => setShowPackListDialog(true) },
@@ -382,6 +388,9 @@ export default function MenuBar() {
 
       {showPackListDialog && (
         <PackListDialog onClose={() => setShowPackListDialog(false)} />
+      )}
+      {showTitleBlockDialog && (
+        <TitleBlockDialog onClose={() => setShowTitleBlockDialog(false)} />
       )}
     </div>
   );
