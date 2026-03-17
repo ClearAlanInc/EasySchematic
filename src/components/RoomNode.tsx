@@ -51,7 +51,6 @@ function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
         isVisible={selected}
         minWidth={200}
         minHeight={150}
-        snapGrid={[GRID_SIZE, GRID_SIZE]}
         onResize={handleResize}
         onResizeEnd={handleResizeEnd}
         lineStyle={{ borderColor: "var(--color-border)" }}

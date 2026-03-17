@@ -611,7 +611,7 @@ function SchematicCanvas() {
 
         const from = clickConnectFromRef.current;
         if (!from || node.type !== 'device') {
-          onPaneClick();
+          onPaneClick(event);
           return;
         }
 

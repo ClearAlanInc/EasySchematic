@@ -23,6 +23,8 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   vga: "VGA",
   power: "Power",
   gpio: "GPIO",
+  dmx: "DMX",
+  madi: "MADI",
   custom: "Other",
 };
 

@@ -679,7 +679,6 @@ function PortVisibilitySection({
 
   const tplHidden = templateId ? (templateHiddenSignals[templateId] ?? []) : [];
 
-  const hiddenSet = new Set(hiddenPorts);
   const namedPorts = ports.filter((p) => p.label.trim());
 
   return (

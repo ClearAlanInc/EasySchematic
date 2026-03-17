@@ -7,7 +7,7 @@ import {
   PAGE_MARGIN_IN,
 } from "./printConfig";
 import { computePageGrid, type PageRect } from "./printPageGrid";
-import type { TitleBlock, TitleBlockLayout, DeviceData, SchematicNode, ConnectionEdge, SignalType } from "./types";
+import type { TitleBlock, TitleBlockLayout, DeviceData, SchematicNode, ConnectionEdge } from "./types";
 import type { RoutedEdge } from "./edgeRouter";
 import { computeCellRects, normalizeSizes, getFieldValue } from "./titleBlockLayout";
 import { useSchematicStore } from "./store";

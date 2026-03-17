@@ -43,7 +43,7 @@ function computeCrossingLabels(
   routedEdges: Record<string, RoutedEdge>,
   edges: { id: string; source: string; target: string; data?: { signalType?: SignalType } }[],
   nodes: { id: string; type?: string; data: Record<string, unknown>; parentId?: string }[],
-  pxPerPt: number,
+  _pxPerPt: number,
   signalColorOverrides?: Partial<Record<SignalType, string>>,
 ): CrossingLabel[] {
   if (pages.length <= 1) return [];

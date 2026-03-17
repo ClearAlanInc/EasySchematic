@@ -24,6 +24,8 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   composite: 40,   // yellow
   vga: 150,        // dark sky blue
   power: 46,       // dark amber
+  dmx: 1,          // dark red
+  madi: 3,         // emerald
   custom: 9,       // cool gray
 };
 
