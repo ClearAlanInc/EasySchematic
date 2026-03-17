@@ -9,12 +9,15 @@ import SubmitPage from "./pages/SubmitPage";
 import MySubmissionsPage from "./pages/MySubmissionsPage";
 import ReviewQueuePage from "./pages/ReviewQueuePage";
 import ReviewDetailPage from "./pages/ReviewDetailPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 import UserMenu from "./components/UserMenu";
 
 function parseHash(): { page: string; id?: string } {
   const hash = window.location.hash.slice(1) || "/";
   if (hash.startsWith("/admin/edit/")) return { page: "admin-edit", id: hash.slice(12) };
-  if (hash === "/admin") return { page: "admin-edit" };
+  if (hash === "/admin/edit") return { page: "admin-edit" };
+  if (hash === "/admin/users") return { page: "admin-users" };
+  if (hash === "/admin") return { page: "admin-users" };
   if (hash.startsWith("/device/")) return { page: "device", id: hash.slice(8) };
   if (hash === "/login") return { page: "login" };
   if (hash.startsWith("/submit/")) return { page: "submit", id: hash.slice(8) };
@@ -103,6 +106,9 @@ export default function App() {
         )}
         {route.page === "review-detail" && route.id && (
           isMod ? <ReviewDetailPage id={route.id} /> : <NoAccess />
+        )}
+        {route.page === "admin-users" && (
+          isAdmin ? <AdminUsersPage /> : <NoAccess />
         )}
         {route.page === "admin-edit" && <AdminEditorPage id={route.id} />}
       </main>
