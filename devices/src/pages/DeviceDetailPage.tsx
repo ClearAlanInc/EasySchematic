@@ -4,8 +4,13 @@ import { CONNECTOR_LABELS } from "../../../src/types";
 import { fetchTemplate, getAdminToken } from "../api";
 import SignalBadge from "../components/SignalBadge";
 
+type TemplateWithAttribution = DeviceTemplate & {
+  submittedBy?: { name: string };
+  lastEditedBy?: { name: string };
+};
+
 export default function DeviceDetailPage({ id }: { id: string }) {
-  const [template, setTemplate] = useState<DeviceTemplate | null>(null);
+  const [template, setTemplate] = useState<TemplateWithAttribution | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -89,6 +94,17 @@ export default function DeviceDetailPage({ id }: { id: string }) {
           )}
         </div>
       </div>
+
+      {(template.submittedBy || template.lastEditedBy) && (
+        <div className="mb-6 flex items-center gap-4 text-xs text-slate-400">
+          {template.submittedBy && (
+            <span>Submitted by <span className="text-slate-600 font-medium">{template.submittedBy.name}</span></span>
+          )}
+          {template.lastEditedBy && (
+            <span>Last edited by <span className="text-slate-600 font-medium">{template.lastEditedBy.name}</span></span>
+          )}
+        </div>
+      )}
 
       {template.searchTerms && template.searchTerms.length > 0 && (
         <div className="mb-6">

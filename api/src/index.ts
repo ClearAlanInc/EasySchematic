@@ -182,12 +182,46 @@ app.get("/auth/me", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
+  // Fetch submission stats
+  const stats = await c.env.easyschematic_db
+    .prepare(
+      `SELECT
+         COUNT(*) as total,
+         SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+       FROM submissions WHERE user_id = ?`,
+    )
+    .bind(user.id)
+    .first<{ total: number; approved: number; pending: number; rejected: number }>();
+
   return c.json({
     id: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
+    stats: stats ?? { total: 0, approved: 0, pending: 0, rejected: 0 },
   });
+});
+
+app.put("/auth/me", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const body = await c.req.json<{ name?: string }>();
+
+  if (body.name != null) {
+    const name = body.name.trim();
+    if (name.length > 50) {
+      return c.json({ error: "Name must be 50 characters or fewer" }, 400);
+    }
+    await c.env.easyschematic_db
+      .prepare("UPDATE users SET name = ? WHERE id = ?")
+      .bind(name || null, user.id)
+      .run();
+  }
+
+  return c.json({ ok: true });
 });
 
 // ==================== SUBMISSION ENDPOINTS ====================
@@ -293,14 +327,14 @@ app.post("/submissions/:id/approve", async (c) => {
   const data = JSON.parse(submission.data);
 
   if (submission.action === "create") {
-    // Create new template
+    // Create new template with attribution
     const templateId = crypto.randomUUID();
     const templateRow = templateToRow({ ...data, id: templateId });
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order, submitted_by)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         templateRow.id,
@@ -313,10 +347,11 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.search_terms,
         templateRow.ports,
         templateRow.sort_order,
+        submission.user_id,
       )
       .run();
   } else if (submission.action === "update" && submission.template_id) {
-    // Update existing template
+    // Update existing template with edit attribution
     const templateRow = templateToRow({ ...data, id: submission.template_id });
 
     await db
@@ -324,7 +359,7 @@ app.post("/submissions/:id/approve", async (c) => {
         `UPDATE templates
          SET device_type = ?, label = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, search_terms = ?, ports = ?, sort_order = ?,
-             version = version + 1, updated_at = CURRENT_TIMESTAMP
+             version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?
          WHERE id = ?`,
       )
       .bind(
@@ -337,6 +372,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.search_terms,
         templateRow.ports,
         templateRow.sort_order,
+        submission.user_id,
         submission.template_id,
       )
       .run();
@@ -417,6 +453,31 @@ app.put("/users/:id/ban", async (c) => {
   return c.json({ ok: true });
 });
 
+// ==================== CONTRIBUTORS (public) ====================
+
+app.get("/contributors", async (c) => {
+  const { results } = await c.env.easyschematic_db
+    .prepare(
+      `SELECT u.id, u.name, u.email,
+              COUNT(*) as approved_count
+       FROM submissions s JOIN users u ON s.user_id = u.id
+       WHERE s.status = 'approved'
+       GROUP BY u.id
+       ORDER BY approved_count DESC
+       LIMIT 50`,
+    )
+    .all();
+
+  // Only expose name (or anonymized email) — not full email
+  const contributors = (results as unknown as { id: string; name: string | null; email: string; approved_count: number }[]).map((r) => ({
+    id: r.id,
+    name: r.name || anonymizeEmail(r.email),
+    approvedCount: r.approved_count,
+  }));
+
+  return c.json(contributors, 200, CACHE_HEADERS);
+});
+
 // ==================== TEMPLATE ENDPOINTS ====================
 
 app.get("/templates", async (c) => {
@@ -431,7 +492,15 @@ app.get("/templates", async (c) => {
 app.get("/templates/:id", async (c) => {
   const id = c.req.param("id");
   const row = await c.env.easyschematic_db
-    .prepare("SELECT * FROM templates WHERE id = ?")
+    .prepare(
+      `SELECT t.*,
+              su.name as submitter_name, su.email as submitter_email,
+              eu.name as editor_name, eu.email as editor_email
+       FROM templates t
+       LEFT JOIN users su ON t.submitted_by = su.id
+       LEFT JOIN users eu ON t.last_edited_by = eu.id
+       WHERE t.id = ?`,
+    )
     .bind(id)
     .first();
 
@@ -439,7 +508,22 @@ app.get("/templates/:id", async (c) => {
     return c.json({ error: "Template not found" }, 404);
   }
 
-  return c.json(rowToTemplate(row as never), 200, CACHE_HEADERS);
+  const template = rowToTemplate(row as never);
+  const r = row as Record<string, unknown>;
+  const result: Record<string, unknown> = { ...template };
+
+  if (r.submitted_by) {
+    result.submittedBy = {
+      name: (r.submitter_name as string) || anonymizeEmail(r.submitter_email as string),
+    };
+  }
+  if (r.last_edited_by) {
+    result.lastEditedBy = {
+      name: (r.editor_name as string) || anonymizeEmail(r.editor_email as string),
+    };
+  }
+
+  return c.json(result, 200, CACHE_HEADERS);
 });
 
 app.post("/templates", async (c) => {
@@ -574,6 +658,12 @@ interface SubmissionRow {
   // Joined fields (optional)
   submitter_email?: string;
   submitter_name?: string;
+}
+
+function anonymizeEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return "Anonymous";
+  return `${local[0]}${"*".repeat(Math.min(local.length - 1, 5))}@${domain}`;
 }
 
 function formatSubmission(row: SubmissionRow) {

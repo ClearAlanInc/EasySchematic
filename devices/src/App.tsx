@@ -10,6 +10,8 @@ import MySubmissionsPage from "./pages/MySubmissionsPage";
 import ReviewQueuePage from "./pages/ReviewQueuePage";
 import ReviewDetailPage from "./pages/ReviewDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import ProfilePage from "./pages/ProfilePage";
+import ContributorsPage from "./pages/ContributorsPage";
 import UserMenu from "./components/UserMenu";
 
 function parseHash(): { page: string; id?: string } {
@@ -25,6 +27,8 @@ function parseHash(): { page: string; id?: string } {
   if (hash === "/my-submissions") return { page: "my-submissions" };
   if (hash === "/review") return { page: "review" };
   if (hash.startsWith("/review/")) return { page: "review-detail", id: hash.slice(8) };
+  if (hash === "/profile") return { page: "profile" };
+  if (hash === "/contributors") return { page: "contributors" };
   return { page: "browse" };
 }
 
@@ -60,6 +64,9 @@ export default function App() {
           EasySchematic <span className="text-slate-400 font-normal">Devices</span>
         </a>
         <div className="flex items-center gap-4">
+          <a href="#/contributors" className="text-sm text-slate-400 hover:text-white transition-colors">
+            Contributors
+          </a>
           <a href="https://easyschematic.live" className="text-sm text-slate-400 hover:text-white transition-colors">
             Main App
           </a>
@@ -107,6 +114,10 @@ export default function App() {
         {route.page === "review-detail" && route.id && (
           isMod ? <ReviewDetailPage id={route.id} /> : <NoAccess />
         )}
+        {route.page === "profile" && (
+          user ? <ProfilePage user={user} onUpdate={setUser} /> : <LoginRedirect />
+        )}
+        {route.page === "contributors" && <ContributorsPage />}
         {route.page === "admin-users" && (
           isAdmin ? <AdminUsersPage /> : <NoAccess />
         )}

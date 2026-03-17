@@ -41,6 +41,9 @@ export default function UserMenu({ user, onLogout }: Props) {
             <p className="text-xs text-slate-500 truncate">{user.email}</p>
             <p className="text-xs text-slate-400 capitalize">{user.role}</p>
           </div>
+          <a href="#/profile" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Profile
+          </a>
           <a href="#/my-submissions" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
             My Submissions
           </a>

@@ -61,6 +61,12 @@ export interface User {
   email: string;
   name: string | null;
   role: string;
+  stats?: {
+    total: number;
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
 }
 
 export async function requestMagicLink(email: string): Promise<void> {
@@ -86,6 +92,31 @@ export async function fetchCurrentUser(): Promise<User | null> {
   });
   if (res.status === 401) return null;
   if (!res.ok) return null;
+  return res.json();
+}
+
+export async function updateProfile(data: { name?: string }): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json() as { error: string };
+    throw new Error(err.error || "Failed to update profile");
+  }
+}
+
+export interface Contributor {
+  id: string;
+  name: string;
+  approvedCount: number;
+}
+
+export async function fetchContributors(): Promise<Contributor[]> {
+  const res = await fetch(`${API_URL}/contributors`);
+  if (!res.ok) throw new Error(`Failed to fetch contributors: ${res.status}`);
   return res.json();
 }
 
