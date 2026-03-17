@@ -27,7 +27,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, and 19 signal types)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 23 signal types total)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -42,8 +42,8 @@ export default function OverviewPage() {
           <strong>Notes</strong> — rich text annotations with formatting (bold, italic, bullets, font sizes)
         </li>
         <li>
-          <strong>Device library</strong> — 65+ real-world device templates across cameras, switchers, audio gear, and
-          more
+          <strong>Device library</strong> — 210+ real-world device templates across cameras, switchers, audio, lighting,
+          LED video, and more
         </li>
         <li>
           <strong>Custom templates</strong> — save your own device configurations for reuse

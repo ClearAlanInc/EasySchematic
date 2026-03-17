@@ -48,7 +48,7 @@ export default function GettingStartedPage() {
           <tr><td><strong>Disconnect</strong></td><td>Drag from a connected port and release on empty space</td></tr>
           <tr><td><strong>Copy/Paste</strong></td><td>Ctrl+C / Ctrl+V</td></tr>
           <tr><td><strong>Undo/Redo</strong></td><td>Ctrl+Z / Ctrl+Shift+Z (or Ctrl+Y)</td></tr>
-          <tr><td><strong>Align</strong></td><td>Select multiple items, then use the Align menu in the toolbar</td></tr>
+          <tr><td><strong>Align</strong></td><td>Select multiple items, then use the Align menu in the menu bar</td></tr>
         </tbody>
       </table>
 

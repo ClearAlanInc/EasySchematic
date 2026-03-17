@@ -12,7 +12,7 @@
 
 ### Canvas & Devices
 
-- **60 built-in device templates** across 11 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Networking, KVM/Extenders
+- **210+ built-in device templates** across 17 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Speakers & Amps, Networking, KVM/Extenders, Wireless, LED Video, Media Servers, Lighting, Control
 - **Custom device templates** — save modified devices for reuse
 - **Quick-create routers** — generate routers with configurable input/output counts and signal type
 - **Notes** — text annotations on the canvas
@@ -27,7 +27,7 @@
 - **Drag-to-connect** with the same preview/snap/validity behavior
 - **Smart edge routing** — A* pathfinding avoids device crossings with automatic parallel edge nesting
 - **Manual route editing** — right-click a connection to add draggable waypoint handles; A* routes each leg between handles while other connections yield
-- **21 signal types**, all color-coded (see below)
+- **23 signal types**, all color-coded (see below)
 
 ### Ports
 
@@ -47,7 +47,7 @@
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
@@ -129,10 +129,14 @@ Output goes to `dist/` — deploy as a static site anywhere.
 | `Escape` | Cancel connection / deselect |
 | `Space` + drag | Pan canvas |
 | `Delete` / `Backspace` | Delete selected |
+| `Ctrl+S` | Save schematic |
+| `Ctrl+O` | Open schematic |
 | `Ctrl+C` | Copy selected |
 | `Ctrl+V` | Paste |
+| `Ctrl+A` | Select all |
 | `Ctrl+Z` | Undo |
 | `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `F9` | Toggle Print View |
 | Double-click device | Open device editor |
 | Right-click connection | Add/remove routing handles, reset route |
 | `Ctrl+B` | Toggle routing debug overlay |

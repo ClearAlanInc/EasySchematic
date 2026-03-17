@@ -9,8 +9,7 @@ export default function PrintingPage() {
 
       <h2>Print View</h2>
       <p>
-        Toggle <strong>Print View</strong> using the button in the toolbar (or switch between Print View and Infinite
-        View). In Print View:
+        Toggle <strong>Print View</strong> from the <strong>View</strong> menu or press <strong>F9</strong>. In Print View:
       </p>
       <ul>
         <li>Page boundaries appear as an overlay on the canvas</li>
@@ -64,7 +63,7 @@ export default function PrintingPage() {
 
       <h2>PDF export</h2>
       <p>
-        Click <strong>Export</strong> in the toolbar, then choose <strong>Export PDF</strong> to generate a multi-page PDF
+        Open the <strong>Export</strong> menu in the menu bar, then choose <strong>Export PDF</strong> to generate a multi-page PDF
         document matching your Print View settings. Each page includes the title block.
       </p>
     </>

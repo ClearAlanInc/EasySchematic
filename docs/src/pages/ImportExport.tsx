@@ -11,7 +11,7 @@ export default function ImportExportPage() {
 
       <h3>Export</h3>
       <p>
-        Click <strong>Save</strong> in the toolbar to export a <code>.json</code> file with:
+        Click <strong>Save</strong> in the menu bar to export a <code>.json</code> file with:
       </p>
       <ul>
         <li>Schema version (for forward compatibility)</li>
@@ -27,7 +27,7 @@ export default function ImportExportPage() {
 
       <h3>Import</h3>
       <p>
-        Click <strong>Load</strong> in the toolbar to import a previously exported file. Schema migrations run automatically if
+        Click <strong>Load</strong> in the menu bar to import a previously exported file. Schema migrations run automatically if
         the file was saved with an older version.
       </p>
 

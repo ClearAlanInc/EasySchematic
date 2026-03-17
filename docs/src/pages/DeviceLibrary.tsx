@@ -5,23 +5,26 @@ export default function DeviceLibraryPage() {
 
       <h2>Built-in templates</h2>
       <p>
-        The device library sidebar contains <strong>65+ real-world device templates</strong> organized by category:
+        The device library sidebar contains <strong>210+ real-world device templates</strong> organized by category:
       </p>
       <ul>
-        <li><strong>Cameras</strong> — PTZ cameras, cinema cameras, camcorders</li>
-        <li><strong>Switchers</strong> — video switchers, production switchers</li>
-        <li><strong>Monitors</strong> — confidence monitors, multiviewers</li>
-        <li><strong>Converters</strong> — SDI↔HDMI, fiber, format converters</li>
-        <li><strong>Audio</strong> — mixers, audio interfaces, speakers</li>
-        <li><strong>Recorders</strong> — disk recorders, capture devices</li>
-        <li><strong>Streaming</strong> — encoders, decoders</li>
-        <li><strong>Networking</strong> — switches, media converters</li>
-        <li><strong>Graphics</strong> — CG systems, character generators</li>
-        <li><strong>Displays</strong> — projectors, LED walls</li>
-        <li><strong>KVM / Extenders</strong> — KVM switches, HDMI/SDI extenders</li>
-        <li><strong>Wireless</strong> — wireless video transmitters/receivers</li>
-        <li><strong>Control</strong> — control surfaces, tally systems</li>
-        <li><strong>Peripherals</strong> — peripherals and accessories</li>
+        <li><strong>Sources</strong> — cameras, PTZ cameras, graphics, computers, media players</li>
+        <li><strong>Switching</strong> — video switchers (ATEM family, Roland, Barco, Analog Way), routers</li>
+        <li><strong>Processing</strong> — converters, scalers, frame syncs, multiviewers, capture cards</li>
+        <li><strong>Distribution</strong> — DAs, video wall controllers</li>
+        <li><strong>Monitoring</strong> — production monitors (SmartView, SmallHD, Marshall, Atomos)</li>
+        <li><strong>Recording</strong> — HyperDecks, Ki Pro, Sound Devices</li>
+        <li><strong>Audio</strong> — consoles (Yamaha CL/QL/TF, A&H dLive/SQ, DiGiCo SD7), stage boxes, DSP, wireless mics, intercom</li>
+        <li><strong>Speakers & Amps</strong> — line arrays, powered speakers, subwoofers, amplifiers (Meyer, L'Acoustics, QSC, JBL)</li>
+        <li><strong>Networking</strong> — NDI encoders/decoders, streaming encoders, network switches, AV-over-IP</li>
+        <li><strong>LED Video</strong> — LED processors (Brompton Tessera, Novastar)</li>
+        <li><strong>Media Servers</strong> — Disguise d3, Dataton WATCHPAX</li>
+        <li><strong>Lighting</strong> — consoles (ETC, grandMA3, Road Hog), moving lights, LED fixtures, DMX splitters</li>
+        <li><strong>Wireless</strong> — wireless video transmitters/receivers, intercom</li>
+        <li><strong>KVM / Extenders</strong> — KVM switches, HDBaseT extenders</li>
+        <li><strong>Control</strong> — control processors, tally systems, timecode generators, MIDI devices</li>
+        <li><strong>Projection</strong> — large venue projectors</li>
+        <li><strong>Peripherals</strong> — mice, keyboards, adapters</li>
       </ul>
 
       <h2>Using templates</h2>

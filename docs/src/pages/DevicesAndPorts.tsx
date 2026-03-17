@@ -40,6 +40,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Dante</strong></td><td>Orange</td><td>Network audio</td></tr>
           <tr><td><strong>Analog Audio</strong></td><td>Brown</td><td>XLR/TRS audio</td></tr>
           <tr><td><strong>AES</strong></td><td>Purple</td><td>Digital audio</td></tr>
+          <tr><td><strong>DMX</strong></td><td>Dark Red</td><td>Lighting control (XLR-5)</td></tr>
+          <tr><td><strong>MADI</strong></td><td>Emerald</td><td>Multi-channel digital audio (BNC/fiber)</td></tr>
           <tr><td><strong>USB</strong></td><td>Pink</td><td>USB connections</td></tr>
           <tr><td><strong>Ethernet</strong></td><td>Teal</td><td>Network data</td></tr>
           <tr><td><strong>Fiber</strong></td><td>Amber</td><td>Fiber optic</td></tr>
@@ -51,6 +53,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>RS-422</strong></td><td>Deep Violet</td><td>Machine control</td></tr>
           <tr><td><strong>Serial</strong></td><td>Gray</td><td>Generic serial</td></tr>
           <tr><td><strong>Thunderbolt</strong></td><td>Indigo</td><td>High-speed I/O</td></tr>
+          <tr><td><strong>Composite</strong></td><td>Yellow</td><td>Legacy analog video (BNC/RCA)</td></tr>
+          <tr><td><strong>VGA</strong></td><td>Dark Blue</td><td>Analog video (DB15)</td></tr>
           <tr><td><strong>Power</strong></td><td>Dark Amber</td><td>Power connections</td></tr>
           <tr><td><strong>Custom</strong></td><td>User-defined</td><td>Custom signal types for anything not covered above</td></tr>
         </tbody>
