@@ -60,7 +60,8 @@ export default function App() {
   return (
     <div className="min-h-full flex flex-col">
       <nav className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
-        <a href="#/" className="text-lg font-semibold tracking-tight hover:text-slate-300 transition-colors">
+        <a href="#/" className="flex items-center gap-2 text-lg font-semibold tracking-tight hover:text-slate-300 transition-colors">
+          <img src="/favicon.svg" alt="" className="w-6 h-6" />
           EasySchematic <span className="text-slate-400 font-normal">Devices</span>
         </a>
         <div className="flex items-center gap-4">
