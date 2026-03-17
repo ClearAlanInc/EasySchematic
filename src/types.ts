@@ -124,6 +124,7 @@ export interface DeviceTemplate {
   manufacturer?: string;
   modelNumber?: string;
   imageUrl?: string;
+  referenceUrl?: string;
 }
 
 export interface CustomField {

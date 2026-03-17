@@ -5,6 +5,7 @@ interface TemplateInput {
   modelNumber?: string;
   color?: string;
   imageUrl?: string;
+  referenceUrl?: string;
   searchTerms?: string[];
   ports: PortInput[];
   sortOrder?: number;
@@ -48,10 +49,17 @@ export function validateTemplate(body: unknown): ValidationResult {
   if (typeErr) return { ok: false, error: typeErr };
 
   // Optional string fields — validate length if present
-  for (const [key, max] of [["manufacturer", MAX_STRING], ["modelNumber", MAX_STRING], ["imageUrl", 500]] as const) {
+  for (const [key, max] of [["manufacturer", MAX_STRING], ["modelNumber", MAX_STRING], ["imageUrl", 500], ["referenceUrl", 2000]] as const) {
     if (obj[key] != null) {
       const err = checkString(obj[key], key, max);
       if (err) return { ok: false, error: err };
+    }
+  }
+
+  // Reference URL — must be HTTPS if provided
+  if (obj.referenceUrl != null && typeof obj.referenceUrl === "string" && obj.referenceUrl.trim() !== "") {
+    if (!obj.referenceUrl.startsWith("https://")) {
+      return { ok: false, error: "referenceUrl must start with https://" };
     }
   }
 
@@ -112,6 +120,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.modelNumber != null && { modelNumber: obj.modelNumber as string }),
       ...(obj.color != null && { color: obj.color as string }),
       ...(obj.imageUrl != null && { imageUrl: obj.imageUrl as string }),
+      ...(obj.referenceUrl != null && { referenceUrl: obj.referenceUrl as string }),
       ...(obj.searchTerms != null && { searchTerms: obj.searchTerms as string[] }),
       ports: obj.ports as PortInput[],
       ...(obj.sortOrder != null && { sortOrder: obj.sortOrder as number }),

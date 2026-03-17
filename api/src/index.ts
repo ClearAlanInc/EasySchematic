@@ -333,8 +333,8 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order, submitted_by)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order, submitted_by)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         templateRow.id,
@@ -344,6 +344,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.model_number,
         templateRow.color,
         templateRow.image_url,
+        templateRow.reference_url,
         templateRow.search_terms,
         templateRow.ports,
         templateRow.sort_order,
@@ -358,7 +359,7 @@ app.post("/submissions/:id/approve", async (c) => {
       .prepare(
         `UPDATE templates
          SET device_type = ?, label = ?, manufacturer = ?, model_number = ?,
-             color = ?, image_url = ?, search_terms = ?, ports = ?, sort_order = ?,
+             color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?
          WHERE id = ?`,
       )
@@ -369,6 +370,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.model_number,
         templateRow.color,
         templateRow.image_url,
+        templateRow.reference_url,
         templateRow.search_terms,
         templateRow.ports,
         templateRow.sort_order,
@@ -539,8 +541,8 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
@@ -550,6 +552,7 @@ app.post("/templates", async (c) => {
       row.model_number,
       row.color,
       row.image_url,
+      row.reference_url,
       row.search_terms,
       row.ports,
       row.sort_order,
@@ -589,7 +592,7 @@ app.put("/templates/:id", async (c) => {
     .prepare(
       `UPDATE templates
      SET device_type = ?, label = ?, manufacturer = ?, model_number = ?,
-         color = ?, image_url = ?, search_terms = ?, ports = ?, sort_order = ?,
+         color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, sort_order = ?,
          version = version + 1, updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`,
     )
@@ -600,6 +603,7 @@ app.put("/templates/:id", async (c) => {
       row.model_number,
       row.color,
       row.image_url,
+      row.reference_url,
       row.search_terms,
       row.ports,
       row.sort_order,

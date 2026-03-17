@@ -13,6 +13,7 @@ export default function SubmitPage({ id }: Props) {
   const [manufacturer, setManufacturer] = useState("");
   const [modelNumber, setModelNumber] = useState("");
   const [searchTerms, setSearchTerms] = useState("");
+  const [referenceUrl, setReferenceUrl] = useState("");
   const [color, setColor] = useState("");
   const [ports, setPorts] = useState<Port[]>([]);
   const [loading, setLoading] = useState(!!id);
@@ -30,6 +31,7 @@ export default function SubmitPage({ id }: Props) {
         setDeviceType(t.deviceType);
         setManufacturer(t.manufacturer ?? "");
         setModelNumber(t.modelNumber ?? "");
+        setReferenceUrl(t.referenceUrl ?? "");
         setSearchTerms(t.searchTerms?.join(", ") ?? "");
         setColor(t.color ?? "");
         setPorts(t.ports);
@@ -41,6 +43,8 @@ export default function SubmitPage({ id }: Props) {
   const handleSubmit = async () => {
     if (!label.trim()) { setError("Label is required"); return; }
     if (!deviceType.trim()) { setError("Device type is required"); return; }
+    if (!referenceUrl.trim()) { setError("Reference URL is required"); return; }
+    if (!referenceUrl.trim().startsWith("https://")) { setError("Reference URL must start with https://"); return; }
 
     setSaving(true);
     setError("");
@@ -49,6 +53,7 @@ export default function SubmitPage({ id }: Props) {
       label: label.trim(),
       deviceType: deviceType.trim(),
       ports,
+      referenceUrl: referenceUrl.trim(),
       ...(manufacturer.trim() && { manufacturer: manufacturer.trim() }),
       ...(modelNumber.trim() && { modelNumber: modelNumber.trim() }),
       ...(color.trim() && { color: color.trim() }),
@@ -119,6 +124,11 @@ export default function SubmitPage({ id }: Props) {
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Model Number</span>
           <input value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </label>
+        <label className="col-span-2">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL *</span>
+          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product-page" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">Link to the manufacturer's product page for verification</span>
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>

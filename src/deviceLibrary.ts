@@ -96,6 +96,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD SDI→HDMI",
     manufacturer: "Blackmagic Design",
     modelNumber: "Micro Converter SDI to HDMI 3G",
+    referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-12",
     searchTerms: ["blackmagic", "micro converter", "microconverter"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -110,6 +111,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD HDMI→SDI",
     manufacturer: "Blackmagic Design",
     modelNumber: "Micro Converter HDMI to SDI 3G",
+    referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-11",
     searchTerms: ["blackmagic", "micro converter", "microconverter"],
     ports: [
       port("HDMI In", "hdmi", "input"),
@@ -124,6 +126,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Decimator MD-LX",
     manufacturer: "Decimator Design",
     modelNumber: "MD-LX",
+    referenceUrl: "https://decimator.com/Products/MiniConverters/MD-LX/MD-LX.html",
     searchTerms: ["decimator", "cross converter", "bidirectional"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -139,6 +142,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD BiDir SDI/HDMI 3G",
     manufacturer: "Blackmagic Design",
     modelNumber: "Micro Converter BiDirectional SDI/HDMI 3G",
+    referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-09",
     searchTerms: ["blackmagic", "micro converter", "bidirectional", "3g"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -154,6 +158,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "AJA FiDO-4T",
     manufacturer: "AJA",
     modelNumber: "FiDO-4T",
+    referenceUrl: "https://www.aja.com/products/fido-4t",
     searchTerms: ["aja", "fido", "fiber", "transmitter", "quad"],
     ports: [
       port("SDI In 1", "sdi", "input"),
@@ -174,6 +179,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "AJA FiDO-4R",
     manufacturer: "AJA",
     modelNumber: "FiDO-4R",
+    referenceUrl: "https://www.aja.com/products/fido-4r",
     searchTerms: ["aja", "fido", "fiber", "receiver", "quad"],
     ports: [
       port("Fiber In 1", "fiber", "input"),
@@ -194,6 +200,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "AJA FiDO-T",
     manufacturer: "AJA",
     modelNumber: "FiDO-T",
+    referenceUrl: "https://www.aja.com/products/fido-t",
     searchTerms: ["aja", "fido", "fiber", "transmitter", "single"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -208,6 +215,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "AJA FiDO-R",
     manufacturer: "AJA",
     modelNumber: "FiDO-R",
+    referenceUrl: "https://www.aja.com/products/fido-r",
     searchTerms: ["aja", "fido", "fiber", "receiver", "single"],
     ports: [
       port("Fiber In", "fiber", "input"),
@@ -222,6 +230,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Datavideo DAC-70",
     manufacturer: "Datavideo",
     modelNumber: "DAC-70",
+    referenceUrl: "https://www.datavideo.com/us/product/DAC-70",
     searchTerms: ["datavideo", "cross converter", "dac", "vga"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -241,6 +250,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Decimator MD-HX",
     manufacturer: "Decimator Design",
     modelNumber: "MD-HX",
+    referenceUrl: "https://decimator.com/Products/MiniConverters/MD-HX/MD-HX.html",
     searchTerms: ["decimator", "cross converter", "scaler", "upconverter", "downconverter"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -257,6 +267,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Extron DSC 301 HD",
     manufacturer: "Extron",
     modelNumber: "DSC 301 HD",
+    referenceUrl: "https://www.extron.com/product/dsc301hd",
     searchTerms: ["extron", "presentation scaler", "vga", "scan converter"],
     ports: [
       port("HDMI In", "hdmi", "input"),
@@ -330,6 +341,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD Videohub 20x20",
     manufacturer: "Blackmagic Design",
     modelNumber: "Smart Videohub 20x20",
+    referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicvideohub/techspecs",
     searchTerms: ["blackmagic", "smart videohub", "videohub", "20x20", "matrix"],
     ports: [
       port("In 1", "sdi", "input"),
@@ -383,6 +395,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD CleanSwitch 12x12",
     manufacturer: "Blackmagic Design",
     modelNumber: "CleanSwitch 12x12",
+    referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicvideohub/techspecs/W-VHS-06",
     searchTerms: ["blackmagic", "videohub", "cleanswitch", "clean switch", "12x12"],
     ports: [
       port("In 1", "sdi", "input"),
@@ -420,6 +433,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Kramer VS-88H2",
     manufacturer: "Kramer",
     modelNumber: "VS-88H2",
+    referenceUrl: "https://www1.kramerav.com/us/product/vs-88h2",
     searchTerms: ["kramer", "hdmi", "matrix", "8x8", "switcher"],
     ports: [
       port("HDMI In 1", "hdmi", "input"),
@@ -487,6 +501,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD HyperDeck Extreme",
     manufacturer: "Blackmagic Design",
     modelNumber: "HyperDeck Extreme 8K HDR",
+    referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckextreme/techspecs",
     searchTerms: ["blackmagic", "hyperdeck", "4k", "hdr", "recorder", "player"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -541,6 +556,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD UltraStudio 4K Mini",
     manufacturer: "Blackmagic Design",
     modelNumber: "UltraStudio 4K Mini",
+    referenceUrl: "https://www.blackmagicdesign.com/products/ultrastudio/techspecs/W-DLUS-11",
     searchTerms: ["blackmagic", "ultrastudio", "capture", "playback", "thunderbolt"],
     ports: [
       port("SDI In 1", "sdi", "input"),
@@ -560,6 +576,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Datapath FX4 SDI",
     manufacturer: "Datapath",
     modelNumber: "FX4 SDI",
+    referenceUrl: "https://www.datapath.co.uk/datapath-products/video-wall-controllers/datapath-fx4-sdi/",
     searchTerms: ["datapath", "video wall"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -581,6 +598,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Datapath FX4 HDMI",
     manufacturer: "Datapath",
     modelNumber: "FX4 HDMI",
+    referenceUrl: "https://www.datapath.co.uk/datapath-products/video-wall-controllers/datapath-fx4/",
     ports: [
       port("DP In", "displayport", "input"),
       port("HDMI In 1", "hdmi", "input"),
@@ -601,6 +619,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Panasonic DZ13K",
     manufacturer: "Panasonic",
     modelNumber: "PT-DZ13K",
+    referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-dz13ku-3-chip-dlptm-large-venue-projector",
     ports: [
       port("RGBHV In (BNC)", "vga", "input"),
       port("RGB In (VGA)", "vga", "input"),
@@ -622,6 +641,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Panasonic RZ21K",
     manufacturer: "Panasonic",
     modelNumber: "PT-RZ21K",
+    referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-rz21ku-3-chip-dlptm-solid-shine-laser-projector",
     searchTerms: ["panasonic", "laser", "dlp", "21k", "projector"],
     ports: [
       port("HDMI In", "hdmi", "input"),
@@ -643,6 +663,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Mac Studio (M4)",
     manufacturer: "Apple",
     modelNumber: "Mac Studio (M4)",
+    referenceUrl: "https://www.apple.com/mac-studio/specs/",
     ports: [
       port("TB5 1", "thunderbolt", "bidirectional"),
       port("TB5 2", "thunderbolt", "bidirectional"),
@@ -729,6 +750,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "PTZOptics Move SE",
     manufacturer: "PTZOptics",
     modelNumber: "Move SE",
+    referenceUrl: "https://ptzoptics.com/move-se/",
     searchTerms: ["ptz", "ptzoptics", "pt30x", "move se"],
     ports: [
       port("3.5mm Audio In", "analog-audio", "input", "trs-eighth"),
@@ -749,6 +771,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Adder XDIP",
     manufacturer: "Adder",
     modelNumber: "XDIP",
+    referenceUrl: "https://www.adder.com/en/kvm-solutions/adderlink-xdip",
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -772,6 +795,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Extron DTP T HD2 4K",
     manufacturer: "Extron",
     modelNumber: "DTP T HD2 4K 230",
+    referenceUrl: "https://www.extron.com/product/dtpthd24k230",
     searchTerms: ["extron", "dtp", "hdbaset", "transmitter", "extender"],
     ports: [
       port("HDMI In", "hdmi", "input"),
@@ -788,6 +812,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Extron DTP R HD2 4K",
     manufacturer: "Extron",
     modelNumber: "DTP R HD2 4K 230",
+    referenceUrl: "https://www.extron.com/product/dtphdmi230rx",
     searchTerms: ["extron", "dtp", "hdbaset", "receiver", "extender"],
     ports: [
       port("HDBaseT In", "hdbaset", "input"),
@@ -805,6 +830,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Teradek Bolt 4K TX",
     manufacturer: "Teradek",
     modelNumber: "Bolt 4K 750 TX",
+    referenceUrl: "https://teradek.com/products/bolt-4k-750-set",
     searchTerms: ["teradek", "bolt", "wireless", "transmitter", "zero delay"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -820,6 +846,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Teradek Bolt 4K RX",
     manufacturer: "Teradek",
     modelNumber: "Bolt 4K 750 RX",
+    referenceUrl: "https://teradek.com/products/bolt-4k-750-rx-only",
     searchTerms: ["teradek", "bolt", "wireless", "receiver", "zero delay"],
     ports: [
       port("SDI Out 1", "sdi", "output"),
@@ -837,6 +864,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "ClearCom FreeSpeak II",
     manufacturer: "Clear-Com",
     modelNumber: "FreeSpeak II Base Station",
+    referenceUrl: "https://www.clearcom.com/Products/Products-By-Name/Station-IC/fsii-base-ii",
     searchTerms: ["clearcom", "clear-com", "freespeak", "wireless intercom", "base station"],
     ports: [
       port("Partyline 1", "analog-audio", "bidirectional"),
@@ -862,6 +890,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD SDI→Audio 12G",
     manufacturer: "Blackmagic Design",
     modelNumber: "Teranex Mini SDI to Audio 12G",
+    referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini/techspecs/W-TERAMIN-05",
     searchTerms: ["blackmagic", "teranex", "de-embedder", "deembed", "audio extract"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -880,6 +909,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD Audio→SDI 12G",
     manufacturer: "Blackmagic Design",
     modelNumber: "Teranex Mini Audio to SDI 12G",
+    referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini/techspecs/W-TERAMIN-06",
     searchTerms: ["blackmagic", "teranex", "embedder", "audio embed"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -900,6 +930,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Teradek Prism Flex",
     manufacturer: "Teradek",
     modelNumber: "Prism Flex",
+    referenceUrl: "https://teradek.com/pages/prism-flex",
     searchTerms: ["teradek", "prism", "streaming", "encoder", "rtmp", "srt", "hevc"],
     ports: [
       port("SDI In", "sdi", "input"),
@@ -921,6 +952,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BrightSign XD1035",
     manufacturer: "BrightSign",
     modelNumber: "XD1035",
+    referenceUrl: "https://docs.brightsign.biz/hardware/xd235-xd1035",
     searchTerms: ["brightsign", "digital signage", "media player", "signage"],
     ports: [
       port("HDMI Out", "hdmi", "output"),
@@ -942,6 +974,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Shure ULXD4Q",
     manufacturer: "Shure",
     modelNumber: "ULXD4Q",
+    referenceUrl: "https://www.shure.com/en-US/products/wireless-systems/ulx-d_digital_wireless/ulxd4q",
     searchTerms: ["shure", "ulx-d", "wireless", "microphone", "receiver", "quad"],
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
@@ -960,6 +993,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Sennheiser EW-DX EM 4",
     manufacturer: "Sennheiser",
     modelNumber: "EW-DX EM 4 Dante",
+    referenceUrl: "https://www.sennheiser.com/en-us/catalog/products/wireless-systems/ew-dx-em-4-dante/ew-dx-em-4-dante-q1-9-509370",
     searchTerms: ["sennheiser", "ew-dx", "wireless", "microphone", "receiver", "dante"],
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
@@ -981,6 +1015,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Focusrite RedNet A16R",
     manufacturer: "Focusrite",
     modelNumber: "RedNet A16R MkII",
+    referenceUrl: "https://us.focusrite.com/products/rednet-a16r-mkii",
     searchTerms: ["focusrite", "rednet", "dante", "audio interface", "a16r"],
     ports: [
       port("Analog In 1-8", "analog-audio", "input"),
@@ -1005,6 +1040,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Crestron CP4N",
     manufacturer: "Crestron",
     modelNumber: "CP4N",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Control-and-Management/Control-System/Rack-Mount/CP4N",
     searchTerms: ["crestron", "control", "processor", "automation", "cp4"],
     ports: [
       port("LAN", "ethernet", "bidirectional"),
@@ -1027,6 +1063,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "BMD GPI & Tally",
     manufacturer: "Blackmagic Design",
     modelNumber: "GPI and Tally Interface",
+    referenceUrl: "https://www.blackmagicdesign.com/products/atemconstellation/techspecs/W-ATC-03",
     searchTerms: ["blackmagic", "tally", "gpi", "gpio", "indicator"],
     ports: [
       port("Ethernet In", "ethernet", "bidirectional"),
@@ -1045,6 +1082,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     label: "Crestron DM-NVX-351",
     manufacturer: "Crestron",
     modelNumber: "DM-NVX-351",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/AV-Over-IP/DM-NVX-AV-Over-IP/Video-Endpoint/DM-NVX-351",
     searchTerms: ["crestron", "nvx", "av-over-ip", "networked av", "encoder", "decoder"],
     ports: [
       port("HDMI In 1", "hdmi", "input"),

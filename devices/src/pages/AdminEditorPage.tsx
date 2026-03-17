@@ -9,6 +9,7 @@ function Editor({ id }: { id?: string }) {
   const [deviceType, setDeviceType] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [modelNumber, setModelNumber] = useState("");
+  const [referenceUrl, setReferenceUrl] = useState("");
   const [searchTerms, setSearchTerms] = useState("");
   const [color, setColor] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
@@ -28,6 +29,7 @@ function Editor({ id }: { id?: string }) {
         setDeviceType(t.deviceType);
         setManufacturer(t.manufacturer ?? "");
         setModelNumber(t.modelNumber ?? "");
+        setReferenceUrl(t.referenceUrl ?? "");
         setSearchTerms(t.searchTerms?.join(", ") ?? "");
         setColor(t.color ?? "");
         setPorts(t.ports);
@@ -51,6 +53,7 @@ function Editor({ id }: { id?: string }) {
       ports,
       ...(manufacturer.trim() && { manufacturer: manufacturer.trim() }),
       ...(modelNumber.trim() && { modelNumber: modelNumber.trim() }),
+      ...(referenceUrl.trim() && { referenceUrl: referenceUrl.trim() }),
       ...(color.trim() && { color: color.trim() }),
       ...(searchTerms.trim() && { searchTerms: searchTerms.split(",").map((s) => s.trim()).filter(Boolean) }),
     };
@@ -115,6 +118,10 @@ function Editor({ id }: { id?: string }) {
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Model Number</span>
           <input value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </label>
+        <label className="col-span-2">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL</span>
+          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product-page" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>

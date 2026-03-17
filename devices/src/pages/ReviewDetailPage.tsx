@@ -165,13 +165,19 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   );
 }
 
-function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType" | "manufacturer" | "modelNumber" | "color"> }) {
+function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType" | "manufacturer" | "modelNumber" | "color" | "referenceUrl"> }) {
   return (
     <div className="grid grid-cols-2 gap-2 text-sm mb-4">
       <div><span className="text-slate-500">Label:</span> <span className="font-medium">{data.label}</span></div>
       <div><span className="text-slate-500">Type:</span> {data.deviceType}</div>
       {data.manufacturer && <div><span className="text-slate-500">Manufacturer:</span> {data.manufacturer}</div>}
       {data.modelNumber && <div><span className="text-slate-500">Model:</span> {data.modelNumber}</div>}
+      {data.referenceUrl && (
+        <div className="col-span-2">
+          <span className="text-slate-500">Reference:</span>{" "}
+          <a href={data.referenceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all">{data.referenceUrl}</a>
+        </div>
+      )}
       {data.color && (
         <div className="flex items-center gap-1">
           <span className="text-slate-500">Color:</span>

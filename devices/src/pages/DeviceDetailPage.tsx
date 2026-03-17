@@ -73,6 +73,11 @@ export default function DeviceDetailPage({ id }: { id: string }) {
             {template.modelNumber && <span>Model: {template.modelNumber}</span>}
             <span className="capitalize">{template.deviceType.replace(/-/g, " ")}</span>
           </div>
+          {template.referenceUrl && (
+            <a href={template.referenceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-800">
+              Manufacturer Page <span aria-hidden="true">&nearr;</span>
+            </a>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {template.color && (

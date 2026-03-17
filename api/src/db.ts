@@ -8,6 +8,7 @@ interface TemplateOutput {
   modelNumber?: string;
   color?: string;
   imageUrl?: string;
+  referenceUrl?: string;
   searchTerms?: string[];
   ports: unknown[];
 }
@@ -21,6 +22,7 @@ export interface TemplateRow {
   model_number: string | null;
   color: string | null;
   image_url: string | null;
+  reference_url: string | null;
   search_terms: string | null;
   ports: string;
   sort_order: number;
@@ -34,6 +36,7 @@ interface TemplateInput {
   modelNumber?: string;
   color?: string;
   imageUrl?: string;
+  referenceUrl?: string;
   searchTerms?: string[];
   ports: unknown[];
   sortOrder?: number;
@@ -48,6 +51,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     model_number: input.modelNumber ?? null,
     color: input.color ?? null,
     image_url: input.imageUrl ?? null,
+    reference_url: input.referenceUrl ?? null,
     search_terms: input.searchTerms ? JSON.stringify(input.searchTerms) : null,
     ports: JSON.stringify(input.ports),
     sort_order: input.sortOrder ?? 0,
@@ -64,6 +68,7 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.model_number && { modelNumber: row.model_number }),
     ...(row.color && { color: row.color }),
     ...(row.image_url && { imageUrl: row.image_url }),
+    ...(row.reference_url && { referenceUrl: row.reference_url }),
     ...(row.search_terms && { searchTerms: JSON.parse(row.search_terms) as string[] }),
     ports: JSON.parse(row.ports) as unknown[],
   };
