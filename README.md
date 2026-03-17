@@ -70,7 +70,23 @@ SDI · HDMI · NDI · Dante · Analog Audio · AES · USB · Ethernet · Fiber �
 - **Moderation workflow** — submissions are reviewed by moderators before going live
 - **Reference URLs** — branded devices link to manufacturer product pages for spec verification
 - **Contributor attribution** — approved submissions credit the contributor on the device page and the hall of fame
-- **REST API** at `api.easyschematic.live` backed by Cloudflare D1 (SQLite)
+- **REST API** at `api.easyschematic.live` backed by Cloudflare D1 (SQLite) — public read endpoints below
+
+#### Public API
+
+The device database API is open for read access. No authentication required.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /templates` | All device templates (label, ports, manufacturer, model, signal types, connectors) |
+| `GET /templates/:id` | Single template with contributor attribution |
+| `GET /templates/device-types` | Distinct device type values |
+| `GET /templates/search-terms` | All search terms across templates |
+| `GET /contributors` | Top contributors (name + approved count) |
+
+Base URL: `https://api.easyschematic.live`
+
+Responses are JSON. Templates are cached for 5 minutes. This data is free to use — if you're building AV tooling and need a structured database of professional video/audio equipment with port definitions, signal types, and connector types, help yourself.
 
 ### Save & Export
 
