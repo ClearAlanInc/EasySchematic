@@ -8,6 +8,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   dante: "rj45",
   "analog-audio": "xlr-3",
   aes: "xlr-3",
+  dmx: "xlr-5",
+  madi: "bnc",
   usb: "usb-a",
   ethernet: "rj45",
   fiber: "lc",

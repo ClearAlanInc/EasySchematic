@@ -8,6 +8,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   dante: "#ea580c",
   "analog-audio": "#854d0e",
   aes: "#7c3aed",
+  dmx: "#b91c1c",
+  madi: "#059669",
   usb: "#db2777",
   ethernet: "#0891b2",
   fiber: "#d97706",

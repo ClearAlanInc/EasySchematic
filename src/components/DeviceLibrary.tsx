@@ -12,16 +12,20 @@ const CATEGORIES: { label: string; types: string[] }[] = [
   { label: "Sources", types: ["camera", "ptz-camera", "graphics", "computer", "media-player"] },
   { label: "Peripherals", types: ["mouse", "keyboard"] },
   { label: "Switching", types: ["switcher", "router"] },
-  { label: "Processing", types: ["converter", "scaler", "adapter", "frame-sync", "multiviewer"] },
+  { label: "Processing", types: ["converter", "scaler", "adapter", "frame-sync", "multiviewer", "capture-card"] },
   { label: "Distribution", types: ["da", "video-wall-controller"] },
   { label: "Monitoring", types: ["monitor", "tv"] },
   { label: "Projection", types: ["projector"] },
   { label: "Recording", types: ["recorder"] },
-  { label: "Audio", types: ["audio-mixer", "audio-embedder", "audio-interface", "wireless-mic-receiver"] },
+  { label: "Audio", types: ["audio-mixer", "audio-embedder", "audio-interface", "audio-dsp", "stage-box", "wireless-mic-receiver"] },
+  { label: "Speakers & Amps", types: ["speaker", "amplifier"] },
   { label: "Networking", types: ["ndi-encoder", "ndi-decoder", "network-switch", "streaming-encoder", "av-over-ip"] },
   { label: "KVM / Extenders", types: ["kvm-extender", "hdbaset-extender"] },
   { label: "Wireless", types: ["wireless-video", "intercom"] },
-  { label: "Control", types: ["control-processor", "tally-system"] },
+  { label: "LED Video", types: ["led-processor"] },
+  { label: "Media Servers", types: ["media-server"] },
+  { label: "Lighting", types: ["lighting-console", "moving-light", "led-fixture", "dmx-splitter"] },
+  { label: "Control", types: ["control-processor", "tally-system", "timecode-generator", "midi-device"] },
 ];
 
 function onDragStart(event: DragEvent, template: DeviceTemplate) {

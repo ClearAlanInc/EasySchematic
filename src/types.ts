@@ -37,6 +37,8 @@ export type SignalType =
   | "dante"
   | "analog-audio"
   | "aes"
+  | "dmx"
+  | "madi"
   | "usb"
   | "ethernet"
   | "fiber"
@@ -199,6 +201,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   dante: "var(--color-dante)",
   "analog-audio": "var(--color-analog-audio)",
   aes: "var(--color-aes)",
+  dmx: "var(--color-dmx)",
+  madi: "var(--color-madi)",
   usb: "var(--color-usb)",
   ethernet: "var(--color-ethernet)",
   fiber: "var(--color-fiber)",
@@ -249,6 +253,8 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   dante: "Dante",
   "analog-audio": "Analog",
   aes: "AES",
+  dmx: "DMX",
+  madi: "MADI",
   usb: "USB",
   ethernet: "Ethernet",
   fiber: "Fiber",

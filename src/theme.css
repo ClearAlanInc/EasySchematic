@@ -14,6 +14,8 @@
   --color-dante: #ea580c;     /* orange — network audio */
   --color-analog-audio: #854d0e; /* brown — old-school warmth */
   --color-aes: #7c3aed;       /* purple — digital audio */
+  --color-dmx: #b91c1c;       /* dark red — lighting control */
+  --color-madi: #059669;      /* emerald — multi-channel digital audio */
   --color-usb: #db2777;       /* pink — ubiquitous connector */
   --color-ethernet: #0891b2;  /* teal — networking */
   --color-fiber: #d97706;     /* amber — industry standard for fiber */
