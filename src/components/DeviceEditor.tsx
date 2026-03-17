@@ -27,6 +27,7 @@ interface PortDraft {
   section?: string;
   connectorType?: ConnectorType;
   networkConfig?: PortNetworkConfig;
+  addressable?: boolean;
   capabilities?: PortCapabilities;
 }
 
