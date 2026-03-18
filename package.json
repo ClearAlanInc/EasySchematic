@@ -30,6 +30,7 @@
     "generate-fallback": "npx tsx api/seed/generate-fallback.ts",
     "build": "npm run generate-fallback && tsc -b && vite build",
     "lint": "eslint .",
+    "db:sync": "cd api && npm run seed:remote",
     "preview": "vite preview"
   },
   "dependencies": {

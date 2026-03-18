@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "predeploy": "npx tsx seed/seed.ts --remote",
     "deploy": "wrangler deploy",
     "seed:local": "npx tsx seed/seed.ts",
     "seed:remote": "npx tsx seed/seed.ts --remote",
