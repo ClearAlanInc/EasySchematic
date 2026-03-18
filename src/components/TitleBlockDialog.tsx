@@ -114,6 +114,11 @@ export default function TitleBlockDialog({ onClose }: TitleBlockDialogProps) {
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Logo image is too large (max 5 MB). Please use a smaller image.");
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = reader.result as string;

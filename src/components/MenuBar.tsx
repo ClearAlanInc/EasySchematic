@@ -162,6 +162,11 @@ export default function MenuBar() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File is too large (max 10 MB). Please use a smaller schematic file.");
+        e.target.value = "";
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         try {
