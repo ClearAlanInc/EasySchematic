@@ -7,7 +7,7 @@ import appShimPlugin from "./vite-alias-plugin.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Put Vite's cache in temp dir to avoid Dropbox file-locking conflicts
+// Use temp dir for cache to avoid file-locking issues
 const cacheDir = path.join(os.tmpdir(), "vite-easyschematic-docs");
 
 export default defineConfig({

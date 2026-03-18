@@ -5,7 +5,7 @@ import os from 'os'
 import { readFileSync } from 'fs'
 import { execSync } from 'child_process'
 
-// Put Vite's cache in temp dir to avoid Dropbox file-locking conflicts
+// Use temp dir for cache to avoid file-locking issues
 const cacheDir = path.join(os.tmpdir(), 'vite-easyschematic')
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))

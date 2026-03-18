@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability in EasySchematic, please report it responsibly:
 
-1. **GitHub Security Advisories** (preferred): [Report a vulnerability](https://github.com/argylexr/EasySchematic/security/advisories/new)
+1. **GitHub Security Advisories** (preferred): [Report a vulnerability](https://github.com/duremovich/EasySchematic/security/advisories/new)
 2. **Email**: security@easyschematic.live
 
 Please do **not** open a public issue for security vulnerabilities.

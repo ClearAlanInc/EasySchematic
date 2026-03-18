@@ -55,40 +55,40 @@ export default function EdgeRoutingPage() {
       <h2>Manual routing</h2>
       <p>
         Sometimes the auto-router doesn't produce the exact path you want. You can override
-        routing on any connection by adding <strong>manual handles</strong> — waypoints that the
+        routing on any connection by adding <strong>manual waypoints</strong> — points that the
         connection must pass through.
       </p>
 
-      <h3>Adding a handle</h3>
+      <h3>Adding a waypoint</h3>
       <ol>
         <li><strong>Right-click</strong> on any connection to open the context menu</li>
         <li>Select <strong>Add Handle</strong></li>
-        <li>A handle appears on the connection at the click position</li>
+        <li>A waypoint appears on the connection at the click position</li>
       </ol>
       <p>
-        The connection is re-routed using A* pathfinding between each pair of handles,
+        The connection is re-routed using A* pathfinding between each pair of waypoints,
         so it still avoids devices and maintains smooth orthogonal turns — it just passes
         through your chosen points along the way.
       </p>
 
-      <h3>Moving handles</h3>
+      <h3>Moving waypoints</h3>
       <p>
-        Click the connection to select it, then <strong>drag any handle</strong> to reposition it.
-        Handles snap to the 20px grid (the same grid devices snap to), so connections align
+        Click the connection to select it, then <strong>drag any waypoint</strong> to reposition it.
+        Waypoints snap to the 20px grid (the same grid devices snap to), so connections align
         cleanly with ports.
       </p>
 
-      <h3>Removing handles</h3>
+      <h3>Removing waypoints</h3>
       <p>
-        Right-click near an existing handle and select <strong>Remove Handle</strong> to delete it.
-        The connection re-routes automatically around the remaining handles (or fully
-        auto-routes if no handles remain).
+        Right-click near an existing waypoint and select <strong>Remove Handle</strong> to delete it.
+        The connection re-routes automatically around the remaining waypoints (or fully
+        auto-routes if no waypoints remain).
       </p>
 
       <h3>Resetting to auto-routing</h3>
       <p>
         Right-click a manually-routed connection and select <strong>Reset Route</strong> to remove
-        all handles and return the connection to fully automatic routing.
+        all waypoints and return the connection to fully automatic routing.
       </p>
 
       <h3>How manual routing interacts with auto-routing</h3>
@@ -102,11 +102,11 @@ export default function EdgeRoutingPage() {
           connection's path and route around it
         </li>
         <li>
-          <strong>A* still works</strong> — each leg between handles uses full A* pathfinding
-          with obstacle avoidance, just constrained to pass through your handles
+          <strong>A* still works</strong> — each leg between waypoints uses full A* pathfinding
+          with obstacle avoidance, just constrained to pass through your waypoints
         </li>
         <li>
-          <strong>Undo/redo</strong> — all handle operations are undoable with Ctrl+Z
+          <strong>Undo/redo</strong> — all waypoint operations are undoable with Ctrl+Z
         </li>
       </ul>
 

@@ -31,7 +31,7 @@
 - **Click-to-connect** — click a source handle, preview line follows cursor, snaps to nearby valid targets (green = valid, red = incompatible signal type), click target to connect or click device body to auto-connect first compatible port
 - **Drag-to-connect** with the same preview/snap/validity behavior
 - **Smart edge routing** — A* pathfinding avoids device crossings with automatic parallel edge nesting
-- **Manual route editing** — right-click a connection to add draggable waypoint handles; A* routes each leg between handles while other connections yield
+- **Manual route editing** — right-click a connection to add draggable waypoints; A* routes each leg between waypoints while other connections yield
 - **23 signal types**, all color-coded (see below)
 
 ### Ports
@@ -134,7 +134,7 @@ Output goes to `dist/` — deploy as a static site anywhere.
 
 | Shortcut | Action |
 |----------|--------|
-| Click handle | Start click-to-connect |
+| Click port | Start click-to-connect |
 | `Escape` | Cancel connection / deselect |
 | `Space` + drag | Pan canvas |
 | `Delete` / `Backspace` | Delete selected |
@@ -150,8 +150,11 @@ Output goes to `dist/` — deploy as a static site anywhere.
 | Double-click canvas | Quick-add device search dialog |
 | Double-click room background | Quick-add device inside room |
 | Right-click room | Open room properties editor |
-| Right-click connection | Add/remove routing handles, reset route |
-| `Ctrl+B` | Toggle routing debug overlay |
+| Right-click connection | Add/remove routing waypoints, reset route |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, architecture notes, and guidelines.
 
 ## License
 

@@ -26,7 +26,7 @@ export default function ApiPage() {
         <li><code>manufacturer</code> — brand name (optional)</li>
         <li><code>modelNumber</code> — model identifier (optional)</li>
         <li><code>referenceUrl</code> — manufacturer product page URL (optional)</li>
-        <li><code>color</code> — hex color for the device node (optional)</li>
+        <li><code>color</code> — hex color for the device (optional)</li>
         <li><code>searchTerms</code> — array of search keywords (optional)</li>
         <li><code>ports</code> — array of port objects (see below)</li>
       </ul>
