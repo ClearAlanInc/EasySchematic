@@ -74,7 +74,7 @@ export function mergeDevicesByModel(devices: PackListDevice[]): PackListDevice[]
   );
 }
 
-function getRoomLabel(
+export function getRoomLabel(
   nodes: SchematicNode[],
   parentId: string | undefined,
 ): string {
@@ -84,7 +84,7 @@ function getRoomLabel(
   return (room.data as RoomData).label || "Unassigned";
 }
 
-function resolvePortLabel(
+export function resolvePortLabel(
   node: SchematicNode,
   handleId: string | null | undefined,
 ): string {
@@ -96,7 +96,7 @@ function resolvePortLabel(
   return port?.label ?? handleId;
 }
 
-function resolvePort(
+export function resolvePort(
   node: SchematicNode | undefined,
   handleId: string | null | undefined,
 ) {
@@ -201,14 +201,14 @@ export function computePackList(
 
 // --------------- CSV Export ---------------
 
-function escapeCsv(val: string): string {
+export function escapeCsv(val: string): string {
   if (val.includes(",") || val.includes('"') || val.includes("\n")) {
     return `"${val.replace(/"/g, '""')}"`;
   }
   return val;
 }
 
-function csvRow(cells: string[]): string {
+export function csvRow(cells: string[]): string {
   return cells.map(escapeCsv).join(",");
 }
 
@@ -250,7 +250,7 @@ export function exportPackListCsv(
 
 // --------------- Report Table Data Transform ---------------
 
-function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
+export function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
   for (const item of items) {
     const key = keyFn(item);

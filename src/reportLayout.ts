@@ -220,6 +220,62 @@ export function createDefaultPackListLayout(): ReportLayout {
   };
 }
 
+// ─── Cable Schedule Defaults ───
+
+export function createDefaultCableScheduleHeaderLayout(): TitleBlockLayout {
+  return {
+    columns: normalizeSizes([0.6, 0.4]),
+    rows: normalizeSizes([0.55, 0.45]),
+    widthIn: 8,
+    heightIn: 0.8,
+    cells: [
+      layoutCell(0, 0, { type: "static", text: "Cable Schedule" }, { fontSize: 14, fontWeight: "bold" }),
+      layoutCell(0, 1, { type: "logo" }, { align: "right" }),
+      layoutCell(1, 0, { type: "field", field: "showName" }, { fontSize: 8 }),
+      layoutCell(1, 1, { type: "field", field: "date" }, { fontSize: 8, align: "right", color: "#666666" }),
+    ],
+  };
+}
+
+export function createDefaultCableScheduleLayout(): ReportLayout {
+  return {
+    headerLayout: createDefaultCableScheduleHeaderLayout(),
+    headerHeightMm: 22,
+    footerLayout: createDefaultPackListFooterLayout(),
+    footerHeightMm: 8,
+    tables: [
+      {
+        id: "cableSchedule",
+        label: "Cable Schedule",
+        columns: [
+          { key: "cableId",         header: "Cable ID",   widthMm: 18, visible: true },
+          { key: "sourceDevice",    header: "Source",      widthMm: 30, visible: true },
+          { key: "sourcePort",      header: "Src Port",    widthMm: 22, visible: true },
+          { key: "sourceConnector", header: "Src Conn",    widthMm: 18, visible: true },
+          { key: "targetDevice",    header: "Target",      widthMm: 30, visible: true },
+          { key: "targetPort",      header: "Tgt Port",    widthMm: 22, visible: true },
+          { key: "targetConnector", header: "Tgt Conn",    widthMm: 18, visible: true },
+          { key: "cableType",       header: "Cable Type",  widthMm: 22, visible: true },
+          { key: "signalType",      header: "Signal",      widthMm: 20, visible: true },
+          { key: "sourceRoom",      header: "Src Room",    widthMm: 24, visible: true },
+          { key: "targetRoom",      header: "Tgt Room",    widthMm: 24, visible: true },
+        ],
+        groupBy: null,
+        groupByOptions: [
+          { key: "",           label: "None" },
+          { key: "sourceRoom", label: "Source Room" },
+          { key: "signalType", label: "Signal Type" },
+          { key: "cableType",  label: "Cable Type" },
+        ],
+        sortBy: "cableId",
+        sortDir: "asc",
+      },
+    ],
+    orientation: "landscape",
+    paperSize: "letter",
+  };
+}
+
 // ─── Helpers ───
 
 export function getVisibleColumns(table: ReportTableDef): ReportColumnDef[] {

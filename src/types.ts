@@ -127,6 +127,7 @@ export interface ConnectionData {
   signalType: SignalType;
   manualWaypoints?: { x: number; y: number }[];
   connectorMismatch?: boolean;
+  cableId?: string;
 }
 
 export type ConnectionEdge = Edge<ConnectionData>;

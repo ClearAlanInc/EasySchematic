@@ -102,6 +102,10 @@ interface SchematicState {
   addCustomTemplate: (template: DeviceTemplate) => void;
   removeCustomTemplate: (deviceType: string) => void;
 
+  // Edge data
+  patchEdgeData: (edgeId: string, patch: Partial<import("./types").ConnectionData>) => void;
+  batchPatchEdgeData: (changes: { edgeId: string; patch: Partial<import("./types").ConnectionData> }[]) => void;
+
   // Manual edge routing
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
@@ -1235,6 +1239,31 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setSchematicName: (name) => {
     set({ schematicName: name });
+    get().saveToLocalStorage();
+  },
+
+  patchEdgeData: (edgeId, patch) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      edges: state.edges.map((e) =>
+        e.id === edgeId ? { ...e, data: { ...e.data!, ...patch } } : e,
+      ),
+    });
+    get().saveToLocalStorage();
+  },
+
+  batchPatchEdgeData: (changes) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const changeMap = new Map(changes.map((c) => [c.edgeId, c.patch]));
+    set({
+      edges: state.edges.map((e) => {
+        const patch = changeMap.get(e.id);
+        if (!patch) return e;
+        return { ...e, data: { ...e.data!, ...patch } };
+      }),
+    });
     get().saveToLocalStorage();
   },
 

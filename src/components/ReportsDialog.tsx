@@ -9,7 +9,13 @@ import {
   exportPackListCsv,
   getPackListTableData,
 } from "../packList";
-import { createDefaultPackListLayout, createDefaultNetworkReportLayout } from "../reportLayout";
+import {
+  computeCableSchedule,
+  exportCableScheduleCsv,
+  getCableScheduleTableData,
+  type CableScheduleRow,
+} from "../cableSchedule";
+import { createDefaultPackListLayout, createDefaultNetworkReportLayout, createDefaultCableScheduleLayout } from "../reportLayout";
 import { getNetworkReportTableData } from "../networkReport";
 import ReportPreviewDialog from "./ReportPreviewDialog";
 import IpInput from "./IpInput";
@@ -18,7 +24,7 @@ import { useSpreadsheetSelection } from "../spreadsheet/useSpreadsheetSelection"
 import type { SpreadsheetColumn } from "../spreadsheet/types";
 import FillSeriesDialog from "../spreadsheet/FillSeriesDialog";
 
-export type ReportsTab = "network" | "devices" | "packList";
+export type ReportsTab = "network" | "devices" | "packList" | "cableSchedule";
 
 interface ReportsDialogProps {
   initialTab: ReportsTab;
@@ -27,12 +33,14 @@ interface ReportsDialogProps {
 
 const PACKLIST_LAYOUT_KEY = "easyschematic-packlist-layout";
 const NETWORK_LAYOUT_KEY = "easyschematic-network-report-layout";
+const CABLE_SCHEDULE_LAYOUT_KEY = "easyschematic-cable-schedule-layout";
 
 function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const [tab, setTab] = useState<ReportsTab>(initialTab);
   const [maximized, setMaximized] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showNetworkPreview, setShowNetworkPreview] = useState(false);
+  const [showCableSchedulePreview, setShowCableSchedulePreview] = useState(false);
 
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
@@ -54,6 +62,9 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
       exportNetworkCsv(nodes, edges, schematicName);
     } else if (tab === "devices") {
       exportDevicesCsv(nodes, schematicName);
+    } else if (tab === "cableSchedule") {
+      const rows = computeCableSchedule(nodes, edges);
+      exportCableScheduleCsv(rows, schematicName);
     } else {
       const data = computePackList(nodes, edges);
       exportPackListCsv(data, schematicName);
@@ -62,11 +73,13 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
 
   const defaultLayout = useMemo(() => createDefaultPackListLayout(), []);
   const networkDefaultLayout = useMemo(() => createDefaultNetworkReportLayout(), []);
+  const cableScheduleDefaultLayout = useMemo(() => createDefaultCableScheduleLayout(), []);
 
   const tabLabels: Record<ReportsTab, string> = {
     network: "Network",
     devices: "Devices",
     packList: "Pack List",
+    cableSchedule: "Cable Schedule",
   };
 
   return (
@@ -99,6 +112,11 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
             )}
             {tab === "packList" && (
               <button onClick={() => setShowPreview(true)} className={btnClass}>
+                PDF
+              </button>
+            )}
+            {tab === "cableSchedule" && (
+              <button onClick={() => setShowCableSchedulePreview(true)} className={btnClass}>
                 PDF
               </button>
             )}
@@ -140,6 +158,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
             {tab === "network" && <NetworkReportTab />}
             {tab === "devices" && <DeviceReportTab />}
             {tab === "packList" && <PackListTabInline />}
+            {tab === "cableSchedule" && <CableScheduleTabInline />}
           </div>
         </div>
       </div>
@@ -167,6 +186,19 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           }
           onClose={() => setShowPreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Pack List.pdf`}
+        />
+      )}
+
+      {showCableSchedulePreview && (
+        <ReportPreviewDialog
+          reportKey={CABLE_SCHEDULE_LAYOUT_KEY}
+          defaultLayout={cableScheduleDefaultLayout}
+          titleBlock={titleBlock}
+          getTableData={(layout) =>
+            getCableScheduleTableData(computeCableSchedule(nodes, edges), layout)
+          }
+          onClose={() => setShowCableSchedulePreview(false)}
+          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Cable Schedule.pdf`}
         />
       )}
     </>
@@ -1044,6 +1076,316 @@ const DeviceRow = memo(function DeviceRow({
     </tr>
   );
 });
+
+// ─── Cable Schedule Tab ────────────────────────────────────────
+
+type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector" | "targetDevice" | "targetPort" | "targetConnector" | "cableType" | "signalType" | "sourceRoom" | "targetRoom";
+type CableGroupBy = "" | "sourceRoom" | "signalType" | "cableType";
+
+const cableScheduleColumns: SpreadsheetColumn<CableScheduleRow>[] = [
+  { id: "cableId", header: "Cable ID", getValue: (r) => r.cableId, editable: true, fillType: "deviceName" },
+];
+
+function CableScheduleTabInline() {
+  const nodes = useSchematicStore((s) => s.nodes);
+  const edges = useSchematicStore((s) => s.edges);
+  const patchEdgeData = useSchematicStore((s) => s.patchEdgeData);
+  const batchPatchEdgeData = useSchematicStore((s) => s.batchPatchEdgeData);
+
+  const [filter, setFilter] = useState("");
+  const [sortKey, setSortKey] = useState<CableSortKey>("cableId");
+  const [sortAsc, setSortAsc] = useState(true);
+  const [groupByKey, setGroupByKey] = useState<CableGroupBy>("");
+
+  const rows = useMemo(() => computeCableSchedule(nodes, edges), [nodes, edges]);
+
+  const filtered = useMemo(() => {
+    const q = filter.toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.cableId.toLowerCase().includes(q) ||
+        r.sourceDevice.toLowerCase().includes(q) ||
+        r.sourcePort.toLowerCase().includes(q) ||
+        r.sourceConnector.toLowerCase().includes(q) ||
+        r.targetDevice.toLowerCase().includes(q) ||
+        r.targetPort.toLowerCase().includes(q) ||
+        r.targetConnector.toLowerCase().includes(q) ||
+        r.cableType.toLowerCase().includes(q) ||
+        r.signalType.toLowerCase().includes(q) ||
+        r.sourceRoom.toLowerCase().includes(q) ||
+        r.targetRoom.toLowerCase().includes(q),
+    );
+  }, [rows, filter]);
+
+  const sorted = useMemo(() => {
+    const copy = [...filtered];
+    copy.sort((a, b) => {
+      const cmp = a[sortKey].localeCompare(b[sortKey]);
+      return sortAsc ? cmp : -cmp;
+    });
+    return copy;
+  }, [filtered, sortKey, sortAsc]);
+
+  const toggleSort = (key: CableSortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else {
+      setSortKey(key);
+      setSortAsc(true);
+    }
+  };
+
+  const sortArrow = (key: CableSortKey) =>
+    sortKey === key ? (sortAsc ? " ▴" : " ▾") : "";
+
+  const onCellChange = useCallback(
+    (rowIndex: number, _columnId: string, value: string) => {
+      const row = sorted[rowIndex];
+      if (!row || !value.trim()) return;
+      patchEdgeData(row.edgeId, { cableId: value.trim() });
+    },
+    [sorted, patchEdgeData],
+  );
+
+  const onBatchChange = useCallback(
+    (changes: { rowIndex: number; columnId: string; value: string }[]) => {
+      const edgeChanges = changes
+        .map((c) => {
+          const row = sorted[c.rowIndex];
+          if (!row || !c.value.trim()) return null;
+          return { edgeId: row.edgeId, patch: { cableId: c.value.trim() } };
+        })
+        .filter((c): c is { edgeId: string; patch: { cableId: string } } => c !== null);
+      if (edgeChanges.length > 0) {
+        batchPatchEdgeData(edgeChanges);
+      }
+    },
+    [sorted, batchPatchEdgeData],
+  );
+
+  const isCellEditable = useCallback(
+    (_rowIndex: number, _columnId: string) => true,
+    [],
+  );
+
+  const getCellValue = useCallback(
+    (rowIndex: number, _columnId: string) => sorted[rowIndex]?.cableId ?? "",
+    [sorted],
+  );
+
+  const spreadsheet = useSpreadsheetSelection({
+    rowCount: sorted.length,
+    columns: cableScheduleColumns,
+    isCellEditable,
+    getCellValue,
+    onCellChange,
+    onBatchChange,
+  });
+
+  // Clear selection on sort/filter change
+  useEffect(() => {
+    spreadsheet.clearSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortKey, sortAsc, filter]);
+
+  if (rows.length === 0) {
+    return (
+      <div className="text-sm text-[var(--color-text-muted)] text-center py-8">
+        No connections in this schematic.
+      </div>
+    );
+  }
+
+  const grouped = groupByKey
+    ? groupCableScheduleRows(sorted, groupByKey)
+    : null;
+
+  return (
+    <>
+      {/* Action bar */}
+      {spreadsheet.selectedCells.size > 0 && (
+        <div className="mb-3 flex items-center gap-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <span className="text-xs font-medium text-blue-700">
+            {spreadsheet.selectedCells.size} cable ID{spreadsheet.selectedCells.size > 1 ? "s" : ""} selected
+          </span>
+          <span className="text-[11px] text-blue-500">
+            {spreadsheet.selectedCells.size > 1 ? "Type a value + Enter to fill series" : "Double-click or type to edit"}
+          </span>
+          <div className="flex-1" />
+          <button
+            onClick={() => spreadsheet.clearSelection()}
+            className="px-2 py-1 text-xs rounded text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mb-3">
+        <input
+          className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+          placeholder="Filter by device, port, cable type, signal, room..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+        <select
+          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none cursor-pointer"
+          value={groupByKey}
+          onChange={(e) => setGroupByKey(e.target.value as CableGroupBy)}
+        >
+          <option value="">No Grouping</option>
+          <option value="sourceRoom">Source Room</option>
+          <option value="signalType">Signal Type</option>
+          <option value="cableType">Cable Type</option>
+        </select>
+      </div>
+      <div {...spreadsheet.getContainerProps()}>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className={thClass} onClick={() => toggleSort("cableId")}>Cable ID{sortArrow("cableId")}</th>
+              <th className={thClass} onClick={() => toggleSort("sourceDevice")}>Source{sortArrow("sourceDevice")}</th>
+              <th className={thClass} onClick={() => toggleSort("sourcePort")}>Src Port{sortArrow("sourcePort")}</th>
+              <th className={thClass} onClick={() => toggleSort("sourceConnector")}>Src Conn{sortArrow("sourceConnector")}</th>
+              <th className={thClass} onClick={() => toggleSort("targetDevice")}>Target{sortArrow("targetDevice")}</th>
+              <th className={thClass} onClick={() => toggleSort("targetPort")}>Tgt Port{sortArrow("targetPort")}</th>
+              <th className={thClass} onClick={() => toggleSort("targetConnector")}>Tgt Conn{sortArrow("targetConnector")}</th>
+              <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
+              <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
+              <th className={thClass} onClick={() => toggleSort("sourceRoom")}>Src Room{sortArrow("sourceRoom")}</th>
+              <th className={thClass} onClick={() => toggleSort("targetRoom")}>Tgt Room{sortArrow("targetRoom")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {grouped
+              ? renderGroupedCableSchedule(grouped, spreadsheet)
+              : sorted.map((r, i) => (
+                  <CableScheduleRow_
+                    key={r.edgeId}
+                    row={r}
+                    rowIndex={i}
+                    altClass={rowClass(i)}
+                    spreadsheet={spreadsheet}
+                  />
+                ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      {spreadsheet.fillSeriesRequest && (
+        <FillSeriesDialog
+          config={spreadsheet.fillSeriesRequest.config}
+          startValue={spreadsheet.fillSeriesRequest.startValue}
+          cellCount={spreadsheet.fillSeriesRequest.cellCount}
+          onApply={(values) => spreadsheet.applyFillSeries(values)}
+          onClose={() => spreadsheet.dismissFillSeries()}
+        />
+      )}
+    </>
+  );
+}
+
+const CableScheduleRow_ = memo(function CableScheduleRow_({
+  row,
+  rowIndex,
+  altClass,
+  spreadsheet,
+}: {
+  row: CableScheduleRow;
+  rowIndex: number;
+  altClass: string;
+  spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>;
+}) {
+  const cellProps = spreadsheet.getCellProps(rowIndex, "cableId");
+  const hasSelection = cellProps.isSelected;
+
+  return (
+    <tr className={hasSelection ? "bg-blue-50" : altClass}>
+      {cellProps.isEditing ? (
+        <td className={`${tdClass} p-0.5`}>
+          <input
+            className="w-full bg-[var(--color-surface)] border border-blue-500 rounded px-1 py-0.5 text-xs outline-none"
+            value={spreadsheet.editValue}
+            onChange={(e) => spreadsheet.setEditValue(e.target.value)}
+            onBlur={() => spreadsheet.commitEdit(spreadsheet.editValue)}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Enter") { e.preventDefault(); spreadsheet.commitEdit(spreadsheet.editValue); }
+              else if (e.key === "Escape") { e.preventDefault(); spreadsheet.cancelEdit(); }
+              else if (e.key === "Tab") { e.preventDefault(); spreadsheet.commitEdit(spreadsheet.editValue); }
+            }}
+            autoFocus
+          />
+        </td>
+      ) : (
+        <td
+          className={`${tdClass} p-0.5 cursor-cell ${cellProps.isSelected ? "bg-blue-100 ring-1 ring-inset ring-blue-300" : ""}`}
+          onMouseDown={cellProps.onMouseDown}
+          onMouseEnter={cellProps.onMouseEnter}
+          onDoubleClick={cellProps.onDoubleClick}
+        >
+          <span className="text-[10px] px-1 select-none">{row.cableId}</span>
+        </td>
+      )}
+      <td className={tdClass}>{row.sourceDevice}</td>
+      <td className={tdClass}>{row.sourcePort}</td>
+      <td className={tdClass}>{row.sourceConnector}</td>
+      <td className={tdClass}>{row.targetDevice}</td>
+      <td className={tdClass}>{row.targetPort}</td>
+      <td className={tdClass}>{row.targetConnector}</td>
+      <td className={tdClass}>{row.cableType}</td>
+      <td className={tdClass}>{row.signalType}</td>
+      <td className={tdClass}>{row.sourceRoom}</td>
+      <td className={tdClass}>{row.targetRoom}</td>
+    </tr>
+  );
+});
+
+function groupCableScheduleRows(rows: CableScheduleRow[], key: CableGroupBy): Map<string, CableScheduleRow[]> {
+  const map = new Map<string, CableScheduleRow[]>();
+  for (const r of rows) {
+    const groupKey = key === "sourceRoom" ? r.sourceRoom : key === "signalType" ? r.signalType : r.cableType;
+    const arr = map.get(groupKey);
+    if (arr) arr.push(r);
+    else map.set(groupKey, [r]);
+  }
+  return map;
+}
+
+function renderGroupedCableSchedule(
+  groups: Map<string, CableScheduleRow[]>,
+  spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>,
+) {
+  const elements: React.ReactNode[] = [];
+  let idx = 0;
+  for (const [group, rows] of groups) {
+    elements.push(
+      <tr key={`h-${group}`}>
+        <td
+          colSpan={11}
+          className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+        >
+          {group}
+        </td>
+      </tr>,
+    );
+    for (const r of rows) {
+      elements.push(
+        <CableScheduleRow_
+          key={r.edgeId}
+          row={r}
+          rowIndex={idx}
+          altClass={rowClass(idx)}
+          spreadsheet={spreadsheet}
+        />,
+      );
+      idx++;
+    }
+  }
+  return elements;
+}
 
 // ─── Pack List Tab (inline, reusing packList.ts logic) ─────────
 
