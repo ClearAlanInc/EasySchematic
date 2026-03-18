@@ -48,6 +48,15 @@ function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   return nodes;
 }
 
+/** Ensure `draggable: false` is set on any room with `data.locked`. Mutates in place. */
+function applyRoomLockState(nodes: SchematicNode[]): void {
+  for (const n of nodes) {
+    if (n.type === "room" && (n.data as import("./types").RoomData).locked) {
+      n.draggable = false;
+    }
+  }
+}
+
 interface Clipboard {
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
@@ -83,6 +92,7 @@ interface SchematicState {
   addRoom: (label: string, position: { x: number; y: number }) => void;
   updateRoomLabel: (nodeId: string, label: string) => void;
   updateRoom: (nodeId: string, data: import("./types").RoomData) => void;
+  toggleRoomLock: (nodeId: string) => void;
   addNote: (position: { x: number; y: number }) => void;
   updateNoteHtml: (nodeId: string, html: string) => void;
   reparentNode: (nodeId: string, absolutePosition: { x: number; y: number }) => void;
@@ -113,6 +123,7 @@ interface SchematicState {
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
+  roomContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
 
   // Centralized edge routing
   routedEdges: Record<string, RoutedEdge>;
@@ -357,6 +368,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   customTemplates: loadCustomTemplates(),
   routedEdges: {},
   edgeContextMenu: null,
+  roomContextMenu: null,
   debugEdges: false,
   resizeGuides: [],
   isDemo: false,
@@ -813,7 +825,31 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({
       nodes: state.nodes.map((n) => {
         if (n.id !== nodeId || n.type !== "room") return n;
-        return { ...n, data } as SchematicNode;
+        // Preserve locked state when RoomEditor reconstructs data
+        const wasLocked = (n.data as import("./types").RoomData).locked;
+        const merged = wasLocked ? { ...data, locked: true } : data;
+        return { ...n, data: merged } as SchematicNode;
+      }),
+    });
+    get().saveToLocalStorage();
+  },
+
+  toggleRoomLock: (nodeId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.id !== nodeId || n.type !== "room") return n;
+        const wasLocked = (n.data as import("./types").RoomData).locked;
+        const locked = !wasLocked;
+        return {
+          ...n,
+          draggable: locked ? false : undefined,
+          data: {
+            ...n.data,
+            locked: locked || undefined, // keep JSON clean
+          },
+        } as SchematicNode;
       }),
     });
     get().saveToLocalStorage();
@@ -1088,6 +1124,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           if (get().nodes.length > 0) return;
           const data = migrateSchematic(mod.default) as SchematicFile;
           snapNodesToGrid(data.nodes);
+          applyRoomLockState(data.nodes);
           syncCounters(data.nodes, data.edges);
           const colors = data.signalColors ?? {};
           applySignalColors(colors);
@@ -1120,6 +1157,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       }
       const data = migrateSchematic(JSON.parse(raw)) as SchematicFile;
       snapNodesToGrid(data.nodes);
+      applyRoomLockState(data.nodes);
       syncCounters(data.nodes, data.edges);
       // Always apply colors — if file has none, reset to defaults
       const colors = data.signalColors ?? {};
@@ -1190,6 +1228,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       }
     }
     snapNodesToGrid(nodes);
+    applyRoomLockState(nodes);
     syncCounters(nodes, edges);
     // Merge imported custom templates with existing ones (avoid duplicates by deviceType)
     if (data.customTemplates?.length) {

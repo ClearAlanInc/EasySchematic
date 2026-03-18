@@ -112,6 +112,7 @@ export interface RoomData {
   borderColor?: string;
   borderStyle?: "dashed" | "solid" | "dotted";
   labelSize?: number;
+  locked?: boolean;
 }
 
 export type RoomNode = Node<RoomData, "room">;

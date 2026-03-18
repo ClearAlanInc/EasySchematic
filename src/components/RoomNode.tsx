@@ -4,11 +4,32 @@ import type { RoomNode as RoomNodeType, SchematicNode } from "../types";
 import { useSchematicStore } from "../store";
 import { computeResizeSnap } from "../snapUtils";
 
+function LockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function UnlockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </svg>
+  );
+}
+
 function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
   const updateRoomLabel = useSchematicStore((s) => s.updateRoomLabel);
+  const toggleRoomLock = useSchematicStore((s) => s.toggleRoomLock);
   const setResizeGuides = useSchematicStore((s) => s.setResizeGuides);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(data.label);
+
+  const locked = data.locked ?? false;
 
   const handleResize = useCallback(
     (_event: unknown, params: { x: number; y: number; width: number; height: number; direction: number[] }) => {
@@ -48,7 +69,7 @@ function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
   return (
     <>
       <NodeResizer
-        isVisible={selected}
+        isVisible={selected && !locked}
         minWidth={200}
         minHeight={150}
         onResize={handleResize}
@@ -95,6 +116,25 @@ function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
               {data.label}
             </span>
           )}
+        </div>
+        {/* Lock toggle — top-right corner */}
+        <div
+          className="absolute top-0 right-0 px-1.5 py-1 transition-opacity"
+          style={{
+            pointerEvents: "auto",
+            opacity: locked ? 1 : selected ? 0.6 : 0,
+          }}
+        >
+          <button
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleRoomLock(id);
+            }}
+            title={locked ? "Unlock room" : "Lock room"}
+          >
+            {locked ? <LockIcon /> : <UnlockIcon />}
+          </button>
         </div>
       </div>
     </>

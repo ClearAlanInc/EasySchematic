@@ -19,6 +19,7 @@ export default function RoomEditor() {
   const editingNodeId = useSchematicStore((s) => s.editingNodeId);
   const nodes = useSchematicStore((s) => s.nodes);
   const updateRoom = useSchematicStore((s) => s.updateRoom);
+  const toggleRoomLock = useSchematicStore((s) => s.toggleRoomLock);
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
 
   const node = nodes.find((n) => n.id === editingNodeId && n.type === "room") as RoomNode | undefined;
@@ -28,6 +29,7 @@ export default function RoomEditor() {
   const [borderColor, setBorderColor] = useState("");
   const [borderStyle, setBorderStyle] = useState<RoomData["borderStyle"]>("dashed");
   const [labelSize, setLabelSize] = useState(12);
+  const [locked, setLocked] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- syncing props to local editor state */
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function RoomEditor() {
     setBorderColor(node.data.borderColor ?? "");
     setBorderStyle(node.data.borderStyle ?? "dashed");
     setLabelSize(node.data.labelSize ?? 12);
+    setLocked(node.data.locked ?? false);
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -89,6 +92,27 @@ export default function RoomEditor() {
               onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSave(); }}
               autoFocus
             />
+          </div>
+
+          {/* Lock */}
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+              Position Lock
+            </label>
+            <button
+              onClick={() => {
+                if (!editingNodeId) return;
+                toggleRoomLock(editingNodeId);
+                setLocked(!locked);
+              }}
+              className={`px-3 py-1 text-xs rounded border cursor-pointer transition-colors ${
+                locked
+                  ? "bg-blue-50 border-blue-400 text-blue-700"
+                  : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)] hover:text-[var(--color-text-heading)]"
+              }`}
+            >
+              {locked ? "Locked" : "Unlocked"}
+            </button>
           </div>
 
           {/* Label Size */}

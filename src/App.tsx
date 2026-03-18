@@ -26,6 +26,7 @@ import ShowInfoPanel from "./components/ShowInfoPanel";
 import ViewOptionsPanel from "./components/ViewOptionsPanel";
 import MenuBar from "./components/MenuBar";
 import EdgeContextMenu from "./components/EdgeContextMenu";
+import RoomContextMenu from "./components/RoomContextMenu";
 import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import RouterCreator from "./components/RouterCreator";
@@ -651,7 +652,9 @@ function SchematicCanvas() {
       onNodeContextMenu={(event, node) => {
         if (node.type !== "room") return;
         event.preventDefault();
-        useSchematicStore.getState().setEditingNodeId(node.id);
+        useSchematicStore.setState({
+          roomContextMenu: { nodeId: node.id, screenX: event.clientX, screenY: event.clientY },
+        });
       }}
       onReconnectStart={onReconnectStart}
       onReconnect={onReconnect}
@@ -840,6 +843,7 @@ export default function App() {
       <DeviceEditor />
       <RoomEditor />
       <EdgeContextMenu />
+      <RoomContextMenu />
     </div>
   );
 }
