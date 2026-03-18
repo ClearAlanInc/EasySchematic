@@ -8,7 +8,7 @@
 
 <p align="center"><b><a href="https://easyschematic.live">Try it live →</a></b> · <b><a href="https://docs.easyschematic.live">Documentation →</a></b> · <b><a href="https://devices.easyschematic.live">Device Database →</a></b></p>
 
-<p align="center"><img src="public/og-image.png" width="800" alt="EasySchematic — a broadcast signal flow diagram"/></p>
+
 
 ## Features
 
