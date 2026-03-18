@@ -30,8 +30,8 @@
 
 - **Click-to-connect** — click a source handle, preview line follows cursor, snaps to nearby valid targets (green = valid, red = incompatible signal type), click target to connect or click device body to auto-connect first compatible port
 - **Drag-to-connect** with the same preview/snap/validity behavior
-- **Smart edge routing** — A* pathfinding avoids device crossings with automatic parallel edge nesting
-- **Manual route editing** — right-click a connection to add draggable waypoints; A* routes each leg between waypoints while other connections yield
+- **Smart edge routing** — A\* pathfinding avoids device crossings with automatic parallel edge nesting
+- **Manual route editing** — right-click a connection to add draggable waypoints; A\* routes each leg between waypoints while other connections yield
 - **23 signal types**, all color-coded (see below)
 
 ### Ports

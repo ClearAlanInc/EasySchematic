@@ -1,6 +1,6 @@
 # Edge Routing Aesthetic Rules
 
-These are the aesthetic rules that the A* edge routing system must always satisfy.
+These are the aesthetic rules that the A\* edge routing system must always satisfy.
 They are ordered by priority — earlier rules take precedence over later ones.
 When fixing routing bugs or adding features, verify all rules still hold.
 
@@ -13,7 +13,7 @@ Edges must route around device obstacle rects (node bounds + PAD padding).
 Room and Note nodes are not obstacles.
 
 ### R2. Always connect to handles horizontally
-The final segment arriving at both source and target handles must be horizontal — never vertical. An edge exits a source handle going RIGHT and enters a target handle going LEFT (or RIGHT for wrap-arounds). The A* goal test must reject vertical arrivals.
+The final segment arriving at both source and target handles must be horizontal — never vertical. An edge exits a source handle going RIGHT and enters a target handle going LEFT (or RIGHT for wrap-arounds). The A\* goal test must reject vertical arrivals.
 
 ### R3. Maintain orthogonal paths
 Every segment of every edge must be either perfectly horizontal or perfectly vertical. No diagonal segments. This must hold after all offsets and jog insertions.
@@ -36,19 +36,19 @@ Edges sharing the same source device get a per-edge `stubSpread` (STUB_GAP=6px) 
 
 ---
 
-## Aesthetic Preferences (soft, enforced via A* cost)
+## Aesthetic Preferences (soft, enforced via A\* cost)
 
 ### R8. Minimize turns
-The A* applies a TURN_PENALTY=100 for each direction change. Fewer turns = cleaner paths. A straight 2-turn path is strongly preferred over a wiggly 6-turn path, even if the 6-turn path is shorter in distance.
+The A\* applies a TURN_PENALTY=100 for each direction change. Fewer turns = cleaner paths. A straight 2-turn path is strongly preferred over a wiggly 6-turn path, even if the 6-turn path is shorter in distance.
 
 ### R9. Prefer shorter paths (after turn count)
-Among paths with the same number of turns, prefer the one with less total Manhattan distance. This is the base A* heuristic behavior.
+Among paths with the same number of turns, prefer the one with less total Manhattan distance. This is the base A\* heuristic behavior.
 
 ### R10. Edges should stay close to their source/target Y levels
 Edges should not detour far from their natural Y corridor when a closer path exists with the same turn count. (Currently emergent from Manhattan distance preference, not explicitly penalized.)
 
 ### R11. Different signal types should have extra separation
-When edges of different signal types run in parallel corridors, the proximity threshold doubles from SEPARATION_PX (10px) to CROSS_TYPE_SEPARATION (20px). This visually groups same-type edges together and adds breathing room between signal type groups (e.g., an ethernet column vs an SDI column). Penalty zones are tagged with their source edge's signal type; the A* uses wider exclusion and wider grid lines only for cross-type zones. Same-type routing is identical to pre-R11 behavior.
+When edges of different signal types run in parallel corridors, the proximity threshold doubles from SEPARATION_PX (10px) to CROSS_TYPE_SEPARATION (20px). This visually groups same-type edges together and adds breathing room between signal type groups (e.g., an ethernet column vs an SDI column). Penalty zones are tagged with their source edge's signal type; the A\* uses wider exclusion and wider grid lines only for cross-type zones. Same-type routing is identical to pre-R11 behavior.
 
 ---
 
@@ -61,8 +61,8 @@ When edges of different signal types run in parallel corridors, the proximity th
    a. Short-circuit: aligned handles with clear path → straight line (no stubs/offset)
    b. Compute stub positions (sourceX + STUB + stubSpread, targetX - STUB - stubSpread)
    c. Build sparse grid from obstacle boundaries
-   d. Run A* from source stub to target stub (direction-aware, starts RIGHT, must arrive HORIZONTAL)
-   e. Assemble waypoints: source handle → stub → jog to offset Y → A* interior (shifted X+Y) → jog back → stub → target handle
+   d. Run A\* from source stub to target stub (direction-aware, starts RIGHT, must arrive HORIZONTAL)
+   e. Assemble waypoints: source handle → stub → jog to offset Y → A\* interior (shifted X+Y) → jog back → stub → target handle
    f. Simplify collinear points, generate SVG path with rounded corners
 
 ### What each offset does
@@ -75,7 +75,7 @@ When edges of different signal types run in parallel corridors, the proximity th
 | PAD | 20 | Obstacle padding around device nodes |
 | GAP | 8 | Routing channel width outside obstacles |
 | STUB | 30 | Minimum horizontal stub length at handles |
-| TURN_PENALTY | 100 | A* cost for each direction change |
+| TURN_PENALTY | 100 | A\* cost for each direction change |
 | CORNER_RADIUS | 8 | Rounded corner radius in SVG path |
 | ESCAPE_MARGIN | 40 | Grid expansion beyond bounding box |
 | EDGE_GAP | 12 | Spacing between parallel edges (overlap offset) |

@@ -77,7 +77,7 @@ If possible, export your schematic (File > Save as JSON) and attach it — this 
 
 - **State management**: Zustand store in `src/store.ts`
 - **Canvas**: Built on [@xyflow/react](https://reactflow.dev/) v12
-- **Edge routing**: Custom A* pathfinder in `src/edgeRouter.ts` — see `ROUTING_RULES.md` for the algorithm's aesthetic rules and penalty system
+- **Edge routing**: Custom A\* pathfinder in `src/edgeRouter.ts` — see `ROUTING_RULES.md` for the algorithm's aesthetic rules and penalty system
 - **Schema**: JSON files use versioned schemas with forward migrations in `src/migrations.ts`. Bumping the schema version requires a migration.
 - **Styling**: Tailwind CSS v4
 
