@@ -21,6 +21,27 @@ export default function PackListPage() {
         When grouping is off, identical items are merged into a single row with a combined count.
       </p>
 
+      <h2>Cable schedule</h2>
+      <p>
+        The <strong>Cable Schedule</strong> is a per-connection wiring report available from the same
+        Reports menu. It lists every connection in your schematic with:
+      </p>
+      <ul>
+        <li><strong>Cable ID</strong> — editable identifier for each cable</li>
+        <li><strong>Source and destination</strong> — device names, port names, and rooms</li>
+        <li><strong>Signal type</strong> and <strong>cable type</strong></li>
+        <li><strong>Connector types</strong> at each end</li>
+        <li><strong>Cable length</strong> — editable per-connection</li>
+      </ul>
+      <p>
+        Cable IDs support <strong>fill series</strong> — select multiple cells, type a value with a number
+        (e.g., "SDI-001"), and the tool auto-increments for each selected row. This works the same way
+        as device auto-numbering.
+      </p>
+      <p>
+        The cable schedule supports the same PDF export, CSV export, and print preview layout as the pack list.
+      </p>
+
       <h2>CSV export</h2>
       <p>
         Click <strong>CSV</strong> to download a spreadsheet-friendly file with both device and cable tables.

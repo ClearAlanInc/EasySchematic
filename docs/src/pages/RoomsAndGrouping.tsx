@@ -36,9 +36,25 @@ export default function RoomsAndGroupingPage() {
         Resize handles snap to other rooms' edges with blue guide lines for precise alignment.
       </p>
 
+      <h2>Room context menu</h2>
+      <p>
+        <strong>Right-click</strong> a room to open a context menu with two options:
+      </p>
+      <ul>
+        <li><strong>Edit Properties...</strong> — opens the Room Properties editor (see below)</li>
+        <li><strong>Lock Room / Unlock Room</strong> — toggles whether the room can be dragged</li>
+      </ul>
+
+      <h2>Locking rooms</h2>
+      <p>
+        Lock a room to <strong>prevent accidental dragging</strong>. Locked rooms show a lock icon on their
+        label and cannot be moved until unlocked. Child devices inside a locked room can still be
+        repositioned. Toggle the lock from the right-click context menu.
+      </p>
+
       <h2>Room styling</h2>
       <p>
-        <strong>Right-click</strong> a room to open the Room Properties editor. You can customize:
+        Open the Room Properties editor from the right-click context menu. You can customize:
       </p>
       <ul>
         <li><strong>Label</strong> — the room's display name</li>

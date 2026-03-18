@@ -21,7 +21,7 @@
 - **Quick-add** — double-click empty canvas to open a search dialog; type to find any device, note, or room and place it instantly
 - **Quick-create routers** — generate routers with configurable input/output counts and signal type
 - **Notes** — text annotations on the canvas
-- **Rooms** — resizable dashed-border containers for grouping devices
+- **Rooms** — resizable dashed-border containers for grouping devices, with lock/unlock to prevent accidental moves
 - **Auto-numbering** — dropped devices auto-increment (Camera → Camera 1, Camera 2, …)
 - **Demo schematic** loaded for first-time visitors
 - **Collapsible device library sidebar**
@@ -32,6 +32,8 @@
 - **Drag-to-connect** with the same preview/snap/validity behavior
 - **Smart edge routing** — A\* pathfinding avoids device crossings with automatic parallel edge nesting
 - **Manual route editing** — right-click a connection to add draggable waypoints; A\* routes each leg between waypoints while other connections yield
+- **Cable length** — editable per-connection field, tracked in cable schedule and pack list
+- **Multicable support** — cable accessory templates (snakes, socapex), trunk ports, break-in/break-out devices
 - **23 signal types**, all color-coded (see below)
 
 ### Ports
@@ -63,6 +65,7 @@ SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethe
 ### Pack List & Reports
 
 - **Pack list** — auto-generated bill of materials from your schematic (devices + cables)
+- **Cable schedule** — per-connection wiring report with editable cable IDs, connector info, cable types, signal types, and room assignments; fill series support for batch renaming
 - **Print preview** — WYSIWYG report editor with interactive header/footer grid, column visibility, grouping, sorting
 - **Multi-page preview** with accurate page breaks, page navigation, zoom, and "Page X of Y" numbering
 - **Header/footer grid editor** — assign fields (show name, venue, date, etc.), static text, logo, or page numbers to cells; merge, resize, add/delete rows and columns via right-click
@@ -103,7 +106,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Copy/paste** with offset positioning
 - **Double-click device** to open device editor (label, type, ports, presets)
 - **Double-click canvas** to quick-add a device via search dialog
-- **Right-click room** to open room properties (label, colors, border style)
+- **Right-click room** for context menu — edit properties (label, colors, border style) or lock/unlock the room
 
 ## Getting Started
 
@@ -149,7 +152,7 @@ Output goes to `dist/` — deploy as a static site anywhere.
 | Double-click device | Open device editor |
 | Double-click canvas | Quick-add device search dialog |
 | Double-click room background | Quick-add device inside room |
-| Right-click room | Open room properties editor |
+| Right-click room | Room context menu (edit properties, lock/unlock) |
 | Right-click connection | Add/remove routing waypoints, reset route |
 
 ## Contributing

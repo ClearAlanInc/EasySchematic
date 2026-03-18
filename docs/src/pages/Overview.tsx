@@ -30,7 +30,7 @@ export default function OverviewPage() {
           <strong>Smart connection routing</strong> — A* pathfinding routes connections around devices with parallel-connection nesting
         </li>
         <li>
-          <strong>Room grouping</strong> — drag devices into room containers to organize by physical location
+          <strong>Room grouping</strong> — drag devices into room containers to organize by physical location, with lock/unlock to prevent accidental moves
         </li>
         <li>
           <strong>Notes</strong> — rich text annotations with formatting (bold, italic, bullets, font sizes)
@@ -49,7 +49,7 @@ export default function OverviewPage() {
           <strong>Quick-add</strong> — double-click the canvas to search and place a device in one step
         </li>
         <li>
-          <strong>Room styling</strong> — customize background color, border style, and label size via right-click
+          <strong>Room styling</strong> — customize background color, border style, and label size via right-click context menu
         </li>
         <li>
           <strong>Alignment tools</strong> — align and distribute selected devices horizontally or vertically

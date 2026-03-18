@@ -47,6 +47,26 @@ export default function ConnectionsPage() {
         <li>Or <strong>click</strong> the connection to select it, then press <strong>Delete</strong></li>
       </ul>
 
+      <h2>Cable length</h2>
+      <p>
+        Each connection has an optional <strong>cable length</strong> field. Set it in the cable schedule
+        report — lengths are stored per-connection and appear in both the cable schedule and pack list.
+        The pack list groups cables by length when summarizing.
+      </p>
+
+      <h2>Multicable connections</h2>
+      <p>
+        EasySchematic supports <strong>multicable accessories</strong> — cable snakes, socapex, and similar bundled
+        cable assemblies. These use special device templates with <strong>trunk ports</strong> that carry multiple
+        signals over a single physical cable.
+      </p>
+      <ul>
+        <li><strong>Break-in devices</strong> fan out individual connections into a trunk</li>
+        <li><strong>Break-out devices</strong> split a trunk back into individual connections</li>
+        <li>Trunk connections display as thicker lines on the canvas</li>
+        <li>Right-click a trunk connection to set a <strong>cable label</strong></li>
+      </ul>
+
       <h2>Signal colors</h2>
       <p>
         Connections inherit the <strong>signal type color</strong> from the source port. This makes it easy to
