@@ -25,3 +25,14 @@ CLAUDE.md
 *.njsproj
 *.sln
 *.sw?
+
+# Debug artifacts
+canvas-screenshot*.png
+debug-capture.mjs
+screenshot.mjs
+debug/
+edge-debug.log
+*.tmp.*
+
+# Wrangler local state
+.wrangler/

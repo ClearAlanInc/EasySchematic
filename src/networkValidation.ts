@@ -35,7 +35,7 @@ export function isValidVlan(vlan: number): boolean {
  */
 export function formatIpInput(raw: string, prev: string): string {
   // Strip anything that isn't a digit or period
-  let cleaned = raw.replace(/[^\d.]/g, "");
+  const cleaned = raw.replace(/[^\d.]/g, "");
 
   // Detect paste: big jump in length
   const isPaste = Math.abs(cleaned.length - prev.length) > 1;
@@ -49,7 +49,7 @@ export function formatIpInput(raw: string, prev: string): string {
   const parts = cleaned.split(".");
   const rebuilt: string[] = [];
   for (let i = 0; i < parts.length && i < 4; i++) {
-    let part = parts[i];
+    const part = parts[i];
     if (part.length > 3) {
       // Overflow: push first 3 as this octet, rest into next
       rebuilt.push(part.slice(0, 3));

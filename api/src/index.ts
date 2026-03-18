@@ -17,6 +17,7 @@ app.use(
       "https://devices.easyschematic.live",
       "http://localhost:5173",
       "http://localhost:5174",
+      "http://localhost:5175",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Authorization", "Content-Type"],

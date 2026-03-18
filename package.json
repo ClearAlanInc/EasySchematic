@@ -2,8 +2,29 @@
   "name": "easyschematic",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "type": "module",
+  "description": "Browser-based AV signal flow diagram tool for designing audio/video system schematics",
+  "homepage": "https://easyschematic.live",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/duremovich/EasySchematic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/duremovich/EasySchematic/issues"
+  },
+  "author": "duremovich",
+  "keywords": [
+    "av",
+    "audio-video",
+    "signal-flow",
+    "schematic",
+    "diagram",
+    "broadcast",
+    "av-integration",
+    "dxf",
+    "cad"
+  ],
   "scripts": {
     "dev": "vite",
     "generate-fallback": "npx tsx api/seed/generate-fallback.ts",

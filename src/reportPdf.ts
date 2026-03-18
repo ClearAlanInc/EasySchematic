@@ -32,9 +32,16 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 
 async function loadInterFont(doc: jsPDF) {
   if (!interRegularB64) {
+    const [regularRes, boldRes] = await Promise.all([
+      fetch("/fonts/Inter-Regular.ttf"),
+      fetch("/fonts/Inter-Bold.ttf"),
+    ]);
+    if (!regularRes.ok || !boldRes.ok) {
+      throw new Error(`Font fetch failed: regular=${regularRes.status} bold=${boldRes.status}`);
+    }
     const [regular, bold] = await Promise.all([
-      fetch("/fonts/Inter-Regular.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/Inter-Bold.ttf").then((r) => r.arrayBuffer()),
+      regularRes.arrayBuffer(),
+      boldRes.arrayBuffer(),
     ]);
     interRegularB64 = arrayBufferToBase64(regular);
     interBoldB64 = arrayBufferToBase64(bold);

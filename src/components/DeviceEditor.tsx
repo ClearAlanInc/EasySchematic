@@ -77,6 +77,7 @@ export default function DeviceEditor() {
   const [draggedPortId, setDraggedPortId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ direction: PortDirection; index: number } | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- syncing props to local editor state */
   useEffect(() => {
     if (!node) return;
     setLabel(node.data.label);
@@ -99,6 +100,7 @@ export default function DeviceEditor() {
     setPortVisOpen(false);
     setDhcpServer(node.data.dhcpServer ? { ...node.data.dhcpServer } : undefined);
   }, [node]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const close = useCallback(() => setEditingNodeId(null), [setEditingNodeId]);
 
@@ -436,9 +438,6 @@ export default function DeviceEditor() {
             setOpen={setPortVisOpen}
           />
 
-          {/* DHCP Server */}
-          <DhcpServerSection dhcpServer={dhcpServer} onChange={setDhcpServer} />
-
           <PortSection
             title="Inputs"
             direction="input"
@@ -489,6 +488,10 @@ export default function DeviceEditor() {
             hiddenPorts={hiddenPorts}
             setHiddenPorts={setHiddenPorts}
           />
+
+          {ports.some((p) => p.connectorType === "rj45" || p.connectorType === "ethercon") && (
+            <DhcpServerSection dhcpServer={dhcpServer} onChange={setDhcpServer} />
+          )}
         </div>
 
         {/* Footer */}

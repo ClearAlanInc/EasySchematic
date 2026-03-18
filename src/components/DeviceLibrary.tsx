@@ -206,7 +206,7 @@ export default function DeviceLibrary() {
   const favoriteSet = useMemo(() => new Set(favoriteTemplates), [favoriteTemplates]);
 
   useEffect(() => {
-    fetchTemplates().then(setTemplates).catch(() => {});
+    fetchTemplates().then(setTemplates).catch(() => console.warn("Using bundled device library (API unavailable)"));
   }, []);
 
   const query = search.trim();

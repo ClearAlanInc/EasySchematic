@@ -3,11 +3,14 @@ import { createRoot } from "react-dom/client";
 import { ReactFlowProvider } from "@xyflow/react";
 import "./index.css";
 import App from "./App.tsx";
+import ErrorBoundary from "./components/ErrorBoundary.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ReactFlowProvider>
-      <App />
-    </ReactFlowProvider>
+    <ErrorBoundary>
+      <ReactFlowProvider>
+        <App />
+      </ReactFlowProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

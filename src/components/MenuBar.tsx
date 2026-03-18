@@ -6,7 +6,7 @@ import { exportDxf } from "../dxfExport";
 import { exportPdf } from "../pdfExport";
 import { PAPER_SIZES } from "../printConfig";
 import type { SchematicFile } from "../types";
-import PackListDialog from "./PackListDialog";
+import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
 import AlignmentMenu from "./AlignmentMenu";
 
@@ -112,7 +112,7 @@ export default function MenuBar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(schematicName);
-  const [showPackListDialog, setShowPackListDialog] = useState(false);
+  const [reportsTab, setReportsTab] = useState<ReportsTab | null>(null);
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
 
   // Keep nameValue in sync when schematicName changes externally
@@ -270,7 +270,9 @@ export default function MenuBar() {
       { type: "item", label: "Title Block...", onClick: () => setShowTitleBlockDialog(true) },
     ],
     Reports: [
-      { type: "item", label: "Pack List...", onClick: () => setShowPackListDialog(true) },
+      { type: "item", label: "Network Report...", onClick: () => setReportsTab("network") },
+      { type: "item", label: "Device List...", onClick: () => setReportsTab("devices") },
+      { type: "item", label: "Pack List...", onClick: () => setReportsTab("packList") },
     ],
     Help: [
       {
@@ -395,8 +397,8 @@ export default function MenuBar() {
         onChange={handleImport}
       />
 
-      {showPackListDialog && (
-        <PackListDialog onClose={() => setShowPackListDialog(false)} />
+      {reportsTab && (
+        <ReportsDialog initialTab={reportsTab} onClose={() => setReportsTab(null)} />
       )}
       {showTitleBlockDialog && (
         <TitleBlockDialog onClose={() => setShowTitleBlockDialog(false)} />

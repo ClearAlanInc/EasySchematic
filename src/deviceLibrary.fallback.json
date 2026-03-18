@@ -2477,28 +2477,32 @@
         "label": "Port 1",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-291",
         "label": "Port 2",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-292",
         "label": "Port 3",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-293",
         "label": "Port 4",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-294",
@@ -2524,56 +2528,64 @@
         "label": "Port 1",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-296",
         "label": "Port 2",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-297",
         "label": "Port 3",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-298",
         "label": "Port 4",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-299",
         "label": "Port 5",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-300",
         "label": "Port 6",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-301",
         "label": "Port 7",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-302",
         "label": "Port 8",
         "signalType": "ethernet",
         "direction": "bidirectional",
-        "connectorType": "rj45"
+        "connectorType": "rj45",
+        "addressable": false
       },
       {
         "id": "port-303",

@@ -496,7 +496,7 @@ function LayoutTab({
       const halfH = (prev.rows[rowIdx] ?? (1 / prev.rows.length)) / 2;
       newRows.splice(rowIdx, 1, halfH, halfH);
       // Shift cells below down by 1, expand rowSpans that cross the boundary
-      let cells = prev.cells.map((c) => {
+      const cells = prev.cells.map((c) => {
         if (c.row >= rowIdx) return { ...c, row: c.row + 1 };
         if (c.row + c.rowSpan > rowIdx) return { ...c, rowSpan: c.rowSpan + 1 };
         return c;
@@ -519,7 +519,7 @@ function LayoutTab({
       const newCols = [...prev.columns];
       const halfW = (prev.columns[colIdx] ?? (1 / prev.columns.length)) / 2;
       newCols.splice(colIdx, 1, halfW, halfW);
-      let cells = prev.cells.map((c) => {
+      const cells = prev.cells.map((c) => {
         if (c.col >= colIdx) return { ...c, col: c.col + 1 };
         if (c.col + c.colSpan > colIdx) return { ...c, colSpan: c.colSpan + 1 };
         return c;

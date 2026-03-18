@@ -118,6 +118,9 @@ interface SchematicState {
   resizeGuides: import("./snapUtils").GuideLine[];
   setResizeGuides: (guides: import("./snapUtils").GuideLine[]) => void;
 
+  // Demo state — true when the demo schematic was auto-loaded for first-time visitors
+  isDemo: boolean;
+
   // Drag state — edges freeze during drag and recalculate on drop
   isDragging: boolean;
 
@@ -348,6 +351,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   edgeContextMenu: null,
   debugEdges: false,
   resizeGuides: [],
+  isDemo: false,
   isDragging: false,
   undoSize: 0,
   redoSize: 0,
@@ -1056,7 +1060,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   loadFromLocalStorage: () => {
     try {
-      let raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         // Load default demo schematic for first-time visitors
         // Dynamically import to avoid bundling in the critical path
@@ -1072,6 +1076,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           set({
             nodes: data.nodes,
             edges: data.edges,
+            isDemo: true,
             schematicName: data.name ?? "Demo Schematic",
             signalColors: data.signalColors,
             printPaperId: data.printPaperId ?? "arch-d",
@@ -1176,6 +1181,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes,
       edges,
       schematicName: data.name ?? "Imported Schematic",
+      isDemo: false,
       signalColors: data.signalColors,
       printPaperId: data.printPaperId ?? "arch-d",
       printOrientation: data.printOrientation ?? "landscape",
@@ -1202,6 +1208,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes: [],
       edges: [],
       schematicName: "Untitled Schematic",
+      isDemo: false,
       titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: createDefaultLayout(),
       hiddenSignalTypes: "",

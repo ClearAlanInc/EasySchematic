@@ -229,11 +229,11 @@ function ReportPreviewDialog({
   const useGlobalFooter = (layout.useGlobalFooter ?? false) && globalFooterLayout != null;
   const effectiveHeaderLayout = useGlobalHeader ? globalHeaderLayout! : layout.headerLayout;
   const effectiveFooterLayout = useGlobalFooter ? globalFooterLayout! : layout.footerLayout;
-  const effectiveLayout: ReportLayout = {
+  const effectiveLayout: ReportLayout = useMemo(() => ({
     ...layout,
     headerLayout: effectiveHeaderLayout,
     footerLayout: effectiveFooterLayout,
-  };
+  }), [layout, effectiveHeaderLayout, effectiveFooterLayout]);
 
   const handleExportPdf = useCallback(async () => {
     await renderReportPdf(effectiveLayout, titleBlock, tables, filename);
@@ -246,9 +246,11 @@ function ReportPreviewDialog({
   const totalPages = pages.length;
   const safePage = Math.min(currentPage, totalPages);
   // Clamp page if layout changes reduce page count
+  /* eslint-disable react-hooks/set-state-in-effect -- clamping derived state */
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(Math.max(1, totalPages));
   }, [currentPage, totalPages]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Unified cell selection — tracks which grid block ("header" | "footer") and cell ID
   const [selectedGridCell, setSelectedGridCell] = useState<{ block: "header" | "footer"; cellId: string } | null>(null);
@@ -1190,7 +1192,7 @@ function HeaderPreviewGrid({
       const newRows = [...prev.rows];
       const halfH = (prev.rows[rowIdx] ?? (1 / prev.rows.length)) / 2;
       newRows.splice(rowIdx, 1, halfH, halfH);
-      let cells = prev.cells.map((c) => {
+      const cells = prev.cells.map((c) => {
         if (c.row >= rowIdx) return { ...c, row: c.row + 1 };
         if (c.row + c.rowSpan > rowIdx) return { ...c, rowSpan: c.rowSpan + 1 };
         return c;
@@ -1210,7 +1212,7 @@ function HeaderPreviewGrid({
       const newCols = [...prev.columns];
       const halfW = (prev.columns[colIdx] ?? (1 / prev.columns.length)) / 2;
       newCols.splice(colIdx, 1, halfW, halfW);
-      let cells = prev.cells.map((c) => {
+      const cells = prev.cells.map((c) => {
         if (c.col >= colIdx) return { ...c, col: c.col + 1 };
         if (c.col + c.colSpan > colIdx) return { ...c, colSpan: c.colSpan + 1 };
         return c;

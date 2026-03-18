@@ -91,9 +91,11 @@ export default function QuickAddDevice({
   }, [templates, customTemplates, query, favoriteSet]);
 
   // Reset selection when results change
+  /* eslint-disable react-hooks/set-state-in-effect -- resetting derived state */
   useEffect(() => {
     setSelectedIndex(0);
   }, [results]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Auto-focus
   useEffect(() => {

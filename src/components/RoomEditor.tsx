@@ -29,6 +29,7 @@ export default function RoomEditor() {
   const [borderStyle, setBorderStyle] = useState<RoomData["borderStyle"]>("dashed");
   const [labelSize, setLabelSize] = useState(12);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- syncing props to local editor state */
   useEffect(() => {
     if (!node) return;
     setLabel(node.data.label);
@@ -37,6 +38,7 @@ export default function RoomEditor() {
     setBorderStyle(node.data.borderStyle ?? "dashed");
     setLabelSize(node.data.labelSize ?? 12);
   }, [node]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const close = useCallback(() => setEditingNodeId(null), [setEditingNodeId]);
 

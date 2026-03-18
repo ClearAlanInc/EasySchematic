@@ -683,7 +683,7 @@ export function routeAllEdges(
         { x: ep.targetX, y: ep.targetY },
       ];
 
-      let allWaypoints: Point[] = [];
+      const allWaypoints: Point[] = [];
       let allFailed = false;
       let prevArrivalDir: number | undefined;
 

@@ -387,7 +387,7 @@ export function enforceMinSpacing(
 
   const dragged = nodeRect(draggedNode);
   let newX = draggedNode.position.x;
-  let newY = draggedNode.position.y;
+  const newY = draggedNode.position.y;
   let changed = false;
 
   for (const other of allNodes) {

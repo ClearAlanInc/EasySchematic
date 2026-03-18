@@ -47,7 +47,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     }
     return ids.sort().join(",");
   });
-  const connectedHandles = new Set(connectedHandleStr ? connectedHandleStr.split(",") : []);
+  const connectedHandles = useMemo(
+    () => new Set(connectedHandleStr ? connectedHandleStr.split(",") : []),
+    [connectedHandleStr],
+  );
 
   const visiblePorts = useMemo(() => {
     if (data.showAllPorts) {
@@ -72,7 +75,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       return true;
     });
   }, [data.ports, data.showAllPorts, data.hiddenPorts,
-      hiddenSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandleStr]);
+      hiddenSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
 
   const inputs = visiblePorts.filter((p) => p.direction === "input");
   const outputs = visiblePorts.filter((p) => p.direction === "output");

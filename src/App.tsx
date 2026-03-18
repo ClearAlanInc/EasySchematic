@@ -167,6 +167,15 @@ function SchematicCanvas() {
     return () => clearTimeout(timer);
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr]);
 
+  // Click-to-connect: show preview line between first click and mouse
+  const clearClickConnect = useCallback(() => {
+    clickConnectFromRef.current = null;
+    clickConnectCleanupRef.current?.();
+    clickConnectCleanupRef.current = null;
+    isClickConnectMode.current = false;
+    setConnectPreview(null);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -228,7 +237,7 @@ function SchematicCanvas() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [removeSelected, copySelected, pasteClipboard, undo, redo]);
+  }, [removeSelected, copySelected, pasteClipboard, undo, redo, clearClickConnect]);
 
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -320,15 +329,6 @@ function SchematicCanvas() {
     },
     [],
   );
-
-  // Click-to-connect: show preview line between first click and mouse
-  const clearClickConnect = useCallback(() => {
-    clickConnectFromRef.current = null;
-    clickConnectCleanupRef.current?.();
-    clickConnectCleanupRef.current = null;
-    isClickConnectMode.current = false;
-    setConnectPreview(null);
-  }, []);
 
   // Shared helper: start preview line tracking from a handle
   const startPreviewTracking = useCallback(
@@ -755,6 +755,7 @@ function SchematicCanvas() {
         onOpenRouterCreator={() => { routerCreatorPosRef.current = quickAddPos ?? undefined; setShowRouterCreator(true); }}
       />
     )}
+    {/* eslint-disable-next-line react-hooks/refs -- ref read is intentional; value is set before render */}
     {showRouterCreator && <RouterCreator position={routerCreatorPosRef.current} onClose={() => { setShowRouterCreator(false); routerCreatorPosRef.current = undefined; }} />}
     </>
   );
@@ -785,6 +786,33 @@ function PrintTitleBlock() {
   );
 }
 
+function DemoBanner() {
+  const isDemo = useSchematicStore((s) => s.isDemo);
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem("easyschematic-demo-dismissed") === "1",
+  );
+
+  if (!isDemo || dismissed) return null;
+
+  return (
+    <div className="bg-slate-700 text-slate-200 text-sm px-4 py-2 flex items-center justify-between gap-4" data-print-hide>
+      <span>
+        You&apos;re viewing a demo schematic. Start fresh with{" "}
+        <strong>File &gt; New</strong>, or explore to see what EasySchematic can do.
+      </span>
+      <button
+        className="text-slate-400 hover:text-white shrink-0"
+        onClick={() => {
+          setDismissed(true);
+          localStorage.setItem("easyschematic-demo-dismissed", "1");
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
   const printView = useSchematicStore((s) => s.printView);
 
@@ -793,6 +821,7 @@ export default function App() {
       <div data-print-hide>
         <MenuBar />
       </div>
+      <DemoBanner />
       {printView && <PrintViewBar />}
       <PrintTitleBlock />
       <div className="flex flex-1 overflow-hidden">
