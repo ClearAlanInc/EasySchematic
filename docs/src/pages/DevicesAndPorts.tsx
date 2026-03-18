@@ -1,5 +1,3 @@
-import DeviceShowcase from "../components/demos/DeviceShowcase";
-
 export default function DevicesAndPortsPage() {
   return (
     <>
@@ -18,7 +16,6 @@ export default function DevicesAndPortsPage() {
           direction at a time
         </li>
       </ul>
-      <DeviceShowcase />
 
       <h2>Signal types</h2>
       <p>

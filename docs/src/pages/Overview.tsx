@@ -1,5 +1,3 @@
-import DeviceShowcase from "../components/demos/DeviceShowcase";
-
 export default function OverviewPage() {
   return (
     <>
@@ -19,10 +17,6 @@ export default function OverviewPage() {
           <a href="https://easyschematic.live/">Open EasySchematic &rarr;</a>
         </strong>
       </p>
-
-      <h2>What it looks like</h2>
-      <p>Drag devices around and see how they are represented:</p>
-      <DeviceShowcase />
 
       <h2>Key features</h2>
       <ul>

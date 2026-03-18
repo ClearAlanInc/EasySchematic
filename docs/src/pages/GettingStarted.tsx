@@ -1,5 +1,3 @@
-import ConnectionDemo from "../components/demos/ConnectionDemo";
-
 export default function GettingStartedPage() {
   return (
     <>
@@ -24,13 +22,6 @@ export default function GettingStartedPage() {
           <strong>Save</strong> happens automatically to your browser's localStorage
         </li>
       </ol>
-
-      <h2>Try it</h2>
-      <p>
-        This demo has a Camera and a Switcher. Try drawing a connection from the Camera's{" "}
-        <strong>HDMI Out</strong> to the Switcher's <strong>HDMI In 1</strong>:
-      </p>
-      <ConnectionDemo />
 
       <h2>Controls</h2>
       <table>

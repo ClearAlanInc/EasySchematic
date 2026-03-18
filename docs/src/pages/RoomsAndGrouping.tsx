@@ -1,5 +1,3 @@
-import RoomDemo from "../components/demos/RoomDemo";
-
 export default function RoomsAndGroupingPage() {
   return (
     <>
@@ -10,7 +8,6 @@ export default function RoomsAndGroupingPage() {
         Rooms are <strong>containers</strong> that represent physical locations — a control booth, a stage, a
         rack room, etc. Devices inside a room move with it when you drag the room.
       </p>
-      <RoomDemo />
 
       <h2>Creating rooms</h2>
       <ol>

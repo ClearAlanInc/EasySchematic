@@ -1,5 +1,3 @@
-import RoutingDemo from "../components/demos/RoutingDemo";
-
 export default function EdgeRoutingPage() {
   return (
     <>
@@ -18,10 +16,6 @@ export default function EdgeRoutingPage() {
           <strong>Use orthogonal paths</strong> (horizontal and vertical segments only) for a clean, professional look
         </li>
       </ul>
-
-      <h2>See it in action</h2>
-      <p>Drag the devices around and watch the connections re-route in real time:</p>
-      <RoutingDemo />
 
       <h2>How it works</h2>
       <ol>

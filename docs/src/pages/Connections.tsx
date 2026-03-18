@@ -1,5 +1,3 @@
-import ConnectionDemo from "../components/demos/ConnectionDemo";
-
 export default function ConnectionsPage() {
   return (
     <>
@@ -33,10 +31,6 @@ export default function ConnectionsPage() {
           <strong>Bidirectional</strong> ports connect on one side at a time — connecting one side disables the other
         </li>
       </ul>
-
-      <h2>Try it</h2>
-      <p>One connection is already drawn. Try connecting the Camera's remaining outputs to the Switcher:</p>
-      <ConnectionDemo />
 
       <h2>Reconnecting</h2>
       <p>To <strong>move</strong> an existing connection to a different port:</p>
