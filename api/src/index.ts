@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { rowToTemplate, templateToRow } from "./db";
-import { authMiddleware, sessionMiddleware, requireSession, requireModerator, requireModeratorOrToken, requireAdmin } from "./auth";
+import { authMiddleware, sessionMiddleware, requireSession, requireModeratorOrToken, requireAdmin } from "./auth";
 import type { Env } from "./auth";
 import { validateTemplate } from "./validate";
 import { checkRateLimit, cleanupExpiredRateLimits } from "./rateLimiter";
@@ -724,11 +724,6 @@ interface SubmissionRow {
   submitter_name?: string;
 }
 
-function anonymizeEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return "Anonymous";
-  return `${local[0]}${"*".repeat(Math.min(local.length - 1, 5))}@${domain}`;
-}
 
 function formatSubmission(row: SubmissionRow) {
   return {
