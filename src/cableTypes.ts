@@ -26,6 +26,8 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   gpio: "GPIO",
   dmx: "DMX",
   madi: "MADI",
+  midi: "MIDI",
+  tally: "Tally",
   custom: "Other",
 };
 

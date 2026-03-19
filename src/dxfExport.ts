@@ -26,6 +26,8 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   power: 46,       // dark amber
   dmx: 1,          // dark red
   madi: 3,         // emerald
+  midi: 6,         // fuchsia
+  tally: 1,        // deep rose
   custom: 9,       // cool gray
 };
 

@@ -24,6 +24,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   composite: "#ca8a04",
   vga: "#0369a1",
   power: "#a16207",
+  midi: "#c026d3",
+  tally: "#be185d",
   custom: "#64748b",
 };
 

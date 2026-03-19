@@ -24,6 +24,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   composite: "bnc",
   vga: "vga",
   power: "edison",
+  midi: "din-5",
+  tally: "db9",
   custom: "other",
 };
 
@@ -62,6 +64,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "usb-c": "USB-C",
   db9: "DB9",
   db25: "DB25",
+  "din-5": "DIN-5",
   phoenix: "Phoenix",
   powercon: "powerCON",
   edison: "Edison",

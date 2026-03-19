@@ -30,5 +30,7 @@
   --color-composite: #ca8a04; /* yellow — classic yellow RCA */
   --color-vga: #0369a1;       /* dark sky blue — classic VGA blue */
   --color-power: #a16207;     /* dark amber — electrical */
+  --color-midi: #c026d3;      /* fuchsia — musical instrument digital interface */
+  --color-tally: #be185d;     /* deep rose — tally/status */
   --color-custom: #64748b;    /* cool gray */
 }

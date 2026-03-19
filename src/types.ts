@@ -5,7 +5,7 @@ export type ConnectorType =
   | "xlr-3" | "xlr-5" | "trs-quarter" | "trs-eighth"
   | "rj45" | "ethercon" | "sfp" | "lc"
   | "usb-a" | "usb-b" | "usb-c"
-  | "db9" | "db25" | "phoenix" | "powercon" | "edison" | "iec"
+  | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
   | "speakon" | "socapex" | "multipin" | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -61,6 +61,8 @@ export type SignalType =
   | "composite"
   | "vga"
   | "power"
+  | "midi"
+  | "tally"
   | "custom";
 
 export type PortDirection = "input" | "output" | "bidirectional";
@@ -254,6 +256,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   composite: "var(--color-composite)",
   vga: "var(--color-vga)",
   power: "var(--color-power)",
+  midi: "var(--color-midi)",
+  tally: "var(--color-tally)",
   custom: "var(--color-custom)",
 };
 
@@ -275,6 +279,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "usb-c": "USB-C",
   db9: "DB9",
   db25: "DB25",
+  "din-5": "DIN-5",
   phoenix: "Phoenix",
   powercon: "powerCON",
   edison: "Edison",
@@ -309,5 +314,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   composite: "Composite",
   vga: "VGA",
   power: "Power",
+  midi: "MIDI",
+  tally: "Tally",
   custom: "Custom",
 };
