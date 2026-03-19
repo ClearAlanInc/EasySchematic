@@ -494,7 +494,7 @@ app.get("/contributors", async (c) => {
     approvedCount: r.approved_count,
   }));
 
-  return c.json(contributors, 200, CACHE_HEADERS);
+  return c.json(contributors, 200, NO_CACHE_HEADERS);
 });
 
 app.get("/contributors/:id/templates", async (c) => {
@@ -509,7 +509,7 @@ app.get("/contributors/:id/templates", async (c) => {
     .bind(userId)
     .all();
 
-  return c.json(results, 200, CACHE_HEADERS);
+  return c.json(results, 200, NO_CACHE_HEADERS);
 });
 
 // ==================== TEMPLATE ENDPOINTS ====================
