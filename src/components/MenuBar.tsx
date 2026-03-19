@@ -4,11 +4,13 @@ import { useSchematicStore } from "../store";
 import { exportImage } from "../exportUtils";
 import { exportDxf } from "../dxfExport";
 import { exportPdf } from "../pdfExport";
+import { exportTemplatesToFile, readTemplateFile } from "../templateExport";
 import { PAPER_SIZES } from "../printConfig";
 import type { SchematicFile, SchematicNode, AnnotationData } from "../types";
 import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
 import AboutDialog from "./AboutDialog";
+import PreferencesDialog from "./PreferencesDialog";
 import AlignmentMenu from "./AlignmentMenu";
 
 // ─── Menu data types ─────────────────────────────────────────────
@@ -108,6 +110,7 @@ export default function MenuBar() {
 
   const reactFlowInstance = useReactFlow();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const archiveInputRef = useRef<HTMLInputElement>(null);
   const menuBarRef = useRef<HTMLDivElement>(null);
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -116,6 +119,7 @@ export default function MenuBar() {
   const [reportsTab, setReportsTab] = useState<ReportsTab | null>(null);
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
 
   // Keep nameValue in sync when schematicName changes externally
   useEffect(() => {
@@ -180,6 +184,35 @@ export default function MenuBar() {
       e.target.value = "";
     },
     [importFromJSON],
+  );
+
+  const handleSaveArchive = useCallback(() => {
+    const templates = useSchematicStore.getState().exportCustomTemplates();
+    if (templates.length === 0) {
+      alert("No custom device templates to export.");
+      return;
+    }
+    exportTemplatesToFile(templates);
+  }, []);
+
+  const handleOpenArchive = useCallback(() => {
+    archiveInputRef.current?.click();
+  }, []);
+
+  const handleImportArchive = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const templates = await readTemplateFile(file);
+        useSchematicStore.getState().importCustomTemplates(templates);
+        alert(`Imported ${templates.length} device template${templates.length === 1 ? "" : "s"}.`);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Invalid device archive file.");
+      }
+      e.target.value = "";
+    },
+    [],
   );
 
   // Listen for keyboard shortcut events from App.tsx
@@ -247,8 +280,13 @@ export default function MenuBar() {
     File: [
       { type: "item", label: "New", onClick: newSchematic },
       { type: "separator" },
-      { type: "item", label: "Save", shortcut: "Ctrl+S", onClick: handleSave },
-      { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
+      { type: "item", label: "Save Schematic", shortcut: "Ctrl+S", onClick: handleSave },
+      { type: "item", label: "Open Schematic...", shortcut: "Ctrl+O", onClick: handleOpen },
+      { type: "separator" },
+      { type: "item", label: "Save Device Archive", onClick: handleSaveArchive },
+      { type: "item", label: "Import Device Archive...", onClick: handleOpenArchive },
+      { type: "separator" },
+      { type: "item", label: "Preferences...", onClick: () => setShowPreferences(true) },
     ],
     Edit: [
       { type: "item", label: "Undo", shortcut: "Ctrl+Z", disabled: undoSize === 0, onClick: undo },
@@ -418,13 +456,21 @@ export default function MenuBar() {
         <AlignmentMenu />
       </div>
 
-      {/* Hidden file input for Open */}
+      {/* Hidden file input for Open Schematic */}
       <input
         ref={fileInputRef}
         type="file"
         accept=".json"
         className="hidden"
         onChange={handleImport}
+      />
+      {/* Hidden file input for Import Device Archive */}
+      <input
+        ref={archiveInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleImportArchive}
       />
 
       {reportsTab && (
@@ -435,6 +481,9 @@ export default function MenuBar() {
       )}
       {showAboutDialog && (
         <AboutDialog onClose={() => setShowAboutDialog(false)} />
+      )}
+      {showPreferences && (
+        <PreferencesDialog onClose={() => setShowPreferences(false)} />
       )}
     </div>
   );
