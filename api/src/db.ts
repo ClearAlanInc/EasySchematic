@@ -3,6 +3,7 @@ interface TemplateOutput {
   id: string;
   version: number;
   deviceType: string;
+  category: string;
   label: string;
   manufacturer?: string;
   modelNumber?: string;
@@ -17,6 +18,7 @@ export interface TemplateRow {
   id: string;
   version: number;
   device_type: string;
+  category: string;
   label: string;
   manufacturer: string | null;
   model_number: string | null;
@@ -32,6 +34,7 @@ interface TemplateInput {
   id?: string;
   label: string;
   deviceType: string;
+  category: string;
   manufacturer?: string;
   modelNumber?: string;
   color?: string;
@@ -46,6 +49,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
   return {
     id: input.id ?? "",
     device_type: input.deviceType,
+    category: input.category,
     label: input.label,
     manufacturer: input.manufacturer ?? null,
     model_number: input.modelNumber ?? null,
@@ -63,6 +67,7 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     id: row.id,
     version: row.version,
     deviceType: row.device_type,
+    category: row.category,
     label: row.label,
     ...(row.manufacturer && { manufacturer: row.manufacturer }),
     ...(row.model_number && { modelNumber: row.model_number }),

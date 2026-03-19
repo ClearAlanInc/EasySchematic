@@ -1,6 +1,7 @@
 interface TemplateInput {
   label: string;
   deviceType: string;
+  category: string;
   manufacturer?: string;
   modelNumber?: string;
   color?: string;
@@ -47,6 +48,9 @@ export function validateTemplate(body: unknown): ValidationResult {
 
   const typeErr = checkString(obj.deviceType, "deviceType", 100);
   if (typeErr) return { ok: false, error: typeErr };
+
+  const catErr = checkString(obj.category, "category", 100);
+  if (catErr) return { ok: false, error: catErr };
 
   // Optional string fields — validate length if present
   for (const [key, max] of [["manufacturer", MAX_STRING], ["modelNumber", MAX_STRING], ["imageUrl", 500], ["referenceUrl", 2000]] as const) {
@@ -116,6 +120,7 @@ export function validateTemplate(body: unknown): ValidationResult {
     data: {
       label: obj.label as string,
       deviceType: obj.deviceType as string,
+      category: obj.category as string,
       ...(obj.manufacturer != null && { manufacturer: obj.manufacturer as string }),
       ...(obj.modelNumber != null && { modelNumber: obj.modelNumber as string }),
       ...(obj.color != null && { color: obj.color as string }),

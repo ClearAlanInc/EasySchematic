@@ -17,6 +17,7 @@ DEVICE_TEMPLATES.forEach((t, i) => {
   const id = t.id ?? `auto-${i}`;
   const version = t.version ?? 1;
   const deviceType = escapeSQL(t.deviceType);
+  const category = escapeSQL(t.category ?? "Other");
   const label = escapeSQL(t.label);
   const manufacturer = t.manufacturer ? `'${escapeSQL(t.manufacturer)}'` : "NULL";
   const modelNumber = t.modelNumber ? `'${escapeSQL(t.modelNumber)}'` : "NULL";
@@ -28,7 +29,7 @@ DEVICE_TEMPLATES.forEach((t, i) => {
   const ports = escapeSQL(JSON.stringify(t.ports));
 
   lines.push(
-    `INSERT OR REPLACE INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${searchTerms}, '${ports}', ${i});`
+    `INSERT OR REPLACE INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, search_terms, ports, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${category}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${searchTerms}, '${ports}', ${i});`
   );
 });
 

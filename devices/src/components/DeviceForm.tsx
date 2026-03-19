@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import type { Port } from "../../../src/types";
-import { fetchTemplate, fetchDeviceTypes, fetchSearchTerms } from "../api";
+import { fetchTemplate, fetchDeviceTypes, fetchSearchTerms, fetchCategories } from "../api";
 import PortEditor from "./PortEditor";
 import AutocompleteInput from "./AutocompleteInput";
 import TagAutocompleteInput from "./TagAutocompleteInput";
@@ -8,6 +8,7 @@ import TagAutocompleteInput from "./TagAutocompleteInput";
 export interface DeviceFormData {
   label: string;
   deviceType: string;
+  category: string;
   ports: Port[];
   manufacturer: string;
   modelNumber?: string;
@@ -34,6 +35,7 @@ interface DeviceFormProps {
 export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
   const [label, setLabel] = useState("");
   const [deviceType, setDeviceType] = useState("");
+  const [category, setCategory] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [modelNumber, setModelNumber] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
@@ -44,10 +46,12 @@ export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelH
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
+  const [knownCategories, setKnownCategories] = useState<string[]>([]);
   const [knownSearchTerms, setKnownSearchTerms] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDeviceTypes().then(setDeviceTypes);
+    fetchCategories().then(setKnownCategories);
     fetchSearchTerms().then(setKnownSearchTerms);
   }, []);
 
@@ -57,6 +61,7 @@ export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelH
       .then((t) => {
         setLabel(t.label);
         setDeviceType(t.deviceType);
+        setCategory(t.category ?? "");
         setManufacturer(t.manufacturer ?? "");
         setModelNumber(t.modelNumber ?? "");
         setReferenceUrl(t.referenceUrl ?? "");
@@ -71,6 +76,7 @@ export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelH
   const handleSubmit = async () => {
     if (!label.trim()) { setError("Label is required"); return; }
     if (!deviceType.trim()) { setError("Device type is required"); return; }
+    if (!category.trim()) { setError("Category is required"); return; }
     if (!manufacturer.trim()) { setError("Manufacturer is required (use \"Generic\" if not a specific brand)"); return; }
     const isGeneric = manufacturer.trim().toLowerCase() === "generic";
     if (!isGeneric && !modelNumber.trim()) { setError("Model number is required (unless manufacturer is Generic)"); return; }
@@ -84,6 +90,7 @@ export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelH
       await onSubmit({
         label: label.trim(),
         deviceType: deviceType.trim(),
+        category: category.trim(),
         ports,
         manufacturer: manufacturer.trim(),
         ...(modelNumber.trim() && { modelNumber: modelNumber.trim() }),
@@ -116,6 +123,10 @@ export default function DeviceForm({ id, onSubmit, submitLabel = "Save", cancelH
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
           <AutocompleteInput value={deviceType} onChange={setDeviceType} suggestions={deviceTypes} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Category *</span>
+          <AutocompleteInput value={category} onChange={setCategory} suggestions={knownCategories} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer *</span>

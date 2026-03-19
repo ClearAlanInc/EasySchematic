@@ -143,6 +143,7 @@ export interface DeviceTemplate {
   id?: string;
   version?: number;
   deviceType: string;
+  category?: string;
   label: string;
   ports: Port[];
   color?: string;

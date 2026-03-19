@@ -46,7 +46,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0002-4000-8000-000000000002",
@@ -116,7 +117,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0003-4000-8000-000000000003",
@@ -151,7 +153,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0004-4000-8000-000000000004",
@@ -177,7 +180,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0005-4000-8000-000000000005",
@@ -247,7 +251,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0006-4000-8000-000000000006",
@@ -283,7 +288,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0007-4000-8000-000000000007",
@@ -319,7 +325,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0008-4000-8000-000000000008",
@@ -362,7 +369,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0009-4000-8000-000000000009",
@@ -406,7 +414,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000a-4000-8000-000000000010",
@@ -486,7 +495,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000b-4000-8000-000000000011",
@@ -566,7 +576,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000c-4000-8000-000000000012",
@@ -604,7 +615,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000d-4000-8000-000000000013",
@@ -642,7 +654,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000e-4000-8000-000000000014",
@@ -714,7 +727,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-000f-4000-8000-000000000015",
@@ -766,7 +780,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0010-4000-8000-000000000016",
@@ -845,7 +860,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0011-4000-8000-000000000017",
@@ -866,7 +882,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0012-4000-8000-000000000018",
@@ -908,7 +925,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0013-4000-8000-000000000019",
@@ -950,7 +968,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0014-4000-8000-000000000020",
@@ -1020,7 +1039,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0015-4000-8000-000000000021",
@@ -1331,7 +1351,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0016-4000-8000-000000000022",
@@ -1530,7 +1551,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0017-4000-8000-000000000023",
@@ -1680,7 +1702,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0018-4000-8000-000000000024",
@@ -1736,7 +1759,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0019-4000-8000-000000000025",
@@ -1764,7 +1788,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-001a-4000-8000-000000000026",
@@ -1792,7 +1817,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-001b-4000-8000-000000000027",
@@ -1866,7 +1892,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-001c-4000-8000-000000000028",
@@ -1894,7 +1921,8 @@
         "direction": "output",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-001d-4000-8000-000000000029",
@@ -1936,7 +1964,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Distribution"
   },
   {
     "id": "c0a80101-001e-4000-8000-000000000030",
@@ -1962,7 +1991,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-001f-4000-8000-000000000031",
@@ -2035,7 +2065,8 @@
         "direction": "bidirectional",
         "connectorType": "db9"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0020-4000-8000-000000000032",
@@ -2119,7 +2150,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Distribution"
   },
   {
     "id": "c0a80101-0021-4000-8000-000000000033",
@@ -2199,7 +2231,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Distribution"
   },
   {
     "id": "c0a80101-0022-4000-8000-000000000034",
@@ -2286,7 +2319,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Projection"
   },
   {
     "id": "c0a80101-0023-4000-8000-000000000035",
@@ -2373,7 +2407,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Projection"
   },
   {
     "id": "c0a80101-0024-4000-8000-000000000036",
@@ -2460,7 +2495,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0025-4000-8000-000000000037",
@@ -2511,7 +2547,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0026-4000-8000-000000000038",
@@ -2594,7 +2631,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0027-4000-8000-000000000039",
@@ -2634,7 +2672,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0028-4000-8000-000000000040",
@@ -2653,7 +2692,8 @@
         "direction": "bidirectional",
         "connectorType": "usb-a"
       }
-    ]
+    ],
+    "category": "Peripherals"
   },
   {
     "id": "c0a80101-0029-4000-8000-000000000041",
@@ -2671,7 +2711,8 @@
         "direction": "bidirectional",
         "connectorType": "usb-a"
       }
-    ]
+    ],
+    "category": "Peripherals"
   },
   {
     "id": "c0a80101-002a-4000-8000-000000000042",
@@ -2743,7 +2784,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-002b-4000-8000-000000000043",
@@ -2832,7 +2874,8 @@
       "extender",
       "IP",
       "matrix"
-    ]
+    ],
+    "category": "KVM / Extenders"
   },
   {
     "id": "c0a80101-002c-4000-8000-000000000044",
@@ -2884,7 +2927,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "KVM / Extenders"
   },
   {
     "id": "c0a80101-002d-4000-8000-000000000045",
@@ -2929,7 +2973,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "KVM / Extenders"
   },
   {
     "id": "c0a80101-002e-4000-8000-000000000046",
@@ -2974,7 +3019,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-002f-4000-8000-000000000047",
@@ -3019,7 +3065,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-0030-4000-8000-000000000048",
@@ -3120,7 +3167,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-0031-4000-8000-000000000049",
@@ -3186,7 +3234,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0032-4000-8000-000000000050",
@@ -3251,7 +3300,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0033-4000-8000-000000000051",
@@ -3326,7 +3376,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0034-4000-8000-000000000052",
@@ -3398,7 +3449,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0035-4000-8000-000000000053",
@@ -3465,7 +3517,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0036-4000-8000-000000000054",
@@ -3539,7 +3592,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0037-4000-8000-000000000055",
@@ -3633,7 +3687,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0038-4000-8000-000000000056",
@@ -3713,7 +3768,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-0039-4000-8000-000000000057",
@@ -3765,7 +3821,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-003a-4000-8000-000000000058",
@@ -3853,7 +3910,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-003b-4000-8000-000000000059",
@@ -3915,7 +3973,8 @@
         "direction": "output",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Infrastructure"
   },
   {
     "id": "c0a80101-003c-4000-8000-000000000060",
@@ -4018,7 +4077,8 @@
         "direction": "output",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Infrastructure"
   },
   {
     "id": "c0a80101-003d-4000-8000-000000000061",
@@ -4090,7 +4150,8 @@
         "direction": "input",
         "connectorType": "trs-eighth"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-003e-4000-8000-000000000062",
@@ -4169,7 +4230,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-003f-4000-8000-000000000063",
@@ -4248,7 +4310,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0040-4000-8000-000000000064",
@@ -4376,7 +4439,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0041-4000-8000-000000000065",
@@ -4505,7 +4569,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0042-4000-8000-000000000066",
@@ -4569,7 +4634,8 @@
         "direction": "output",
         "connectorType": "usb-c"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0043-4000-8000-000000000067",
@@ -4640,7 +4706,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0044-4000-8000-000000000068",
@@ -4740,7 +4807,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0045-4000-8000-000000000069",
@@ -4875,7 +4943,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0046-4000-8000-000000000070",
@@ -5039,7 +5108,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0047-4000-8000-000000000071",
@@ -5314,7 +5384,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0048-4000-8000-000000000072",
@@ -5813,7 +5884,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0049-4000-8000-000000000073",
@@ -5983,7 +6055,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004a-4000-8000-000000000074",
@@ -6132,7 +6205,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004b-4000-8000-000000000075",
@@ -6296,7 +6370,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004c-4000-8000-000000000076",
@@ -6452,7 +6527,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004d-4000-8000-000000000077",
@@ -6622,7 +6698,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004e-4000-8000-000000000078",
@@ -7212,7 +7289,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-004f-4000-8000-000000000079",
@@ -8251,7 +8329,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0050-4000-8000-000000000080",
@@ -8401,7 +8480,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0051-4000-8000-000000000081",
@@ -8663,7 +8743,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Switching"
   },
   {
     "id": "c0a80101-0052-4000-8000-000000000082",
@@ -8700,7 +8781,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0053-4000-8000-000000000083",
@@ -8737,7 +8819,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0054-4000-8000-000000000084",
@@ -8781,7 +8864,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0055-4000-8000-000000000085",
@@ -8868,7 +8952,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Distribution"
   },
   {
     "id": "c0a80101-0056-4000-8000-000000000086",
@@ -8956,7 +9041,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Distribution"
   },
   {
     "id": "c0a80101-0057-4000-8000-000000000087",
@@ -9021,7 +9107,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0058-4000-8000-000000000088",
@@ -9065,7 +9152,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0059-4000-8000-000000000089",
@@ -9109,7 +9197,8 @@
         "direction": "input",
         "connectorType": "sfp"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005a-4000-8000-000000000090",
@@ -9153,7 +9242,8 @@
         "direction": "output",
         "connectorType": "sfp"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005b-4000-8000-000000000091",
@@ -9255,7 +9345,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005c-4000-8000-000000000092",
@@ -9305,7 +9396,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005d-4000-8000-000000000093",
@@ -9370,7 +9462,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005e-4000-8000-000000000094",
@@ -9518,7 +9611,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-005f-4000-8000-000000000095",
@@ -9604,7 +9698,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0060-4000-8000-000000000096",
@@ -9683,7 +9778,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0061-4000-8000-000000000097",
@@ -9945,7 +10041,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0062-4000-8000-000000000098",
@@ -9982,7 +10079,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0063-4000-8000-000000000099",
@@ -10020,7 +10118,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0064-4000-8000-000000000100",
@@ -10072,7 +10171,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0065-4000-8000-000000000101",
@@ -10137,7 +10237,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0066-4000-8000-000000000102",
@@ -10202,7 +10303,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0067-4000-8000-000000000103",
@@ -10253,7 +10355,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Monitoring"
   },
   {
     "id": "c0a80101-0068-4000-8000-000000000104",
@@ -10319,7 +10422,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-0069-4000-8000-000000000105",
@@ -10349,7 +10453,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006a-4000-8000-000000000106",
@@ -10386,7 +10491,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006b-4000-8000-000000000107",
@@ -10451,7 +10557,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006c-4000-8000-000000000108",
@@ -10530,7 +10637,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006d-4000-8000-000000000109",
@@ -10639,7 +10747,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006e-4000-8000-000000000110",
@@ -10739,7 +10848,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Recording"
   },
   {
     "id": "c0a80101-006f-4000-8000-000000000111",
@@ -10769,7 +10879,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0070-4000-8000-000000000112",
@@ -10814,7 +10925,8 @@
         "direction": "bidirectional",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0071-4000-8000-000000000113",
@@ -10887,7 +10999,8 @@
         "direction": "bidirectional",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0072-4000-8000-000000000114",
@@ -11002,7 +11115,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-0073-4000-8000-000000000115",
@@ -11040,7 +11154,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0074-4000-8000-000000000116",
@@ -11078,7 +11193,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0075-4000-8000-000000000117",
@@ -11108,7 +11224,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0076-4000-8000-000000000118",
@@ -11159,7 +11276,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0077-4000-8000-000000000119",
@@ -11210,7 +11328,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0078-4000-8000-000000000120",
@@ -11262,7 +11381,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-0079-4000-8000-000000000121",
@@ -11306,7 +11426,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Networking"
   },
   {
     "id": "c0a80101-007a-4000-8000-000000000122",
@@ -11351,7 +11472,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-007b-4000-8000-000000000123",
@@ -11396,7 +11518,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-007c-4000-8000-000000000124",
@@ -11482,7 +11605,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-007d-4000-8000-000000000125",
@@ -11567,7 +11691,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-007e-4000-8000-000000000126",
@@ -11660,7 +11785,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-007f-4000-8000-000000000127",
@@ -11718,7 +11844,8 @@
         "direction": "output",
         "connectorType": "trs-eighth"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0080-4000-8000-000000000128",
@@ -11791,7 +11918,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0081-4000-8000-000000000129",
@@ -11864,7 +11992,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0082-4000-8000-000000000130",
@@ -11923,7 +12052,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0083-4000-8000-000000000131",
@@ -11983,7 +12113,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0084-4000-8000-000000000132",
@@ -12049,7 +12180,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0085-4000-8000-000000000133",
@@ -12102,7 +12234,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0086-4000-8000-000000000134",
@@ -12154,7 +12287,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0087-4000-8000-000000000135",
@@ -12205,7 +12339,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0088-4000-8000-000000000136",
@@ -12249,7 +12384,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-0089-4000-8000-000000000137",
@@ -12307,7 +12443,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-008a-4000-8000-000000000138",
@@ -12386,7 +12523,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Sources"
   },
   {
     "id": "c0a80101-008b-4000-8000-000000000139",
@@ -12563,7 +12701,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-008c-4000-8000-000000000140",
@@ -12740,7 +12879,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-008d-4000-8000-000000000141",
@@ -12917,7 +13057,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-008e-4000-8000-000000000142",
@@ -13255,7 +13396,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-008f-4000-8000-000000000143",
@@ -13481,7 +13623,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0090-4000-8000-000000000144",
@@ -13862,7 +14005,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0091-4000-8000-000000000145",
@@ -14186,7 +14330,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0092-4000-8000-000000000146",
@@ -14454,7 +14599,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0093-4000-8000-000000000147",
@@ -14526,7 +14672,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0094-4000-8000-000000000148",
@@ -14885,7 +15032,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0095-4000-8000-000000000149",
@@ -15132,7 +15280,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0096-4000-8000-000000000150",
@@ -15225,7 +15374,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0097-4000-8000-000000000151",
@@ -15669,7 +15819,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0098-4000-8000-000000000152",
@@ -15875,7 +16026,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-0099-4000-8000-000000000153",
@@ -16053,7 +16205,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009a-4000-8000-000000000154",
@@ -16350,7 +16503,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009b-4000-8000-000000000155",
@@ -16381,7 +16535,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009c-4000-8000-000000000156",
@@ -16419,7 +16574,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009d-4000-8000-000000000157",
@@ -16457,7 +16613,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009e-4000-8000-000000000158",
@@ -16487,7 +16644,8 @@
         "direction": "bidirectional",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-009f-4000-8000-000000000159",
@@ -16568,7 +16726,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-00a0-4000-8000-000000000160",
@@ -16605,7 +16764,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-00a1-4000-8000-000000000161",
@@ -16642,7 +16802,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-00a2-4000-8000-000000000162",
@@ -16707,7 +16868,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-00a3-4000-8000-000000000163",
@@ -16793,7 +16955,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-00a4-4000-8000-000000000164",
@@ -16865,7 +17028,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-00a5-4000-8000-000000000165",
@@ -16937,7 +17101,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-00a6-4000-8000-000000000166",
@@ -17017,7 +17182,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Wireless"
   },
   {
     "id": "c0a80101-00a7-4000-8000-000000000167",
@@ -17061,7 +17227,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00a8-4000-8000-000000000168",
@@ -17091,7 +17258,8 @@
         "direction": "output",
         "connectorType": "speakon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00a9-4000-8000-000000000169",
@@ -17122,7 +17290,8 @@
         "direction": "output",
         "connectorType": "speakon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00aa-4000-8000-000000000170",
@@ -17160,7 +17329,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00ab-4000-8000-000000000171",
@@ -17197,7 +17367,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00ac-4000-8000-000000000172",
@@ -17242,7 +17413,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00ad-4000-8000-000000000173",
@@ -17287,7 +17459,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00ae-4000-8000-000000000174",
@@ -17317,7 +17490,8 @@
         "direction": "output",
         "connectorType": "speakon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00af-4000-8000-000000000175",
@@ -17355,7 +17529,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00b0-4000-8000-000000000176",
@@ -17456,7 +17631,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00b1-4000-8000-000000000177",
@@ -17542,7 +17718,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Speakers & Amps"
   },
   {
     "id": "c0a80101-00b2-4000-8000-000000000178",
@@ -17755,7 +17932,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Audio"
   },
   {
     "id": "c0a80101-00b3-4000-8000-000000000179",
@@ -17989,7 +18167,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "LED Video"
   },
   {
     "id": "c0a80101-00b4-4000-8000-000000000180",
@@ -18075,7 +18254,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "LED Video"
   },
   {
     "id": "c0a80101-00b5-4000-8000-000000000181",
@@ -18106,7 +18286,8 @@
         "direction": "output",
         "connectorType": "rj45"
       }
-    ]
+    ],
+    "category": "LED Video"
   },
   {
     "id": "c0a80101-00b6-4000-8000-000000000182",
@@ -18283,7 +18464,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "LED Video"
   },
   {
     "id": "c0a80101-00b7-4000-8000-000000000183",
@@ -18481,7 +18663,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "LED Video"
   },
   {
     "id": "c0a80101-00b8-4000-8000-000000000184",
@@ -18595,7 +18778,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Media Servers"
   },
   {
     "id": "c0a80101-00b9-4000-8000-000000000185",
@@ -18675,7 +18859,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Media Servers"
   },
   {
     "id": "c0a80101-00ba-4000-8000-000000000186",
@@ -18754,7 +18939,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Media Servers"
   },
   {
     "id": "c0a80101-00bb-4000-8000-000000000187",
@@ -18820,7 +19006,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Media Servers"
   },
   {
     "id": "c0a80101-00bc-4000-8000-000000000188",
@@ -18871,7 +19058,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00bd-4000-8000-000000000189",
@@ -18978,7 +19166,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00be-4000-8000-000000000190",
@@ -19149,7 +19338,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00bf-4000-8000-000000000191",
@@ -19242,7 +19432,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c0-4000-8000-000000000192",
@@ -19288,7 +19479,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c1-4000-8000-000000000193",
@@ -19333,7 +19525,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c2-4000-8000-000000000194",
@@ -19370,7 +19563,8 @@
         "direction": "input",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c3-4000-8000-000000000195",
@@ -19409,7 +19603,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c4-4000-8000-000000000196",
@@ -19441,7 +19636,8 @@
         "direction": "output",
         "connectorType": "xlr-5"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c5-4000-8000-000000000197",
@@ -19472,7 +19668,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c6-4000-8000-000000000198",
@@ -19542,7 +19739,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c7-4000-8000-000000000199",
@@ -19613,7 +19811,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Lighting"
   },
   {
     "id": "c0a80101-00c8-4000-8000-000000000200",
@@ -19640,7 +19839,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00c9-4000-8000-000000000201",
@@ -19667,7 +19867,8 @@
         "direction": "output",
         "connectorType": "displayport"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00ca-4000-8000-000000000202",
@@ -19693,7 +19894,8 @@
         "direction": "output",
         "connectorType": "other"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00cb-4000-8000-000000000203",
@@ -19720,7 +19922,8 @@
         "direction": "output",
         "connectorType": "displayport"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00cc-4000-8000-000000000204",
@@ -19746,7 +19949,8 @@
         "direction": "output",
         "connectorType": "hdmi"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00cd-4000-8000-000000000205",
@@ -19774,7 +19978,8 @@
         "direction": "output",
         "connectorType": "bnc"
       }
-    ]
+    ],
+    "category": "Processing"
   },
   {
     "id": "c0a80101-00ce-4000-8000-000000000206",
@@ -19853,7 +20058,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Projection"
   },
   {
     "id": "c0a80101-00cf-4000-8000-000000000207",
@@ -19890,7 +20096,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-00d0-4000-8000-000000000208",
@@ -19957,7 +20164,8 @@
         "direction": "input",
         "connectorType": "edison"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-00d1-4000-8000-000000000209",
@@ -20011,7 +20219,8 @@
         "direction": "output",
         "connectorType": "other"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-00d2-4000-8000-000000000210",
@@ -20058,7 +20267,8 @@
         "direction": "output",
         "connectorType": "other"
       }
-    ]
+    ],
+    "category": "Control"
   },
   {
     "id": "c0a80101-00e0-4000-8000-000000000300",
@@ -20112,7 +20322,8 @@
         "isMulticable": true,
         "channelCount": 4
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e1-4000-8000-000000000301",
@@ -20166,7 +20377,8 @@
         "direction": "output",
         "connectorType": "xlr-3"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e0-4000-8000-000000000310",
@@ -20248,7 +20460,8 @@
         "isMulticable": true,
         "channelCount": 8
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e1-4000-8000-000000000311",
@@ -20330,7 +20543,8 @@
         "direction": "output",
         "connectorType": "xlr-3"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e0-4000-8000-000000000320",
@@ -20468,7 +20682,8 @@
         "isMulticable": true,
         "channelCount": 16
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e1-4000-8000-000000000321",
@@ -20606,7 +20821,8 @@
         "direction": "output",
         "connectorType": "xlr-3"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e0-4000-8000-000000000330",
@@ -20800,7 +21016,8 @@
         "isMulticable": true,
         "channelCount": 24
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e1-4000-8000-000000000331",
@@ -20994,7 +21211,8 @@
         "direction": "output",
         "connectorType": "xlr-3"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e0-4000-8000-000000000340",
@@ -21077,7 +21295,8 @@
         "isMulticable": true,
         "channelCount": 8
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e1-4000-8000-000000000341",
@@ -21160,7 +21379,8 @@
         "direction": "output",
         "connectorType": "xlr-3"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e2-4000-8000-000000000302",
@@ -21226,7 +21446,8 @@
         "isMulticable": true,
         "channelCount": 6
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e3-4000-8000-000000000303",
@@ -21292,7 +21513,8 @@
         "direction": "output",
         "connectorType": "powercon"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e4-4000-8000-000000000304",
@@ -21344,7 +21566,8 @@
         "isMulticable": true,
         "channelCount": 4
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e5-4000-8000-000000000305",
@@ -21396,7 +21619,8 @@
         "direction": "output",
         "connectorType": "lc"
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e6-4000-8000-000000000306",
@@ -21419,7 +21643,8 @@
         "isMulticable": true,
         "channelCount": 0
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   },
   {
     "id": "c0a80101-00e7-4000-8000-000000000307",
@@ -21442,6 +21667,7 @@
         "isMulticable": true,
         "channelCount": 0
       }
-    ]
+    ],
+    "category": "Cable Accessories"
   }
 ]

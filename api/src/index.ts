@@ -344,12 +344,13 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order, submitted_by)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order, submitted_by)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         templateRow.id,
         templateRow.device_type,
+        templateRow.category,
         templateRow.label,
         templateRow.manufacturer,
         templateRow.model_number,
@@ -369,13 +370,14 @@ app.post("/submissions/:id/approve", async (c) => {
     await db
       .prepare(
         `UPDATE templates
-         SET device_type = ?, label = ?, manufacturer = ?, model_number = ?,
+         SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?
          WHERE id = ?`,
       )
       .bind(
         templateRow.device_type,
+        templateRow.category,
         templateRow.label,
         templateRow.manufacturer,
         templateRow.model_number,
@@ -493,6 +495,13 @@ app.get("/contributors", async (c) => {
 
 // ==================== TEMPLATE ENDPOINTS ====================
 
+app.get("/templates/categories", async (c) => {
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT DISTINCT category FROM templates ORDER BY category")
+    .all();
+  return c.json(results.map((r) => (r as { category: string }).category), 200, CACHE_HEADERS);
+});
+
 app.get("/templates/device-types", async (c) => {
   const { results } = await c.env.easyschematic_db
     .prepare("SELECT DISTINCT device_type FROM templates ORDER BY device_type")
@@ -572,12 +581,13 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
       row.device_type,
+      row.category,
       row.label,
       row.manufacturer,
       row.model_number,
@@ -622,13 +632,14 @@ app.put("/templates/:id", async (c) => {
   await c.env.easyschematic_db
     .prepare(
       `UPDATE templates
-     SET device_type = ?, label = ?, manufacturer = ?, model_number = ?,
+     SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
          color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, sort_order = ?,
          version = version + 1, updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`,
     )
     .bind(
       row.device_type,
+      row.category,
       row.label,
       row.manufacturer,
       row.model_number,

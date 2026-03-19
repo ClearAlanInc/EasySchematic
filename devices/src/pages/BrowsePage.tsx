@@ -3,7 +3,7 @@ import type { DeviceTemplate } from "../../../src/types";
 import { SIGNAL_LABELS } from "../../../src/types";
 import { fetchTemplates } from "../api";
 import SearchBar from "../components/SearchBar";
-import CategoryFilter, { CATEGORIES } from "../components/CategoryFilter";
+import CategoryFilter from "../components/CategoryFilter";
 import DeviceCard from "../components/DeviceCard";
 
 export default function BrowsePage() {
@@ -20,18 +20,21 @@ export default function BrowsePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Derive available categories from template data
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const t of templates) {
+      if (t.category) cats.add(t.category);
+    }
+    return [...cats].sort();
+  }, [templates]);
+
   const filtered = useMemo(() => {
     let result = templates;
 
-    // Category filter
+    // Category filter — directly from template.category
     if (selectedCategories.size > 0) {
-      const allowedTypes = new Set<string>();
-      for (const cat of CATEGORIES) {
-        if (selectedCategories.has(cat.label)) {
-          cat.types.forEach((t) => allowedTypes.add(t));
-        }
-      }
-      result = result.filter((t) => allowedTypes.has(t.deviceType));
+      result = result.filter((t) => t.category && selectedCategories.has(t.category));
     }
 
     // Search filter
@@ -62,7 +65,7 @@ export default function BrowsePage() {
         <SearchBar value={search} onChange={setSearch} resultCount={filtered.length} totalCount={templates.length} />
       </div>
       <div className="mb-6">
-        <CategoryFilter selected={selectedCategories} onChange={setSelectedCategories} />
+        <CategoryFilter categories={categories} selected={selectedCategories} onChange={setSelectedCategories} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((t) => (

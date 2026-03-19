@@ -9,25 +9,27 @@ import RouterCreator from "./RouterCreator";
 const APP_VERSION = __APP_VERSION__;
 const BUILD_HASH = __BUILD_HASH__;
 
-const CATEGORIES: { label: string; types: string[] }[] = [
-  { label: "Sources", types: ["camera", "ptz-camera", "graphics", "computer", "media-player"] },
-  { label: "Peripherals", types: ["mouse", "keyboard"] },
-  { label: "Switching", types: ["switcher", "router"] },
-  { label: "Processing", types: ["converter", "scaler", "adapter", "frame-sync", "multiviewer", "capture-card"] },
-  { label: "Distribution", types: ["da", "video-wall-controller"] },
-  { label: "Monitoring", types: ["monitor", "tv"] },
-  { label: "Projection", types: ["projector"] },
-  { label: "Recording", types: ["recorder"] },
-  { label: "Audio", types: ["audio-mixer", "audio-embedder", "audio-interface", "audio-dsp", "stage-box", "wireless-mic-receiver"] },
-  { label: "Speakers & Amps", types: ["speaker", "amplifier"] },
-  { label: "Networking", types: ["ndi-encoder", "ndi-decoder", "network-switch", "streaming-encoder", "av-over-ip"] },
-  { label: "KVM / Extenders", types: ["kvm-extender", "hdbaset-extender"] },
-  { label: "Wireless", types: ["wireless-video", "intercom"] },
-  { label: "LED Video", types: ["led-processor"] },
-  { label: "Media Servers", types: ["media-server"] },
-  { label: "Lighting", types: ["lighting-console", "moving-light", "led-fixture", "dmx-splitter"] },
-  { label: "Control", types: ["control-processor", "tally-system", "timecode-generator", "midi-device"] },
-  { label: "Cable Accessories", types: ["cable-accessory"] },
+/** Preferred display order for categories — unlisted categories sort alphabetically at the end */
+const CATEGORY_ORDER: string[] = [
+  "Sources",
+  "Peripherals",
+  "Switching",
+  "Processing",
+  "Distribution",
+  "Monitoring",
+  "Projection",
+  "Recording",
+  "Audio",
+  "Speakers & Amps",
+  "Networking",
+  "KVM / Extenders",
+  "Wireless",
+  "LED Video",
+  "Media Servers",
+  "Lighting",
+  "Control",
+  "Infrastructure",
+  "Cable Accessories",
 ];
 
 function onDragStart(event: DragEvent, template: DeviceTemplate) {
@@ -245,17 +247,28 @@ export default function DeviceLibrary() {
     return favoriteTemplates.map((k) => byKey.get(k)).filter((t): t is DeviceTemplate => !!t);
   }, [templates, customTemplates, favoriteTemplates]);
 
-  const filteredCategories = useMemo(
-    () =>
-      CATEGORIES.map((cat) => {
-        const all = templates.filter((t) =>
-          cat.types.includes(t.deviceType),
-        );
-        const sorted = all.toSorted((a, b) => a.label.localeCompare(b.label));
-        return { ...cat, templates: sorted };
-      }),
-    [templates],
-  );
+  const filteredCategories = useMemo(() => {
+    // Group templates by category
+    const groups = new Map<string, DeviceTemplate[]>();
+    for (const t of templates) {
+      const cat = t.category ?? "Other";
+      const arr = groups.get(cat);
+      if (arr) arr.push(t);
+      else groups.set(cat, [t]);
+    }
+    // Sort each group alphabetically
+    for (const arr of groups.values()) arr.sort((a, b) => a.label.localeCompare(b.label));
+    // Sort categories by CATEGORY_ORDER, unknown ones alphabetically at end
+    const orderIndex = new Map(CATEGORY_ORDER.map((c, i) => [c, i]));
+    return [...groups.entries()]
+      .sort(([a], [b]) => {
+        const ai = orderIndex.get(a) ?? 9999;
+        const bi = orderIndex.get(b) ?? 9999;
+        if (ai !== bi) return ai - bi;
+        return a.localeCompare(b);
+      })
+      .map(([label, tmpls]) => ({ label, templates: tmpls }));
+  }, [templates]);
 
   const totalResults = rankedResults?.length ??
     (filteredCustom.length + filteredCategories.reduce((sum, c) => sum + c.templates.length, 0));

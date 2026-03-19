@@ -22,6 +22,12 @@ export async function fetchDeviceTypes(): Promise<string[]> {
   return res.json();
 }
 
+export async function fetchCategories(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/templates/categories`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function fetchSearchTerms(): Promise<string[]> {
   const res = await fetch(`${API_URL}/templates/search-terms`);
   if (!res.ok) return [];
