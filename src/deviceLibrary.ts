@@ -3809,6 +3809,71 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
       trunkPort("Trunk In", "custom", "input", 0, "multipin"),
     ],
   },
+
+  // Patch Panels
+  {
+    id: "c0a80101-00e8-4000-8000-000000000308",
+    deviceType: "patch-panel",
+    label: "Patch Panel 12-Port",
+    searchTerms: ["patch panel", "patch bay", "12 port", "rj45", "ethernet", "cat6"],
+    ports: ports("Port", "ethernet", "bidirectional", 12),
+  },
+  {
+    id: "c0a80101-00e9-4000-8000-000000000309",
+    deviceType: "patch-panel",
+    label: "Patch Panel 24-Port",
+    searchTerms: ["patch panel", "patch bay", "24 port", "rj45", "ethernet", "cat6"],
+    ports: ports("Port", "ethernet", "bidirectional", 24),
+  },
+  {
+    id: "c0a80101-00ea-4000-8000-000000000310",
+    deviceType: "patch-panel",
+    label: "Patch Panel 48-Port",
+    searchTerms: ["patch panel", "patch bay", "48 port", "rj45", "ethernet", "cat6"],
+    ports: ports("Port", "ethernet", "bidirectional", 48),
+  },
+  {
+    id: "c0a80101-00eb-4000-8000-000000000311",
+    deviceType: "patch-panel",
+    label: "BNC Patch Panel 12-Port",
+    searchTerms: ["patch panel", "patch bay", "12 port", "bnc", "sdi", "video"],
+    ports: ports("Port", "sdi", "bidirectional", 12),
+  },
+  {
+    id: "c0a80101-00ec-4000-8000-000000000312",
+    deviceType: "patch-panel",
+    label: "BNC Patch Panel 24-Port",
+    searchTerms: ["patch panel", "patch bay", "24 port", "bnc", "sdi", "video"],
+    ports: ports("Port", "sdi", "bidirectional", 24),
+  },
+  {
+    id: "c0a80101-00ed-4000-8000-000000000313",
+    deviceType: "patch-panel",
+    label: "XLR Patch Panel 12-Port",
+    searchTerms: ["patch panel", "patch bay", "12 port", "xlr", "audio", "analog"],
+    ports: ports("Port", "analog-audio", "bidirectional", 12),
+  },
+  {
+    id: "c0a80101-00ee-4000-8000-000000000314",
+    deviceType: "patch-panel",
+    label: "XLR Patch Panel 24-Port",
+    searchTerms: ["patch panel", "patch bay", "24 port", "xlr", "audio", "analog"],
+    ports: ports("Port", "analog-audio", "bidirectional", 24),
+  },
+  {
+    id: "c0a80101-00ef-4000-8000-000000000315",
+    deviceType: "patch-panel",
+    label: "Fiber Patch Panel 12-Port",
+    searchTerms: ["patch panel", "patch bay", "12 port", "fiber", "lc", "optical"],
+    ports: ports("Port", "fiber", "bidirectional", 12),
+  },
+  {
+    id: "c0a80101-00f0-4000-8000-000000000316",
+    deviceType: "patch-panel",
+    label: "Fiber Patch Panel 24-Port",
+    searchTerms: ["patch panel", "patch bay", "24 port", "fiber", "lc", "optical"],
+    ports: ports("Port", "fiber", "bidirectional", 24),
+  },
 ];
 
 // Populate category from deviceType — avoids touching every template literal above
@@ -3863,6 +3928,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "midi-device": "Control",
   "cable-accessory": "Cable Accessories",
   "power-distribution": "Infrastructure",
+  "patch-panel": "Infrastructure",
 };
 
 for (const t of DEVICE_TEMPLATES) {
