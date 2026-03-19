@@ -15,16 +15,20 @@ describe('headerColor fallback', () => {
 });
 
 describe('scrollBehavior props', () => {
+  function getScrollProps(behavior: 'zoom' | 'pan') {
+    return { panOnScroll: behavior === 'pan', zoomOnScroll: behavior !== 'pan' };
+  }
+
   it('pan mode sets panOnScroll=true, zoomOnScroll=false', () => {
-    const scrollBehavior: 'zoom' | 'pan' = 'pan';
-    expect(scrollBehavior === 'pan').toBe(true);
-    expect(scrollBehavior !== 'pan').toBe(false);
+    const props = getScrollProps('pan');
+    expect(props.panOnScroll).toBe(true);
+    expect(props.zoomOnScroll).toBe(false);
   });
 
   it('zoom mode sets panOnScroll=false, zoomOnScroll=true', () => {
-    const scrollBehavior: 'zoom' | 'pan' = 'zoom';
-    expect(scrollBehavior === 'pan').toBe(false);
-    expect(scrollBehavior !== 'pan').toBe(true);
+    const props = getScrollProps('zoom');
+    expect(props.panOnScroll).toBe(false);
+    expect(props.zoomOnScroll).toBe(true);
   });
 });
 

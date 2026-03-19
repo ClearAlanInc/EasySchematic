@@ -142,7 +142,7 @@ describe("buildObstacles", () => {
     const nodes = [
       { id: "n1", position: { x: 100, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },
     ];
-    const getAbsPos = (n: typeof nodes[number]) => n.position;
+    const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
     const { rects } = buildObstacles(nodes, [], getAbsPos);
     expect(rects).toHaveLength(1);
     expect(rects[0].left).toBe(80); // 100 - 20 PAD
@@ -155,7 +155,7 @@ describe("buildObstacles", () => {
     const nodes = [
       { id: "r1", position: { x: 0, y: 0 }, measured: { width: 500, height: 500 }, type: "room" },
     ];
-    const getAbsPos = (n: typeof nodes[number]) => n.position;
+    const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
     const { rects } = buildObstacles(nodes, [], getAbsPos);
     expect(rects).toHaveLength(0);
   });
@@ -165,7 +165,7 @@ describe("buildObstacles", () => {
       { id: "n1", position: { x: 100, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },
       { id: "n2", position: { x: 400, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },
     ];
-    const getAbsPos = (n: typeof nodes[number]) => n.position;
+    const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
     const { rects } = buildObstacles(nodes, ["n1"], getAbsPos);
     expect(rects).toHaveLength(1);
   });
