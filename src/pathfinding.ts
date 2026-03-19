@@ -50,8 +50,10 @@ const GAP = 8; // Extra grid lines just outside obstacle edges (routing channel)
 const STUB = 30; // Minimum horizontal distance from handle before first turn
 const TURN_PENALTY = 100; // Penalty for changing direction (strongly prefer fewer turns)
 const CORNER_RADIUS = 8;
+export const ARC_R = 6; // Arc radius for crossing hop arcs / gap cuts
+const GAP_HALF = 3;    // Half-width of the gap cut on vertical edges (clears the arc stroke at its peak)
 const ESCAPE_MARGIN = 40; // Grid lines beyond the overall bounding box
-const SEPARATION_PX = 10; // Offset distance for penalty zone grid lines
+const SEPARATION_PX = 16; // Offset distance for penalty zone grid lines (>= 2*ARC_R+4 for non-overlapping hops)
 const CROSS_TYPE_SEPARATION = 20; // Wider separation between edges of different signal types
 const PROXIMITY_PENALTY = 150; // Extra A* cost when near a different-signal-type edge (parallel)
 const SAME_TYPE_PROXIMITY = 20; // Gentle nudge for same-signal edges — allows clustering in adjacent corridors
@@ -558,6 +560,280 @@ export function waypointsToSvgPath(waypoints: Point[], radius: number = CORNER_R
   const last = waypoints[waypoints.length - 1];
   parts.push(`L ${last.x} ${last.y}`);
 
+  return parts.join(" ");
+}
+
+// ---------- SVG path with hop arcs ----------
+
+/**
+ * Like waypointsToSvgPath but inserts semicircular arc hops on horizontal
+ * segments and gap (moveTo) cuts on vertical segments at crossing points.
+ * Horizontal edges arc over; vertical edges gap under — standard CAD convention.
+ *
+ * Falls back to waypointsToSvgPath when there are no crossings.
+ */
+export function waypointsToSvgPathWithHops(
+  waypoints: Point[],
+  arcCrossings: { x: number; y: number }[],
+  gapCrossings: { x: number; y: number }[],
+  radius: number = CORNER_RADIUS,
+): string {
+  if (arcCrossings.length === 0 && gapCrossings.length === 0) return waypointsToSvgPath(waypoints, radius);
+  if (waypoints.length < 2) return "";
+
+  // Index arc crossings by Y so we can quickly find relevant ones per horizontal segment
+  const crossingsByY = new Map<number, number[]>();
+  for (const cp of arcCrossings) {
+    const key = Math.round(cp.y);
+    let list = crossingsByY.get(key);
+    if (!list) { list = []; crossingsByY.set(key, list); }
+    list.push(cp.x);
+  }
+
+  // Index gap crossings by X so we can quickly find relevant ones per vertical segment
+  const gapCrossingsByX = new Map<number, number[]>();
+  for (const cp of gapCrossings) {
+    const key = Math.round(cp.x);
+    let list = gapCrossingsByX.get(key);
+    if (!list) { list = []; gapCrossingsByX.set(key, list); }
+    list.push(cp.y);
+  }
+
+  // Build path using the same corner-radius logic as waypointsToSvgPath,
+  // but intercept each L command on a horizontal segment to inject arcs,
+  // and on vertical segments to inject gaps.
+  if (waypoints.length === 2) {
+    const [a, b] = waypoints;
+    if (Math.abs(a.y - b.y) < 0.5) {
+      // Single horizontal segment — insert arcs directly
+      return buildHorizontalSegmentWithArcs(a.x, b.x, a.y, crossingsByY);
+    }
+    if (Math.abs(a.x - b.x) < 0.5) {
+      // Single vertical segment — insert gaps directly
+      return buildVerticalSegmentWithGaps(a.y, b.y, a.x, gapCrossingsByX);
+    }
+    return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+  }
+
+  const parts: string[] = [`M ${waypoints[0].x} ${waypoints[0].y}`];
+
+  // We need to track the "current position" after each corner's Q command
+  // so we can inject arcs on the segment from that position to the next
+  // corner's entry point (or the final endpoint).
+  //
+  // For each segment between waypoints, the path goes:
+  //   prev → [corner entry at cur] Q [corner exit at cur] → [corner entry at next] ...
+  // So the actual line segments are:
+  //   cornerExit[i-1] → cornerEntry[i]  (for intermediate waypoints)
+  //   start → cornerEntry[1]            (first segment)
+  //   cornerExit[N-2] → end             (last segment)
+
+  // Pre-compute corner entry/exit points
+  interface Corner { bx: number; by: number; cx: number; cy: number; ax: number; ay: number }
+  const corners: (Corner | null)[] = [null]; // index 0 = start, no corner
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const prev = waypoints[i - 1];
+    const cur = waypoints[i];
+    const next = waypoints[i + 1];
+    const inLen = Math.abs(cur.x - prev.x) + Math.abs(cur.y - prev.y);
+    const outLen = Math.abs(next.x - cur.x) + Math.abs(next.y - cur.y);
+    const r = Math.min(radius, inLen / 2, outLen / 2);
+    const inDx = Math.sign(cur.x - prev.x);
+    const inDy = Math.sign(cur.y - prev.y);
+    const outDx = Math.sign(next.x - cur.x);
+    const outDy = Math.sign(next.y - cur.y);
+    corners.push({
+      bx: cur.x - inDx * r, by: cur.y - inDy * r,
+      cx: cur.x, cy: cur.y,
+      ax: cur.x + outDx * r, ay: cur.y + outDy * r,
+    });
+  }
+  corners.push(null); // last waypoint, no corner
+
+  // Now emit segments. Between each pair of consecutive waypoints,
+  // the drawn line goes from segStart to segEnd.
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const segStartX = i === 0 ? waypoints[0].x : corners[i]!.ax;
+    const segStartY = i === 0 ? waypoints[0].y : corners[i]!.ay;
+    const segEndX = i === waypoints.length - 2 ? waypoints[waypoints.length - 1].x : corners[i + 1]!.bx;
+    const segEndY = i === waypoints.length - 2 ? waypoints[waypoints.length - 1].y : corners[i + 1]!.by;
+
+    // Is this a horizontal segment?
+    if (Math.abs(segStartY - segEndY) < 0.5) {
+      const y = segStartY;
+      const yKey = Math.round(y);
+      const cxList = crossingsByY.get(yKey);
+      if (cxList && cxList.length > 0) {
+        // Filter crossings that actually fall within this segment
+        const minX = Math.min(segStartX, segEndX);
+        const maxX = Math.max(segStartX, segEndX);
+        const relevant = cxList.filter((cx) => cx > minX + ARC_R && cx < maxX - ARC_R);
+
+        if (relevant.length > 0) {
+          const leftToRight = segEndX > segStartX;
+          relevant.sort((a, b) => leftToRight ? a - b : b - a);
+
+          // Filter out overlapping arcs (too close together)
+          const filtered: number[] = [];
+          let lastArcEnd = -Infinity;
+          for (const cx of relevant) {
+            const arcStart = leftToRight ? cx - ARC_R : cx + ARC_R;
+            if (Math.abs(arcStart - lastArcEnd) < 0.5) continue; // overlapping
+            // Check distance from previous arc
+            if (filtered.length > 0) {
+              const prevCx = filtered[filtered.length - 1];
+              if (Math.abs(cx - prevCx) < 2 * ARC_R) continue;
+            }
+            filtered.push(cx);
+            lastArcEnd = leftToRight ? cx + ARC_R : cx - ARC_R;
+          }
+
+          // Emit L commands with arc insertions
+          for (const cx of filtered) {
+            if (leftToRight) {
+              parts.push(`L ${cx - ARC_R} ${y}`);
+              parts.push(`A ${ARC_R} ${ARC_R} 0 0 1 ${cx + ARC_R} ${y}`);
+            } else {
+              parts.push(`L ${cx + ARC_R} ${y}`);
+              parts.push(`A ${ARC_R} ${ARC_R} 0 0 0 ${cx - ARC_R} ${y}`);
+            }
+          }
+          parts.push(`L ${segEndX} ${y}`);
+        } else {
+          parts.push(`L ${segEndX} ${segEndY}`);
+        }
+      } else {
+        parts.push(`L ${segEndX} ${segEndY}`);
+      }
+    } else if (Math.abs(segStartX - segEndX) < 0.5) {
+      // Vertical segment — insert gap (moveTo) cuts at crossing points
+      const x = segStartX;
+      const xKey = Math.round(x);
+      const cyList = gapCrossingsByX.get(xKey);
+      if (cyList && cyList.length > 0) {
+        const minY = Math.min(segStartY, segEndY);
+        const maxY = Math.max(segStartY, segEndY);
+        // Gap center is at cy - ARC_R, so ensure that falls within segment bounds
+        const relevant = cyList.filter((cy) => {
+          const gc = cy - ARC_R;
+          return gc - GAP_HALF > minY + 1 && gc + GAP_HALF < maxY - 1;
+        });
+
+        if (relevant.length > 0) {
+          const topToBottom = segEndY > segStartY;
+          relevant.sort((a, b) => topToBottom ? a - b : b - a);
+
+          // Filter out overlapping gaps (too close together)
+          const filtered: number[] = [];
+          for (const cy of relevant) {
+            if (filtered.length > 0 && Math.abs(cy - filtered[filtered.length - 1]) < 2 * GAP_HALF + 2) continue;
+            filtered.push(cy);
+          }
+
+          for (const cy of filtered) {
+            // The arc peaks at cy - ARC_R (top of the semicircle) — center the gap there
+            const gapCenter = cy - ARC_R;
+            parts.push(`L ${x} ${gapCenter - GAP_HALF}`);
+            parts.push(`M ${x} ${gapCenter + GAP_HALF}`);
+          }
+          parts.push(`L ${segEndX} ${segEndY}`);
+        } else {
+          parts.push(`L ${segEndX} ${segEndY}`);
+        }
+      } else {
+        parts.push(`L ${segEndX} ${segEndY}`);
+      }
+    } else {
+      parts.push(`L ${segEndX} ${segEndY}`);
+    }
+
+    // Emit corner Q command if this isn't the last segment
+    if (i < waypoints.length - 2) {
+      const c = corners[i + 1]!;
+      parts.push(`Q ${c.cx} ${c.cy} ${c.ax} ${c.ay}`);
+    }
+  }
+
+  return parts.join(" ");
+}
+
+/** Build an M...L path for a single horizontal segment with arc hops. */
+function buildHorizontalSegmentWithArcs(
+  x1: number, x2: number, y: number,
+  crossingsByY: Map<number, number[]>,
+): string {
+  const parts: string[] = [`M ${x1} ${y}`];
+  const yKey = Math.round(y);
+  const cxList = crossingsByY.get(yKey);
+
+  if (!cxList || cxList.length === 0) {
+    parts.push(`L ${x2} ${y}`);
+    return parts.join(" ");
+  }
+
+  const minX = Math.min(x1, x2);
+  const maxX = Math.max(x1, x2);
+  const leftToRight = x2 > x1;
+  const relevant = cxList
+    .filter((cx) => cx > minX + ARC_R && cx < maxX - ARC_R)
+    .sort((a, b) => leftToRight ? a - b : b - a);
+
+  const filtered: number[] = [];
+  for (const cx of relevant) {
+    if (filtered.length > 0 && Math.abs(cx - filtered[filtered.length - 1]) < 2 * ARC_R) continue;
+    filtered.push(cx);
+  }
+
+  for (const cx of filtered) {
+    if (leftToRight) {
+      parts.push(`L ${cx - ARC_R} ${y}`);
+      parts.push(`A ${ARC_R} ${ARC_R} 0 0 1 ${cx + ARC_R} ${y}`);
+    } else {
+      parts.push(`L ${cx + ARC_R} ${y}`);
+      parts.push(`A ${ARC_R} ${ARC_R} 0 0 0 ${cx - ARC_R} ${y}`);
+    }
+  }
+  parts.push(`L ${x2} ${y}`);
+  return parts.join(" ");
+}
+
+/** Build an M...L path for a single vertical segment with gap cuts. */
+function buildVerticalSegmentWithGaps(
+  y1: number, y2: number, x: number,
+  gapCrossingsByX: Map<number, number[]>,
+): string {
+  const parts: string[] = [`M ${x} ${y1}`];
+  const xKey = Math.round(x);
+  const cyList = gapCrossingsByX.get(xKey);
+
+  if (!cyList || cyList.length === 0) {
+    parts.push(`L ${x} ${y2}`);
+    return parts.join(" ");
+  }
+
+  const minY = Math.min(y1, y2);
+  const maxY = Math.max(y1, y2);
+  const topToBottom = y2 > y1;
+  const relevant = cyList
+    .filter((cy) => {
+      const gc = cy - ARC_R;
+      return gc - GAP_HALF > minY + 1 && gc + GAP_HALF < maxY - 1;
+    })
+    .sort((a, b) => topToBottom ? a - b : b - a);
+
+  const filtered: number[] = [];
+  for (const cy of relevant) {
+    if (filtered.length > 0 && Math.abs(cy - filtered[filtered.length - 1]) < 2 * GAP_HALF + 2) continue;
+    filtered.push(cy);
+  }
+
+  for (const cy of filtered) {
+    // The arc peaks at cy - ARC_R (top of the semicircle) — center the gap there
+    const gapCenter = cy - ARC_R;
+    parts.push(`L ${x} ${gapCenter - GAP_HALF}`);
+    parts.push(`M ${x} ${gapCenter + GAP_HALF}`);
+  }
+  parts.push(`L ${x} ${y2}`);
   return parts.join(" ");
 }
 

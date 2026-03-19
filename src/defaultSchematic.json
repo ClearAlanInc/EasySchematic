@@ -81,7 +81,7 @@
       "id": "device-33",
       "type": "device",
       "position": {
-        "x": 600,
+        "x": 560,
         "y": 120
       },
       "data": {
@@ -1713,7 +1713,7 @@
       "id": "device-71",
       "type": "device",
       "position": {
-        "x": 320,
+        "x": 240,
         "y": 100
       },
       "data": {
@@ -1743,7 +1743,7 @@
       "id": "device-72",
       "type": "device",
       "position": {
-        "x": 320,
+        "x": 240,
         "y": 220
       },
       "data": {

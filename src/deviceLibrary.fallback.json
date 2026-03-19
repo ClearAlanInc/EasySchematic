@@ -3802,17 +3802,21 @@
       },
       {
         "id": "port-424",
-        "label": "GPI In (8ch)",
+        "label": "GPI In",
         "signalType": "gpio",
         "direction": "input",
-        "connectorType": "phoenix"
+        "connectorType": "phoenix",
+        "isMulticable": true,
+        "channelCount": 8
       },
       {
         "id": "port-425",
-        "label": "GPI Out (8ch)",
+        "label": "GPI Out",
         "signalType": "gpio",
         "direction": "output",
-        "connectorType": "phoenix"
+        "connectorType": "phoenix",
+        "isMulticable": true,
+        "channelCount": 8
       },
       {
         "id": "port-426",
@@ -19982,6 +19986,35 @@
     "category": "Processing"
   },
   {
+    "id": "c0a80101-00f8-4000-8000-000000000324",
+    "deviceType": "adapter",
+    "label": "TB → Ethernet Adapter",
+    "searchTerms": [
+      "thunderbolt",
+      "usb-c",
+      "ethernet",
+      "dongle",
+      "network"
+    ],
+    "ports": [
+      {
+        "id": "port-2371",
+        "label": "TB In",
+        "signalType": "thunderbolt",
+        "direction": "input",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-2372",
+        "label": "Ethernet Out",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      }
+    ],
+    "category": "Processing"
+  },
+  {
     "id": "c0a80101-00ce-4000-8000-000000000206",
     "deviceType": "projector",
     "label": "Panasonic RZ12K",
@@ -19996,63 +20029,63 @@
     ],
     "ports": [
       {
-        "id": "port-2371",
+        "id": "port-2373",
         "label": "HDMI In",
         "signalType": "hdmi",
         "direction": "input",
         "connectorType": "hdmi"
       },
       {
-        "id": "port-2372",
+        "id": "port-2374",
         "label": "DVI-D In",
         "signalType": "hdmi",
         "direction": "input",
         "connectorType": "hdmi"
       },
       {
-        "id": "port-2373",
+        "id": "port-2375",
         "label": "SDI In 1",
         "signalType": "sdi",
         "direction": "input",
         "connectorType": "bnc"
       },
       {
-        "id": "port-2374",
+        "id": "port-2376",
         "label": "SDI In 2",
         "signalType": "sdi",
         "direction": "input",
         "connectorType": "bnc"
       },
       {
-        "id": "port-2375",
+        "id": "port-2377",
         "label": "HDBaseT In",
         "signalType": "hdbaset",
         "direction": "input",
         "connectorType": "rj45"
       },
       {
-        "id": "port-2376",
+        "id": "port-2378",
         "label": "VGA In",
         "signalType": "vga",
         "direction": "input",
         "connectorType": "vga"
       },
       {
-        "id": "port-2377",
+        "id": "port-2379",
         "label": "RS-232",
         "signalType": "serial",
         "direction": "bidirectional",
         "connectorType": "db9"
       },
       {
-        "id": "port-2378",
+        "id": "port-2380",
         "label": "Ethernet",
         "signalType": "ethernet",
         "direction": "bidirectional",
         "connectorType": "rj45"
       },
       {
-        "id": "port-2379",
+        "id": "port-2381",
         "label": "AC Power",
         "signalType": "power",
         "direction": "input",
@@ -20076,21 +20109,21 @@
     ],
     "ports": [
       {
-        "id": "port-2380",
+        "id": "port-2382",
         "label": "Ethernet",
         "signalType": "ethernet",
         "direction": "bidirectional",
         "connectorType": "rj45"
       },
       {
-        "id": "port-2381",
+        "id": "port-2383",
         "label": "RS-232",
         "signalType": "serial",
         "direction": "bidirectional",
         "connectorType": "db9"
       },
       {
-        "id": "port-2382",
+        "id": "port-2384",
         "label": "AC Power",
         "signalType": "power",
         "direction": "input",
@@ -20116,49 +20149,49 @@
     ],
     "ports": [
       {
-        "id": "port-2383",
+        "id": "port-2385",
         "label": "LTC Out 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2384",
+        "id": "port-2386",
         "label": "LTC Out 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2385",
+        "id": "port-2387",
         "label": "Ref In",
         "signalType": "genlock",
         "direction": "input",
         "connectorType": "bnc"
       },
       {
-        "id": "port-2386",
+        "id": "port-2388",
         "label": "Ethernet",
         "signalType": "ethernet",
         "direction": "bidirectional",
         "connectorType": "rj45"
       },
       {
-        "id": "port-2387",
+        "id": "port-2389",
         "label": "MIDI Out",
         "signalType": "serial",
         "direction": "output",
         "connectorType": "other"
       },
       {
-        "id": "port-2388",
+        "id": "port-2390",
         "label": "USB",
         "signalType": "usb",
         "direction": "bidirectional",
         "connectorType": "usb-a"
       },
       {
-        "id": "port-2389",
+        "id": "port-2391",
         "label": "AC Power",
         "signalType": "power",
         "direction": "input",
@@ -20178,42 +20211,42 @@
     ],
     "ports": [
       {
-        "id": "port-2390",
+        "id": "port-2392",
         "label": "MIDI In 1",
         "signalType": "serial",
         "direction": "input",
         "connectorType": "other"
       },
       {
-        "id": "port-2391",
+        "id": "port-2393",
         "label": "MIDI In 2",
         "signalType": "serial",
         "direction": "input",
         "connectorType": "other"
       },
       {
-        "id": "port-2392",
+        "id": "port-2394",
         "label": "MIDI In 3",
         "signalType": "serial",
         "direction": "input",
         "connectorType": "other"
       },
       {
-        "id": "port-2393",
+        "id": "port-2395",
         "label": "MIDI In 4",
         "signalType": "serial",
         "direction": "input",
         "connectorType": "other"
       },
       {
-        "id": "port-2394",
+        "id": "port-2396",
         "label": "MIDI Out 1",
         "signalType": "serial",
         "direction": "output",
         "connectorType": "other"
       },
       {
-        "id": "port-2395",
+        "id": "port-2397",
         "label": "MIDI Out 2",
         "signalType": "serial",
         "direction": "output",
@@ -20233,35 +20266,35 @@
     ],
     "ports": [
       {
-        "id": "port-2396",
+        "id": "port-2398",
         "label": "MIDI In",
         "signalType": "serial",
         "direction": "input",
         "connectorType": "other"
       },
       {
-        "id": "port-2397",
+        "id": "port-2399",
         "label": "MIDI Thru 1",
         "signalType": "serial",
         "direction": "output",
         "connectorType": "other"
       },
       {
-        "id": "port-2398",
+        "id": "port-2400",
         "label": "MIDI Thru 2",
         "signalType": "serial",
         "direction": "output",
         "connectorType": "other"
       },
       {
-        "id": "port-2399",
+        "id": "port-2401",
         "label": "MIDI Thru 3",
         "signalType": "serial",
         "direction": "output",
         "connectorType": "other"
       },
       {
-        "id": "port-2400",
+        "id": "port-2402",
         "label": "MIDI Thru 4",
         "signalType": "serial",
         "direction": "output",
@@ -20286,35 +20319,35 @@
     ],
     "ports": [
       {
-        "id": "port-2401",
+        "id": "port-2403",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2402",
+        "id": "port-2404",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2403",
+        "id": "port-2405",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2404",
+        "id": "port-2406",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2405",
+        "id": "port-2407",
         "label": "Trunk Out",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20341,7 +20374,7 @@
     ],
     "ports": [
       {
-        "id": "port-2406",
+        "id": "port-2408",
         "label": "Trunk In",
         "signalType": "analog-audio",
         "direction": "input",
@@ -20350,28 +20383,28 @@
         "channelCount": 4
       },
       {
-        "id": "port-2407",
+        "id": "port-2409",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2408",
+        "id": "port-2410",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2409",
+        "id": "port-2411",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2410",
+        "id": "port-2412",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20396,63 +20429,63 @@
     ],
     "ports": [
       {
-        "id": "port-2411",
+        "id": "port-2413",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2412",
+        "id": "port-2414",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2413",
+        "id": "port-2415",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2414",
+        "id": "port-2416",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2415",
+        "id": "port-2417",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2416",
+        "id": "port-2418",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2417",
+        "id": "port-2419",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2418",
+        "id": "port-2420",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2419",
+        "id": "port-2421",
         "label": "Trunk Out",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20479,7 +20512,7 @@
     ],
     "ports": [
       {
-        "id": "port-2420",
+        "id": "port-2422",
         "label": "Trunk In",
         "signalType": "analog-audio",
         "direction": "input",
@@ -20488,56 +20521,56 @@
         "channelCount": 8
       },
       {
-        "id": "port-2421",
+        "id": "port-2423",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2422",
+        "id": "port-2424",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2423",
+        "id": "port-2425",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2424",
+        "id": "port-2426",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2425",
+        "id": "port-2427",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2426",
+        "id": "port-2428",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2427",
+        "id": "port-2429",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2428",
+        "id": "port-2430",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20562,119 +20595,119 @@
     ],
     "ports": [
       {
-        "id": "port-2429",
+        "id": "port-2431",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2430",
+        "id": "port-2432",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2431",
+        "id": "port-2433",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2432",
+        "id": "port-2434",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2433",
+        "id": "port-2435",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2434",
+        "id": "port-2436",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2435",
+        "id": "port-2437",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2436",
+        "id": "port-2438",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2437",
+        "id": "port-2439",
         "label": "Ch 9",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2438",
+        "id": "port-2440",
         "label": "Ch 10",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2439",
+        "id": "port-2441",
         "label": "Ch 11",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2440",
+        "id": "port-2442",
         "label": "Ch 12",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2441",
+        "id": "port-2443",
         "label": "Ch 13",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2442",
+        "id": "port-2444",
         "label": "Ch 14",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2443",
+        "id": "port-2445",
         "label": "Ch 15",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2444",
+        "id": "port-2446",
         "label": "Ch 16",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2445",
+        "id": "port-2447",
         "label": "Trunk Out",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20701,7 +20734,7 @@
     ],
     "ports": [
       {
-        "id": "port-2446",
+        "id": "port-2448",
         "label": "Trunk In",
         "signalType": "analog-audio",
         "direction": "input",
@@ -20710,112 +20743,112 @@
         "channelCount": 16
       },
       {
-        "id": "port-2447",
+        "id": "port-2449",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2448",
+        "id": "port-2450",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2449",
+        "id": "port-2451",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2450",
+        "id": "port-2452",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2451",
+        "id": "port-2453",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2452",
+        "id": "port-2454",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2453",
+        "id": "port-2455",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2454",
+        "id": "port-2456",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2455",
+        "id": "port-2457",
         "label": "Ch 9",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2456",
+        "id": "port-2458",
         "label": "Ch 10",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2457",
+        "id": "port-2459",
         "label": "Ch 11",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2458",
+        "id": "port-2460",
         "label": "Ch 12",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2459",
+        "id": "port-2461",
         "label": "Ch 13",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2460",
+        "id": "port-2462",
         "label": "Ch 14",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2461",
+        "id": "port-2463",
         "label": "Ch 15",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2462",
+        "id": "port-2464",
         "label": "Ch 16",
         "signalType": "analog-audio",
         "direction": "output",
@@ -20840,175 +20873,175 @@
     ],
     "ports": [
       {
-        "id": "port-2463",
+        "id": "port-2465",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2464",
+        "id": "port-2466",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2465",
+        "id": "port-2467",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2466",
+        "id": "port-2468",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2467",
+        "id": "port-2469",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2468",
+        "id": "port-2470",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2469",
+        "id": "port-2471",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2470",
+        "id": "port-2472",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2471",
+        "id": "port-2473",
         "label": "Ch 9",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2472",
+        "id": "port-2474",
         "label": "Ch 10",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2473",
+        "id": "port-2475",
         "label": "Ch 11",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2474",
+        "id": "port-2476",
         "label": "Ch 12",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2475",
+        "id": "port-2477",
         "label": "Ch 13",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2476",
+        "id": "port-2478",
         "label": "Ch 14",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2477",
+        "id": "port-2479",
         "label": "Ch 15",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2478",
+        "id": "port-2480",
         "label": "Ch 16",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2479",
+        "id": "port-2481",
         "label": "Ch 17",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2480",
+        "id": "port-2482",
         "label": "Ch 18",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2481",
+        "id": "port-2483",
         "label": "Ch 19",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2482",
+        "id": "port-2484",
         "label": "Ch 20",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2483",
+        "id": "port-2485",
         "label": "Ch 21",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2484",
+        "id": "port-2486",
         "label": "Ch 22",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2485",
+        "id": "port-2487",
         "label": "Ch 23",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2486",
+        "id": "port-2488",
         "label": "Ch 24",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2487",
+        "id": "port-2489",
         "label": "Trunk Out",
         "signalType": "analog-audio",
         "direction": "output",
@@ -21035,7 +21068,7 @@
     ],
     "ports": [
       {
-        "id": "port-2488",
+        "id": "port-2490",
         "label": "Trunk In",
         "signalType": "analog-audio",
         "direction": "input",
@@ -21044,168 +21077,168 @@
         "channelCount": 24
       },
       {
-        "id": "port-2489",
+        "id": "port-2491",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2490",
+        "id": "port-2492",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2491",
+        "id": "port-2493",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2492",
+        "id": "port-2494",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2493",
+        "id": "port-2495",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2494",
+        "id": "port-2496",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2495",
+        "id": "port-2497",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2496",
+        "id": "port-2498",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2497",
+        "id": "port-2499",
         "label": "Ch 9",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2498",
+        "id": "port-2500",
         "label": "Ch 10",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2499",
+        "id": "port-2501",
         "label": "Ch 11",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2500",
+        "id": "port-2502",
         "label": "Ch 12",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2501",
+        "id": "port-2503",
         "label": "Ch 13",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2502",
+        "id": "port-2504",
         "label": "Ch 14",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2503",
+        "id": "port-2505",
         "label": "Ch 15",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2504",
+        "id": "port-2506",
         "label": "Ch 16",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2505",
+        "id": "port-2507",
         "label": "Ch 17",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2506",
+        "id": "port-2508",
         "label": "Ch 18",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2507",
+        "id": "port-2509",
         "label": "Ch 19",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2508",
+        "id": "port-2510",
         "label": "Ch 20",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2509",
+        "id": "port-2511",
         "label": "Ch 21",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2510",
+        "id": "port-2512",
         "label": "Ch 22",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2511",
+        "id": "port-2513",
         "label": "Ch 23",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2512",
+        "id": "port-2514",
         "label": "Ch 24",
         "signalType": "analog-audio",
         "direction": "output",
@@ -21231,63 +21264,63 @@
     ],
     "ports": [
       {
-        "id": "port-2513",
+        "id": "port-2515",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2514",
+        "id": "port-2516",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2515",
+        "id": "port-2517",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2516",
+        "id": "port-2518",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2517",
+        "id": "port-2519",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2518",
+        "id": "port-2520",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2519",
+        "id": "port-2521",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2520",
+        "id": "port-2522",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "input",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2521",
+        "id": "port-2523",
         "label": "Trunk Out",
         "signalType": "analog-audio",
         "direction": "output",
@@ -21315,7 +21348,7 @@
     ],
     "ports": [
       {
-        "id": "port-2522",
+        "id": "port-2524",
         "label": "Trunk In",
         "signalType": "analog-audio",
         "direction": "input",
@@ -21324,56 +21357,56 @@
         "channelCount": 8
       },
       {
-        "id": "port-2523",
+        "id": "port-2525",
         "label": "Ch 1",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2524",
+        "id": "port-2526",
         "label": "Ch 2",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2525",
+        "id": "port-2527",
         "label": "Ch 3",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2526",
+        "id": "port-2528",
         "label": "Ch 4",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2527",
+        "id": "port-2529",
         "label": "Ch 5",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2528",
+        "id": "port-2530",
         "label": "Ch 6",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2529",
+        "id": "port-2531",
         "label": "Ch 7",
         "signalType": "analog-audio",
         "direction": "output",
         "connectorType": "xlr-3"
       },
       {
-        "id": "port-2530",
+        "id": "port-2532",
         "label": "Ch 8",
         "signalType": "analog-audio",
         "direction": "output",
@@ -21396,49 +21429,49 @@
     ],
     "ports": [
       {
-        "id": "port-2531",
+        "id": "port-2533",
         "label": "Ch 1",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2532",
+        "id": "port-2534",
         "label": "Ch 2",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2533",
+        "id": "port-2535",
         "label": "Ch 3",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2534",
+        "id": "port-2536",
         "label": "Ch 4",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2535",
+        "id": "port-2537",
         "label": "Ch 5",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2536",
+        "id": "port-2538",
         "label": "Ch 6",
         "signalType": "power",
         "direction": "input",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2537",
+        "id": "port-2539",
         "label": "Trunk Out",
         "signalType": "power",
         "direction": "output",
@@ -21463,7 +21496,7 @@
     ],
     "ports": [
       {
-        "id": "port-2538",
+        "id": "port-2540",
         "label": "Trunk In",
         "signalType": "power",
         "direction": "input",
@@ -21472,42 +21505,42 @@
         "channelCount": 6
       },
       {
-        "id": "port-2539",
+        "id": "port-2541",
         "label": "Ch 1",
         "signalType": "power",
         "direction": "output",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2540",
+        "id": "port-2542",
         "label": "Ch 2",
         "signalType": "power",
         "direction": "output",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2541",
+        "id": "port-2543",
         "label": "Ch 3",
         "signalType": "power",
         "direction": "output",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2542",
+        "id": "port-2544",
         "label": "Ch 4",
         "signalType": "power",
         "direction": "output",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2543",
+        "id": "port-2545",
         "label": "Ch 5",
         "signalType": "power",
         "direction": "output",
         "connectorType": "powercon"
       },
       {
-        "id": "port-2544",
+        "id": "port-2546",
         "label": "Ch 6",
         "signalType": "power",
         "direction": "output",
@@ -21530,35 +21563,35 @@
     ],
     "ports": [
       {
-        "id": "port-2545",
+        "id": "port-2547",
         "label": "Ch 1",
         "signalType": "fiber",
         "direction": "input",
         "connectorType": "lc"
       },
       {
-        "id": "port-2546",
+        "id": "port-2548",
         "label": "Ch 2",
         "signalType": "fiber",
         "direction": "input",
         "connectorType": "lc"
       },
       {
-        "id": "port-2547",
+        "id": "port-2549",
         "label": "Ch 3",
         "signalType": "fiber",
         "direction": "input",
         "connectorType": "lc"
       },
       {
-        "id": "port-2548",
+        "id": "port-2550",
         "label": "Ch 4",
         "signalType": "fiber",
         "direction": "input",
         "connectorType": "lc"
       },
       {
-        "id": "port-2549",
+        "id": "port-2551",
         "label": "Trunk Out",
         "signalType": "fiber",
         "direction": "output",
@@ -21583,7 +21616,7 @@
     ],
     "ports": [
       {
-        "id": "port-2550",
+        "id": "port-2552",
         "label": "Trunk In",
         "signalType": "fiber",
         "direction": "input",
@@ -21592,28 +21625,28 @@
         "channelCount": 4
       },
       {
-        "id": "port-2551",
+        "id": "port-2553",
         "label": "Ch 1",
         "signalType": "fiber",
         "direction": "output",
         "connectorType": "lc"
       },
       {
-        "id": "port-2552",
+        "id": "port-2554",
         "label": "Ch 2",
         "signalType": "fiber",
         "direction": "output",
         "connectorType": "lc"
       },
       {
-        "id": "port-2553",
+        "id": "port-2555",
         "label": "Ch 3",
         "signalType": "fiber",
         "direction": "output",
         "connectorType": "lc"
       },
       {
-        "id": "port-2554",
+        "id": "port-2556",
         "label": "Ch 4",
         "signalType": "fiber",
         "direction": "output",
@@ -21635,7 +21668,7 @@
     ],
     "ports": [
       {
-        "id": "port-2555",
+        "id": "port-2557",
         "label": "Trunk Out",
         "signalType": "custom",
         "direction": "output",
@@ -21659,7 +21692,7 @@
     ],
     "ports": [
       {
-        "id": "port-2556",
+        "id": "port-2558",
         "label": "Trunk In",
         "signalType": "custom",
         "direction": "input",
@@ -21669,5 +21702,2194 @@
       }
     ],
     "category": "Cable Accessories"
+  },
+  {
+    "id": "c0a80101-00e8-4000-8000-000000000308",
+    "deviceType": "patch-panel",
+    "label": "Patch Panel 12-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "12 port",
+      "rj45",
+      "ethernet",
+      "cat6"
+    ],
+    "ports": [
+      {
+        "id": "port-2559",
+        "label": "Port 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2560",
+        "label": "Port 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2561",
+        "label": "Port 3",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2562",
+        "label": "Port 4",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2563",
+        "label": "Port 5",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2564",
+        "label": "Port 6",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2565",
+        "label": "Port 7",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2566",
+        "label": "Port 8",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2567",
+        "label": "Port 9",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2568",
+        "label": "Port 10",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2569",
+        "label": "Port 11",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2570",
+        "label": "Port 12",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00e9-4000-8000-000000000309",
+    "deviceType": "patch-panel",
+    "label": "Patch Panel 24-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "24 port",
+      "rj45",
+      "ethernet",
+      "cat6"
+    ],
+    "ports": [
+      {
+        "id": "port-2571",
+        "label": "Port 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2572",
+        "label": "Port 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2573",
+        "label": "Port 3",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2574",
+        "label": "Port 4",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2575",
+        "label": "Port 5",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2576",
+        "label": "Port 6",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2577",
+        "label": "Port 7",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2578",
+        "label": "Port 8",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2579",
+        "label": "Port 9",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2580",
+        "label": "Port 10",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2581",
+        "label": "Port 11",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2582",
+        "label": "Port 12",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2583",
+        "label": "Port 13",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2584",
+        "label": "Port 14",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2585",
+        "label": "Port 15",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2586",
+        "label": "Port 16",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2587",
+        "label": "Port 17",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2588",
+        "label": "Port 18",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2589",
+        "label": "Port 19",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2590",
+        "label": "Port 20",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2591",
+        "label": "Port 21",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2592",
+        "label": "Port 22",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2593",
+        "label": "Port 23",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2594",
+        "label": "Port 24",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00ea-4000-8000-000000000310",
+    "deviceType": "patch-panel",
+    "label": "Patch Panel 48-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "48 port",
+      "rj45",
+      "ethernet",
+      "cat6"
+    ],
+    "ports": [
+      {
+        "id": "port-2595",
+        "label": "Port 1",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2596",
+        "label": "Port 2",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2597",
+        "label": "Port 3",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2598",
+        "label": "Port 4",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2599",
+        "label": "Port 5",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2600",
+        "label": "Port 6",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2601",
+        "label": "Port 7",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2602",
+        "label": "Port 8",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2603",
+        "label": "Port 9",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2604",
+        "label": "Port 10",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2605",
+        "label": "Port 11",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2606",
+        "label": "Port 12",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2607",
+        "label": "Port 13",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2608",
+        "label": "Port 14",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2609",
+        "label": "Port 15",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2610",
+        "label": "Port 16",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2611",
+        "label": "Port 17",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2612",
+        "label": "Port 18",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2613",
+        "label": "Port 19",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2614",
+        "label": "Port 20",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2615",
+        "label": "Port 21",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2616",
+        "label": "Port 22",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2617",
+        "label": "Port 23",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2618",
+        "label": "Port 24",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2619",
+        "label": "Port 25",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2620",
+        "label": "Port 26",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2621",
+        "label": "Port 27",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2622",
+        "label": "Port 28",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2623",
+        "label": "Port 29",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2624",
+        "label": "Port 30",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2625",
+        "label": "Port 31",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2626",
+        "label": "Port 32",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2627",
+        "label": "Port 33",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2628",
+        "label": "Port 34",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2629",
+        "label": "Port 35",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2630",
+        "label": "Port 36",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2631",
+        "label": "Port 37",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2632",
+        "label": "Port 38",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2633",
+        "label": "Port 39",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2634",
+        "label": "Port 40",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2635",
+        "label": "Port 41",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2636",
+        "label": "Port 42",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2637",
+        "label": "Port 43",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2638",
+        "label": "Port 44",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2639",
+        "label": "Port 45",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2640",
+        "label": "Port 46",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2641",
+        "label": "Port 47",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2642",
+        "label": "Port 48",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00eb-4000-8000-000000000311",
+    "deviceType": "patch-panel",
+    "label": "BNC Patch Panel 12-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "12 port",
+      "bnc",
+      "sdi",
+      "video"
+    ],
+    "ports": [
+      {
+        "id": "port-2643",
+        "label": "Port 1",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2644",
+        "label": "Port 2",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2645",
+        "label": "Port 3",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2646",
+        "label": "Port 4",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2647",
+        "label": "Port 5",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2648",
+        "label": "Port 6",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2649",
+        "label": "Port 7",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2650",
+        "label": "Port 8",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2651",
+        "label": "Port 9",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2652",
+        "label": "Port 10",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2653",
+        "label": "Port 11",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2654",
+        "label": "Port 12",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00ec-4000-8000-000000000312",
+    "deviceType": "patch-panel",
+    "label": "BNC Patch Panel 24-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "24 port",
+      "bnc",
+      "sdi",
+      "video"
+    ],
+    "ports": [
+      {
+        "id": "port-2655",
+        "label": "Port 1",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2656",
+        "label": "Port 2",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2657",
+        "label": "Port 3",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2658",
+        "label": "Port 4",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2659",
+        "label": "Port 5",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2660",
+        "label": "Port 6",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2661",
+        "label": "Port 7",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2662",
+        "label": "Port 8",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2663",
+        "label": "Port 9",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2664",
+        "label": "Port 10",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2665",
+        "label": "Port 11",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2666",
+        "label": "Port 12",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2667",
+        "label": "Port 13",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2668",
+        "label": "Port 14",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2669",
+        "label": "Port 15",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2670",
+        "label": "Port 16",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2671",
+        "label": "Port 17",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2672",
+        "label": "Port 18",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2673",
+        "label": "Port 19",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2674",
+        "label": "Port 20",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2675",
+        "label": "Port 21",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2676",
+        "label": "Port 22",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2677",
+        "label": "Port 23",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2678",
+        "label": "Port 24",
+        "signalType": "sdi",
+        "direction": "bidirectional",
+        "connectorType": "bnc"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00ed-4000-8000-000000000313",
+    "deviceType": "patch-panel",
+    "label": "XLR Patch Panel 12-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "12 port",
+      "xlr",
+      "audio",
+      "analog"
+    ],
+    "ports": [
+      {
+        "id": "port-2679",
+        "label": "Port 1",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2680",
+        "label": "Port 2",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2681",
+        "label": "Port 3",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2682",
+        "label": "Port 4",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2683",
+        "label": "Port 5",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2684",
+        "label": "Port 6",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2685",
+        "label": "Port 7",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2686",
+        "label": "Port 8",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2687",
+        "label": "Port 9",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2688",
+        "label": "Port 10",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2689",
+        "label": "Port 11",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2690",
+        "label": "Port 12",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00ee-4000-8000-000000000314",
+    "deviceType": "patch-panel",
+    "label": "XLR Patch Panel 24-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "24 port",
+      "xlr",
+      "audio",
+      "analog"
+    ],
+    "ports": [
+      {
+        "id": "port-2691",
+        "label": "Port 1",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2692",
+        "label": "Port 2",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2693",
+        "label": "Port 3",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2694",
+        "label": "Port 4",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2695",
+        "label": "Port 5",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2696",
+        "label": "Port 6",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2697",
+        "label": "Port 7",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2698",
+        "label": "Port 8",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2699",
+        "label": "Port 9",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2700",
+        "label": "Port 10",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2701",
+        "label": "Port 11",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2702",
+        "label": "Port 12",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2703",
+        "label": "Port 13",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2704",
+        "label": "Port 14",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2705",
+        "label": "Port 15",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2706",
+        "label": "Port 16",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2707",
+        "label": "Port 17",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2708",
+        "label": "Port 18",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2709",
+        "label": "Port 19",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2710",
+        "label": "Port 20",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2711",
+        "label": "Port 21",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2712",
+        "label": "Port 22",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2713",
+        "label": "Port 23",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      },
+      {
+        "id": "port-2714",
+        "label": "Port 24",
+        "signalType": "analog-audio",
+        "direction": "bidirectional",
+        "connectorType": "xlr-3"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00ef-4000-8000-000000000315",
+    "deviceType": "patch-panel",
+    "label": "Fiber Patch Panel 12-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "12 port",
+      "fiber",
+      "lc",
+      "optical"
+    ],
+    "ports": [
+      {
+        "id": "port-2715",
+        "label": "Port 1",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2716",
+        "label": "Port 2",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2717",
+        "label": "Port 3",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2718",
+        "label": "Port 4",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2719",
+        "label": "Port 5",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2720",
+        "label": "Port 6",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2721",
+        "label": "Port 7",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2722",
+        "label": "Port 8",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2723",
+        "label": "Port 9",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2724",
+        "label": "Port 10",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2725",
+        "label": "Port 11",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2726",
+        "label": "Port 12",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00f0-4000-8000-000000000316",
+    "deviceType": "patch-panel",
+    "label": "Fiber Patch Panel 24-Port",
+    "searchTerms": [
+      "patch panel",
+      "patch bay",
+      "24 port",
+      "fiber",
+      "lc",
+      "optical"
+    ],
+    "ports": [
+      {
+        "id": "port-2727",
+        "label": "Port 1",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2728",
+        "label": "Port 2",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2729",
+        "label": "Port 3",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2730",
+        "label": "Port 4",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2731",
+        "label": "Port 5",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2732",
+        "label": "Port 6",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2733",
+        "label": "Port 7",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2734",
+        "label": "Port 8",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2735",
+        "label": "Port 9",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2736",
+        "label": "Port 10",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2737",
+        "label": "Port 11",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2738",
+        "label": "Port 12",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2739",
+        "label": "Port 13",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2740",
+        "label": "Port 14",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2741",
+        "label": "Port 15",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2742",
+        "label": "Port 16",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2743",
+        "label": "Port 17",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2744",
+        "label": "Port 18",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2745",
+        "label": "Port 19",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2746",
+        "label": "Port 20",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2747",
+        "label": "Port 21",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2748",
+        "label": "Port 22",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2749",
+        "label": "Port 23",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      },
+      {
+        "id": "port-2750",
+        "label": "Port 24",
+        "signalType": "fiber",
+        "direction": "bidirectional",
+        "connectorType": "lc"
+      }
+    ],
+    "category": "Infrastructure"
+  },
+  {
+    "id": "c0a80101-00f1-4000-8000-000000000317",
+    "deviceType": "av-over-ip",
+    "label": "Cisco Room Kit",
+    "manufacturer": "Cisco",
+    "modelNumber": "CS-KIT-K9",
+    "referenceUrl": "https://www.cisco.com/c/en/us/support/collaboration-endpoints/spark-room-kit/model.html",
+    "searchTerms": [
+      "cisco",
+      "room kit",
+      "video conferencing",
+      "webex",
+      "collaboration"
+    ],
+    "ports": [
+      {
+        "id": "port-2751",
+        "label": "HDMI In 1",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2752",
+        "label": "HDMI In 2",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2753",
+        "label": "HDMI In 3",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2754",
+        "label": "HDMI Out 1",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2755",
+        "label": "HDMI Out 2",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2756",
+        "label": "HDMI Out 3",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2757",
+        "label": "USB-C In",
+        "signalType": "usb",
+        "direction": "input",
+        "connectorType": "usb-c"
+      },
+      {
+        "id": "port-2758",
+        "label": "USB-A 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-2759",
+        "label": "USB-A 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-2760",
+        "label": "Network",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2761",
+        "label": "PoE 1",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2762",
+        "label": "PoE 2",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2763",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ],
+    "category": "Networking"
+  },
+  {
+    "id": "c0a80101-00f2-4000-8000-000000000318",
+    "deviceType": "av-over-ip",
+    "label": "Cisco Codec Pro",
+    "manufacturer": "Cisco",
+    "modelNumber": "CS-CODEC-PRO-K9",
+    "referenceUrl": "https://help.webex.com/article/n86suwx/Get-started-with-your-Cisco-Codec-Pro",
+    "searchTerms": [
+      "cisco",
+      "codec pro",
+      "video conferencing",
+      "webex",
+      "collaboration",
+      "sdi"
+    ],
+    "ports": [
+      {
+        "id": "port-2764",
+        "label": "HDMI Cam In 1",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2765",
+        "label": "HDMI Cam In 2",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2766",
+        "label": "HDMI In 3",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2767",
+        "label": "HDMI In 4",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2768",
+        "label": "HDMI In 5",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2769",
+        "label": "SDI Cam In",
+        "signalType": "sdi",
+        "direction": "input",
+        "connectorType": "bnc"
+      },
+      {
+        "id": "port-2770",
+        "label": "HDMI Out 1",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2771",
+        "label": "HDMI Out 2",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2772",
+        "label": "HDMI Out 3",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2773",
+        "label": "USB-A 1",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-2774",
+        "label": "USB-A 2",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-a"
+      },
+      {
+        "id": "port-2775",
+        "label": "USB-B",
+        "signalType": "usb",
+        "direction": "bidirectional",
+        "connectorType": "usb-b"
+      },
+      {
+        "id": "port-2776",
+        "label": "Network",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2777",
+        "label": "Cam Ctrl 1",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2778",
+        "label": "Cam Ctrl 2",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2779",
+        "label": "PoE",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2780",
+        "label": "Mic/Line In 1",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2781",
+        "label": "Mic/Line In 2",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2782",
+        "label": "Mic/Line In 3",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2783",
+        "label": "Mic/Line In 4",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2784",
+        "label": "Mic/Line In 5",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2785",
+        "label": "Mic/Line In 6",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2786",
+        "label": "Mic/Line In 7",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2787",
+        "label": "Mic/Line In 8",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2788",
+        "label": "Line Out 1",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2789",
+        "label": "Line Out 2",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2790",
+        "label": "Line Out 3",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2791",
+        "label": "Line Out 4",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2792",
+        "label": "Line Out 5",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2793",
+        "label": "Line Out 6",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2794",
+        "label": "AC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ],
+    "category": "Networking"
+  },
+  {
+    "id": "c0a80101-00f3-4000-8000-000000000319",
+    "deviceType": "av-over-ip",
+    "label": "Extron NAV E 101",
+    "manufacturer": "Extron",
+    "modelNumber": "NAV E 101",
+    "referenceUrl": "https://www.extron.com/product/nave101",
+    "searchTerms": [
+      "extron",
+      "nav",
+      "encoder",
+      "av over ip",
+      "streaming",
+      "pure3"
+    ],
+    "ports": [
+      {
+        "id": "port-2795",
+        "label": "HDMI In",
+        "signalType": "hdmi",
+        "direction": "input",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2796",
+        "label": "HDMI Loop",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2797",
+        "label": "Network",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2798",
+        "label": "Audio In L",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2799",
+        "label": "Audio In R",
+        "signalType": "analog-audio",
+        "direction": "input",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2800",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2801",
+        "label": "DC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ],
+    "category": "Networking"
+  },
+  {
+    "id": "c0a80101-00f4-4000-8000-000000000320",
+    "deviceType": "av-over-ip",
+    "label": "Extron NAV SD 101",
+    "manufacturer": "Extron",
+    "modelNumber": "NAV SD 101",
+    "referenceUrl": "https://www.extron.com/product/navsd101",
+    "searchTerms": [
+      "extron",
+      "nav",
+      "decoder",
+      "av over ip",
+      "scaling",
+      "pure3"
+    ],
+    "ports": [
+      {
+        "id": "port-2802",
+        "label": "HDMI Out",
+        "signalType": "hdmi",
+        "direction": "output",
+        "connectorType": "hdmi"
+      },
+      {
+        "id": "port-2803",
+        "label": "Network",
+        "signalType": "ethernet",
+        "direction": "bidirectional",
+        "connectorType": "rj45"
+      },
+      {
+        "id": "port-2804",
+        "label": "Audio Out L",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2805",
+        "label": "Audio Out R",
+        "signalType": "analog-audio",
+        "direction": "output",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2806",
+        "label": "RS-232",
+        "signalType": "serial",
+        "direction": "bidirectional",
+        "connectorType": "phoenix"
+      },
+      {
+        "id": "port-2807",
+        "label": "DC Power",
+        "signalType": "power",
+        "direction": "input",
+        "connectorType": "edison"
+      }
+    ],
+    "category": "Networking"
+  },
+  {
+    "id": "c0a80101-00f5-4000-8000-000000000321",
+    "deviceType": "cloud-service",
+    "label": "AWS MediaConnect",
+    "manufacturer": "AWS",
+    "modelNumber": "Elemental MediaConnect",
+    "referenceUrl": "https://docs.aws.amazon.com/mediaconnect/latest/ug/protocols.html",
+    "searchTerms": [
+      "aws",
+      "elemental",
+      "mediaconnect",
+      "srt",
+      "rist",
+      "zixi",
+      "rtp",
+      "cloud",
+      "transport"
+    ],
+    "ports": [
+      {
+        "id": "port-2808",
+        "label": "SRT Source",
+        "signalType": "srt",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2809",
+        "label": "RTP Source",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2810",
+        "label": "Zixi Source",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2811",
+        "label": "RIST Source",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2812",
+        "label": "SRT Output 1",
+        "signalType": "srt",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2813",
+        "label": "SRT Output 2",
+        "signalType": "srt",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2814",
+        "label": "RTP Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2815",
+        "label": "Zixi Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2816",
+        "label": "RIST Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      }
+    ],
+    "category": "Cloud Services"
+  },
+  {
+    "id": "c0a80101-00f6-4000-8000-000000000322",
+    "deviceType": "cloud-service",
+    "label": "AWS MediaLive",
+    "manufacturer": "AWS",
+    "modelNumber": "Elemental MediaLive",
+    "referenceUrl": "https://docs.aws.amazon.com/medialive/latest/ug/how-medialive-works-channels.html",
+    "searchTerms": [
+      "aws",
+      "elemental",
+      "medialive",
+      "encoder",
+      "transcoder",
+      "rtmp",
+      "hls",
+      "cloud",
+      "live"
+    ],
+    "ports": [
+      {
+        "id": "port-2817",
+        "label": "RTMP Push Input",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2818",
+        "label": "RTP Input",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2819",
+        "label": "HLS Input",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2820",
+        "label": "MediaConnect Input",
+        "signalType": "srt",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2821",
+        "label": "HLS Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2822",
+        "label": "RTMP Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2823",
+        "label": "RTP Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2824",
+        "label": "MediaPackage Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2825",
+        "label": "Archive Output",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      }
+    ],
+    "category": "Cloud Services"
+  },
+  {
+    "id": "c0a80101-00f7-4000-8000-000000000323",
+    "deviceType": "cloud-service",
+    "label": "AWS MediaPackage",
+    "manufacturer": "AWS",
+    "modelNumber": "Elemental MediaPackage",
+    "referenceUrl": "https://docs.aws.amazon.com/mediapackage/latest/ug/what-is-features.html",
+    "searchTerms": [
+      "aws",
+      "elemental",
+      "mediapackage",
+      "packaging",
+      "hls",
+      "dash",
+      "cmaf",
+      "cloud",
+      "origin"
+    ],
+    "ports": [
+      {
+        "id": "port-2826",
+        "label": "HLS Ingest",
+        "signalType": "ethernet",
+        "direction": "input",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2827",
+        "label": "HLS Endpoint",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2828",
+        "label": "DASH Endpoint",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2829",
+        "label": "CMAF Endpoint",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      },
+      {
+        "id": "port-2830",
+        "label": "MSS Endpoint",
+        "signalType": "ethernet",
+        "direction": "output",
+        "connectorType": "none"
+      }
+    ],
+    "category": "Cloud Services"
   }
 ]

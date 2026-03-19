@@ -1099,8 +1099,8 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     ports: [
       port("Ethernet In", "ethernet", "bidirectional"),
       port("Ethernet Loop", "ethernet", "bidirectional"),
-      port("GPI In (8ch)", "gpio", "input"),
-      port("GPI Out (8ch)", "gpio", "output"),
+      trunkPort("GPI In", "gpio", "input", 8),
+      trunkPort("GPI Out", "gpio", "output", 8),
       port("AC Power", "power", "input"),
     ],
   },
@@ -3570,6 +3570,16 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
+    ],
+  },
+  {
+    id: "c0a80101-00f8-4000-8000-000000000324",
+    deviceType: "adapter",
+    label: "TB → Ethernet Adapter",
+    searchTerms: ["thunderbolt", "usb-c", "ethernet", "dongle", "network"],
+    ports: [
+      port("TB In", "thunderbolt", "input"),
+      port("Ethernet Out", "ethernet", "output"),
     ],
   },
 

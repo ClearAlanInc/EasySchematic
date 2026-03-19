@@ -12,6 +12,7 @@ import {
   computeEdgePath,
   simplifyWaypoints,
   waypointsToSvgPath,
+  waypointsToSvgPathWithHops,
   type PenaltyZone,
   type Rect,
 } from "./pathfinding";
@@ -33,6 +34,8 @@ export interface CrossingPoint {
 export interface RoutedEdge {
   edgeId: string;
   svgPath: string;
+  /** SVG path with arc hops on horizontal segments and gap cuts on vertical segments at crossings */
+  svgPathWithHops?: string;
   waypoints: Point[];
   segments: Segment[];
   labelX: number;
@@ -1059,10 +1062,14 @@ export function routeAllEdges(
     }
   }
 
-  // Detect crossing points between all edge pairs
-  const crossingMap = new Map<string, CrossingPoint[]>();
+  // Detect crossing points between all edge pairs.
+  // Horizontal edge at a crossing gets an arc (hop over);
+  // vertical edge at the same crossing gets a gap (moveTo cut).
+  const arcCrossingMap = new Map<string, CrossingPoint[]>();
+  const gapCrossingMap = new Map<string, CrossingPoint[]>();
   for (const rs of routeStates) {
-    crossingMap.set(rs.edgeId, []);
+    arcCrossingMap.set(rs.edgeId, []);
+    gapCrossingMap.set(rs.edgeId, []);
   }
   for (let i = 0; i < routeStates.length; i++) {
     for (let j = i + 1; j < routeStates.length; j++) {
@@ -1071,13 +1078,18 @@ export function routeAllEdges(
       for (const sa of a.segments) {
         for (const sb of b.segments) {
           if (segmentsCross(sa, sb)) {
-            // Intersection of perpendicular segments: the vertical segment's X
-            // and the horizontal segment's Y
             const h = sa.axis === "h" ? sa : sb;
             const v = sa.axis === "v" ? sa : sb;
             const pt: CrossingPoint = { x: v.x1, y: h.y1 };
-            crossingMap.get(a.edgeId)!.push(pt);
-            crossingMap.get(b.edgeId)!.push(pt);
+            // Horizontal segment's edge gets the arc
+            // Vertical segment's edge gets the gap
+            if (sa.axis === "h") {
+              arcCrossingMap.get(a.edgeId)!.push(pt);
+              gapCrossingMap.get(b.edgeId)!.push(pt);
+            } else {
+              arcCrossingMap.get(b.edgeId)!.push(pt);
+              gapCrossingMap.get(a.edgeId)!.push(pt);
+            }
           }
         }
       }
@@ -1086,15 +1098,21 @@ export function routeAllEdges(
 
   // Build final results
   for (const rs of routeStates) {
+    const arcPts = arcCrossingMap.get(rs.edgeId) ?? [];
+    const gapPts = gapCrossingMap.get(rs.edgeId) ?? [];
+    const hopPath = (arcPts.length > 0 || gapPts.length > 0)
+      ? waypointsToSvgPathWithHops(rs.waypoints, arcPts, gapPts)
+      : undefined;
     results[rs.edgeId] = {
       edgeId: rs.edgeId,
       svgPath: rs.svgPath,
+      svgPathWithHops: hopPath,
       waypoints: rs.waypoints,
       segments: rs.segments,
       labelX: rs.labelX,
       labelY: rs.labelY,
       turns: rs.turns,
-      crossingPoints: crossingMap.get(rs.edgeId) ?? [],
+      crossingPoints: arcPts,
     };
   }
 

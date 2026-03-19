@@ -1,4 +1,4 @@
-import type { ConnectorType, SignalType } from "./types";
+import type { ConnectorType, DeviceTemplate, SignalType } from "./types";
 
 /** Default connector type inferred from signal type — used for migration and new ports */
 export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
@@ -75,6 +75,38 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   none: "",
   other: "Other",
 };
+
+/** Find adapter/converter templates that bridge two different signal types */
+export function findAdaptersForSignalBridge(
+  sourceSignalType: SignalType,
+  targetSignalType: SignalType,
+  templates: DeviceTemplate[],
+): DeviceTemplate[] {
+  const results = templates.filter((t) => {
+    if (t.deviceType !== "converter" && t.deviceType !== "adapter") return false;
+    const hasMatchingInput = t.ports.some(
+      (p) =>
+        (p.direction === "input" || p.direction === "bidirectional") &&
+        p.signalType === sourceSignalType,
+    );
+    const hasMatchingOutput = t.ports.some(
+      (p) =>
+        (p.direction === "output" || p.direction === "bidirectional") &&
+        p.signalType === targetSignalType,
+    );
+    return hasMatchingInput && hasMatchingOutput;
+  });
+
+  // Sort: fewest total ports first (tightest match), then alphabetically
+  results.sort((a, b) => {
+    const aPorts = a.ports.filter((p) => p.signalType !== "power").length;
+    const bPorts = b.ports.filter((p) => p.signalType !== "power").length;
+    if (aPorts !== bPorts) return aPorts - bPorts;
+    return a.label.localeCompare(b.label);
+  });
+
+  return results;
+}
 
 /** Signal types that can have network configuration */
 export const NETWORK_SIGNAL_TYPES: Set<SignalType> = new Set([
