@@ -91,6 +91,20 @@ export function requireModerator(c: Context<Env>): SessionUser | null {
   return user;
 }
 
+/** Require moderator session OR valid ADMIN_TOKEN bearer */
+export function requireModeratorOrToken(c: Context<Env>): SessionUser | "token" | null {
+  const user = requireModerator(c);
+  if (user) return user;
+
+  const header = c.req.header("Authorization");
+  if (header?.startsWith("Bearer ")) {
+    const token = header.slice(7);
+    if (token === c.env.ADMIN_TOKEN) return "token";
+  }
+
+  return null;
+}
+
 /** Require admin role */
 export function requireAdmin(c: Context<Env>): SessionUser | null {
   const user = c.get("user");

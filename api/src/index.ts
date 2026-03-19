@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { rowToTemplate, templateToRow } from "./db";
-import { authMiddleware, sessionMiddleware, requireSession, requireModerator, requireAdmin } from "./auth";
+import { authMiddleware, sessionMiddleware, requireSession, requireModerator, requireModeratorOrToken, requireAdmin } from "./auth";
 import type { Env } from "./auth";
 import { validateTemplate } from "./validate";
 import { checkRateLimit, cleanupExpiredRateLimits } from "./rateLimiter";
@@ -282,8 +282,8 @@ app.get("/submissions/mine", async (c) => {
 });
 
 app.get("/submissions/pending", async (c) => {
-  const mod = requireModerator(c);
-  if (!mod) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
 
   const { results } = await c.env.easyschematic_db
     .prepare(
@@ -297,8 +297,9 @@ app.get("/submissions/pending", async (c) => {
 });
 
 app.get("/submissions/:id", async (c) => {
-  const user = requireSession(c);
-  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  const auth = requireModeratorOrToken(c);
+  const user = auth === "token" ? null : requireSession(c);
+  if (!auth && !user) return c.json({ error: "Not authenticated" }, 401);
 
   const id = c.req.param("id");
   const row = await c.env.easyschematic_db.prepare("SELECT * FROM submissions WHERE id = ?").bind(id).first();
@@ -306,8 +307,8 @@ app.get("/submissions/:id", async (c) => {
   if (!row) return c.json({ error: "Submission not found" }, 404);
 
   const submission = row as unknown as SubmissionRow;
-  // Users can see their own, moderators can see all
-  if (submission.user_id !== user.id && user.role !== "moderator" && user.role !== "admin") {
+  // Token gets full access, users can see their own, moderators can see all
+  if (auth !== "token" && user && submission.user_id !== user.id && user.role !== "moderator" && user.role !== "admin") {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -315,8 +316,9 @@ app.get("/submissions/:id", async (c) => {
 });
 
 app.post("/submissions/:id/approve", async (c) => {
-  const mod = requireModerator(c);
-  if (!mod) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const reviewerId = auth === "token" ? null : auth.id;
 
   const id = c.req.param("id");
   const db = c.env.easyschematic_db;
@@ -396,15 +398,16 @@ app.post("/submissions/:id/approve", async (c) => {
   // Mark submission approved
   await db
     .prepare("UPDATE submissions SET status = 'approved', reviewer_id = ?, reviewed_at = datetime('now') WHERE id = ?")
-    .bind(mod.id, id)
+    .bind(reviewerId, id)
     .run();
 
   return c.json({ ok: true, status: "approved" }, 200, NO_CACHE_HEADERS);
 });
 
 app.post("/submissions/:id/reject", async (c) => {
-  const mod = requireModerator(c);
-  if (!mod) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const reviewerId = auth === "token" ? null : auth.id;
 
   const id = c.req.param("id");
   const body = await c.req.json<{ note?: string }>();
@@ -420,7 +423,7 @@ app.post("/submissions/:id/reject", async (c) => {
     .prepare(
       "UPDATE submissions SET status = 'rejected', reviewer_id = ?, reviewer_note = ?, reviewed_at = datetime('now') WHERE id = ?",
     )
-    .bind(mod.id, body.note ?? null, id)
+    .bind(reviewerId, body.note ?? null, id)
     .run();
 
   return c.json({ ok: true, status: "rejected" }, 200, NO_CACHE_HEADERS);
