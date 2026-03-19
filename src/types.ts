@@ -6,7 +6,7 @@ export type ConnectorType =
   | "rj45" | "ethercon" | "sfp" | "lc"
   | "usb-a" | "usb-b" | "usb-c"
   | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
-  | "speakon" | "socapex" | "multipin" | "none" | "other";
+  | "speakon" | "socapex" | "multipin" | "rca" | "none" | "other";
 
 export interface PortNetworkConfig {
   ip?: string;
@@ -338,6 +338,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   speakon: "speakON",
   socapex: "Socapex",
   multipin: "Multi-pin",
+  rca: "RCA",
   none: "None",
   other: "Other",
 };

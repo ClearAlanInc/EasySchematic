@@ -72,6 +72,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   speakon: "speakON",
   socapex: "Socapex",
   multipin: "Multi-pin",
+  rca: "RCA",
   none: "",
   other: "Other",
 };
