@@ -9,6 +9,8 @@ export default function ViewOptionsPanel() {
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const hideDeviceTypes = useSchematicStore((s) => s.hideDeviceTypes);
   const hideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
+  const scrollBehavior = useSchematicStore((s) => s.scrollBehavior);
+  const setScrollBehavior = useSchematicStore((s) => s.setScrollBehavior);
   const toggleSignalTypeVisibility = useSchematicStore((s) => s.toggleSignalTypeVisibility);
   const setHideDeviceTypes = useSchematicStore((s) => s.setHideDeviceTypes);
   const setHideUnconnectedPorts = useSchematicStore((s) => s.setHideUnconnectedPorts);
@@ -119,6 +121,37 @@ export default function ViewOptionsPanel() {
           />
           <span className="text-xs text-[var(--color-text)]">Show device types</span>
         </label>
+
+        {/* Divider */}
+        <div className="border-t border-[var(--color-border)] my-2" />
+
+        {/* Scroll Behavior */}
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+          Scroll Behavior
+        </div>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="radio"
+            name="scrollBehavior"
+            checked={scrollBehavior === "zoom"}
+            onChange={() => setScrollBehavior("zoom")}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Scroll to zoom</span>
+        </label>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="radio"
+            name="scrollBehavior"
+            checked={scrollBehavior === "pan"}
+            onChange={() => setScrollBehavior("pan")}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Scroll to pan</span>
+        </label>
+        <div className="text-[10px] text-[var(--color-text-muted)] px-1 mt-0.5">
+          {scrollBehavior === "pan" ? "Ctrl+scroll to zoom" : ""}
+        </div>
       </div>
 
       {/* Show All button */}

@@ -139,6 +139,7 @@ function SchematicCanvas() {
   const isDragging = useSchematicStore((s) => s.isDragging);
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const printView = useSchematicStore((s) => s.printView);
+  const scrollBehavior = useSchematicStore((s) => s.scrollBehavior);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const nodeCount = useSchematicStore((s) => s.nodes.length);
   const edgeCount = useSchematicStore((s) => s.edges.length);
@@ -673,6 +674,8 @@ function SchematicCanvas() {
       selectionKeyCode={null}
       multiSelectionKeyCode="Shift"
       proOptions={{ hideAttribution: true }}
+      panOnScroll={scrollBehavior === "pan"}
+      zoomOnScroll={scrollBehavior !== "pan"}
       zoomOnDoubleClick={false}
       connectOnClick
       edgesReconnectable
