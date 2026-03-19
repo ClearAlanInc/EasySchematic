@@ -159,6 +159,8 @@ export interface ConnectionData {
   stubbed?: boolean;
   /** Allow connection between incompatible connector types (#6) */
   allowIncompatible?: boolean;
+  /** When true, hide cable ID labels on this specific connection (#5) */
+  hideLabel?: boolean;
 }
 
 export type ConnectionEdge = Edge<ConnectionData>;
@@ -253,11 +255,34 @@ export interface SchematicFile {
   reportLayouts?: Record<string, unknown>;
   globalReportHeaderLayout?: TitleBlockLayout;
   globalReportFooterLayout?: TitleBlockLayout;
-  /** Scroll wheel behavior: zoom (default) or pan (#19) */
+  /** @deprecated Use scrollConfig instead. Kept for backwards compatibility on import. */
   scrollBehavior?: "zoom" | "pan";
+  /** Per-modifier scroll wheel action mapping (#19) */
+  scrollConfig?: ScrollConfig;
   /** Cable naming scheme for cable schedule (#1) */
   cableNamingScheme?: "sequential" | "type-prefix";
+  /** Show line jump arcs where connections cross (#18) */
+  showLineJumps?: boolean;
+  /** Show cable ID labels at connection endpoints (#5) */
+  showConnectionLabels?: boolean;
 }
+
+export type ScrollAction = "zoom" | "pan-x" | "pan-y";
+
+export interface ScrollConfig {
+  /** Scroll wheel with no modifier key */
+  scroll: ScrollAction;
+  /** Shift + scroll wheel */
+  shiftScroll: ScrollAction;
+  /** Ctrl + scroll wheel */
+  ctrlScroll: ScrollAction;
+}
+
+export const DEFAULT_SCROLL_CONFIG: ScrollConfig = {
+  scroll: "zoom",
+  shiftScroll: "pan-x",
+  ctrlScroll: "pan-y",
+};
 
 export const SIGNAL_COLORS: Record<SignalType, string> = {
   sdi: "var(--color-sdi)",

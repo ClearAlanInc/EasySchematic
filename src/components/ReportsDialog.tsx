@@ -63,7 +63,8 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
     } else if (tab === "devices") {
       exportDevicesCsv(nodes, schematicName);
     } else if (tab === "cableSchedule") {
-      const rows = computeCableSchedule(nodes, edges);
+      const cableNamingScheme = useSchematicStore.getState().cableNamingScheme;
+      const rows = computeCableSchedule(nodes, edges, cableNamingScheme);
       exportCableScheduleCsv(rows, schematicName);
     } else {
       const data = computePackList(nodes, edges);
@@ -195,7 +196,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           defaultLayout={cableScheduleDefaultLayout}
           titleBlock={titleBlock}
           getTableData={(layout) =>
-            getCableScheduleTableData(computeCableSchedule(nodes, edges), layout)
+            getCableScheduleTableData(computeCableSchedule(nodes, edges, useSchematicStore.getState().cableNamingScheme), layout)
           }
           onClose={() => setShowCableSchedulePreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Cable Schedule.pdf`}
@@ -1084,6 +1085,7 @@ type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector
 type CableGroupBy = "" | "sourceRoom" | "signalType" | "cableType" | "multicableLabel";
 
 const cableScheduleColumns: SpreadsheetColumn<CableScheduleRow>[] = [
+  { id: "label", header: "Label", getValue: () => "", editable: false },
   { id: "cableId", header: "Cable ID", getValue: (r) => r.cableId, editable: true, fillType: "deviceName" },
   { id: "cableLength", header: "Length", getValue: (r) => r.cableLength, editable: true },
 ];
@@ -1099,7 +1101,8 @@ function CableScheduleTabInline() {
   const [sortAsc, setSortAsc] = useState(true);
   const [groupByKey, setGroupByKey] = useState<CableGroupBy>("");
 
-  const rows = useMemo(() => computeCableSchedule(nodes, edges), [nodes, edges]);
+  const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
+  const rows = useMemo(() => computeCableSchedule(nodes, edges, cableNamingScheme), [nodes, edges, cableNamingScheme]);
 
   const filtered = useMemo(() => {
     const q = filter.toLowerCase();
@@ -1149,8 +1152,8 @@ function CableScheduleTabInline() {
       if (columnId === "cableLength") {
         patchEdgeData(row.edgeId, { cableLength: value.trim() });
       } else {
-        if (!value.trim()) return;
-        patchEdgeData(row.edgeId, { cableId: value.trim() });
+        // Empty value clears the override → reverts to auto-generated ID
+        patchEdgeData(row.edgeId, { cableId: value.trim() || undefined });
       }
     },
     [sorted, patchEdgeData],
@@ -1165,8 +1168,8 @@ function CableScheduleTabInline() {
           if (c.columnId === "cableLength") {
             return { edgeId: row.edgeId, patch: { cableLength: c.value.trim() } };
           }
-          if (!c.value.trim()) return null;
-          return { edgeId: row.edgeId, patch: { cableId: c.value.trim() } };
+          // Empty value clears the override → reverts to auto-generated ID
+          return { edgeId: row.edgeId, patch: { cableId: c.value.trim() || undefined } };
         })
         .filter((c) => c !== null) as { edgeId: string; patch: Partial<ConnectionData> }[];
       if (edgeChanges.length > 0) {
@@ -1199,6 +1202,31 @@ function CableScheduleTabInline() {
     onCellChange,
     onBatchChange,
   });
+
+  // Toggle label visibility for one row — if that row is part of a multi-selection, toggle all selected rows
+  const onToggleLabel = useCallback(
+    (rowIndex: number, currentHideLabel: boolean) => {
+      const newValue = currentHideLabel ? undefined : true;
+      // Collect selected row indices from the spreadsheet selection
+      const selectedRows = new Set<number>();
+      for (const key of spreadsheet.selectedCells) {
+        const idx = Number(key.slice(0, key.indexOf(":")));
+        selectedRows.add(idx);
+      }
+      if (selectedRows.size > 1 && selectedRows.has(rowIndex)) {
+        // Batch toggle all selected rows to match the clicked row's new state
+        const changes = Array.from(selectedRows)
+          .map((ri) => sorted[ri])
+          .filter(Boolean)
+          .map((r) => ({ edgeId: r.edgeId, patch: { hideLabel: newValue } as Partial<ConnectionData> }));
+        if (changes.length > 0) batchPatchEdgeData(changes);
+      } else {
+        const row = sorted[rowIndex];
+        if (row) patchEdgeData(row.edgeId, { hideLabel: newValue });
+      }
+    },
+    [sorted, spreadsheet.selectedCells, patchEdgeData, batchPatchEdgeData],
+  );
 
   // Clear selection on sort/filter change
   useEffect(() => {
@@ -1263,6 +1291,7 @@ function CableScheduleTabInline() {
         <table className="w-full border-collapse">
           <thead>
             <tr>
+              <th className={thClass} style={{ width: 28, textAlign: "center" }} title="Show label on schematic">Label</th>
               <th className={thClass} onClick={() => toggleSort("cableId")}>Cable ID{sortArrow("cableId")}</th>
               <th className={thClass} onClick={() => toggleSort("sourceDevice")}>Source{sortArrow("sourceDevice")}</th>
               <th className={thClass} onClick={() => toggleSort("sourcePort")}>Src Port{sortArrow("sourcePort")}</th>
@@ -1280,7 +1309,7 @@ function CableScheduleTabInline() {
           </thead>
           <tbody>
             {grouped
-              ? renderGroupedCableSchedule(grouped, spreadsheet)
+              ? renderGroupedCableSchedule(grouped, spreadsheet, onToggleLabel)
               : sorted.map((r, i) => (
                   <CableScheduleRow_
                     key={r.edgeId}
@@ -1288,6 +1317,7 @@ function CableScheduleTabInline() {
                     rowIndex={i}
                     altClass={rowClass(i)}
                     spreadsheet={spreadsheet}
+                    onToggleLabel={onToggleLabel}
                   />
                 ))
             }
@@ -1351,18 +1381,40 @@ const CableScheduleRow_ = memo(function CableScheduleRow_({
   rowIndex,
   altClass,
   spreadsheet,
+  onToggleLabel,
 }: {
   row: CableScheduleRow;
   rowIndex: number;
   altClass: string;
   spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>;
+  onToggleLabel: (rowIndex: number, currentHideLabel: boolean) => void;
 }) {
+  const labelProps = spreadsheet.getCellProps(rowIndex, "label");
   const cableIdProps = spreadsheet.getCellProps(rowIndex, "cableId");
   const lengthProps = spreadsheet.getCellProps(rowIndex, "cableLength");
-  const hasSelection = cableIdProps.isSelected || lengthProps.isSelected;
+  const hasSelection = labelProps.isSelected || cableIdProps.isSelected || lengthProps.isSelected;
+  const hideLabel = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === row.edgeId);
+    return edge?.data?.hideLabel === true;
+  });
 
   return (
     <tr className={hasSelection ? "bg-blue-50" : altClass}>
+      <td
+        className={`${tdClass} ${labelProps.isSelected ? "bg-blue-100 ring-1 ring-inset ring-blue-300" : ""}`}
+        style={{ textAlign: "center" }}
+        onMouseDown={labelProps.onMouseDown}
+        onMouseEnter={labelProps.onMouseEnter}
+      >
+        <input
+          type="checkbox"
+          checked={!hideLabel}
+          onChange={() => onToggleLabel(rowIndex, hideLabel)}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-3 h-3 accent-blue-500 cursor-pointer"
+          title={hideLabel ? "Show label" : "Hide label"}
+        />
+      </td>
       <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableId" value={row.cableId} />
       <td className={tdClass}>{row.sourceDevice}</td>
       <td className={tdClass}>{row.sourcePort}</td>
@@ -1394,6 +1446,7 @@ function groupCableScheduleRows(rows: CableScheduleRow[], key: CableGroupBy): Ma
 function renderGroupedCableSchedule(
   groups: Map<string, CableScheduleRow[]>,
   spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>,
+  onToggleLabel: (rowIndex: number, currentHideLabel: boolean) => void,
 ) {
   const elements: React.ReactNode[] = [];
   let idx = 0;
@@ -1401,7 +1454,7 @@ function renderGroupedCableSchedule(
     elements.push(
       <tr key={`h-${group}`}>
         <td
-          colSpan={13}
+          colSpan={14}
           className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
         >
           {group}
@@ -1416,6 +1469,7 @@ function renderGroupedCableSchedule(
           rowIndex={idx}
           altClass={rowClass(idx)}
           spreadsheet={spreadsheet}
+          onToggleLabel={onToggleLabel}
         />,
       );
       idx++;

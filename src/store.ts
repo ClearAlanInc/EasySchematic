@@ -20,7 +20,8 @@ import type {
   TemplatePreset,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType } from "./types";
+import type { SignalType, ScrollConfig } from "./types";
+import { DEFAULT_SCROLL_CONFIG } from "./types";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
@@ -29,9 +30,24 @@ import { areConnectorsCompatible } from "./connectorTypes";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
+import { computeCableSchedule } from "./cableSchedule";
 
 const STORAGE_KEY = "easyschematic-autosave";
 const TEMPLATES_KEY = "easyschematic-custom-templates";
+
+/** Migrate legacy scrollBehavior to ScrollConfig, or use provided scrollConfig */
+function resolveScrollConfig(data: { scrollBehavior?: string; scrollConfig?: ScrollConfig }): ScrollConfig {
+  if (data.scrollConfig) return data.scrollConfig;
+  if (data.scrollBehavior === "pan") return { scroll: "pan-y", shiftScroll: "pan-x", ctrlScroll: "zoom" };
+  return { ...DEFAULT_SCROLL_CONFIG };
+}
+
+/** True if the scroll config matches the default (omit from JSON when saving) */
+function isDefaultScrollConfig(c: ScrollConfig): boolean {
+  return c.scroll === DEFAULT_SCROLL_CONFIG.scroll
+    && c.shiftScroll === DEFAULT_SCROLL_CONFIG.shiftScroll
+    && c.ctrlScroll === DEFAULT_SCROLL_CONFIG.ctrlScroll;
+}
 
 /** Guard: don't persist empty state before initial load completes */
 let hydrated = false;
@@ -191,12 +207,32 @@ interface SchematicState {
   toggleFavoriteTemplate: (templateKey: string) => void;
 
   // Scroll behavior (#19)
-  scrollBehavior: "zoom" | "pan";
-  setScrollBehavior: (v: "zoom" | "pan") => void;
+  scrollConfig: ScrollConfig;
+  setScrollConfig: (v: ScrollConfig) => void;
 
   // Cable naming scheme (#1)
   cableNamingScheme: "sequential" | "type-prefix";
   setCableNamingScheme: (v: "sequential" | "type-prefix") => void;
+
+  // Incompatible connection dialog (#6)
+  pendingIncompatibleConnection: {
+    connection: Connection;
+    sourcePort: Port;
+    targetPort: Port;
+  } | null;
+  dismissIncompatibleDialog: () => void;
+  forceIncompatibleConnection: () => void;
+  insertAdapterBetween: (template: DeviceTemplate) => void;
+
+  // Line jumps (#18)
+  showLineJumps: boolean;
+  setShowLineJumps: (show: boolean) => void;
+
+  // Connection labels (#5)
+  showConnectionLabels: boolean;
+  setShowConnectionLabels: (show: boolean) => void;
+  cableIdMap: Record<string, string>;
+  recomputeCableIds: () => void;
 
   // Template import/export (#12/#26)
   exportCustomTemplates: () => DeviceTemplate[];
@@ -403,8 +439,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   templateHiddenSignals: {},
   templatePresets: {},
   favoriteTemplates: [],
-  scrollBehavior: "zoom" as "zoom" | "pan",
-  cableNamingScheme: "sequential" as "sequential" | "type-prefix",
+  scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
+  cableNamingScheme: "type-prefix" as "sequential" | "type-prefix",
+  showLineJumps: true,
+  showConnectionLabels: true,
+  cableIdMap: {},
+  pendingIncompatibleConnection: null,
 
   onNodesChange: (changes) => {
     const updated = applyNodeChanges(changes, get().nodes) as SchematicNode[];
@@ -428,7 +468,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   onConnect: (connection) => {
     const state = get();
-    if (!state.isValidConnection(connection)) return;
+    if (!state.isValidConnection(connection)) {
+      // Check if the failure is specifically a signal-type mismatch
+      const srcPort = getPortFromHandle(state.nodes, connection.source, connection.sourceHandle);
+      const tgtPort = getPortFromHandle(state.nodes, connection.target, connection.targetHandle);
+      if (srcPort && tgtPort) {
+        const canSource = srcPort.direction === "output" || srcPort.direction === "bidirectional";
+        const canTarget = tgtPort.direction === "input" || tgtPort.direction === "bidirectional";
+        if (canSource && canTarget && srcPort.signalType !== tgtPort.signalType) {
+          set({ pendingIncompatibleConnection: { connection, sourcePort: srcPort, targetPort: tgtPort } });
+        }
+      }
+      return;
+    }
     pushUndo({ nodes: state.nodes, edges: state.edges });
 
     const sourcePort = getPortFromHandle(
@@ -1011,6 +1063,214 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     saveCustomTemplates(updated);
   },
 
+  dismissIncompatibleDialog: () => {
+    set({ pendingIncompatibleConnection: null });
+  },
+
+  forceIncompatibleConnection: () => {
+    const state = get();
+    const pending = state.pendingIncompatibleConnection;
+    if (!pending) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const newEdge: ConnectionEdge = {
+      id: nextEdgeId(),
+      source: pending.connection.source,
+      target: pending.connection.target,
+      sourceHandle: pending.connection.sourceHandle,
+      targetHandle: pending.connection.targetHandle,
+      data: {
+        signalType: pending.sourcePort.signalType,
+        connectorMismatch: true,
+        allowIncompatible: true,
+      },
+      style: {
+        stroke: `var(--color-${pending.sourcePort.signalType})`,
+        strokeWidth: 2,
+      },
+    };
+
+    set({ edges: [...state.edges, newEdge], pendingIncompatibleConnection: null });
+    get().saveToLocalStorage();
+  },
+
+  insertAdapterBetween: (template) => {
+    const state = get();
+    const pending = state.pendingIncompatibleConnection;
+    if (!pending) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    // Resolve source and target device absolute positions for midpoint
+    const sourceNode = state.nodes.find((n) => n.id === pending.connection.source);
+    const targetNode = state.nodes.find((n) => n.id === pending.connection.target);
+    if (!sourceNode || !targetNode) {
+      set({ pendingIncompatibleConnection: null });
+      return;
+    }
+
+    // Compute absolute positions (accounting for room parents)
+    const absPos = (node: SchematicNode): { x: number; y: number } => {
+      if (!node.parentId) return node.position;
+      const parent = state.nodes.find((n) => n.id === node.parentId);
+      if (!parent) return node.position;
+      return { x: node.position.x + parent.position.x, y: node.position.y + parent.position.y };
+    };
+
+    const srcAbs = absPos(sourceNode);
+    const tgtAbs = absPos(targetNode);
+    const srcW = sourceNode.measured?.width ?? 180;
+    const tgtW = targetNode.measured?.width ?? 180;
+
+    // Midpoint between the right edge of the left device and left edge of the right device
+    // (or just center-to-center if they're stacked vertically)
+    const srcCenterX = srcAbs.x + srcW / 2;
+    const tgtCenterX = tgtAbs.x + tgtW / 2;
+    const srcCenterY = srcAbs.y + (sourceNode.measured?.height ?? 60) / 2;
+    const tgtCenterY = tgtAbs.y + (targetNode.measured?.height ?? 60) / 2;
+
+    let idealX = Math.round(((srcCenterX + tgtCenterX) / 2) / GRID_SIZE) * GRID_SIZE;
+    let idealY = Math.round(((srcCenterY + tgtCenterY) / 2) / GRID_SIZE) * GRID_SIZE;
+
+    // If both are in the same room, parent the adapter there too
+    const adapterParentId = (sourceNode.parentId && sourceNode.parentId === targetNode.parentId)
+      ? sourceNode.parentId : undefined;
+
+    // Convert back to parent-relative coords if parented
+    if (adapterParentId) {
+      const parentNode = state.nodes.find((n) => n.id === adapterParentId);
+      if (parentNode) {
+        idealX -= parentNode.position.x;
+        idealY -= parentNode.position.y;
+      }
+    }
+
+    // Snap to grid
+    idealX = Math.round(idealX / GRID_SIZE) * GRID_SIZE;
+    idealY = Math.round(idealY / GRID_SIZE) * GRID_SIZE;
+
+    // Create adapter device
+    const preset = template.id ? state.templatePresets[template.id] : undefined;
+    let adapterPorts: Port[];
+    let hiddenPorts: string[] | undefined;
+    let color = template.color;
+
+    if (preset) {
+      const cloned = clonePorts(preset.ports);
+      const idMap = new Map<string, string>();
+      preset.ports.forEach((p, i) => { idMap.set(p.id, cloned[i].id); });
+      adapterPorts = cloned;
+      hiddenPorts = preset.hiddenPorts?.map((id) => idMap.get(id) ?? id).filter((id) => cloned.some((p) => p.id === id));
+      color = preset.color ?? template.color;
+    } else {
+      adapterPorts = clonePorts(template.ports);
+    }
+
+    const adapterId = nextNodeId();
+    let adapterNode: DeviceNode = {
+      id: adapterId,
+      type: "device",
+      position: { x: idealX, y: idealY },
+      ...(adapterParentId ? { parentId: adapterParentId } : {}),
+      data: {
+        label: template.label,
+        deviceType: template.deviceType,
+        ports: adapterPorts,
+        color,
+        baseLabel: template.label,
+        model: template.label,
+        ...(template.id ? { templateId: template.id } : {}),
+        ...(template.version ? { templateVersion: template.version } : {}),
+        ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
+        ...(template.modelNumber ? { modelNumber: template.modelNumber } : {}),
+        ...(hiddenPorts && hiddenPorts.length > 0 ? { hiddenPorts } : {}),
+      },
+    };
+
+    // Nudge adapter position if it overlaps existing devices
+    const MIN_GAP = GRID_SIZE * 5; // 100px — enough for stubs + routing
+    const adapterW = 180; // approximate width before measurement
+    const adapterH = 60;
+    let posX = adapterNode.position.x;
+    let posY = adapterNode.position.y;
+    for (const other of state.nodes) {
+      if (other.type !== "device") continue;
+      if (other.parentId !== adapterParentId) continue;
+      const ow = other.measured?.width ?? 180;
+      const oh = other.measured?.height ?? 60;
+      // Check AABB overlap with gap
+      const overlapX = posX < other.position.x + ow + MIN_GAP && posX + adapterW + MIN_GAP > other.position.x;
+      const overlapY = posY < other.position.y + oh && posY + adapterH > other.position.y;
+      if (overlapX && overlapY) {
+        // Push horizontally toward the midpoint direction
+        const pushRight = other.position.x + ow + MIN_GAP;
+        const pushLeft = other.position.x - adapterW - MIN_GAP;
+        // Pick whichever side is closer to the ideal position
+        if (Math.abs(pushRight - idealX) < Math.abs(pushLeft - idealX)) {
+          posX = Math.round(pushRight / GRID_SIZE) * GRID_SIZE;
+        } else {
+          posX = Math.round(pushLeft / GRID_SIZE) * GRID_SIZE;
+        }
+      }
+    }
+    adapterNode = { ...adapterNode, position: { x: posX, y: posY } };
+
+    // Find matching ports on adapter
+    const adapterInput = adapterPorts.find(
+      (p) => (p.direction === "input" || p.direction === "bidirectional") && p.signalType === pending.sourcePort.signalType,
+    );
+    const adapterOutput = adapterPorts.find(
+      (p) => (p.direction === "output" || p.direction === "bidirectional") && p.signalType === pending.targetPort.signalType,
+    );
+
+    const newEdges: ConnectionEdge[] = [];
+
+    if (adapterInput) {
+      const inputHandle = adapterInput.direction === "bidirectional" ? `${adapterInput.id}-in` : adapterInput.id;
+      newEdges.push({
+        id: nextEdgeId(),
+        source: pending.connection.source,
+        target: adapterId,
+        sourceHandle: pending.connection.sourceHandle,
+        targetHandle: inputHandle,
+        data: {
+          signalType: pending.sourcePort.signalType,
+          ...(!areConnectorsCompatible(pending.sourcePort.connectorType, adapterInput.connectorType) ? { connectorMismatch: true } : {}),
+        },
+        style: {
+          stroke: `var(--color-${pending.sourcePort.signalType})`,
+          strokeWidth: 2,
+        },
+      });
+    }
+
+    if (adapterOutput) {
+      const outputHandle = adapterOutput.direction === "bidirectional" ? `${adapterOutput.id}-out` : adapterOutput.id;
+      newEdges.push({
+        id: nextEdgeId(),
+        source: adapterId,
+        target: pending.connection.target,
+        sourceHandle: outputHandle,
+        targetHandle: pending.connection.targetHandle,
+        data: {
+          signalType: pending.targetPort.signalType,
+          ...(!areConnectorsCompatible(adapterOutput.connectorType, pending.targetPort.connectorType) ? { connectorMismatch: true } : {}),
+        },
+        style: {
+          stroke: `var(--color-${pending.targetPort.signalType})`,
+          strokeWidth: 2,
+        },
+      });
+    }
+
+    const updatedNodes = renumberNodes([...state.nodes, adapterNode]);
+    set({
+      nodes: updatedNodes,
+      edges: [...state.edges, ...newEdges],
+      pendingIncompatibleConnection: null,
+    });
+    get().saveToLocalStorage();
+  },
+
   setPrintView: (v) => { set({ printView: v }); },
   setPrintPaperId: (id) => { set({ printPaperId: id }); get().saveToLocalStorage(); },
   setPrintOrientation: (o) => { set({ printOrientation: o }); get().saveToLocalStorage(); },
@@ -1096,14 +1356,32 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
-  setScrollBehavior: (v) => {
-    set({ scrollBehavior: v });
+  setScrollConfig: (v) => {
+    set({ scrollConfig: v });
     get().saveToLocalStorage();
   },
 
   setCableNamingScheme: (v) => {
     set({ cableNamingScheme: v });
     get().saveToLocalStorage();
+  },
+
+  setShowLineJumps: (show) => {
+    set({ showLineJumps: show });
+    get().saveToLocalStorage();
+  },
+
+  setShowConnectionLabels: (show) => {
+    set({ showConnectionLabels: show });
+    get().saveToLocalStorage();
+  },
+
+  recomputeCableIds: () => {
+    const state = get();
+    const rows = computeCableSchedule(state.nodes, state.edges, state.cableNamingScheme);
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r.edgeId] = r.cableId;
+    set({ cableIdMap: map });
   },
 
   exportCustomTemplates: () => {
@@ -1144,8 +1422,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
       globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
-      scrollBehavior: state.scrollBehavior !== "zoom" ? state.scrollBehavior : undefined,
-      cableNamingScheme: state.cableNamingScheme !== "sequential" ? state.cableNamingScheme : undefined,
+      scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
+      cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
+      showLineJumps: !state.showLineJumps ? false : undefined,
+      showConnectionLabels: !state.showConnectionLabels ? false : undefined,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -1190,8 +1470,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             reportLayouts: data.reportLayouts ?? {},
             globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
             globalReportFooterLayout: data.globalReportFooterLayout ?? null,
-            scrollBehavior: data.scrollBehavior ?? "zoom",
-            cableNamingScheme: data.cableNamingScheme ?? "sequential",
+            scrollConfig: resolveScrollConfig(data),
+            cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+            showLineJumps: data.showLineJumps ?? true,
+            showConnectionLabels: data.showConnectionLabels ?? true,
           });
           hydrated = true;
           get().saveToLocalStorage();
@@ -1225,8 +1507,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         reportLayouts: data.reportLayouts ?? {},
         globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
         globalReportFooterLayout: data.globalReportFooterLayout ?? null,
-        scrollBehavior: data.scrollBehavior ?? "zoom",
-        cableNamingScheme: data.cableNamingScheme ?? "sequential",
+        scrollConfig: resolveScrollConfig(data),
+        cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+        showLineJumps: data.showLineJumps ?? true,
+        showConnectionLabels: data.showConnectionLabels ?? true,
       });
       hydrated = true;
       return true;
@@ -1259,8 +1543,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
       globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
-      scrollBehavior: state.scrollBehavior !== "zoom" ? state.scrollBehavior : undefined,
-      cableNamingScheme: state.cableNamingScheme !== "sequential" ? state.cableNamingScheme : undefined,
+      scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
+      cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
+      showLineJumps: !state.showLineJumps ? false : undefined,
+      showConnectionLabels: !state.showConnectionLabels ? false : undefined,
     };
   },
 
@@ -1312,8 +1598,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       reportLayouts: data.reportLayouts ?? {},
       globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
       globalReportFooterLayout: data.globalReportFooterLayout ?? null,
-      scrollBehavior: data.scrollBehavior ?? "zoom",
-      cableNamingScheme: data.cableNamingScheme ?? "sequential",
+      scrollConfig: resolveScrollConfig(data),
+      cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+      showLineJumps: data.showLineJumps ?? true,
+      showConnectionLabels: data.showConnectionLabels ?? true,
     });
     get().saveToLocalStorage();
   },
@@ -1337,8 +1625,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       reportLayouts: {},
       globalReportHeaderLayout: null,
       globalReportFooterLayout: null,
-      scrollBehavior: "zoom",
-      cableNamingScheme: "sequential",
+      scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
+      cableNamingScheme: "type-prefix",
+      showLineJumps: true,
+      showConnectionLabels: true,
       undoSize: 0,
       redoSize: 0,
     });
@@ -1354,9 +1644,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
     set({
-      edges: state.edges.map((e) =>
-        e.id === edgeId ? { ...e, data: { ...e.data!, ...patch } } : e,
-      ),
+      edges: state.edges.map((e) => {
+        if (e.id !== edgeId) return e;
+        const merged = { ...e.data!, ...patch };
+        // Remove keys explicitly set to undefined so they don't persist in JSON
+        for (const k of Object.keys(patch) as (keyof typeof patch)[]) {
+          if (patch[k] === undefined) delete (merged as Record<string, unknown>)[k];
+        }
+        return { ...e, data: merged };
+      }),
     });
     get().saveToLocalStorage();
   },
@@ -1369,7 +1665,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       edges: state.edges.map((e) => {
         const patch = changeMap.get(e.id);
         if (!patch) return e;
-        return { ...e, data: { ...e.data!, ...patch } };
+        const merged = { ...e.data!, ...patch };
+        for (const k of Object.keys(patch) as (keyof typeof patch)[]) {
+          if (patch[k] === undefined) delete (merged as Record<string, unknown>)[k];
+        }
+        return { ...e, data: merged };
       }),
     });
     get().saveToLocalStorage();
