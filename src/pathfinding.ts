@@ -55,8 +55,8 @@ const SEPARATION_PX = 10; // Offset distance for penalty zone grid lines
 const CROSS_TYPE_SEPARATION = 20; // Wider separation between edges of different signal types
 const PROXIMITY_PENALTY = 150; // Extra A* cost when near a different-signal-type edge (parallel)
 const SAME_TYPE_PROXIMITY = 20; // Gentle nudge for same-signal edges — allows clustering in adjacent corridors
-const CROSSING_PENALTY = 250; // Extra A* cost when crossing a penalty zone (perpendicular)
-const EARLY_TURN_BIAS = 30; // Extra cost for turning far from target (spreads vertical segments)
+const CROSSING_PENALTY = 350; // Extra A* cost when crossing a penalty zone (perpendicular)
+const EARLY_TURN_BIAS = 50; // Extra cost for turning far from target (spreads vertical segments)
 
 // ---------- Obstacles ----------
 

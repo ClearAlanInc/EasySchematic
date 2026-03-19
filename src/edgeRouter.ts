@@ -706,10 +706,12 @@ export function routeAllEdges(
       if (aCount !== bCount) return bCount - aCount; // more edges first
       return aSig < bSig ? -1 : 1; // alphabetical tiebreaker
     }
-    // Smallest Y change routes first (inner corridor)
-    const aYRange = Math.abs(a.targetY - a.sourceY);
-    const bYRange = Math.abs(b.targetY - b.sourceY);
-    if (aYRange !== bYRange) return aYRange - bYRange;
+    // Shortest connection length routes first — short connections need
+    // direct corridors, longer ones can afford detours. Manhattan distance
+    // captures both X and Y span, improving dense-layout convergence (#14).
+    const aDist = Math.abs(a.targetX - a.sourceX) + Math.abs(a.targetY - a.sourceY);
+    const bDist = Math.abs(b.targetX - b.sourceX) + Math.abs(b.targetY - b.sourceY);
+    if (aDist !== bDist) return aDist - bDist;
     const aY = Math.min(a.sourceY, a.targetY);
     const bY = Math.min(b.sourceY, b.targetY);
     if (aY !== bY) return aY - bY;
