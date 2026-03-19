@@ -339,9 +339,10 @@ app.post("/submissions/:id/approve", async (c) => {
     data = body.data;
   }
 
+  let templateId: string | null = null;
   if (submission.action === "create") {
     // Create new template with attribution
-    const templateId = crypto.randomUUID();
+    templateId = crypto.randomUUID();
     const templateRow = templateToRow({ ...data, id: templateId });
 
     await db
@@ -395,10 +396,10 @@ app.post("/submissions/:id/approve", async (c) => {
       .run();
   }
 
-  // Mark submission approved
+  // Mark submission approved (and backfill template_id for create actions)
   await db
-    .prepare("UPDATE submissions SET status = 'approved', reviewer_id = ?, reviewed_at = datetime('now') WHERE id = ?")
-    .bind(reviewerId, id)
+    .prepare("UPDATE submissions SET status = 'approved', reviewer_id = ?, reviewed_at = datetime('now'), template_id = COALESCE(template_id, ?) WHERE id = ?")
+    .bind(reviewerId, templateId, id)
     .run();
 
   return c.json({ ok: true, status: "approved" }, 200, NO_CACHE_HEADERS);
@@ -501,8 +502,8 @@ app.get("/contributors/:id/templates", async (c) => {
   const { results } = await c.env.easyschematic_db
     .prepare(
       `SELECT t.id, t.label, t.device_type, t.category
-       FROM submissions s JOIN templates t ON t.submitted_by = s.user_id AND t.id = s.template_id
-       WHERE s.user_id = ? AND s.status = 'approved' AND s.action = 'create'
+       FROM templates t
+       WHERE t.submitted_by = ?
        ORDER BY t.label`,
     )
     .bind(userId)
