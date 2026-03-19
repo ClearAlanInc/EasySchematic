@@ -47,6 +47,20 @@ function OffsetEdgeComponent({
     return (edge?.data?.label as string) ?? "";
   });
 
+  // Read stubbed flag (stable primitive selector)
+  const stubbed = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    return edge?.data?.stubbed === true;
+  });
+
+  // Read routed waypoints for stub computation (serialized for stability)
+  const routeWpStr = useSchematicStore((s) => {
+    if (!stubbed) return "";
+    const r = s.routedEdges[id];
+    if (!r?.waypoints?.length) return "";
+    return r.waypoints.map((p) => `${p.x},${p.y}`).join("|");
+  });
+
   // Read manual waypoints directly (serialized for stable selector)
   const manualWpStr = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
@@ -279,6 +293,59 @@ function OffsetEdgeComponent({
     </>
   ) : null;
 
+  // --- Stubbed connection rendering ---
+  // When stubbed, draw short ~40px stubs from source and target instead of full path
+  let stubPaths: { srcPath: string; tgtPath: string; srcEnd: {x:number;y:number;dx:number;dy:number}; tgtEnd: {x:number;y:number;dx:number;dy:number} } | null = null;
+  if (stubbed && routeWpStr) {
+    const wps = routeWpStr.split("|").map((s) => {
+      const [x, y] = s.split(",");
+      return { x: Number(x), y: Number(y) };
+    });
+    const STUB_LEN = 40;
+
+    // Walk from start along waypoints for STUB_LEN px
+    const walkStub = (points: {x:number;y:number}[], maxLen: number) => {
+      let remaining = maxLen;
+      const result: {x:number;y:number}[] = [{ ...points[0] }];
+      let lastDx = 0, lastDy = 0;
+      for (let i = 1; i < points.length && remaining > 0; i++) {
+        const dx = points[i].x - points[i-1].x;
+        const dy = points[i].y - points[i-1].y;
+        const segLen = Math.sqrt(dx*dx + dy*dy);
+        if (segLen === 0) continue;
+        const nx = dx / segLen, ny = dy / segLen;
+        if (segLen <= remaining) {
+          result.push({ ...points[i] });
+          remaining -= segLen;
+          lastDx = nx;
+          lastDy = ny;
+        } else {
+          result.push({ x: points[i-1].x + nx * remaining, y: points[i-1].y + ny * remaining });
+          lastDx = nx;
+          lastDy = ny;
+          remaining = 0;
+        }
+      }
+      return { path: result, dx: lastDx, dy: lastDy };
+    };
+
+    const srcStub = walkStub(wps, STUB_LEN);
+    const tgtStub = walkStub([...wps].reverse(), STUB_LEN);
+
+    const toPath = (pts: {x:number;y:number}[]) =>
+      pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+
+    const srcEnd = srcStub.path[srcStub.path.length - 1];
+    const tgtEnd = tgtStub.path[tgtStub.path.length - 1];
+
+    stubPaths = {
+      srcPath: toPath(srcStub.path),
+      tgtPath: toPath(tgtStub.path),
+      srcEnd: { ...srcEnd, dx: srcStub.dx, dy: srcStub.dy },
+      tgtEnd: { ...tgtEnd, dx: tgtStub.dx, dy: tgtStub.dy },
+    };
+  }
+
   // User-defined connection label rendered at the midpoint
   const connectionLabel = edgeLabel && routeStr ? (
     <foreignObject
@@ -314,6 +381,36 @@ function OffsetEdgeComponent({
     }
     prevDebugRef.current = debugEdges;
   }, [debugEdges, id, sourceX, sourceY, targetX, targetY, turns]);
+
+  // Render slash mark at stub end perpendicular to the path direction
+  const renderSlash = (end: {x:number;y:number;dx:number;dy:number}, key: string) => {
+    // Perpendicular to direction, 6px half-length
+    const px = -end.dy, py = end.dx;
+    const len = 6;
+    return (
+      <line
+        key={key}
+        x1={end.x - px * len} y1={end.y - py * len}
+        x2={end.x + px * len} y2={end.y + py * len}
+        stroke={edgeStyle.stroke as string ?? "currentColor"}
+        strokeWidth={edgeStyle.strokeWidth ?? 2}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+  };
+
+  if (stubbed && stubPaths) {
+    return (
+      <>
+        <path d={stubPaths.srcPath} fill="none" style={edgeStyle} markerEnd={undefined} />
+        <path d={stubPaths.tgtPath} fill="none" style={edgeStyle} markerEnd={markerEnd} />
+        {renderSlash(stubPaths.srcEnd, "slash-src")}
+        {renderSlash(stubPaths.tgtEnd, "slash-tgt")}
+        {connectionLabel}
+        {debugLabel}
+      </>
+    );
+  }
 
   return (
     <>

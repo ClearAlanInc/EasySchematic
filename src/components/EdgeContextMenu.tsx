@@ -193,11 +193,21 @@ export default function EdgeContextMenu() {
     setEditingLabel(false);
   }, [menu, labelValue, editingLabel]);
 
+  const toggleStubbed = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    const current = edge?.data?.stubbed === true;
+    store.patchEdgeData(menu.edgeId, { stubbed: current ? undefined : true });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
   if (!menu) return null;
 
   const store = useSchematicStore.getState();
   const edge = store.edges.find((e) => e.id === menu.edgeId);
   const hasManual = !!(edge?.data?.manualWaypoints?.length);
+  const isStubbed = edge?.data?.stubbed === true;
 
   // Check if this is a trunk (multicable) edge
   const srcNode = store.nodes.find((n) => n.id === edge?.source);
@@ -281,6 +291,10 @@ export default function EdgeContextMenu() {
       {isTrunkEdge && (
         <MenuItem label="Set Cable Label..." onClick={setCableLabel} />
       )}
+      <MenuItem
+        label={isStubbed ? "Show Full Connection" : "Stub Connection"}
+        onClick={toggleStubbed}
+      />
     </div>
   );
 }
