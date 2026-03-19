@@ -138,6 +138,19 @@ export async function fetchContributors(): Promise<Contributor[]> {
   return res.json();
 }
 
+export interface ContributorTemplate {
+  id: string;
+  label: string;
+  device_type: string;
+  category: string;
+}
+
+export async function fetchContributorTemplates(userId: string): Promise<ContributorTemplate[]> {
+  const res = await fetch(`${API_URL}/contributors/${userId}/templates`);
+  if (!res.ok) throw new Error(`Failed to fetch contributor templates: ${res.status}`);
+  return res.json();
+}
+
 export async function logout(): Promise<void> {
   await fetch(`${API_URL}/auth/logout`, {
     method: "POST",

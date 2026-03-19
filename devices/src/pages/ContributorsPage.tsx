@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { fetchContributors } from "../api";
-import type { Contributor } from "../api";
+import { fetchContributors, fetchContributorTemplates } from "../api";
+import type { Contributor, ContributorTemplate } from "../api";
 
 export default function ContributorsPage() {
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<Record<string, ContributorTemplate[]>>({});
+  const [loadingTemplates, setLoadingTemplates] = useState<string | null>(null);
 
   useEffect(() => {
     fetchContributors()
@@ -13,6 +16,25 @@ export default function ContributorsPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const toggleExpand = async (id: string) => {
+    if (expandedId === id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(id);
+    if (!templates[id]) {
+      setLoadingTemplates(id);
+      try {
+        const data = await fetchContributorTemplates(id);
+        setTemplates((prev) => ({ ...prev, [id]: data }));
+      } catch {
+        // silently fail — the row just won't show devices
+      } finally {
+        setLoadingTemplates(null);
+      }
+    }
+  };
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -32,28 +54,61 @@ export default function ContributorsPage() {
       ) : (
         <div className="space-y-2">
           {contributors.map((c, i) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-white"
-            >
-              <div className="flex-shrink-0 w-8 text-center">
-                {i === 0 ? (
-                  <span className="text-xl">&#x1F947;</span>
-                ) : i === 1 ? (
-                  <span className="text-xl">&#x1F948;</span>
-                ) : i === 2 ? (
-                  <span className="text-xl">&#x1F949;</span>
-                ) : (
-                  <span className="text-sm font-bold text-slate-400">#{i + 1}</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900 truncate">{c.name}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-slate-900">{c.approvedCount}</p>
-                <p className="text-xs text-slate-500">{c.approvedCount === 1 ? "device" : "devices"}</p>
-              </div>
+            <div key={c.id} className="rounded-lg border border-slate-200 bg-white">
+              <button
+                onClick={() => toggleExpand(c.id)}
+                className="flex items-center gap-4 p-4 w-full text-left hover:bg-slate-50 transition-colors rounded-lg"
+              >
+                <div className="flex-shrink-0 w-8 text-center">
+                  {i === 0 ? (
+                    <span className="text-xl">&#x1F947;</span>
+                  ) : i === 1 ? (
+                    <span className="text-xl">&#x1F948;</span>
+                  ) : i === 2 ? (
+                    <span className="text-xl">&#x1F949;</span>
+                  ) : (
+                    <span className="text-sm font-bold text-slate-400">#{i + 1}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{c.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-slate-900">{c.approvedCount}</p>
+                  <p className="text-xs text-slate-500">{c.approvedCount === 1 ? "device" : "devices"}</p>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-slate-400 transition-transform ${expandedId === c.id ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {expandedId === c.id && (
+                <div className="px-4 pb-4 pt-0">
+                  <div className="border-t border-slate-100 pt-3">
+                    {loadingTemplates === c.id ? (
+                      <p className="text-xs text-slate-400">Loading devices...</p>
+                    ) : templates[c.id]?.length ? (
+                      <ul className="space-y-1">
+                        {templates[c.id].map((t) => (
+                          <li key={t.id}>
+                            <a
+                              href={`#/device/${t.id}`}
+                              className="text-sm text-blue-600 hover:text-blue-800"
+                            >
+                              {t.label}
+                            </a>
+                            <span className="ml-2 text-xs text-slate-400 capitalize">{t.category}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-slate-400">No devices found.</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

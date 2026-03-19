@@ -57,4 +57,41 @@ execSync(
   { cwd: apiDir, stdio: "inherit" }
 );
 
-console.log("Done!");
+// --- Drift check: detect orphan templates in DB ---
+console.log("\nChecking for drift...");
+const result = execSync(
+  `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT id, label, submitted_by FROM templates"`,
+  { cwd: apiDir, encoding: "utf-8" }
+);
+
+const parsed = JSON.parse(result);
+const rows: { id: string; label: string; submitted_by: string | null }[] =
+  parsed[0]?.results ?? [];
+
+const bundledIds = new Set(
+  DEVICE_TEMPLATES.map((t, i) => t.id ?? `auto-${i}`)
+);
+
+const communityTemplates = rows.filter(
+  (r) => !bundledIds.has(r.id) && r.submitted_by != null
+);
+const orphanTemplates = rows.filter(
+  (r) => !bundledIds.has(r.id) && r.submitted_by == null
+);
+const bundledCount = rows.filter((r) => bundledIds.has(r.id)).length;
+
+console.log(
+  `\n✅ ${bundledCount} bundled + ${communityTemplates.length} community = ${rows.length} total templates`
+);
+
+if (orphanTemplates.length > 0) {
+  console.log(
+    `\n⚠️  ${orphanTemplates.length} template(s) in DB not in deviceLibrary.ts (and not community-submitted):`
+  );
+  for (const t of orphanTemplates) {
+    console.log(`   - ${t.id}: ${t.label}`);
+  }
+  console.log("   Run DELETE manually if these should be removed.");
+}
+
+console.log("\nDone!");

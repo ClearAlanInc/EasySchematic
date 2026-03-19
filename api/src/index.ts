@@ -493,6 +493,21 @@ app.get("/contributors", async (c) => {
   return c.json(contributors, 200, CACHE_HEADERS);
 });
 
+app.get("/contributors/:id/templates", async (c) => {
+  const userId = c.req.param("id");
+  const { results } = await c.env.easyschematic_db
+    .prepare(
+      `SELECT t.id, t.label, t.device_type, t.category
+       FROM submissions s JOIN templates t ON t.submitted_by = s.user_id AND t.id = s.template_id
+       WHERE s.user_id = ? AND s.status = 'approved' AND s.action = 'create'
+       ORDER BY t.label`,
+    )
+    .bind(userId)
+    .all();
+
+  return c.json(results, 200, CACHE_HEADERS);
+});
+
 // ==================== TEMPLATE ENDPOINTS ====================
 
 app.get("/templates/categories", async (c) => {

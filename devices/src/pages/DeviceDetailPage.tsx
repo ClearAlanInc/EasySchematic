@@ -101,17 +101,6 @@ export default function DeviceDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {(template.submittedBy || template.lastEditedBy) && (
-        <div className="mb-6 flex items-center gap-4 text-xs text-slate-400">
-          {template.submittedBy && (
-            <span>Submitted by <span className="text-slate-600 font-medium">{template.submittedBy.name}</span></span>
-          )}
-          {template.lastEditedBy && (
-            <span>Last edited by <span className="text-slate-600 font-medium">{template.lastEditedBy.name}</span></span>
-          )}
-        </div>
-      )}
-
       {template.searchTerms && template.searchTerms.length > 0 && (
         <div className="mb-6">
           <span className="text-xs text-slate-400 uppercase tracking-wider">Search Terms</span>
@@ -126,6 +115,12 @@ export default function DeviceDetailPage({ id }: { id: string }) {
       {renderPortTable(inputs, "Inputs")}
       {renderPortTable(outputs, "Outputs")}
       {renderPortTable(bidi, "Bidirectional")}
+
+      {template.submittedBy && (
+        <div className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-400">
+          Submitted by <span className="text-slate-500">{template.submittedBy.name}</span>
+        </div>
+      )}
     </div>
   );
 }
