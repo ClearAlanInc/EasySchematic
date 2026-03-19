@@ -59,12 +59,18 @@ function OffsetEdgeComponent({
     return edge?.data?.stubbed === true;
   });
 
-  // Read routed waypoints for stub computation (serialized for stability)
+  // Read routed waypoints (serialized for stability)
   const routeWpStr = useSchematicStore((s) => {
-    if (!stubbed) return "";
     const r = s.routedEdges[id];
     if (!r?.waypoints?.length) return "";
     return r.waypoints.map((p) => `${p.x},${p.y}`).join("|");
+  });
+
+  // Read crossing points (serialized for stability)
+  const crossingStr = useSchematicStore((s) => {
+    const r = s.routedEdges[id];
+    if (!r?.crossingPoints?.length) return "";
+    return r.crossingPoints.map((p) => `${p.x},${p.y}`).join("|");
   });
 
   // Read manual waypoints directly (serialized for stable selector)
@@ -352,6 +358,62 @@ function OffsetEdgeComponent({
     };
   }
 
+  // --- Crossing arc bumps ---
+  const parsedRouteWps = routeWpStr
+    ? routeWpStr.split("|").map((s) => {
+        const [x, y] = s.split(",");
+        return { x: Number(x), y: Number(y) };
+      })
+    : [];
+  const crossingArcs = crossingStr && parsedRouteWps.length >= 2 && routeStr && !stubbed
+    ? (() => {
+        const crossings = crossingStr.split("|").map((s) => {
+          const [x, y] = s.split(",");
+          return { x: Number(x), y: Number(y) };
+        });
+        const ARC_R = 6;
+        return crossings.map((cp, i) => {
+          // Find which segment this crossing falls on
+          let isHorizontal = true;
+          for (let j = 0; j < parsedRouteWps.length - 1; j++) {
+            const a = parsedRouteWps[j], b = parsedRouteWps[j + 1];
+            const minX = Math.min(a.x, b.x), maxX = Math.max(a.x, b.x);
+            const minY = Math.min(a.y, b.y), maxY = Math.max(a.y, b.y);
+            if (cp.x >= minX - 1 && cp.x <= maxX + 1 && cp.y >= minY - 1 && cp.y <= maxY + 1) {
+              isHorizontal = Math.abs(a.y - b.y) < 1;
+              break;
+            }
+          }
+          // Draw a small semicircle arc bump with white mask behind it
+          const sw = (edgeStyle.strokeWidth as number) ?? 2;
+          const strokeColor = (edgeStyle.stroke as string) ?? "currentColor";
+          if (isHorizontal) {
+            return (
+              <g key={`cx-${i}`} style={{ pointerEvents: "none" }}>
+                <line x1={cp.x - ARC_R} y1={cp.y} x2={cp.x + ARC_R} y2={cp.y}
+                  stroke="white" strokeWidth={sw + 4} />
+                <path
+                  d={`M ${cp.x - ARC_R} ${cp.y} A ${ARC_R} ${ARC_R} 0 0 1 ${cp.x + ARC_R} ${cp.y}`}
+                  fill="none" stroke={strokeColor} strokeWidth={sw}
+                />
+              </g>
+            );
+          } else {
+            return (
+              <g key={`cx-${i}`} style={{ pointerEvents: "none" }}>
+                <line x1={cp.x} y1={cp.y - ARC_R} x2={cp.x} y2={cp.y + ARC_R}
+                  stroke="white" strokeWidth={sw + 4} />
+                <path
+                  d={`M ${cp.x} ${cp.y - ARC_R} A ${ARC_R} ${ARC_R} 0 0 1 ${cp.x} ${cp.y + ARC_R}`}
+                  fill="none" stroke={strokeColor} strokeWidth={sw}
+                />
+              </g>
+            );
+          }
+        });
+      })()
+    : null;
+
   // User-defined connection label rendered at the midpoint
   const connectionLabel = edgeLabel && routeStr ? (
     <foreignObject
@@ -428,6 +490,7 @@ function OffsetEdgeComponent({
         style={edgeStyle}
         markerEnd={markerEnd}
       />
+      {crossingArcs}
       {connectionLabel}
       {waypointHandles}
       {debugLabel}
