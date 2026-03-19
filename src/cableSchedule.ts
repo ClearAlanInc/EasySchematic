@@ -27,9 +27,39 @@ export interface CableScheduleRow {
   multicableLabel: string;
 }
 
+/** Prefix letter for each signal type when using type-prefix cable naming */
+const SIGNAL_PREFIX: Record<SignalType, string> = {
+  sdi: "S",
+  hdmi: "H",
+  ndi: "N",
+  dante: "D",
+  "analog-audio": "A",
+  aes: "AE",
+  dmx: "DX",
+  madi: "MA",
+  usb: "U",
+  ethernet: "E",
+  fiber: "F",
+  displayport: "DP",
+  hdbaset: "HB",
+  srt: "SR",
+  genlock: "G",
+  gpio: "GP",
+  rs422: "RS",
+  serial: "SL",
+  thunderbolt: "TB",
+  composite: "CO",
+  vga: "V",
+  power: "P",
+  midi: "MI",
+  tally: "TL",
+  custom: "X",
+};
+
 export function computeCableSchedule(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
+  namingScheme: "sequential" | "type-prefix" = "sequential",
 ): CableScheduleRow[] {
   const connections = edges
     .filter((e) => e.data?.signalType)
@@ -59,6 +89,7 @@ export function computeCableSchedule(
 
       return {
         edgeId: e.id,
+        rawSignalType: signalType,
         storedCableId: e.data?.cableId as string | undefined,
         storedCableLength: (e.data?.cableLength as string | undefined) ?? "",
         multicableLabel: (e.data?.multicableLabel as string) ?? "",
@@ -82,6 +113,32 @@ export function computeCableSchedule(
     a.targetDevice.localeCompare(b.targetDevice) ||
     a.targetPort.localeCompare(b.targetPort),
   );
+
+  if (namingScheme === "type-prefix") {
+    // Per-type counters for type-prefix naming (e.g. S001, S002, E001)
+    const counters = new Map<string, number>();
+    return connections.map((c) => {
+      const prefix = SIGNAL_PREFIX[c.rawSignalType] ?? "X";
+      const count = (counters.get(prefix) ?? 0) + 1;
+      counters.set(prefix, count);
+      return {
+        edgeId: c.edgeId,
+        cableId: c.storedCableId || `${prefix}${String(count).padStart(3, "0")}`,
+        sourceDevice: c.sourceDevice,
+        sourcePort: c.sourcePort,
+        sourceConnector: c.sourceConnector,
+        targetDevice: c.targetDevice,
+        targetPort: c.targetPort,
+        targetConnector: c.targetConnector,
+        cableType: c.cableType,
+        signalType: c.signalType,
+        cableLength: c.storedCableLength,
+        sourceRoom: c.sourceRoom,
+        targetRoom: c.targetRoom,
+        multicableLabel: c.multicableLabel,
+      };
+    });
+  }
 
   return connections.map((c, i) => ({
     edgeId: c.edgeId,
