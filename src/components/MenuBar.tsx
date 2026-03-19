@@ -5,7 +5,7 @@ import { exportImage } from "../exportUtils";
 import { exportDxf } from "../dxfExport";
 import { exportPdf } from "../pdfExport";
 import { PAPER_SIZES } from "../printConfig";
-import type { SchematicFile } from "../types";
+import type { SchematicFile, SchematicNode, AnnotationData } from "../types";
 import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
 import AboutDialog from "./AboutDialog";
@@ -223,6 +223,24 @@ export default function MenuBar() {
 
   // ─── Menu definitions ─────────────────────────────────
 
+  const addAnnotation = useCallback((shape: AnnotationData["shape"]) => {
+    const state = useSchematicStore.getState();
+    state.pushSnapshot();
+    const viewport = reactFlowInstance.getViewport();
+    // Place annotation in the center of the current viewport
+    const x = (-viewport.x + window.innerWidth / 2) / viewport.zoom - 100;
+    const y = (-viewport.y + window.innerHeight / 2) / viewport.zoom - 50;
+    const newNode: SchematicNode = {
+      id: `annotation-${Date.now()}`,
+      type: "annotation",
+      position: { x, y },
+      data: { shape, color: "rgba(59, 130, 246, 0.1)", borderColor: "#3b82f6" } as AnnotationData,
+      style: { width: 200, height: 100 },
+    };
+    useSchematicStore.setState({ nodes: [...state.nodes, newNode] });
+    state.saveToLocalStorage();
+  }, [reactFlowInstance]);
+
   const closeMenu = () => setOpenMenu(null);
 
   const menus: Record<string, MenuEntry[]> = {
@@ -241,6 +259,10 @@ export default function MenuBar() {
       { type: "item", label: "Delete", shortcut: "Del", onClick: () => useSchematicStore.getState().removeSelected() },
       { type: "separator" },
       { type: "item", label: "Select All", shortcut: "Ctrl+A", onClick: () => useSchematicStore.getState().selectAll() },
+    ],
+    Insert: [
+      { type: "item", label: "Add Rectangle", onClick: () => addAnnotation("rectangle") },
+      { type: "item", label: "Add Ellipse", onClick: () => addAnnotation("ellipse") },
     ],
     View: [
       {
