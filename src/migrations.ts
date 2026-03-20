@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 16;
+export const CURRENT_SCHEMA_VERSION = 17;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -138,6 +138,11 @@ const migrations: Record<number, Migration> = {
   15: (data) => {
     // v15 → v16: cableLength on connections — optional, no transform needed
     data.version = 16;
+    return data;
+  },
+  16: (data) => {
+    // v16 → v17: modular device slots (expansion cards) — optional field, no transform needed
+    data.version = 17;
     return data;
   },
   12: (data) => {

@@ -240,6 +240,19 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         )
       )}
 
+      {/* Empty Expansion Slots */}
+      {data.slots?.some((s) => !s.cardTemplateId) && (
+        <div>
+          {data.slots.filter((s) => !s.cardTemplateId).map((slot) => (
+            <div key={slot.slotId} className="flex justify-center items-center h-5 mx-1">
+              <span className="text-[9px] text-[var(--color-text-muted)] opacity-40 truncate text-center italic">
+                {slot.label} (empty)
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Bidirectional Ports */}
       {bidirectional.length > 0 && (
         <div>

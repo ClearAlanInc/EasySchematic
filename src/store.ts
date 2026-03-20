@@ -18,6 +18,7 @@ import type {
   TitleBlock,
   TitleBlockLayout,
   TemplatePreset,
+  InstalledSlot,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig } from "./types";
@@ -29,6 +30,7 @@ import { routeAllEdges, type RoutedEdge } from "./edgeRouter";
 import { areConnectorsCompatible } from "./connectorTypes";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
+import { getTemplateById } from "./templateApi";
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
 import { computeCableSchedule } from "./cableSchedule";
 
@@ -104,6 +106,8 @@ interface SchematicState {
   updateDevice: (nodeId: string, data: DeviceData) => void;
   /** Patch device data without clearing baseLabel (for spreadsheet edits). */
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
+  /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
+  swapCard: (nodeId: string, slotId: string, cardTemplateId: string | null) => void;
   setEditingNodeId: (id: string | null) => void;
   addRoom: (label: string, position: { x: number; y: number }) => void;
   updateRoomLabel: (nodeId: string, label: string) => void;
@@ -316,6 +320,18 @@ function clonePorts(ports: Port[]): Port[] {
   return ports.map((p, i) => {
     const clone: Port = { ...p, id: `${prefix}-${i}` };
     // Deep clone nested objects
+    if (p.capabilities) clone.capabilities = { ...p.capabilities };
+    if (p.networkConfig) clone.networkConfig = { ...p.networkConfig };
+    if (p.activeConfig) clone.activeConfig = { ...p.activeConfig };
+    return clone;
+  });
+}
+
+/** Clone ports for a card installed in a slot, namespacing IDs and setting section. */
+function cloneCardPorts(ports: Port[], slotId: string, slotLabel: string): Port[] {
+  const prefix = `slot-${slotId}-${Date.now()}`;
+  return ports.map((p, i) => {
+    const clone: Port = { ...p, id: `${prefix}-${i}`, section: slotLabel };
     if (p.capabilities) clone.capabilities = { ...p.capabilities };
     if (p.networkConfig) clone.networkConfig = { ...p.networkConfig };
     if (p.activeConfig) clone.activeConfig = { ...p.activeConfig };
@@ -542,6 +558,34 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ports = clonePorts(template.ports);
     }
 
+    // Initialize expansion slots from template
+    let installedSlots: InstalledSlot[] | undefined;
+    if (template.slots && template.slots.length > 0) {
+      installedSlots = [];
+      for (const slotDef of template.slots) {
+        const cardTpl = slotDef.defaultCardId ? getTemplateById(slotDef.defaultCardId) : undefined;
+        if (cardTpl) {
+          const cardPorts = cloneCardPorts(cardTpl.ports, slotDef.id, slotDef.label);
+          ports = [...ports, ...cardPorts];
+          installedSlots.push({
+            slotId: slotDef.id,
+            label: slotDef.label,
+            cardTemplateId: cardTpl.id,
+            cardLabel: cardTpl.label,
+            cardManufacturer: cardTpl.manufacturer,
+            cardModelNumber: cardTpl.modelNumber,
+            portIds: cardPorts.map((p) => p.id),
+          });
+        } else {
+          installedSlots.push({
+            slotId: slotDef.id,
+            label: slotDef.label,
+            portIds: [],
+          });
+        }
+      }
+    }
+
     const newNode: DeviceNode = {
       id: nextNodeId(),
       type: "device",
@@ -563,6 +607,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           template.ports.some((p) => p.isMulticable && p.connectorType === "none")
           ? { integratedWithCable: true }
           : {}),
+        ...(installedSlots && installedSlots.length > 0 ? { slots: installedSlots } : {}),
       },
     };
     set({ nodes: renumberNodes([...get().nodes, newNode]) });
@@ -850,6 +895,74 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         return { ...n, data: { ...n.data, ...patch } } as DeviceNode;
       }),
     });
+    get().saveToLocalStorage();
+  },
+
+  swapCard: (nodeId, slotId, cardTemplateId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const nodeIdx = state.nodes.findIndex((n) => n.id === nodeId && n.type === "device");
+    if (nodeIdx === -1) return;
+    const node = state.nodes[nodeIdx] as DeviceNode;
+    const data = node.data;
+    const slots = data.slots ?? [];
+    const slotIdx = slots.findIndex((s) => s.slotId === slotId);
+    if (slotIdx === -1) return;
+
+    const oldSlot = slots[slotIdx];
+    const oldPortIds = new Set(oldSlot.portIds);
+
+    // Remove old card's ports
+    let newPorts = data.ports.filter((p) => !oldPortIds.has(p.id));
+
+    // Remove edges connected to old card's ports
+    const newEdges = oldPortIds.size > 0
+      ? state.edges.filter((e) => {
+          const srcHandle = e.sourceHandle ?? "";
+          const tgtHandle = e.targetHandle ?? "";
+          if (e.source === nodeId && oldPortIds.has(srcHandle)) return false;
+          if (e.target === nodeId && oldPortIds.has(tgtHandle)) return false;
+          // Also check bidirectional suffixes
+          if (e.source === nodeId && oldPortIds.has(srcHandle.replace(/-(in|out)$/, ""))) return false;
+          if (e.target === nodeId && oldPortIds.has(tgtHandle.replace(/-(in|out)$/, ""))) return false;
+          return true;
+        })
+      : state.edges;
+
+    // Build new slot
+    let newSlot: InstalledSlot;
+    if (cardTemplateId) {
+      const cardTpl = getTemplateById(cardTemplateId);
+      if (!cardTpl) return;
+      const cardPorts = cloneCardPorts(cardTpl.ports, slotId, oldSlot.label);
+      newPorts = [...newPorts, ...cardPorts];
+      newSlot = {
+        slotId,
+        label: oldSlot.label,
+        cardTemplateId: cardTpl.id,
+        cardLabel: cardTpl.label,
+        cardManufacturer: cardTpl.manufacturer,
+        cardModelNumber: cardTpl.modelNumber,
+        portIds: cardPorts.map((p) => p.id),
+      };
+    } else {
+      newSlot = {
+        slotId,
+        label: oldSlot.label,
+        portIds: [],
+      };
+    }
+
+    const newSlots = slots.map((s, i) => (i === slotIdx ? newSlot : s));
+
+    const newNode = {
+      ...node,
+      data: { ...data, ports: newPorts, slots: newSlots },
+    } as DeviceNode;
+
+    const newNodes = state.nodes.map((n, i) => (i === nodeIdx ? newNode : n));
+    set({ nodes: newNodes, edges: newEdges });
     get().saveToLocalStorage();
   },
 

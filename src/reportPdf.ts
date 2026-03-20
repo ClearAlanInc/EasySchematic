@@ -225,11 +225,13 @@ function drawTableSection(
       doc.rect(REPORT_MARGIN_MM - 1, y - ROW_HEIGHT + 2, totalW + COL_GAP, ROW_HEIGHT, "F");
     }
 
-    doc.setTextColor(0);
+    const isSubItem = row._isSubItem === "true";
+    doc.setTextColor(isSubItem ? 120 : 0);
     let x = REPORT_MARGIN_MM;
     for (const col of visCols) {
       const text = row[col.key] ?? "";
-      doc.text(text, x, y, { maxWidth: col.widthMm });
+      const indent = isSubItem && col.key !== "count" ? 4 : 0;
+      doc.text(text, x + indent, y, { maxWidth: col.widthMm - indent });
       x += col.widthMm + COL_GAP;
     }
   };

@@ -10,6 +10,13 @@ import { getCableType } from "./cableTypes";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
+export interface PackListDeviceCard {
+  cardLabel: string;
+  manufacturer: string;
+  modelNumber: string;
+  count: number;
+}
+
 export interface PackListDevice {
   model: string;
   deviceType: string;
@@ -17,6 +24,7 @@ export interface PackListDevice {
   count: number;
   manufacturer: string;
   modelNumber: string;
+  cards: PackListDeviceCard[];
 }
 
 export interface PackListCable {
@@ -79,8 +87,16 @@ export function mergeDevicesByModel(devices: PackListDevice[]): PackListDevice[]
     const existing = map.get(key);
     if (existing) {
       existing.count += d.count;
+      // Merge cards
+      for (const card of d.cards) {
+        const ec = existing.cards.find(
+          (c) => c.cardLabel === card.cardLabel && c.manufacturer === card.manufacturer && c.modelNumber === card.modelNumber,
+        );
+        if (ec) ec.count += card.count;
+        else existing.cards.push({ ...card });
+      }
     } else {
-      map.set(key, { ...d, room: "" });
+      map.set(key, { ...d, room: "", cards: d.cards.map((c) => ({ ...c })) });
     }
   }
   return [...map.values()].sort(
@@ -162,7 +178,30 @@ export function computePackList(
         count: 1,
         manufacturer: data.manufacturer ?? "",
         modelNumber: data.modelNumber ?? "",
+        cards: [],
       });
+    }
+
+    // Collect installed expansion cards as sub-items of their parent device
+    if (data.slots) {
+      const device = deviceMap.get(key)!;
+      for (const slot of data.slots) {
+        if (!slot.cardTemplateId || !slot.cardLabel) continue;
+        const cardKey = `${slot.cardLabel}|${slot.cardManufacturer ?? ""}|${slot.cardModelNumber ?? ""}`;
+        const existingCard = device.cards.find(
+          (c) => `${c.cardLabel}|${c.manufacturer}|${c.modelNumber}` === cardKey,
+        );
+        if (existingCard) {
+          existingCard.count++;
+        } else {
+          device.cards.push({
+            cardLabel: slot.cardLabel,
+            manufacturer: slot.cardManufacturer ?? "",
+            modelNumber: slot.cardModelNumber ?? "",
+            count: 1,
+          });
+        }
+      }
     }
   }
   const devices = [...deviceMap.values()].sort(
@@ -269,6 +308,9 @@ export function exportPackListCsv(
   lines.push(csvRow(["Qty", "Device", "Manufacturer", "Model #", "Type", "Room"]));
   for (const d of data.devices) {
     lines.push(csvRow([`${d.count}`, d.model, d.manufacturer, d.modelNumber, d.deviceType, d.room]));
+    for (const c of d.cards) {
+      lines.push(csvRow([`  ${c.count}`, `  ${c.cardLabel}`, c.manufacturer, c.modelNumber, "", ""]));
+    }
   }
   lines.push("");
 
@@ -325,16 +367,29 @@ export function getPackListTableData(
   const roomColVisible = devicesTableDef?.columns.find((c) => c.key === "room")?.visible ?? false;
   const devGroupBy = devicesTableDef?.groupBy;
   const useRawDevices = devGroupBy === "room" || roomColVisible;
-  const deviceRows = (useRawDevices ? data.devices : mergeDevicesByModel(data.devices)).map(
-    (d) => ({
+  const deviceSource = useRawDevices ? data.devices : mergeDevicesByModel(data.devices);
+  const deviceRows: Record<string, string>[] = [];
+  for (const d of deviceSource) {
+    deviceRows.push({
       count: `${d.count}x`,
       model: d.model,
       manufacturer: d.manufacturer,
       modelNumber: d.modelNumber,
       deviceType: d.deviceType,
       room: d.room,
-    }),
-  );
+    });
+    for (const c of d.cards) {
+      deviceRows.push({
+        count: `${c.count}x`,
+        model: c.cardLabel,
+        manufacturer: c.manufacturer,
+        modelNumber: c.modelNumber,
+        deviceType: "",
+        room: "",
+        _isSubItem: "true",
+      });
+    }
+  }
 
   let deviceGroupedRows: Map<string, Record<string, string>[]> | undefined;
   if (devGroupBy === "room") {

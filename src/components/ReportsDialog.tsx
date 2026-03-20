@@ -8,6 +8,7 @@ import {
   mergeCablesByType,
   exportPackListCsv,
   getPackListTableData,
+  type PackListDevice,
 } from "../packList";
 import {
   computeCableSchedule,
@@ -1558,13 +1559,7 @@ function PackListTabInline() {
               <tbody>
                 {(groupDevicesByRoom
                   ? renderGroupedDevices(data.devices)
-                  : mergeDevicesByModel(data.devices).map((d, i) => (
-                      <tr key={i} className={rowClass(i)}>
-                        <td className={tdClass}>{d.count}&times;</td>
-                        <td className={tdClass}>{d.model}</td>
-                        <td className={tdClass}>{d.deviceType}</td>
-                      </tr>
-                    ))
+                  : renderDeviceRows(mergeDevicesByModel(data.devices))
                 )}
               </tbody>
             </table>
@@ -1649,8 +1644,36 @@ function PackListTabInline() {
   );
 }
 
-function renderGroupedDevices(devices: { model: string; deviceType: string; room: string; count: number }[]) {
-  const groups = new Map<string, typeof devices>();
+function renderDeviceRows(devices: PackListDevice[], keyPrefix = "") {
+  const elements: React.ReactNode[] = [];
+  let idx = 0;
+  for (const d of devices) {
+    elements.push(
+      <tr key={`${keyPrefix}${idx}`} className={rowClass(idx)}>
+        <td className={tdClass}>{d.count}&times;</td>
+        <td className={tdClass}>{d.model}</td>
+        <td className={tdClass}>{d.deviceType}</td>
+      </tr>,
+    );
+    idx++;
+    for (let ci = 0; ci < d.cards.length; ci++) {
+      const c = d.cards[ci];
+      elements.push(
+        <tr key={`${keyPrefix}${idx}-c${ci}`} className="bg-[var(--color-surface)]">
+          <td className={`${tdClass} pl-6 text-[var(--color-text-muted)]`}>{c.count}&times;</td>
+          <td className={`${tdClass} text-[var(--color-text-muted)]`}>
+            <span className="pl-3">{c.cardLabel}</span>
+          </td>
+          <td className={tdClass} />
+        </tr>,
+      );
+    }
+  }
+  return elements;
+}
+
+function renderGroupedDevices(devices: PackListDevice[]) {
+  const groups = new Map<string, PackListDevice[]>();
   for (const d of devices) {
     const arr = groups.get(d.room);
     if (arr) arr.push(d);
@@ -1658,7 +1681,6 @@ function renderGroupedDevices(devices: { model: string; deviceType: string; room
   }
 
   const elements: React.ReactNode[] = [];
-  let idx = 0;
   for (const [room, rows] of groups) {
     elements.push(
       <tr key={`h-${room}`}>
@@ -1670,16 +1692,7 @@ function renderGroupedDevices(devices: { model: string; deviceType: string; room
         </td>
       </tr>,
     );
-    for (const d of rows) {
-      elements.push(
-        <tr key={`${room}-${idx}`} className={rowClass(idx)}>
-          <td className={tdClass}>{d.count}&times;</td>
-          <td className={tdClass}>{d.model}</td>
-          <td className={tdClass}>{d.deviceType}</td>
-        </tr>,
-      );
-      idx++;
-    }
+    elements.push(...renderDeviceRows(rows, `${room}-`));
   }
   return elements;
 }

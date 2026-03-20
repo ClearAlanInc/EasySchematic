@@ -168,6 +168,38 @@ function RoomHeader({ room }: { room: string }) {
 
 // ─── Tabs ───
 
+function DeviceRows({ devices, keyPrefix }: { devices: PackListDevice[]; keyPrefix?: string }) {
+  let rowIdx = 0;
+  return (
+    <>
+      {devices.map((d, di) => (
+        <>
+          <tr key={`${keyPrefix ?? ""}d-${di}`} className={rowClass(rowIdx++)}>
+            <td className={tdClass}>{d.count}×</td>
+            <td className={tdClass}>
+              {d.model}
+              {d.cards.length > 0 && <span className="text-[9px] text-[var(--color-text-muted)] ml-1">*</span>}
+            </td>
+            <td className={tdClass}>{d.deviceType}</td>
+          </tr>
+          {d.cards.map((c, ci) => (
+            <tr key={`${keyPrefix ?? ""}d-${di}-c-${ci}`} className="bg-[var(--color-surface)]">
+              <td className={`${tdClass} pl-6 text-[var(--color-text-muted)]`}>{c.count}×</td>
+              <td className={`${tdClass} text-[var(--color-text-muted)]`}>
+                <span className="pl-3">{c.cardLabel}</span>
+                {c.manufacturer && (
+                  <span className="text-[10px] opacity-60 ml-1">{c.manufacturer} {c.modelNumber}</span>
+                )}
+              </td>
+              <td className={tdClass} />
+            </tr>
+          ))}
+        </>
+      ))}
+    </>
+  );
+}
+
 function DevicesTab({
   devices,
   groupByRoom,
@@ -194,13 +226,7 @@ function DevicesTab({
           {[...groups.entries()].map(([room, rows]) => (
             <>
               <RoomHeader key={`h-${room}`} room={room} />
-              {rows.map((d, i) => (
-                <tr key={`${room}-${i}`} className={rowClass(i)}>
-                  <td className={tdClass}>{d.count}×</td>
-                  <td className={tdClass}>{d.model}</td>
-                  <td className={tdClass}>{d.deviceType}</td>
-                </tr>
-              ))}
+              <DeviceRows devices={rows} keyPrefix={`${room}-`} />
             </>
           ))}
         </tbody>
@@ -219,13 +245,7 @@ function DevicesTab({
         </tr>
       </thead>
       <tbody>
-        {merged.map((d, i) => (
-          <tr key={i} className={rowClass(i)}>
-            <td className={tdClass}>{d.count}×</td>
-            <td className={tdClass}>{d.model}</td>
-            <td className={tdClass}>{d.deviceType}</td>
-          </tr>
-        ))}
+        <DeviceRows devices={merged} />
       </tbody>
     </table>
   );

@@ -1686,6 +1686,7 @@ function PreviewDataRow({
 }) {
   const visCols = getVisibleColumns(tableDef);
   const colGap = mm(1.5);
+  const isSubItem = row._isSubItem === "true";
 
   return (
     <div
@@ -1700,24 +1701,27 @@ function PreviewDataRow({
         background: rowIndex % 2 === 1 ? "#f8f8f8" : "transparent",
       }}
     >
-      {visCols.map((col) => (
-        <div
-          key={col.key}
-          style={{
-            width: mm(col.widthMm),
-            paddingLeft: mm(0.5),
-            paddingRight: colGap,
-            fontSize: mm(2.7),
-            color: "#222",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          {row[col.key] ?? ""}
-        </div>
-      ))}
+      {visCols.map((col) => {
+        const indent = isSubItem && col.key !== "count" ? mm(4) : 0;
+        return (
+          <div
+            key={col.key}
+            style={{
+              width: mm(col.widthMm),
+              paddingLeft: mm(0.5) + indent,
+              paddingRight: colGap,
+              fontSize: mm(2.7),
+              color: isSubItem ? "#888" : "#222",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            {row[col.key] ?? ""}
+          </div>
+        );
+      })}
     </div>
   );
 }
