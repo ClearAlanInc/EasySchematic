@@ -483,10 +483,23 @@ app.get("/contributors", async (c) => {
     .prepare(
       `SELECT u.id, u.name, u.email,
               COUNT(*) as approved_count,
-              SUM(CASE WHEN s.action = 'create' THEN 1 ELSE 0 END) as created_count,
-              SUM(CASE WHEN s.action = 'update' THEN 1 ELSE 0 END) as edited_count
-       FROM submissions s JOIN users u ON s.user_id = u.id
-       WHERE s.status = 'approved'
+              SUM(is_creator) as created_count,
+              SUM(CASE WHEN is_creator = 0 AND is_editor = 1 THEN 1 ELSE 0 END) as edited_count
+       FROM (
+         SELECT user_id, template_id,
+                MAX(is_creator) as is_creator,
+                MAX(is_editor) as is_editor
+         FROM (
+           SELECT submitted_by as user_id, id as template_id, 1 as is_creator, 0 as is_editor
+           FROM templates WHERE submitted_by IS NOT NULL
+           UNION ALL
+           SELECT s.user_id, s.template_id, 0 as is_creator, 1 as is_editor
+           FROM submissions s
+           WHERE s.status = 'approved' AND s.action = 'update' AND s.template_id IS NOT NULL
+         )
+         GROUP BY user_id, template_id
+       ) contrib
+       JOIN users u ON contrib.user_id = u.id
        GROUP BY u.id
        ORDER BY approved_count DESC
        LIMIT 50`,
@@ -510,15 +523,16 @@ app.get("/contributors/:id/templates", async (c) => {
   const { results } = await c.env.easyschematic_db
     .prepare(
       `SELECT t.id, t.label, t.device_type, t.category,
-              MAX(CASE WHEN s.action = 'create' THEN 1 ELSE 0 END) as is_creator,
+              MAX(CASE WHEN t.submitted_by = ? THEN 1 ELSE 0 END) as is_creator,
               MAX(CASE WHEN s.action = 'update' THEN 1 ELSE 0 END) as is_editor
-       FROM submissions s
-       JOIN templates t ON s.template_id = t.id
-       WHERE s.user_id = ? AND s.status = 'approved'
+       FROM templates t
+       LEFT JOIN submissions s
+         ON s.template_id = t.id AND s.user_id = ? AND s.status = 'approved' AND s.action = 'update'
+       WHERE t.submitted_by = ? OR s.id IS NOT NULL
        GROUP BY t.id
        ORDER BY t.label`,
     )
-    .bind(userId)
+    .bind(userId, userId, userId)
     .all();
 
   const templatesWithContribution = (results as unknown as { id: string; label: string; device_type: string; category: string; is_creator: number; is_editor: number }[]).map((r) => ({
