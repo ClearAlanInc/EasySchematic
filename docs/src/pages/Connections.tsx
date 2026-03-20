@@ -83,6 +83,47 @@ export default function ConnectionsPage() {
         <li>Click <strong>Reset to Defaults</strong> to restore the original color scheme</li>
         <li>Custom colors are saved with your schematic and persist across sessions</li>
       </ul>
+
+      <h2>Cable IDs &amp; labels</h2>
+      <p>
+        Every connection can have a <strong>cable ID</strong> label displayed on the canvas. EasySchematic offers two
+        naming schemes:
+      </p>
+      <ul>
+        <li>
+          <strong>Type-prefix</strong> (default) — IDs based on the signal type, e.g. "SDI-1", "HDMI-2"
+        </li>
+        <li>
+          <strong>Sequential</strong> — simple numbered IDs like "Cable 1", "Cable 2"
+        </li>
+      </ul>
+      <p>
+        Use the <strong>View</strong> menu to toggle cable labels on or off across the entire canvas. You can also
+        hide the label on a single connection by right-clicking it and choosing <strong>Hide Label</strong>. To start
+        fresh, use the option to <strong>Clear All Cable IDs</strong> from the same menu.
+      </p>
+
+      <h2>Line jump arcs</h2>
+      <p>
+        When connections cross over each other, EasySchematic can render small <strong>arc markers</strong> at each
+        crossing point. This makes it much easier to trace individual paths through a dense schematic. Toggle line
+        jump arcs on or off from the <strong>View</strong> menu.
+      </p>
+
+      <h2>Stubbed connections</h2>
+      <p>
+        Connections can be rendered as short <strong>stubs</strong> from each port instead of full routed lines. This
+        is useful for reducing visual clutter on busy schematics where the routing itself isn't important. Right-click
+        a connection and select <strong>Stub Connection</strong> to toggle between stubbed and fully routed display.
+      </p>
+
+      <h2>Incompatible connector override</h2>
+      <p>
+        By default, connections require <strong>matching connector types</strong> on both ports. In some setups you
+        may need to force-connect ports with mismatched connectors (e.g. an adapter cable). Right-click a connection
+        and select <strong>Allow Incompatible Connectors</strong> to override the compatibility check for that
+        connection.
+      </p>
     </>
   );
 }

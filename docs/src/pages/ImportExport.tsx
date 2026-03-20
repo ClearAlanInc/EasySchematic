@@ -31,6 +31,24 @@ export default function ImportExportPage() {
         the file was saved with an older version.
       </p>
 
+      <h2>Device templates</h2>
+      <p>
+        You can export and import your user device templates separately from full schematics.
+        This is useful for sharing your custom device library with colleagues or backing it up.
+      </p>
+      <ul>
+        <li>
+          <strong>Export templates</strong> — saves your user device templates as a <code>.json</code> file
+        </li>
+        <li>
+          <strong>Import templates</strong> — loads templates from a file, merging them with your existing user templates
+        </li>
+      </ul>
+      <p>
+        This is separate from schematic <strong>Save / Open</strong>, which handles full schematics
+        (devices, connections, rooms, and all configuration).
+      </p>
+
       <h2>PNG / SVG (image export)</h2>
       <ul>
         <li><strong>Export PNG</strong> — raster image at screen resolution, suitable for documents and presentations</li>

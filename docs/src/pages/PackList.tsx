@@ -13,7 +13,7 @@ export default function PackListPage() {
         The pack list dialog has two tabs:
       </p>
       <ul>
-        <li><strong>Devices</strong> — every device in your schematic with quantity, model, type, and room</li>
+        <li><strong>Devices</strong> — every device in your schematic with quantity, manufacturer, model number, model, type, and room</li>
         <li><strong>Cables</strong> — cable counts summarized by cable type, signal type, and route</li>
       </ul>
       <p>

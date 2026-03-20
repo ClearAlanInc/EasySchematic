@@ -1,7 +1,7 @@
 export default function NotesPage() {
   return (
     <>
-      <h1>Notes</h1>
+      <h1>Notes &amp; Annotations</h1>
 
       <p>
         Notes let you add rich text annotations directly on the canvas — labels, descriptions, revision notes, or
@@ -41,6 +41,18 @@ export default function NotesPage() {
       <p>
         Select the note and press <strong>Delete</strong> or <strong>Backspace</strong>.
       </p>
+
+      <h2>Annotation shapes</h2>
+      <p>
+        In addition to text notes, you can place <strong>rectangle</strong> and <strong>ellipse</strong> annotation
+        shapes on the canvas. Add them from the <strong>Insert</strong> menu
+        (Insert → Add Rectangle / Add Ellipse).
+      </p>
+      <ul>
+        <li>Customizable <strong>fill color</strong>, <strong>border color</strong>, and optional <strong>text label</strong></li>
+        <li>Resize by dragging the corner or edge handles</li>
+        <li>Delete with <strong>Delete</strong> or <strong>Backspace</strong></li>
+      </ul>
     </>
   );
 }

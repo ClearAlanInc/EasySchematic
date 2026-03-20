@@ -6,11 +6,12 @@
       "id": "room-5",
       "type": "room",
       "position": {
-        "x": 1040,
-        "y": 1500
+        "x": 1031,
+        "y": 1498
       },
       "data": {
-        "label": "TECH TABLE"
+        "label": "TECH TABLE",
+        "locked": true
       },
       "style": {
         "width": 1314,
@@ -25,7 +26,8 @@
       "dragging": false,
       "width": 1314,
       "height": 674,
-      "resizing": false
+      "resizing": false,
+      "draggable": false
     },
     {
       "id": "room-4",
@@ -35,7 +37,8 @@
         "y": 180
       },
       "data": {
-        "label": "Stage"
+        "label": "Stage",
+        "locked": true
       },
       "style": {
         "width": 738,
@@ -50,7 +53,8 @@
       "dragging": false,
       "width": 738,
       "height": 1992,
-      "resizing": false
+      "resizing": false,
+      "draggable": false
     },
     {
       "id": "room-3",
@@ -60,7 +64,8 @@
         "y": 180
       },
       "data": {
-        "label": "Booth"
+        "label": "Booth",
+        "locked": true
       },
       "style": {
         "width": 400,
@@ -75,13 +80,14 @@
       "dragging": false,
       "width": 1545,
       "height": 1247,
-      "resizing": false
+      "resizing": false,
+      "draggable": false
     },
     {
       "id": "device-33",
       "type": "device",
       "position": {
-        "x": 560,
+        "x": 540,
         "y": 120
       },
       "data": {
@@ -184,7 +190,7 @@
       "id": "device-36",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 120
       },
       "data": {
@@ -221,7 +227,7 @@
       "id": "device-37",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 220
       },
       "data": {
@@ -362,8 +368,8 @@
       "id": "device-39",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 0
+        "x": 460,
+        "y": 60
       },
       "data": {
         "label": "TV 1",
@@ -399,8 +405,8 @@
       "id": "device-40",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 140
+        "x": 460,
+        "y": 200
       },
       "data": {
         "label": "TV 2",
@@ -436,8 +442,8 @@
       "id": "device-41",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 280
+        "x": 460,
+        "y": 340
       },
       "data": {
         "label": "TV 3",
@@ -473,8 +479,8 @@
       "id": "device-42",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 400
+        "x": 460,
+        "y": 460
       },
       "data": {
         "label": "TV 4",
@@ -510,8 +516,8 @@
       "id": "device-43",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 540
+        "x": 460,
+        "y": 600
       },
       "data": {
         "label": "TV 5",
@@ -547,8 +553,8 @@
       "id": "device-44",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 660
+        "x": 460,
+        "y": 720
       },
       "data": {
         "label": "TV 6",
@@ -584,8 +590,8 @@
       "id": "device-45",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 800
+        "x": 460,
+        "y": 860
       },
       "data": {
         "label": "TV 7",
@@ -621,8 +627,8 @@
       "id": "device-46",
       "type": "device",
       "position": {
-        "x": 420,
-        "y": 980
+        "x": 460,
+        "y": 1040
       },
       "data": {
         "label": "TV 8",
@@ -658,7 +664,7 @@
       "id": "device-47",
       "type": "device",
       "position": {
-        "x": 1140,
+        "x": 1240,
         "y": 60
       },
       "data": {
@@ -751,7 +757,7 @@
       "id": "device-48",
       "type": "device",
       "position": {
-        "x": 1140,
+        "x": 1240,
         "y": 240
       },
       "data": {
@@ -845,7 +851,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 0
+        "y": 60
       },
       "data": {
         "label": "BMD SDI→HDMI 1",
@@ -889,7 +895,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 140
+        "y": 200
       },
       "data": {
         "label": "BMD SDI→HDMI 2",
@@ -933,7 +939,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 280
+        "y": 340
       },
       "data": {
         "label": "BMD SDI→HDMI 3",
@@ -977,7 +983,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 400
+        "y": 460
       },
       "data": {
         "label": "BMD SDI→HDMI 4",
@@ -1021,7 +1027,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 540
+        "y": 600
       },
       "data": {
         "label": "BMD SDI→HDMI 5",
@@ -1065,7 +1071,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 660
+        "y": 720
       },
       "data": {
         "label": "BMD SDI→HDMI 6",
@@ -1109,7 +1115,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 800
+        "y": 860
       },
       "data": {
         "label": "BMD SDI→HDMI 7",
@@ -1153,7 +1159,7 @@
       "type": "device",
       "position": {
         "x": 160,
-        "y": 980
+        "y": 1040
       },
       "data": {
         "label": "BMD SDI→HDMI 8",
@@ -1196,7 +1202,7 @@
       "id": "device-60",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 440
       },
       "data": {
@@ -1626,7 +1632,7 @@
       "id": "device-69",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 340
       },
       "data": {
@@ -1663,7 +1669,7 @@
       "id": "device-70",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 1080
       },
       "data": {
@@ -1772,7 +1778,7 @@
       "id": "device-73",
       "type": "device",
       "position": {
-        "x": 1140,
+        "x": 1240,
         "y": 420
       },
       "data": {
@@ -1941,7 +1947,7 @@
       "id": "device-76",
       "type": "device",
       "position": {
-        "x": 880,
+        "x": 920,
         "y": 920
       },
       "data": {
@@ -2092,21 +2098,6 @@
     }
   ],
   "edges": [
-    {
-      "id": "edge-14",
-      "source": "device-33",
-      "target": "device-36",
-      "sourceHandle": "p1773360118182-0-out",
-      "targetHandle": "p1773360222505-0",
-      "data": {
-        "signalType": "thunderbolt"
-      },
-      "style": {
-        "stroke": "var(--color-thunderbolt)",
-        "strokeWidth": 2
-      },
-      "selected": false
-    },
     {
       "id": "edge-16",
       "source": "device-36",
@@ -2615,7 +2606,7 @@
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
       },
-      "selected": false
+      "selected": true
     },
     {
       "id": "edge-73",
@@ -2631,6 +2622,22 @@
         "strokeWidth": 2
       },
       "selected": false
+    },
+    {
+      "type": "smoothstep",
+      "source": "device-33",
+      "target": "device-36",
+      "sourceHandle": "p1773360118182-0-out",
+      "targetHandle": "p1773360222505-0",
+      "data": {
+        "signalType": "thunderbolt"
+      },
+      "style": {
+        "stroke": "var(--color-thunderbolt)",
+        "strokeWidth": 2
+      },
+      "selected": false,
+      "id": "xy-edge__device-33p1773360118182-0-out-device-36p1773360222505-0"
     }
   ],
   "printPaperId": "arch-d",

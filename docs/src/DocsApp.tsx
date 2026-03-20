@@ -21,7 +21,7 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   connections: { title: "Connections", component: ConnectionsPage },
   "connection-routing": { title: "Connection Routing", component: EdgeRoutingPage },
   "rooms-and-grouping": { title: "Rooms & Grouping", component: RoomsAndGroupingPage },
-  notes: { title: "Notes", component: NotesPage },
+  notes: { title: "Notes & Annotations", component: NotesPage },
   "device-library": { title: "Device Library", component: DeviceLibraryPage },
   "pack-list": { title: "Pack List & Reports", component: PackListPage },
   printing: { title: "Printing & Title Block", component: PrintingPage },

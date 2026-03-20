@@ -49,6 +49,33 @@ export default function GettingStartedPage() {
         </tbody>
       </table>
 
+      <h2>Preferences</h2>
+      <p>
+        Open <strong>Edit → Preferences</strong> to customize application behavior.
+      </p>
+
+      <h3>Scroll wheel configuration</h3>
+      <p>
+        Assign actions for each scroll modifier combination:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Input</th>
+            <th>Default action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Scroll</strong></td><td>Zoom</td></tr>
+          <tr><td><strong>Shift + Scroll</strong></td><td>Pan left / right</td></tr>
+          <tr><td><strong>Ctrl + Scroll</strong></td><td>Pan up / down</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Available actions: <strong>Zoom</strong>, <strong>Pan left/right</strong>, and <strong>Pan up/down</strong>.
+        Use the <strong>Reset to defaults</strong> button to restore the default bindings.
+      </p>
+
       <h2>Saving your work</h2>
       <p>
         EasySchematic auto-saves to your browser's localStorage after every change. To share or back up your work:

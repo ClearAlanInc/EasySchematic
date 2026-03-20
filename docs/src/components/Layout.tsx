@@ -9,7 +9,7 @@ const navItems = [
     { hash: "connections", label: "Connections" },
     { hash: "connection-routing", label: "Connection Routing" },
     { hash: "rooms-and-grouping", label: "Rooms & Grouping" },
-    { hash: "notes", label: "Notes" },
+    { hash: "notes", label: "Notes & Annotations" },
     { hash: "device-library", label: "Device Library" },
   ]},
   { hash: "pack-list", label: "Pack List & Reports" },
