@@ -28,6 +28,8 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   madi: "MADI",
   midi: "MIDI",
   tally: "Tally",
+  spdif: "S/PDIF",
+  adat: "ADAT",
   custom: "Other",
 };
 

@@ -6,7 +6,7 @@ export type ConnectorType =
   | "rj45" | "ethercon" | "sfp" | "lc"
   | "usb-a" | "usb-b" | "usb-c"
   | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
-  | "speakon" | "socapex" | "multipin" | "rca" | "none" | "other";
+  | "speakon" | "socapex" | "multipin" | "rca" | "toslink" | "barrel" | "none" | "other";
 
 export interface PortNetworkConfig {
   ip?: string;
@@ -63,6 +63,8 @@ export type SignalType =
   | "power"
   | "midi"
   | "tally"
+  | "spdif"
+  | "adat"
   | "custom";
 
 export type PortDirection = "input" | "output" | "bidirectional";
@@ -309,6 +311,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   power: "var(--color-power)",
   midi: "var(--color-midi)",
   tally: "var(--color-tally)",
+  spdif: "var(--color-spdif)",
+  adat: "var(--color-adat)",
   custom: "var(--color-custom)",
 };
 
@@ -339,6 +343,8 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   socapex: "Socapex",
   multipin: "Multi-pin",
   rca: "RCA",
+  toslink: "TOSLINK",
+  barrel: "DC Barrel",
   none: "None",
   other: "Other",
 };
@@ -368,5 +374,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   power: "Power",
   midi: "MIDI",
   tally: "Tally",
+  spdif: "S/PDIF",
+  adat: "ADAT",
   custom: "Custom",
 };

@@ -53,6 +53,10 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Composite</strong></td><td>Yellow</td><td>Legacy analog video (BNC/RCA)</td></tr>
           <tr><td><strong>VGA</strong></td><td>Dark Blue</td><td>Analog video (DB15)</td></tr>
           <tr><td><strong>Power</strong></td><td>Dark Amber</td><td>Power connections</td></tr>
+          <tr><td><strong>MIDI</strong></td><td>Fuchsia</td><td>Musical instrument digital interface</td></tr>
+          <tr><td><strong>Tally</strong></td><td>Rose</td><td>Tally/status indicators</td></tr>
+          <tr><td><strong>S/PDIF</strong></td><td>Light Violet</td><td>Digital audio (coaxial RCA)</td></tr>
+          <tr><td><strong>ADAT</strong></td><td>Dark Cyan</td><td>Multi-channel optical audio (TOSLINK)</td></tr>
           <tr><td><strong>Custom</strong></td><td>User-defined</td><td>Custom signal types for anything not covered above</td></tr>
         </tbody>
       </table>
@@ -71,7 +75,7 @@ export default function DevicesAndPortsPage() {
         <li>Rename the device</li>
         <li>Add, remove, or reorder ports</li>
         <li>Change port signal types and directions</li>
-        <li>Set a custom color</li>
+        <li>Set a custom body color, or use the separate <strong>header color picker</strong> to set the header bar color independently</li>
         <li>Save as a reusable user template, or set it as a project preset</li>
         <li>Revert to the original template defaults or the active preset</li>
       </ul>

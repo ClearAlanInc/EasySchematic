@@ -53,6 +53,8 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   power: "P",
   midi: "MI",
   tally: "TL",
+  spdif: "SP",
+  adat: "AD",
   custom: "X",
 };
 

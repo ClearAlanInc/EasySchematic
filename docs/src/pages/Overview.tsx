@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 23 signal types total)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 27 signal types total)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -33,7 +33,13 @@ export default function OverviewPage() {
           <strong>Room grouping</strong> — drag devices into room containers to organize by physical location, with lock/unlock to prevent accidental moves
         </li>
         <li>
-          <strong>Notes</strong> — rich text annotations with formatting (bold, italic, bullets, font sizes)
+          <strong>Notes &amp; annotations</strong> — rich text annotations with rectangle and ellipse shapes, plus formatting (bold, italic, bullets, font sizes)
+        </li>
+        <li>
+          <strong>Cable ID labels</strong> — auto-assigned labels for connections, making it easy to reference specific cable runs
+        </li>
+        <li>
+          <strong>Line jump arcs</strong> — arc markers at connection crossings for visual clarity
         </li>
         <li>
           <strong>Device library</strong> — 210+ real-world device templates across cameras, switchers, audio, lighting,

@@ -32,5 +32,7 @@
   --color-power: #a16207;     /* dark amber — electrical */
   --color-midi: #c026d3;      /* fuchsia — musical instrument digital interface */
   --color-tally: #be185d;     /* deep rose — tally/status */
+  --color-spdif: #a855f7;     /* lighter violet — digital audio (coax) */
+  --color-adat: #0e7490;      /* dark cyan — multi-ch optical audio */
   --color-custom: #64748b;    /* cool gray */
 }

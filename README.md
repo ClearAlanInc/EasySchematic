@@ -20,7 +20,7 @@
 - **Template presets** — save a device configuration as the project default for that template; new placements auto-apply the preset
 - **Quick-add** — double-click empty canvas to open a search dialog; type to find any device, note, or room and place it instantly
 - **Quick-create routers** — generate routers with configurable input/output counts and signal type
-- **Notes** — text annotations on the canvas
+- **Notes & annotations** — text annotations on the canvas with rectangle and ellipse shapes
 - **Rooms** — resizable dashed-border containers for grouping devices, with lock/unlock to prevent accidental moves
 - **Auto-numbering** — dropped devices auto-increment (Camera → Camera 1, Camera 2, …)
 - **Demo schematic** loaded for first-time visitors
@@ -34,7 +34,11 @@
 - **Manual route editing** — right-click a connection to add draggable waypoints; A\* routes each leg between waypoints while other connections yield
 - **Cable length** — editable per-connection field, tracked in cable schedule and pack list
 - **Multicable support** — cable accessory templates (snakes, socapex), trunk ports, break-in/break-out devices
-- **23 signal types**, all color-coded (see below)
+- **Cable ID labels** — auto-assigned with type-prefix naming (e.g. "SDI-1", "HDMI-2") or sequential ("Cable 1", "Cable 2")
+- **Line jump arcs** at connection crossings
+- **Stubbed connections** — render as short stubs instead of full routed lines
+- **Connector mismatch override** — force-connect ports with incompatible connectors
+- **27 signal types**, all color-coded (see below)
 
 ### Ports
 
@@ -56,11 +60,11 @@
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · MIDI · Tally · S/PDIF · ADAT · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
-**View options** — hide connections by signal type, toggle device type labels on/off
+**View options** — hide connections by signal type, toggle device type labels, cable labels, and line jumps on/off
 
 ### Pack List & Reports
 
@@ -99,6 +103,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **PNG** — 4x resolution raster export
 - **SVG** — vector export
 - **DXF** — CAD export with organized layer hierarchy (`EasySchematic-Devices`, `EasySchematic-Connections-SDI`, etc.) for Vectorworks, AutoCAD
+- **Template import/export** — export and import user device templates as JSON
 
 ### Editing
 
@@ -106,6 +111,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Copy/paste** with offset positioning
 - **Double-click device** to open device editor (label, type, ports, presets)
 - **Double-click canvas** to quick-add a device via search dialog
+- **Preferences** — scroll wheel configuration via Edit menu
 - **Right-click room** for context menu — edit properties (label, colors, border style) or lock/unlock the room
 
 ## Getting Started
@@ -153,7 +159,7 @@ Output goes to `dist/` — deploy as a static site anywhere.
 | Double-click canvas | Quick-add device search dialog |
 | Double-click room background | Quick-add device inside room |
 | Right-click room | Room context menu (edit properties, lock/unlock) |
-| Right-click connection | Add/remove routing waypoints, reset route |
+| Right-click connection | Connection context menu (waypoints, stub, override connector mismatch, hide label, reset route) |
 
 ## Contributing
 

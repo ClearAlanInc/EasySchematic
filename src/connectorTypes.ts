@@ -26,6 +26,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   power: "edison",
   midi: "din-5",
   tally: "db9",
+  spdif: "rca",
+  adat: "toslink",
   custom: "other",
 };
 
@@ -73,6 +75,8 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   socapex: "Socapex",
   multipin: "Multi-pin",
   rca: "RCA",
+  toslink: "TOSLINK",
+  barrel: "DC Barrel",
   none: "",
   other: "Other",
 };

@@ -26,6 +26,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   power: "#a16207",
   midi: "#c026d3",
   tally: "#be185d",
+  spdif: "#a855f7",
+  adat: "#0e7490",
   custom: "#64748b",
 };
 

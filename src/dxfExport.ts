@@ -28,6 +28,8 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   madi: 3,         // emerald
   midi: 6,         // fuchsia
   tally: 1,        // deep rose
+  spdif: 178,      // lighter violet
+  adat: 4,         // dark cyan
   custom: 9,       // cool gray
 };
 
