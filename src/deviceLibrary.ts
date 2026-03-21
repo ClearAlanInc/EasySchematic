@@ -37,6 +37,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "frame-sync": "Processing",
   "multiviewer": "Processing",
   "capture-card": "Processing",
+  "chromakey": "Processing",
   "da": "Distribution",
   "video-wall-controller": "Distribution",
   "monitor": "Monitoring",
