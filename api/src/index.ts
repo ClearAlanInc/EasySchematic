@@ -735,6 +735,128 @@ app.delete("/templates/:id", async (c) => {
   return c.body(null, 204);
 });
 
+// ==================== SUPPORT EMAIL ENDPOINTS ====================
+
+app.get("/support-emails", async (c) => {
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+
+  const status = c.req.query("status");
+  const limit = parseInt(c.req.query("limit") || "50", 10);
+
+  let query = "SELECT id, message_id, from_email, from_name, subject, received_at, status FROM support_emails";
+  const binds: string[] = [];
+
+  if (status) {
+    query += " WHERE status = ?";
+    binds.push(status);
+  }
+
+  query += " ORDER BY received_at DESC LIMIT ?";
+  binds.push(String(limit));
+
+  const stmt = c.env.easyschematic_db.prepare(query);
+  const { results } = await stmt.bind(...binds).all();
+
+  return c.json(results, 200, NO_CACHE_HEADERS);
+});
+
+app.get("/support-emails/:id", async (c) => {
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+
+  const id = c.req.param("id");
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT * FROM support_emails WHERE id = ?")
+    .bind(id)
+    .first();
+
+  if (!row) return c.json({ error: "Email not found" }, 404);
+  return c.json(row, 200, NO_CACHE_HEADERS);
+});
+
+app.put("/support-emails/:id/status", async (c) => {
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+
+  const id = c.req.param("id");
+  const body = await c.req.json<{ status?: string }>();
+
+  if (!body.status || !["read", "resolved", "spam"].includes(body.status)) {
+    return c.json({ error: "status must be 'read', 'resolved', or 'spam'" }, 400);
+  }
+
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT id FROM support_emails WHERE id = ?")
+    .bind(id)
+    .first();
+
+  if (!row) return c.json({ error: "Email not found" }, 404);
+
+  await c.env.easyschematic_db
+    .prepare("UPDATE support_emails SET status = ? WHERE id = ?")
+    .bind(body.status, id)
+    .run();
+
+  return c.json({ ok: true });
+});
+
+app.post("/support-emails/:id/reply", async (c) => {
+  const auth = requireModeratorOrToken(c);
+  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+
+  const id = c.req.param("id");
+  const body = await c.req.json<{ text: string }>();
+
+  if (!body.text?.trim()) {
+    return c.json({ error: "Reply text is required" }, 400);
+  }
+
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT * FROM support_emails WHERE id = ?")
+    .bind(id)
+    .first<{ id: string; from_email: string; from_name: string | null; subject: string | null; message_id: string | null }>();
+
+  if (!row) return c.json({ error: "Email not found" }, 404);
+
+  // Send reply via Resend
+  const replySubject = row.subject?.startsWith("Re:") ? row.subject : `Re: ${row.subject || "(no subject)"}`;
+
+  const headers: Record<string, string> = {};
+  if (row.message_id) {
+    headers["In-Reply-To"] = row.message_id;
+    headers["References"] = row.message_id;
+  }
+
+  const emailRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "EasySchematic Support <support@easyschematic.live>",
+      to: row.from_email,
+      subject: replySubject,
+      text: body.text,
+      headers,
+    }),
+  });
+
+  if (!emailRes.ok) {
+    const errText = await emailRes.text();
+    console.error("Resend reply error:", errText);
+    return c.json({ error: "Failed to send reply" }, 500);
+  }
+
+  await c.env.easyschematic_db
+    .prepare("UPDATE support_emails SET status = 'replied', reply_text = ?, replied_at = datetime('now') WHERE id = ?")
+    .bind(body.text, id)
+    .run();
+
+  return c.json({ ok: true });
+});
+
 // ==================== HEALTH ====================
 
 app.get("/health", async (c) => {
@@ -743,7 +865,14 @@ app.get("/health", async (c) => {
   return c.json({ ok: true });
 });
 
-export default app;
+import { handleEmail } from "./email";
+
+export default {
+  fetch: app.fetch,
+  async email(message: ForwardableEmailMessage, env: any, ctx: ExecutionContext) {
+    await handleEmail(message, env);
+  },
+};
 
 // ==================== HELPERS ====================
 

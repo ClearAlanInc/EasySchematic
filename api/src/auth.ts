@@ -14,6 +14,7 @@ export type Env = {
     easyschematic_db: D1Database;
     ADMIN_TOKEN: string;
     RESEND_API_KEY: string;
+    SUPPORT_FORWARD_EMAIL: string;
   };
   Variables: {
     user?: SessionUser;
