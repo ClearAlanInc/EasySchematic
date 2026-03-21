@@ -1519,7 +1519,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
       nodes: state.nodes,
-      edges: state.edges,
+      edges: state.edges.map(({ zIndex: _, ...rest }) => rest) as ConnectionEdge[],
       signalColors: state.signalColors,
       printPaperId: state.printPaperId,
       printOrientation: state.printOrientation,
@@ -1639,7 +1639,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
       nodes: state.nodes,
-      edges: state.edges,
+      edges: state.edges.map(({ zIndex: _, ...rest }) => rest) as ConnectionEdge[],
       customTemplates: state.customTemplates.length > 0 ? state.customTemplates : undefined,
       signalColors: state.signalColors,
       printPaperId: state.printPaperId,
@@ -1824,7 +1824,27 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ? state.edges.filter((e) => !hiddenSet.has(e.data?.signalType ?? ""))
       : state.edges;
     const results = routeAllEdges(state.nodes, visibleEdges, rfInstance, state.debugEdges);
-    set({ routedEdges: results });
+
+    // When line jumps are enabled, boost zIndex on edges that hop (have arc crossings)
+    // so they render on top of the edges they jump over.
+    let updatedEdges = state.edges;
+    if (state.showLineJumps) {
+      const hopEdgeIds = new Set<string>();
+      for (const [edgeId, routed] of Object.entries(results)) {
+        if (routed.crossingPoints && routed.crossingPoints.length > 0) {
+          hopEdgeIds.add(edgeId);
+        }
+      }
+      if (hopEdgeIds.size > 0) {
+        updatedEdges = state.edges.map((e) =>
+          hopEdgeIds.has(e.id)
+            ? { ...e, zIndex: 1 }
+            : { ...e, zIndex: 0 },
+        );
+      }
+    }
+
+    set({ routedEdges: results, edges: updatedEdges });
   },
 
   toggleDebugEdges: () => {
