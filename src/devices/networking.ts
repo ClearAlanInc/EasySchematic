@@ -281,7 +281,7 @@ export const templates: DeviceTemplate[] = [
       port("Audio In L", "analog-audio", "input", "phoenix"),
       port("Audio In R", "analog-audio", "input", "phoenix"),
       port("RS-232", "serial", "bidirectional", "phoenix"),
-      port("DC Power", "power", "input"),
+      port("DC Power", "power", "input", "barrel"),
     ],
   },
   {
@@ -298,7 +298,7 @@ export const templates: DeviceTemplate[] = [
       port("Audio Out L", "analog-audio", "output", "phoenix"),
       port("Audio Out R", "analog-audio", "output", "phoenix"),
       port("RS-232", "serial", "bidirectional", "phoenix"),
-      port("DC Power", "power", "input"),
+      port("DC Power", "power", "input", "barrel"),
     ],
   },
   {

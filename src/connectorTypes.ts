@@ -23,7 +23,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   thunderbolt: "usb-c",
   composite: "bnc",
   vga: "vga",
-  power: "edison",
+  power: "iec",
   midi: "din-5",
   tally: "db9",
   spdif: "rca",
@@ -47,6 +47,7 @@ export const CONNECTOR_ACCEPTS: Partial<Record<ConnectorType, ConnectorAcceptanc
   "mini-xlr":      { adapter: ["xlr-3"] },
   "dvi":           { adapter: ["hdmi"] },
   "iec":           { adapter: ["edison", "powercon"] },
+  "powercon":      { adapter: ["edison"] },
 };
 
 /** Check if two connector types are compatible (same type or one accepts the other) */

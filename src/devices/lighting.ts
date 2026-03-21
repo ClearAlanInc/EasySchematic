@@ -80,7 +80,7 @@ export const templates: DeviceTemplate[] = [
       port("MIDI In", "midi", "input", "din-5"),
       port("MIDI Out", "midi", "output", "din-5"),
       port("USB", "usb", "bidirectional"),
-      port("AC Power", "power", "input"),
+      port("AC Power", "power", "input", "powercon"),
     ],
   },
   // ── Lighting Fixtures ────────────────────────────────────────────
@@ -166,7 +166,7 @@ export const templates: DeviceTemplate[] = [
     searchTerms: ["litepanels", "astra", "led panel", "soft light", "bi-color"],
     ports: [
       port("DMX In", "dmx", "input"),
-      port("Power In", "power", "input"),
+      port("Power In", "power", "input", "barrel"),
     ],
   },
   // ── DMX Control ──────────────────────────────────────────────────
@@ -237,7 +237,7 @@ export const templates: DeviceTemplate[] = [
       port("MIDI In", "midi", "input", "din-5"),
       port("MIDI Out", "midi", "output", "din-5"),
       port("USB", "usb", "bidirectional"),
-      port("AC Power", "power", "input"),
+      port("AC Power", "power", "input", "powercon"),
     ],
   },
   {
@@ -258,7 +258,7 @@ export const templates: DeviceTemplate[] = [
       port("MIDI In", "midi", "input", "din-5"),
       port("MIDI Out", "midi", "output", "din-5"),
       port("USB", "usb", "bidirectional"),
-      port("AC Power", "power", "input"),
+      port("AC Power", "power", "input", "powercon"),
     ],
   },
   {

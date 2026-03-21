@@ -143,7 +143,7 @@ export const templates: DeviceTemplate[] = [
       port("Dante Secondary", "dante", "bidirectional"),
       ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
       port("Ethernet", "ethernet", "bidirectional"),
-      port("AC Power", "power", "input"),
+      port("AC Power", "power", "input", "powercon"),
     ],
   },
   {
@@ -158,8 +158,8 @@ export const templates: DeviceTemplate[] = [
       ...ports("Analog In", "analog-audio", "input", 4),
       ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
       port("Ethernet", "ethernet", "bidirectional"),
-      port("AC Power", "power", "input"),
-    
+      port("AC Power", "power", "input", "powercon"),
+
       port("AES In 1-2", "aes", "input"),
     
       port("AES In 3-4", "aes", "input"),
