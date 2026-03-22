@@ -104,6 +104,9 @@ function SchematicCanvas() {
   // Space-held state for pan-on-drag (Vectorworks-style)
   const [spaceHeld, setSpaceHeld] = useState(false);
 
+  // Track physical Ctrl key to distinguish real Ctrl+scroll from trackpad pinch
+  const ctrlHeldRef = useRef(false);
+
   // Edge reconnection state (React Flow's reconnection path)
   const reconnectingRef = useRef(false);
 
@@ -193,16 +196,45 @@ function SchematicCanvas() {
 
       e.preventDefault();
       e.stopPropagation();
+
+      let vp: { x: number; y: number; zoom: number };
+      try { vp = rfInstance.getViewport(); } catch { return; }
+
+      // Trackpad pinch-to-zoom: browser synthesizes ctrlKey on pinch gestures.
+      // If ctrlKey is set but the physical key isn't held, it's a pinch — always zoom.
+      if (e.ctrlKey && !ctrlHeldRef.current) {
+        const factor = 1 - e.deltaY * 0.01;
+        const newZoom = Math.min(8, Math.max(0.05, vp.zoom * factor));
+        const rect = el.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        const ratio = newZoom / vp.zoom;
+        rfInstance.setViewport({
+          x: sx - (sx - vp.x) * ratio,
+          y: sy - (sy - vp.y) * ratio,
+          zoom: newZoom,
+        });
+        return;
+      }
+
+      // Two-axis trackpad scroll: deltaX present without modifier keys → pan both axes
+      if (!e.ctrlKey && !e.shiftKey && e.deltaX !== 0) {
+        rfInstance.setViewport({
+          x: vp.x - e.deltaX,
+          y: vp.y - e.deltaY,
+          zoom: vp.zoom,
+        });
+        return;
+      }
+
+      // Standard mouse wheel: use ScrollConfig as before
       const cfg = useSchematicStore.getState().scrollConfig;
       const action = e.ctrlKey ? cfg.ctrlScroll : e.shiftKey ? cfg.shiftScroll : cfg.scroll;
       const delta = e.deltaY;
-      let vp: { x: number; y: number; zoom: number };
-      try { vp = rfInstance.getViewport(); } catch { return; }
 
       if (action === "zoom") {
         const factor = 1 - delta * 0.001;
         const newZoom = Math.min(8, Math.max(0.05, vp.zoom * factor));
-        // Zoom toward cursor: keep the flow point under the cursor stationary
         const rect = el.getBoundingClientRect();
         const sx = e.clientX - rect.left;
         const sy = e.clientY - rect.top;
@@ -234,6 +266,8 @@ function SchematicCanvas() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Control") { ctrlHeldRef.current = true; }
+
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
@@ -284,13 +318,17 @@ function SchematicCanvas() {
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Control") { ctrlHeldRef.current = false; }
       if (e.key === " ") setSpaceHeld(false);
     };
+    const handleBlur = () => { ctrlHeldRef.current = false; };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [removeSelected, copySelected, pasteClipboard, undo, redo, clearClickConnect]);
 
