@@ -172,6 +172,7 @@ export const templates: DeviceTemplate[] = [
     label: "Aquilon DP Input Module",
     manufacturer: "Analog Way",
     modelNumber: "Aquilon DP Input Module",
+    referenceUrl: "https://www.analogway.com/products/four-displayport-1-2-input-card-for-livepremier-tm-series",
     searchTerms: ["analog way", "aquilon", "displayport", "input", "module"],
     ports: [
       ...ports("DP In", "displayport", "input", 4),
@@ -184,6 +185,7 @@ export const templates: DeviceTemplate[] = [
     label: "Aquilon SDI Input Module",
     manufacturer: "Analog Way",
     modelNumber: "Aquilon SDI Input Module",
+    referenceUrl: "https://www.analogway.com/products/four-12g-sdi-input-card-for-livepremier-tm-series",
     searchTerms: ["analog way", "aquilon", "sdi", "input", "module"],
     ports: [
       ...ports("SDI In", "sdi", "input", 4, "bnc"),
@@ -196,6 +198,7 @@ export const templates: DeviceTemplate[] = [
     label: "Aquilon SDI Output Module",
     manufacturer: "Analog Way",
     modelNumber: "Aquilon SDI Output Module",
+    referenceUrl: "https://www.analogway.com/products/four-12g-sdi-output-card-for-livepremier-tm-series",
     searchTerms: ["analog way", "aquilon", "sdi", "output", "module"],
     ports: [
       ...ports("SDI Out", "sdi", "output", 4, "bnc"),
@@ -209,6 +212,7 @@ export const templates: DeviceTemplate[] = [
     label: "MY8-AE",
     manufacturer: "Yamaha",
     modelNumber: "MY8-AE",
+    referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/digital_cards/index.html",
     searchTerms: ["yamaha", "my8", "aes", "expansion", "card"],
     ports: [
       ...ports("AES In", "aes", "input", 8),
@@ -222,6 +226,7 @@ export const templates: DeviceTemplate[] = [
     label: "MY16-AE",
     manufacturer: "Yamaha",
     modelNumber: "MY16-AE",
+    referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/digital_cards/index.html",
     searchTerms: ["yamaha", "my16", "aes", "expansion", "card"],
     ports: [
       ...ports("AES In", "aes", "input", 16),
@@ -235,10 +240,12 @@ export const templates: DeviceTemplate[] = [
     label: "MY8-LAKE",
     manufacturer: "Yamaha",
     modelNumber: "MY8-LAKE",
+    referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/my8-lake/index.html",
     searchTerms: ["yamaha", "my8", "lake", "processing", "expansion", "card"],
     ports: [
       ...ports("AES In", "aes", "input", 8),
       ...ports("AES Out", "aes", "output", 8),
+      port("Ethernet", "ethernet", "bidirectional", "rj45"),
     ],
   },
   {
@@ -248,9 +255,11 @@ export const templates: DeviceTemplate[] = [
     label: "Dugan-MY16",
     manufacturer: "Yamaha",
     modelNumber: "Dugan-MY16",
+    referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/dugan-my16/index.html",
     searchTerms: ["yamaha", "dugan", "auto-mix", "expansion", "card"],
     ports: [
-      ...ports("Analog In", "analog-audio", "input", 16),
+      port("ADAT 1", "adat", "bidirectional"),
+      port("ADAT 2", "adat", "bidirectional"),
     ],
   },
   // DiGiCo DMI Cards
@@ -261,6 +270,7 @@ export const templates: DeviceTemplate[] = [
     label: "DMI-Dante",
     manufacturer: "DiGiCo",
     modelNumber: "DMI-Dante",
+    referenceUrl: "https://digico.biz/dmi_cards/dmi-dante64/",
     searchTerms: ["digico", "dmi", "dante", "expansion", "card"],
     ports: [
       port("Dante Primary", "dante", "bidirectional"),
@@ -274,6 +284,7 @@ export const templates: DeviceTemplate[] = [
     label: "DMI-MADI",
     manufacturer: "DiGiCo",
     modelNumber: "DMI-MADI",
+    referenceUrl: "https://digico.biz/dmi_cards/dmi-madi-b/",
     searchTerms: ["digico", "dmi", "madi", "expansion", "card"],
     ports: [
       port("MADI 1", "madi", "bidirectional"),
