@@ -362,6 +362,11 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "dLive S7000",
     referenceUrl: "https://www.allen-heath.com/hardware/dlive/dlive-s-class/s7000/",
     searchTerms: ["allen heath", "dlive", "s7000", "digital console"],
+    slots: [
+      { id: "dlive-io-1", label: "I/O Port 1", slotFamily: "ah-dlive-io" },
+      { id: "dlive-io-2", label: "I/O Port 2", slotFamily: "ah-dlive-io" },
+      { id: "dlive-io-3", label: "I/O Port 3", slotFamily: "ah-dlive-io" },
+    ],
     ports: [
       port("SLink 1", "fiber", "bidirectional"),
       port("SLink 2", "fiber", "bidirectional"),
@@ -421,6 +426,9 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SQ-7",
     referenceUrl: "https://www.allen-heath.com/hardware/sq/sq-7/",
     searchTerms: ["allen heath", "sq7", "digital console", "32 channel"],
+    slots: [
+      { id: "sq7-slink-exp", label: "SLink Expansion", slotFamily: "ah-sq-slink" },
+    ],
     ports: [
       ...ports("Analog In", "analog-audio", "input", 32),
       ...ports("Analog Out", "analog-audio", "output", 12),
@@ -452,6 +460,9 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SQ-5",
     referenceUrl: "https://www.allen-heath.com/hardware/sq/sq-5/",
     searchTerms: ["allen heath", "sq5", "digital console", "16 channel"],
+    slots: [
+      { id: "sq5-slink-exp", label: "SLink Expansion", slotFamily: "ah-sq-slink" },
+    ],
     ports: [
       ...ports("Analog In", "analog-audio", "input", 16),
       ...ports("Analog Out", "analog-audio", "output", 12),
@@ -547,6 +558,32 @@ export const templates: DeviceTemplate[] = [
       port("Analog Out 11", "analog-audio", "output"),
     
       port("Analog Out 12", "analog-audio", "output"),
+    ],
+  },
+  {
+    id: "c0a80101-011a-4000-8000-000000000358",
+    deviceType: "audio-mixer",
+    label: "DiGiCo SD12",
+    manufacturer: "DiGiCo",
+    modelNumber: "SD12",
+    referenceUrl: "https://digico.biz/consoles/sd12/",
+    searchTerms: ["digico", "sd12", "digital console"],
+    slots: [
+      { id: "sd12-dmi-1", label: "DMI Slot 1", slotFamily: "digico-dmi" },
+      { id: "sd12-dmi-2", label: "DMI Slot 2", slotFamily: "digico-dmi" },
+    ],
+    ports: [
+      port("MADI 1", "madi", "bidirectional"),
+      port("Optocore 1", "fiber", "bidirectional"),
+      port("Optocore 2", "fiber", "bidirectional"),
+      port("Dante Primary", "dante", "bidirectional"),
+      port("Dante Secondary", "dante", "bidirectional"),
+      port("AES In", "aes", "input"),
+      port("AES Out", "aes", "output"),
+      port("Word Clock", "genlock", "bidirectional"),
+      port("Ethernet", "ethernet", "bidirectional"),
+      port("USB", "usb", "bidirectional"),
+      port("AC Power", "power", "input"),
     ],
   },
   // ── Audio Stage Boxes & DSP ──────────────────────────────────────

@@ -86,6 +86,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   ethercon: "Cat6 (EtherCon)",
   sfp: "SFP Fiber",
   lc: "LC Fiber",
+  sc: "SC Fiber",
   "usb-a": "USB",
   "usb-b": "USB",
   "usb-c": "USB-C",

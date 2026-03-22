@@ -3,7 +3,7 @@ import type { Node, Edge } from "@xyflow/react";
 export type ConnectorType =
   | "bnc" | "hdmi" | "displayport" | "vga"
   | "xlr-3" | "xlr-5" | "trs-quarter" | "trs-eighth" | "combo-xlr-trs"
-  | "rj45" | "ethercon" | "sfp" | "lc"
+  | "rj45" | "ethercon" | "sfp" | "lc" | "sc"
   | "usb-a" | "usb-b" | "usb-c"
   | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
   | "speakon" | "socapex" | "multipin" | "rca" | "toslink" | "barrel"
@@ -358,6 +358,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   ethercon: "EtherCon",
   sfp: "SFP/SFP+",
   lc: "LC Fiber",
+  sc: "SC Fiber",
   "usb-a": "USB-A",
   "usb-b": "USB-B",
   "usb-c": "USB-C",
