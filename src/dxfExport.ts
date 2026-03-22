@@ -32,6 +32,7 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   adat: 4,         // dark cyan
   ultranet: 3,     // green
   aes50: 171,      // blue-violet
+  stageconnect: 30, // orange
   custom: 9,       // cool gray
 };
 

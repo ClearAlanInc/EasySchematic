@@ -52,6 +52,8 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "wireless-mic-receiver": "Audio",
   "speaker": "Speakers & Amps",
   "amplifier": "Speakers & Amps",
+  "headphone-amplifier": "Audio",
+  "personal-monitor": "Audio",
   "ndi-encoder": "Networking",
   "ndi-decoder": "Networking",
   "network-switch": "Networking",

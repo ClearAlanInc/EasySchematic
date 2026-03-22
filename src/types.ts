@@ -69,6 +69,7 @@ export type SignalType =
   | "adat"
   | "ultranet"
   | "aes50"
+  | "stageconnect"
   | "custom";
 
 export type PortDirection = "input" | "output" | "bidirectional";
@@ -339,6 +340,7 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   adat: "var(--color-adat)",
   ultranet: "var(--color-ultranet)",
   aes50: "var(--color-aes50)",
+  stageconnect: "var(--color-stageconnect)",
   custom: "var(--color-custom)",
 };
 
@@ -408,5 +410,6 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   adat: "ADAT",
   ultranet: "Ultranet",
   aes50: "AES50",
+  stageconnect: "StageConnect",
   custom: "Custom",
 };

@@ -30,6 +30,7 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   adat: "#0e7490",
   ultranet: "#059669",
   aes50: "#7c3aed",
+  stageconnect: "#ea580c",
   custom: "#64748b",
 };
 

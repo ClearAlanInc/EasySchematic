@@ -32,6 +32,7 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   adat: "ADAT",
   ultranet: "Ultranet",
   aes50: "AES50",
+  stageconnect: "StageConnect",
   custom: "Other",
 };
 

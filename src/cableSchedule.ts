@@ -57,6 +57,7 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   adat: "AD",
   ultranet: "UN",
   aes50: "A5",
+  stageconnect: "SC",
   custom: "X",
 };
 

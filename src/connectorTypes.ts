@@ -30,6 +30,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   adat: "toslink",
   ultranet: "rj45",
   aes50: "ethercon",
+  stageconnect: "xlr-3",
   custom: "other",
 };
 
