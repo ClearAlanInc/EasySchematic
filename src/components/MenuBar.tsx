@@ -123,6 +123,8 @@ export default function MenuBar() {
   const menuBarRef = useRef<HTMLDivElement>(null);
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(schematicName);
   const [reportsTab, setReportsTab] = useState<ReportsTab | null>(null);
@@ -165,6 +167,20 @@ export default function MenuBar() {
       document.removeEventListener("keydown", handleKey);
     };
   }, [openMenu]);
+
+  // Close mobile menu on Escape + lock body scroll
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    document.body.style.overflow = "hidden";
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [mobileMenuOpen]);
 
   // ─── File actions ──────────────────────────────────────
 
@@ -428,112 +444,231 @@ export default function MenuBar() {
 
   const menuNames = Object.keys(menus);
 
-  return (
-    <div
-      ref={menuBarRef}
-      className="h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-1 shrink-0 select-none"
-    >
-      {/* Left: logo + brand + menus */}
-      <div className="flex items-center">
-        <div className="flex items-center gap-2 px-3 shrink-0">
-          <img src="/favicon.svg" alt="" className="w-5 h-5" />
-          <span className="text-xs font-semibold text-[var(--color-text-heading)] tracking-tight">
-            EasySchematic
-          </span>
-        </div>
-        <div className="w-px h-5 bg-[var(--color-border)]" />
-        {menuNames.map((name) => (
-          <div key={name} className="relative">
-            <button
-              className={`px-3 py-1.5 text-xs rounded transition-colors cursor-pointer ${
-                openMenu === name
-                  ? "bg-[var(--color-surface-hover)] text-[var(--color-text-heading)]"
-                  : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-heading)]"
-              }`}
-              onClick={() => setOpenMenu(openMenu === name ? null : name)}
-              onMouseEnter={() => {
-                if (openMenu && openMenu !== name) setOpenMenu(name);
-              }}
-            >
-              {name}
-            </button>
-            {openMenu === name && (
-              <MenuDropdown items={menus[name]} onClose={closeMenu} />
-            )}
-          </div>
-        ))}
-      </div>
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    setOpenSection(null);
+  };
 
-      {/* Center: schematic name */}
-      <div className="flex-1 flex justify-center">
-        {editingName ? (
-          <input
-            className="bg-transparent text-[var(--color-text-heading)] text-sm font-semibold outline-none border-b border-blue-500 max-w-[200px] text-center"
-            value={nameValue}
-            onChange={(e) => setNameValue(e.target.value)}
-            onBlur={commitName}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitName();
-              if (e.key === "Escape") setEditingName(false);
-            }}
-            autoFocus
-          />
-        ) : (
-          <span className="flex items-center gap-1.5">
-            <span
-              className="text-sm font-semibold text-[var(--color-text-heading)] cursor-pointer hover:text-blue-600 transition-colors"
-              onDoubleClick={() => {
-                setNameValue(schematicName);
-                setEditingName(true);
-              }}
-              title="Double-click to rename"
-            >
-              {schematicName}
-            </span>
-            {cloudSchematicId && (
-              <span
-                title={cloudSavedAt ? `Cloud saved: ${new Date(cloudSavedAt + "Z").toLocaleString()}` : "Cloud-backed schematic"}
-              >
-                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-              </span>
-            )}
-          </span>
+  const MobileAccordionSection = ({ name, items }: { name: string; items: MenuEntry[] }) => {
+    const isOpen = openSection === name;
+    return (
+      <div className="border-b border-[var(--color-border)]">
+        <button
+          className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-[var(--color-text-heading)] hover:bg-[var(--color-surface-hover)] transition-colors"
+          onClick={() => setOpenSection(isOpen ? null : name)}
+        >
+          {name}
+          <svg
+            className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isOpen && (
+          <div className="pb-2 px-2">
+            {items.map((entry, i) => {
+              if (entry.type === "separator") return <div key={i} className="h-px bg-[var(--color-border)] my-1 mx-2" />;
+              return (
+                <button
+                  key={i}
+                  disabled={entry.disabled}
+                  onClick={() => {
+                    entry.onClick();
+                    closeMobileMenu();
+                  }}
+                  className="flex items-center w-full px-4 py-2.5 text-sm rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-left gap-3"
+                >
+                  <span className="w-5 text-center shrink-0 text-xs">
+                    {entry.checked != null ? (entry.checked ? "\u2713" : "") : ""}
+                  </span>
+                  <span className="flex-1 text-[var(--color-text)]">{entry.label}</span>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
+    );
+  };
 
-      {/* Right: undo/redo + alignment */}
-      <div className="flex items-center gap-1">
-        <button
-          title="Undo (Ctrl+Z)"
-          disabled={undoSize === 0}
-          onClick={undo}
-          className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-[var(--color-text)]"
-        >
-          <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 7h7a3 3 0 0 1 0 6H9" />
-            <path d="M6 4 3 7l3 3" />
-          </svg>
-        </button>
-        <button
-          title="Redo (Ctrl+Shift+Z)"
-          disabled={redoSize === 0}
-          onClick={redo}
-          className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-[var(--color-text)]"
-        >
-          <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 7H6a3 3 0 0 0 0 6h1" />
-            <path d="M10 4l3 3-3 3" />
-          </svg>
-        </button>
-        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
-        <AlignmentMenu />
-        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
-        <UserMenuButton />
+  return (
+    <div ref={menuBarRef}>
+      {/* Desktop menu bar */}
+      <div className="hidden md:flex h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] items-center px-1 shrink-0 select-none">
+        {/* Left: logo + brand + menus */}
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 px-3 shrink-0">
+            <img src="/favicon.svg" alt="" className="w-5 h-5" />
+            <span className="text-xs font-semibold text-[var(--color-text-heading)] tracking-tight">
+              EasySchematic
+            </span>
+          </div>
+          <div className="w-px h-5 bg-[var(--color-border)]" />
+          {menuNames.map((name) => (
+            <div key={name} className="relative">
+              <button
+                className={`px-3 py-1.5 text-xs rounded transition-colors cursor-pointer ${
+                  openMenu === name
+                    ? "bg-[var(--color-surface-hover)] text-[var(--color-text-heading)]"
+                    : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-heading)]"
+                }`}
+                onClick={() => setOpenMenu(openMenu === name ? null : name)}
+                onMouseEnter={() => {
+                  if (openMenu && openMenu !== name) setOpenMenu(name);
+                }}
+              >
+                {name}
+              </button>
+              {openMenu === name && (
+                <MenuDropdown items={menus[name]} onClose={closeMenu} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Center: schematic name */}
+        <div className="flex-1 flex justify-center">
+          {editingName ? (
+            <input
+              className="bg-transparent text-[var(--color-text-heading)] text-sm font-semibold outline-none border-b border-blue-500 max-w-[200px] text-center"
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitName();
+                if (e.key === "Escape") setEditingName(false);
+              }}
+              autoFocus
+            />
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <span
+                className="text-sm font-semibold text-[var(--color-text-heading)] cursor-pointer hover:text-blue-600 transition-colors"
+                onDoubleClick={() => {
+                  setNameValue(schematicName);
+                  setEditingName(true);
+                }}
+                title="Double-click to rename"
+              >
+                {schematicName}
+              </span>
+              {cloudSchematicId && (
+                <span
+                  title={cloudSavedAt ? `Cloud saved: ${new Date(cloudSavedAt + "Z").toLocaleString()}` : "Cloud-backed schematic"}
+                >
+                  <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  </svg>
+                </span>
+              )}
+            </span>
+          )}
+        </div>
+
+        {/* Right: undo/redo + alignment */}
+        <div className="flex items-center gap-1">
+          <button
+            title="Undo (Ctrl+Z)"
+            disabled={undoSize === 0}
+            onClick={undo}
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-[var(--color-text)]"
+          >
+            <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 7h7a3 3 0 0 1 0 6H9" />
+              <path d="M6 4 3 7l3 3" />
+            </svg>
+          </button>
+          <button
+            title="Redo (Ctrl+Shift+Z)"
+            disabled={redoSize === 0}
+            onClick={redo}
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-[var(--color-text)]"
+          >
+            <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 7H6a3 3 0 0 0 0 6h1" />
+              <path d="M10 4l3 3-3 3" />
+            </svg>
+          </button>
+          <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+          <AlignmentMenu />
+          <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+          <UserMenuButton />
+        </div>
       </div>
 
-      {/* Hidden file input for Open Schematic */}
+      {/* Mobile header bar */}
+      <div className="flex md:hidden h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] items-center px-3 shrink-0 select-none justify-between">
+        <img src="/favicon.svg" alt="" className="w-5 h-5" />
+        <span className="text-sm font-semibold text-[var(--color-text-heading)] truncate mx-3 flex-1 text-center">
+          {schematicName}
+        </span>
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="p-1 rounded hover:bg-[var(--color-surface-hover)] transition-colors text-[var(--color-text)]"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] bg-[var(--color-surface)] flex flex-col">
+          {/* Overlay header: undo/redo + close */}
+          <div className="flex items-center justify-between px-3 h-12 border-b border-[var(--color-border)] shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                disabled={undoSize === 0}
+                onClick={undo}
+                className="p-2 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-[var(--color-text)]"
+              >
+                <svg viewBox="0 0 16 16" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h7a3 3 0 0 1 0 6H9" />
+                  <path d="M6 4 3 7l3 3" />
+                </svg>
+              </button>
+              <button
+                disabled={redoSize === 0}
+                onClick={redo}
+                className="p-2 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-[var(--color-text)]"
+              >
+                <svg viewBox="0 0 16 16" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 7H6a3 3 0 0 0 0 6h1" />
+                  <path d="M10 4l3 3-3 3" />
+                </svg>
+              </button>
+            </div>
+            <span className="text-sm font-semibold text-[var(--color-text-heading)]">Menu</span>
+            <button
+              onClick={closeMobileMenu}
+              className="p-2 rounded hover:bg-[var(--color-surface-hover)] transition-colors text-[var(--color-text)]"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Scrollable menu sections */}
+          <div className="flex-1 overflow-y-auto">
+            {menuNames.map((name) => (
+              <MobileAccordionSection key={name} name={name} items={menus[name]} />
+            ))}
+          </div>
+
+          {/* Footer: user section */}
+          <div className="border-t border-[var(--color-border)] px-4 py-3 shrink-0">
+            <UserMenuButton />
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
@@ -541,7 +676,6 @@ export default function MenuBar() {
         className="hidden"
         onChange={handleImport}
       />
-      {/* Hidden file input for Import Device Archive */}
       <input
         ref={archiveInputRef}
         type="file"

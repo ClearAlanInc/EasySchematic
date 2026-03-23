@@ -997,7 +997,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full">
-      <div data-print-hide data-mobile-hide>
+      <div data-print-hide>
         <MenuBar />
       </div>
       <DemoBanner />
