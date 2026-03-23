@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, useCallback, useEffect } from "react";
+import React, { memo, useMemo, useState, useCallback, useEffect } from "react";
 import { useSchematicStore } from "../store";
 import { computeNetworkReport, computeDhcpServerSummary, type NetworkReportRow } from "../networkReport";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps, computeDhcpWarnings, type DhcpWarning } from "../networkValidation";
@@ -10,6 +10,7 @@ import {
   getPackListTableData,
   type PackListDevice,
   type PackListSummaryRow,
+  groupCablesByCategory,
 } from "../packList";
 import {
   computeCableSchedule,
@@ -1516,7 +1517,8 @@ function PackListTabInline() {
   type SubTab = "devices" | "cables" | "accessories";
   const [subTab, setSubTab] = useState<SubTab>("devices");
   const [groupDevicesByRoom, setGroupDevicesByRoom] = useState(false);
-  const [groupCablesByPath, setGroupCablesByPath] = useState(false);
+  type CableGrouping = "" | "path" | "category";
+  const [cableGrouping, setCableGrouping] = useState<CableGrouping>("category");
 
   const data = useMemo(() => computePackList(nodes, edges), [nodes, edges]);
 
@@ -1557,14 +1559,17 @@ function PackListTabInline() {
           </label>
         )}
         {subTab === "cables" && (
-          <label className="flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)] cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={groupCablesByPath}
-              onChange={(e) => setGroupCablesByPath(e.target.checked)}
-              className="accent-blue-600"
-            />
-            Group by Path
+          <label className="flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)] select-none">
+            Group by
+            <select
+              value={cableGrouping}
+              onChange={(e) => setCableGrouping(e.target.value as CableGrouping)}
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] text-[var(--color-text)] outline-none cursor-pointer"
+            >
+              <option value="">None</option>
+              <option value="path">Path</option>
+              <option value="category">Category</option>
+            </select>
           </label>
         )}
       </div>
@@ -1603,18 +1608,21 @@ function PackListTabInline() {
             </div>
           ) : (
             (() => {
-              const cableRows = groupCablesByPath ? data.summary : mergeCablesByType(data.summary);
-              const signalCables = cableRows.filter((s) => s.signalType !== "Power");
-              const powerCables = cableRows.filter((s) => s.signalType === "Power");
+              const showPath = cableGrouping === "path";
+              const cableRows = showPath ? data.summary : mergeCablesByType(data.summary);
               const renderRow = (s: PackListSummaryRow, i: number) => (
                 <tr key={i} className={rowClass(i)}>
                   <td className={tdClass}>{s.count}&times;</td>
                   <td className={tdClass}>{s.cableType}</td>
                   <td className={tdClass}>{s.signalType}</td>
                   <td className={tdClass}>{s.cableLength}</td>
-                  {groupCablesByPath && <td className={tdClass}>{s.route}</td>}
+                  {showPath && <td className={tdClass}>{s.route}</td>}
                 </tr>
               );
+
+              const categories = cableGrouping === "category" ? groupCablesByCategory(cableRows) : null;
+              let rowIdx = 0;
+
               return (
                 <table className="w-full border-collapse">
                   <thead>
@@ -1623,24 +1631,29 @@ function PackListTabInline() {
                       <th className={plThClass}>Cable Type</th>
                       <th className={plThClass}>Signal</th>
                       <th className={plThClass}>Length</th>
-                      {groupCablesByPath && <th className={plThClass}>Route</th>}
+                      {showPath && <th className={plThClass}>Route</th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {signalCables.map(renderRow)}
-                    {powerCables.length > 0 && (
-                      <>
-                        <tr>
-                          <td
-                            colSpan={99}
-                            className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
-                          >
-                            Power ({powerCables.reduce((sum, c) => sum + c.count, 0)} cables)
-                          </td>
-                        </tr>
-                        {powerCables.map((s, i) => renderRow(s, signalCables.length + i))}
-                      </>
-                    )}
+                    {categories
+                      ? categories.map((group) => {
+                          const rows = group.rows.map((s) => renderRow(s, rowIdx++));
+                          return categories.length > 1 ? (
+                            <React.Fragment key={group.category}>
+                              <tr>
+                                <td
+                                  colSpan={99}
+                                  className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+                                >
+                                  {group.category} ({group.total} cable{group.total !== 1 ? "s" : ""})
+                                </td>
+                              </tr>
+                              {rows}
+                            </React.Fragment>
+                          ) : rows;
+                        })
+                      : cableRows.map((s, i) => renderRow(s, i))
+                    }
                   </tbody>
                 </table>
               );

@@ -212,6 +212,7 @@ export function createDefaultPackListLayout(): ReportLayout {
         groupByOptions: [
           { key: "", label: "None" },
           { key: "path", label: "Path" },
+          { key: "category", label: "Category" },
         ],
         sortBy: null,
         sortDir: "asc",

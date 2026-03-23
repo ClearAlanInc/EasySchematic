@@ -10,6 +10,63 @@ import { getCableType } from "./cableTypes";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
+export type CableCategory = "Video" | "Audio" | "Control" | "Data" | "Power" | "Custom";
+
+const SIGNAL_CATEGORY: Record<string, CableCategory> = {
+  SDI: "Video",
+  HDMI: "Video",
+  NDI: "Video",
+  DisplayPort: "Video",
+  HDBaseT: "Video",
+  SRT: "Video",
+  Composite: "Video",
+  VGA: "Video",
+  Analog: "Audio",
+  AES: "Audio",
+  Dante: "Audio",
+  MADI: "Audio",
+  MIDI: "Audio",
+  "S/PDIF": "Audio",
+  ADAT: "Audio",
+  Ultranet: "Audio",
+  AES50: "Audio",
+  StageConnect: "Audio",
+  DMX: "Control",
+  Genlock: "Control",
+  GPIO: "Control",
+  "RS-422": "Control",
+  Serial: "Control",
+  Tally: "Control",
+  USB: "Data",
+  Fiber: "Data",
+  Thunderbolt: "Data",
+  Ethernet: "Data",
+  Power: "Power",
+  Custom: "Custom",
+};
+
+const CATEGORY_ORDER: CableCategory[] = ["Video", "Audio", "Control", "Data", "Power", "Custom"];
+
+export function getCableCategory(signalLabel: string): CableCategory {
+  return SIGNAL_CATEGORY[signalLabel] ?? "Custom";
+}
+
+export function groupCablesByCategory(rows: PackListSummaryRow[]): { category: CableCategory; rows: PackListSummaryRow[]; total: number }[] {
+  const groups = new Map<CableCategory, PackListSummaryRow[]>();
+  for (const row of rows) {
+    const cat = getCableCategory(row.signalType);
+    const arr = groups.get(cat);
+    if (arr) arr.push(row);
+    else groups.set(cat, [row]);
+  }
+  return CATEGORY_ORDER
+    .filter((cat) => groups.has(cat))
+    .map((cat) => {
+      const catRows = groups.get(cat)!;
+      return { category: cat, rows: catRows, total: catRows.reduce((sum, r) => sum + r.count, 0) };
+    });
+}
+
 export interface PackListDeviceCard {
   cardLabel: string;
   manufacturer: string;
@@ -419,6 +476,21 @@ export function getPackListTableData(
       const match = r.route.match(/^Within (.+)$|^(.+?) >/);
       return match?.[1] ?? match?.[2] ?? "Unassigned";
     });
+  } else if (cabGroupBy === "category") {
+    // Group by cable category in the defined order (Video, Audio, Control, Data, Power, Custom)
+    const ordered = groupCablesByCategory(summarySource);
+    cableGroupedRows = new Map(
+      ordered.map((g): [string, Record<string, string>[]] => [
+        g.category,
+        g.rows.map((s) => ({
+          count: `${s.count}x`,
+          cableType: s.cableType,
+          signalType: s.signalType,
+          cableLength: s.cableLength,
+          route: s.route,
+        })),
+      ]),
+    );
   }
 
   // Apply sorting
@@ -451,6 +523,14 @@ export function getPackListTableData(
       const match = r.route.match(/^Within (.+)$|^(.+?) >/);
       return match?.[1] ?? match?.[2] ?? "Unassigned";
     });
+  } else if (cabGroupBy === "category" && cablesTableDef?.sortBy) {
+    // Re-group sorted rows by category, preserving category order
+    sortedCableGrouped = new Map(
+      groupCablesByCategory(summarySource).map((g): [string, Record<string, string>[]] => {
+        const catSignals = new Set(g.rows.map((r) => r.signalType));
+        return [g.category, sortedCableRows.filter((r) => catSignals.has(r.signalType))];
+      }).filter(([, rows]) => rows.length > 0),
+    );
   }
 
   // Accessories table

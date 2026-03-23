@@ -151,17 +151,33 @@ function ReportPreviewDialog({
   const setGlobalReportFooterLayout = useSchematicStore((s) => s.setGlobalReportFooterLayout);
 
   const [layout, setLayout] = useState<ReportLayout>(() => {
-    if (storedLayout) return storedLayout;
-    // One-time migration: check old localStorage key
-    try {
-      const raw = localStorage.getItem(reportKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as ReportLayout;
-        localStorage.removeItem(reportKey);
-        if (parsed.headerLayout) return parsed;
-      }
-    } catch { /* ignore */ }
-    return defaultLayout;
+    let base: ReportLayout | null = null;
+    if (storedLayout) {
+      base = storedLayout;
+    } else {
+      // One-time migration: check old localStorage key
+      try {
+        const raw = localStorage.getItem(reportKey);
+        if (raw) {
+          const parsed = JSON.parse(raw) as ReportLayout;
+          localStorage.removeItem(reportKey);
+          if (parsed.headerLayout) base = parsed;
+        }
+      } catch { /* ignore */ }
+    }
+    if (!base) return defaultLayout;
+    // Merge new groupByOptions from default layout into saved layouts
+    return {
+      ...base,
+      tables: base.tables.map((t) => {
+        const defaultTable = defaultLayout.tables.find((dt) => dt.id === t.id);
+        if (!defaultTable) return t;
+        const existingKeys = new Set(t.groupByOptions.map((o) => o.key));
+        const newOptions = defaultTable.groupByOptions.filter((o) => !existingKeys.has(o.key));
+        if (newOptions.length === 0) return t;
+        return { ...t, groupByOptions: [...t.groupByOptions, ...newOptions] };
+      }),
+    };
   });
 
   const tables = getTableData(layout);
