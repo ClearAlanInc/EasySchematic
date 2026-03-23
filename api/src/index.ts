@@ -28,9 +28,9 @@ app.use(
 // Security response headers
 app.use("*", async (c, next) => {
   await next();
-  c.res.headers.set("X-Content-Type-Options", "nosniff");
-  c.res.headers.set("X-Frame-Options", "DENY");
-  c.res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("X-Frame-Options", "DENY");
+  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 });
 
 // Session middleware on all routes
@@ -196,13 +196,8 @@ app.get("/auth/verify", async (c) => {
     .run();
 
   // Redirect to returnTo or devices site with session cookie
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: validReturnTo || "https://devices.easyschematic.live/#/",
-      "Set-Cookie": sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url),
-    },
-  });
+  c.header("Set-Cookie", sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url));
+  return c.redirect(validReturnTo || "https://devices.easyschematic.live/#/");
 });
 
 app.post("/auth/logout", async (c) => {
@@ -213,13 +208,8 @@ app.post("/auth/logout", async (c) => {
     await c.env.easyschematic_db.prepare("DELETE FROM sessions WHERE id = ?").bind(match[1]).run();
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Set-Cookie": sessionCookie("", 0, c.req.url),
-    },
-  });
+  c.header("Set-Cookie", sessionCookie("", 0, c.req.url));
+  return c.json({ ok: true });
 });
 
 app.get("/auth/me", async (c) => {
@@ -327,13 +317,8 @@ app.post("/auth/claim", async (c) => {
     .bind(sessionId, user.id, sessionExpires)
     .run();
 
-  return new Response(JSON.stringify({ id: user.id, email: user.email, name: user.name, role: user.role }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Set-Cookie": sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url),
-    },
-  });
+  c.header("Set-Cookie", sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url));
+  return c.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 
 // ==================== DRAFT ENDPOINTS ====================
@@ -1128,9 +1113,7 @@ app.get("/schematics/:id", async (c) => {
   const obj = await c.env.SCHEMATIC_STORAGE.get(`schematics/${id}.json`);
   if (!obj) return c.json({ error: "Schematic data not found" }, 404);
 
-  return new Response(obj.body, {
-    headers: { "Content-Type": "application/json" },
-  });
+  return c.body(obj.body as ReadableStream, 200, { "Content-Type": "application/json" });
 });
 
 app.put("/schematics/:id", async (c) => {
@@ -1258,9 +1241,7 @@ app.get("/shared/:token", async (c) => {
   const obj = await c.env.SCHEMATIC_STORAGE.get(`schematics/${row.id}.json`);
   if (!obj) return c.json({ error: "Schematic data not found" }, 404);
 
-  return new Response(obj.body, {
-    headers: { "Content-Type": "application/json" },
-  });
+  return c.body(obj.body as ReadableStream, 200, { "Content-Type": "application/json" });
 });
 
 app.put("/schematics/:id/rename", async (c) => {
