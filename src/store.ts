@@ -1588,8 +1588,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showLineJumps: !state.showLineJumps ? false : undefined,
       showConnectionLabels: !state.showConnectionLabels ? false : undefined,
     };
+    // Persist cloud identity alongside autosave (not part of SchematicFile export)
+    const blob: Record<string, unknown> = { ...data };
+    if (state.cloudSchematicId) {
+      blob.cloudSchematicId = state.cloudSchematicId;
+      blob.cloudSavedAt = state.cloudSavedAt ?? undefined;
+    }
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
     } catch {
       // Storage full or unavailable — silently fail
     }
@@ -1642,7 +1648,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         });
         return false;
       }
-      const data = migrateSchematic(JSON.parse(raw)) as SchematicFile;
+      const parsed = JSON.parse(raw);
+      const data = migrateSchematic(parsed) as SchematicFile;
       snapNodesToGrid(data.nodes);
       applyRoomLockState(data.nodes);
       syncCounters(data.nodes, data.edges);
@@ -1674,6 +1681,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
         showLineJumps: data.showLineJumps ?? true,
         showConnectionLabels: data.showConnectionLabels ?? true,
+        // Restore cloud identity from autosave (not part of SchematicFile)
+        cloudSchematicId: parsed.cloudSchematicId ?? null,
+        cloudSavedAt: parsed.cloudSavedAt ?? null,
       });
       hydrated = true;
       return true;
@@ -1766,6 +1776,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
       showLineJumps: data.showLineJumps ?? true,
       showConnectionLabels: data.showConnectionLabels ?? true,
+      // File imports and shared schematics always start as local-only
+      cloudSchematicId: null,
+      cloudSavedAt: null,
     });
     get().saveToLocalStorage();
   },
