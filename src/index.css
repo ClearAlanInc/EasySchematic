@@ -184,3 +184,11 @@ html, body, #root {
     position: relative !important;
   }
 }
+
+@media (max-width: 767px) {
+  [data-mobile-hide],
+  .react-flow__minimap,
+  .react-flow__controls {
+    display: none !important;
+  }
+}

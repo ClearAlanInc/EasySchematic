@@ -107,6 +107,15 @@ function SchematicCanvas() {
   // Space-held state for pan-on-drag (Vectorworks-style)
   const [spaceHeld, setSpaceHeld] = useState(false);
 
+  // Mobile detection for touch-friendly interaction
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Track physical Ctrl key to distinguish real Ctrl+scroll from trackpad pinch
   const ctrlHeldRef = useRef(false);
 
@@ -815,8 +824,8 @@ function SchematicCanvas() {
       edgeTypes={edgeTypes}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      selectionOnDrag={!spaceHeld}
-      panOnDrag={spaceHeld ? [0] : [1]}
+      selectionOnDrag={isMobile ? false : !spaceHeld}
+      panOnDrag={isMobile ? [0] : (spaceHeld ? [0] : [1])}
       fitView
       minZoom={minZoom}
       elevateNodesOnSelect={false}
@@ -988,7 +997,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full">
-      <div data-print-hide>
+      <div data-print-hide data-mobile-hide>
         <MenuBar />
       </div>
       <DemoBanner />
@@ -996,7 +1005,7 @@ export default function App() {
       {printView && <PrintViewBar />}
       <PrintTitleBlock />
       <div className="flex flex-1 overflow-hidden">
-        <div data-print-hide>
+        <div data-print-hide data-mobile-hide>
           <DeviceLibrary />
         </div>
         <div className="flex-1">
