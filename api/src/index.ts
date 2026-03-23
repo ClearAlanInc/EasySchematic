@@ -41,7 +41,7 @@ const NO_CACHE_HEADERS = {
 };
 
 function sessionCookie(sessionId: string, maxAge: number): string {
-  return `session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=${maxAge}`;
+  return `session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}`;
 }
 
 function getClientIP(c: { req: { header: (name: string) => string | undefined } }): string {
