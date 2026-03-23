@@ -82,6 +82,112 @@ export async function logout(): Promise<void> {
   });
 }
 
+// ==================== CLOUD SCHEMATICS ====================
+
+export interface CloudSchematic {
+  id: string;
+  name: string;
+  size_bytes: number;
+  shared: number;
+  share_token: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function saveSchematicToCloud(data: unknown): Promise<CloudSchematic> {
+  const res = await fetch(`${API_URL}/schematics`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to save schematic");
+  }
+  return res.json();
+}
+
+export async function updateSchematicInCloud(id: string, data: unknown): Promise<CloudSchematic> {
+  const res = await fetch(`${API_URL}/schematics/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to update schematic");
+  }
+  return res.json();
+}
+
+export async function listCloudSchematics(): Promise<CloudSchematic[]> {
+  const res = await fetch(`${API_URL}/schematics`, { credentials: "include" });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to list schematics");
+  }
+  return res.json();
+}
+
+export async function loadCloudSchematic(id: string): Promise<unknown> {
+  const res = await fetch(`${API_URL}/schematics/${id}`, { credentials: "include" });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to load schematic");
+  }
+  return res.json();
+}
+
+export async function deleteCloudSchematic(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/schematics/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to delete schematic");
+  }
+}
+
+export async function toggleSchematicSharing(id: string, shared: boolean): Promise<CloudSchematic> {
+  const res = await fetch(`${API_URL}/schematics/${id}/share`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ shared }),
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to toggle sharing");
+  }
+  return res.json();
+}
+
+export async function loadSharedSchematic(token: string): Promise<unknown> {
+  const res = await fetch(`${API_URL}/shared/${token}`, { credentials: "include" });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Shared schematic not found");
+  }
+  return res.json();
+}
+
+export async function renameCloudSchematic(id: string, name: string): Promise<CloudSchematic> {
+  const res = await fetch(`${API_URL}/schematics/${id}/rename`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to rename schematic");
+  }
+  return res.json();
+}
+
 // ==================== TEMPLATES ====================
 
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {

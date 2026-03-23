@@ -1017,6 +1017,257 @@ app.post("/support-emails/:id/reply", async (c) => {
 
 // ==================== HEALTH ====================
 
+// ==================== SCHEMATIC CLOUD STORAGE ====================
+
+const MAX_SCHEMATIC_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_SCHEMATICS_PER_USER = 10;
+
+app.post("/schematics", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  if (user.banned) return c.json({ error: "Account suspended" }, 403);
+
+  const db = c.env.easyschematic_db;
+
+  const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
+  if (!limit.allowed) {
+    return c.json({ error: "Too many saves. Try again later." }, 429);
+  }
+
+  // Quota check
+  const countRow = await db
+    .prepare("SELECT COUNT(*) as cnt FROM schematics WHERE user_id = ?")
+    .bind(user.id)
+    .first<{ cnt: number }>();
+  if ((countRow?.cnt ?? 0) >= MAX_SCHEMATICS_PER_USER) {
+    return c.json({ error: `Maximum ${MAX_SCHEMATICS_PER_USER} schematics allowed. Delete one to save a new one.` }, 400);
+  }
+
+  const raw = await c.req.text();
+  if (raw.length > MAX_SCHEMATIC_SIZE) {
+    return c.json({ error: "Schematic too large (max 10 MB)" }, 400);
+  }
+
+  let body: { name?: string; version?: number };
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+
+  if (!body.name || !body.version) {
+    return c.json({ error: "Schematic must have name and version fields" }, 400);
+  }
+
+  const id = crypto.randomUUID();
+  const sizeBytes = new TextEncoder().encode(raw).length;
+
+  await c.env.SCHEMATIC_STORAGE.put(`schematics/${id}.json`, raw, {
+    httpMetadata: { contentType: "application/json" },
+  });
+
+  await db
+    .prepare("INSERT INTO schematics (id, user_id, name, size_bytes) VALUES (?, ?, ?, ?)")
+    .bind(id, user.id, body.name, sizeBytes)
+    .run();
+
+  const row = await db
+    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .bind(id)
+    .first();
+
+  return c.json(row, 201);
+});
+
+app.get("/schematics", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE user_id = ? ORDER BY updated_at DESC")
+    .bind(user.id)
+    .all();
+
+  return c.json(results);
+});
+
+app.get("/schematics/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const id = c.req.param("id");
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+
+  if (!row) return c.json({ error: "Schematic not found" }, 404);
+
+  const obj = await c.env.SCHEMATIC_STORAGE.get(`schematics/${id}.json`);
+  if (!obj) return c.json({ error: "Schematic data not found" }, 404);
+
+  return new Response(obj.body, {
+    headers: { "Content-Type": "application/json" },
+  });
+});
+
+app.put("/schematics/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
+  if (!limit.allowed) {
+    return c.json({ error: "Too many saves. Try again later." }, 429);
+  }
+
+  const existing = await db
+    .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+  if (!existing) return c.json({ error: "Schematic not found" }, 404);
+
+  const raw = await c.req.text();
+  if (raw.length > MAX_SCHEMATIC_SIZE) {
+    return c.json({ error: "Schematic too large (max 10 MB)" }, 400);
+  }
+
+  let body: { name?: string; version?: number };
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+
+  if (!body.name || !body.version) {
+    return c.json({ error: "Schematic must have name and version fields" }, 400);
+  }
+
+  const sizeBytes = new TextEncoder().encode(raw).length;
+
+  await c.env.SCHEMATIC_STORAGE.put(`schematics/${id}.json`, raw, {
+    httpMetadata: { contentType: "application/json" },
+  });
+
+  await db
+    .prepare("UPDATE schematics SET name = ?, size_bytes = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
+    .bind(body.name, sizeBytes, id, user.id)
+    .run();
+
+  const row = await db
+    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .bind(id)
+    .first();
+
+  return c.json(row);
+});
+
+app.delete("/schematics/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const existing = await db
+    .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+  if (!existing) return c.json({ error: "Schematic not found" }, 404);
+
+  await c.env.SCHEMATIC_STORAGE.delete(`schematics/${id}.json`);
+  await db.prepare("DELETE FROM schematics WHERE id = ?").bind(id).run();
+
+  return c.body(null, 204);
+});
+
+app.post("/schematics/:id/share", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const existing = await db
+    .prepare("SELECT id, shared FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first<{ id: string; shared: number }>();
+  if (!existing) return c.json({ error: "Schematic not found" }, 404);
+
+  const body = await c.req.json<{ shared: boolean }>();
+  const enabling = body.shared;
+
+  if (enabling) {
+    const shareToken = crypto.randomUUID();
+    await db
+      .prepare("UPDATE schematics SET shared = 1, share_token = ? WHERE id = ?")
+      .bind(shareToken, id)
+      .run();
+  } else {
+    await db
+      .prepare("UPDATE schematics SET shared = 0, share_token = NULL WHERE id = ?")
+      .bind(id)
+      .run();
+  }
+
+  const row = await db
+    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .bind(id)
+    .first();
+
+  return c.json(row);
+});
+
+app.get("/shared/:token", async (c) => {
+  const token = c.req.param("token");
+
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT id FROM schematics WHERE share_token = ? AND shared = 1")
+    .bind(token)
+    .first<{ id: string }>();
+  if (!row) return c.json({ error: "Shared schematic not found" }, 404);
+
+  const obj = await c.env.SCHEMATIC_STORAGE.get(`schematics/${row.id}.json`);
+  if (!obj) return c.json({ error: "Schematic data not found" }, 404);
+
+  return new Response(obj.body, {
+    headers: { "Content-Type": "application/json" },
+  });
+});
+
+app.put("/schematics/:id/rename", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const existing = await db
+    .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+  if (!existing) return c.json({ error: "Schematic not found" }, 404);
+
+  const body = await c.req.json<{ name: string }>();
+  const name = body.name?.trim();
+  if (!name) return c.json({ error: "Name is required" }, 400);
+  if (name.length > 100) return c.json({ error: "Name must be 100 characters or fewer" }, 400);
+
+  await db
+    .prepare("UPDATE schematics SET name = ?, updated_at = datetime('now') WHERE id = ?")
+    .bind(name, id)
+    .run();
+
+  const row = await db
+    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .bind(id)
+    .first();
+
+  return c.json(row);
+});
+
 app.get("/health", async (c) => {
   // Opportunistically clean up expired rate limits and drafts
   await cleanupExpiredRateLimits(c.env.easyschematic_db).catch(() => {});

@@ -12,6 +12,7 @@ export interface SessionUser {
 export type Env = {
   Bindings: {
     easyschematic_db: D1Database;
+    SCHEMATIC_STORAGE: R2Bucket;
     ADMIN_TOKEN: string;
     RESEND_API_KEY: string;
     SUPPORT_FORWARD_EMAIL: string;

@@ -33,7 +33,8 @@ import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import RouterCreator from "./components/RouterCreator";
 import { computeSnap, enforceMinSpacing, type GuideLine } from "./snapUtils";
-import type { DeviceTemplate, SchematicNode } from "./types";
+import type { DeviceTemplate, SchematicFile, SchematicNode } from "./types";
+import { loadSharedSchematic } from "./templateApi";
 
 /** Darkens the canvas area left of x=0 and above y=0, marking the printable origin. */
 function CanvasOriginOverlay() {
@@ -969,6 +970,20 @@ function DemoBanner() {
 
 export default function App() {
   const printView = useSchematicStore((s) => s.printView);
+
+  // Handle /s/{token} URLs for shared schematics
+  useEffect(() => {
+    const match = window.location.pathname.match(/^\/s\/([a-f0-9-]+)$/);
+    if (match) {
+      loadSharedSchematic(match[1]).then((data) => {
+        useSchematicStore.getState().importFromJSON(data as SchematicFile);
+        window.history.replaceState(null, "", "/");
+      }).catch(() => {
+        // Invalid or expired share link — just load normally
+        window.history.replaceState(null, "", "/");
+      });
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full">

@@ -13,6 +13,9 @@ import AboutDialog from "./AboutDialog";
 import PreferencesDialog from "./PreferencesDialog";
 import AlignmentMenu from "./AlignmentMenu";
 import UserMenuButton from "./UserMenuButton";
+import SchematicBrowser from "./SchematicBrowser";
+import LoginDialog from "./LoginDialog";
+import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
 
 // ─── Menu data types ─────────────────────────────────────────────
 
@@ -121,6 +124,12 @@ export default function MenuBar() {
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showSchematicBrowser, setShowSchematicBrowser] = useState(false);
+  const [showCloudLogin, setShowCloudLogin] = useState(false);
+  const [cloudSaving, setCloudSaving] = useState(false);
+
+  const cloudSchematicId = useSchematicStore((s) => s.cloudSchematicId);
+  const cloudSavedAt = useSchematicStore((s) => s.cloudSavedAt);
 
   // Keep nameValue in sync when schematicName changes externally
   useEffect(() => {
@@ -216,9 +225,47 @@ export default function MenuBar() {
     [],
   );
 
+  const handleCloudSave = useCallback(async () => {
+    const session = await checkSession();
+    if (!session) {
+      setShowCloudLogin(true);
+      return;
+    }
+    setCloudSaving(true);
+    try {
+      const data = exportToJSON();
+      const store = useSchematicStore.getState();
+      if (store.cloudSchematicId) {
+        const result = await updateSchematicInCloud(store.cloudSchematicId, data);
+        store.setCloudSavedAt(result.updated_at);
+      } else {
+        const result = await saveSchematicToCloud(data);
+        store.setCloudSchematicId(result.id);
+        store.setCloudSavedAt(result.updated_at);
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save to cloud");
+    } finally {
+      setCloudSaving(false);
+    }
+  }, [exportToJSON]);
+
   // Listen for keyboard shortcut events from App.tsx
   useEffect(() => {
-    const onSave = () => handleSave();
+    const onSave = () => {
+      handleSave();
+      // Also save to cloud in parallel if cloud-backed
+      const store = useSchematicStore.getState();
+      if (store.cloudSchematicId) {
+        checkSession().then((session) => {
+          if (!session) return;
+          const data = store.exportToJSON();
+          updateSchematicInCloud(store.cloudSchematicId!, data)
+            .then((result) => store.setCloudSavedAt(result.updated_at))
+            .catch(() => {}); // fire-and-forget
+        });
+      }
+    };
     const onOpen = () => handleOpen();
     window.addEventListener("easyschematic:save", onSave);
     window.addEventListener("easyschematic:open", onOpen);
@@ -283,6 +330,9 @@ export default function MenuBar() {
       { type: "separator" },
       { type: "item", label: "Save Schematic", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Open Schematic...", shortcut: "Ctrl+O", onClick: handleOpen },
+      { type: "separator" },
+      { type: "item", label: cloudSaving ? "Saving..." : "Save to Cloud", disabled: cloudSaving, onClick: handleCloudSave },
+      { type: "item", label: "My Schematics...", onClick: () => setShowSchematicBrowser(true) },
       { type: "separator" },
       { type: "item", label: "Save Device Archive", onClick: handleSaveArchive },
       { type: "item", label: "Import Device Archive...", onClick: handleOpenArchive },
@@ -416,15 +466,26 @@ export default function MenuBar() {
             autoFocus
           />
         ) : (
-          <span
-            className="text-sm font-semibold text-[var(--color-text-heading)] cursor-pointer hover:text-blue-600 transition-colors"
-            onDoubleClick={() => {
-              setNameValue(schematicName);
-              setEditingName(true);
-            }}
-            title="Double-click to rename"
-          >
-            {schematicName}
+          <span className="flex items-center gap-1.5">
+            <span
+              className="text-sm font-semibold text-[var(--color-text-heading)] cursor-pointer hover:text-blue-600 transition-colors"
+              onDoubleClick={() => {
+                setNameValue(schematicName);
+                setEditingName(true);
+              }}
+              title="Double-click to rename"
+            >
+              {schematicName}
+            </span>
+            {cloudSchematicId && (
+              <span
+                title={cloudSavedAt ? `Cloud saved: ${new Date(cloudSavedAt + "Z").toLocaleString()}` : "Cloud-backed schematic"}
+              >
+                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+              </span>
+            )}
           </span>
         )}
       </div>
@@ -488,6 +549,10 @@ export default function MenuBar() {
       {showPreferences && (
         <PreferencesDialog onClose={() => setShowPreferences(false)} />
       )}
+      {showSchematicBrowser && (
+        <SchematicBrowser onClose={() => setShowSchematicBrowser(false)} />
+      )}
+      <LoginDialog open={showCloudLogin} onClose={() => setShowCloudLogin(false)} />
     </div>
   );
 }

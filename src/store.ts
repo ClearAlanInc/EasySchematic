@@ -245,6 +245,12 @@ interface SchematicState {
   exportCustomTemplates: () => DeviceTemplate[];
   importCustomTemplates: (templates: DeviceTemplate[]) => void;
 
+  // Cloud storage
+  cloudSchematicId: string | null;
+  cloudSavedAt: string | null;
+  setCloudSchematicId: (id: string | null) => void;
+  setCloudSavedAt: (ts: string | null) => void;
+
   // Persistence
   saveToLocalStorage: () => void;
   loadFromLocalStorage: () => boolean;
@@ -474,6 +480,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   showLineJumps: true,
   showConnectionLabels: true,
   cableIdMap: {},
+  cloudSchematicId: null,
+  cloudSavedAt: null,
   pendingIncompatibleConnection: null,
 
   onNodesChange: (changes) => {
@@ -1549,6 +1557,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
   },
 
+  setCloudSchematicId: (id) => set({ cloudSchematicId: id }),
+  setCloudSavedAt: (ts) => set({ cloudSavedAt: ts }),
+
   saveToLocalStorage: () => {
     if (!hydrated) return;
     const state = get();
@@ -1767,6 +1778,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       edges: [],
       schematicName: "Untitled Schematic",
       isDemo: false,
+      cloudSchematicId: null,
+      cloudSavedAt: null,
       titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: createDefaultLayout(),
       hiddenSignalTypes: "",
