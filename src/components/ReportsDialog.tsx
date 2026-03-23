@@ -9,6 +9,7 @@ import {
   exportPackListCsv,
   getPackListTableData,
   type PackListDevice,
+  type PackListSummaryRow,
 } from "../packList";
 import {
   computeCableSchedule,
@@ -1601,38 +1602,49 @@ function PackListTabInline() {
               No connections in this schematic.
             </div>
           ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className={plThClass}>Qty</th>
-                  <th className={plThClass}>Cable Type</th>
-                  <th className={plThClass}>Signal</th>
-                  <th className={plThClass}>Length</th>
-                  {groupCablesByPath && <th className={plThClass}>Route</th>}
+            (() => {
+              const cableRows = groupCablesByPath ? data.summary : mergeCablesByType(data.summary);
+              const signalCables = cableRows.filter((s) => s.signalType !== "Power");
+              const powerCables = cableRows.filter((s) => s.signalType === "Power");
+              const renderRow = (s: PackListSummaryRow, i: number) => (
+                <tr key={i} className={rowClass(i)}>
+                  <td className={tdClass}>{s.count}&times;</td>
+                  <td className={tdClass}>{s.cableType}</td>
+                  <td className={tdClass}>{s.signalType}</td>
+                  <td className={tdClass}>{s.cableLength}</td>
+                  {groupCablesByPath && <td className={tdClass}>{s.route}</td>}
                 </tr>
-              </thead>
-              <tbody>
-                {(groupCablesByPath
-                  ? data.summary.map((s, i) => (
-                      <tr key={i} className={rowClass(i)}>
-                        <td className={tdClass}>{s.count}&times;</td>
-                        <td className={tdClass}>{s.cableType}</td>
-                        <td className={tdClass}>{s.signalType}</td>
-                        <td className={tdClass}>{s.cableLength}</td>
-                        <td className={tdClass}>{s.route}</td>
-                      </tr>
-                    ))
-                  : mergeCablesByType(data.summary).map((s, i) => (
-                      <tr key={i} className={rowClass(i)}>
-                        <td className={tdClass}>{s.count}&times;</td>
-                        <td className={tdClass}>{s.cableType}</td>
-                        <td className={tdClass}>{s.signalType}</td>
-                        <td className={tdClass}>{s.cableLength}</td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
+              );
+              return (
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className={plThClass}>Qty</th>
+                      <th className={plThClass}>Cable Type</th>
+                      <th className={plThClass}>Signal</th>
+                      <th className={plThClass}>Length</th>
+                      {groupCablesByPath && <th className={plThClass}>Route</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {signalCables.map(renderRow)}
+                    {powerCables.length > 0 && (
+                      <>
+                        <tr>
+                          <td
+                            colSpan={99}
+                            className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+                          >
+                            Power ({powerCables.reduce((sum, c) => sum + c.count, 0)} cables)
+                          </td>
+                        </tr>
+                        {powerCables.map((s, i) => renderRow(s, signalCables.length + i))}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              );
+            })()
           )}
         </>
       )}
@@ -1751,18 +1763,29 @@ function exportNetworkCsv(nodes: SchematicNode[], edges: import("../types").Conn
 
 function exportDevicesCsv(nodes: SchematicNode[], schematicName: string) {
   const rows = computeDeviceReport(nodes);
-  const header = ["Device", "Type", "Manufacturer", "Model", "Room", "Ports", "Color"];
+  // Group identical devices (same model, manufacturer, type, room) for quantity column
+  const grouped = new Map<string, { row: DeviceReportRow; count: number }>();
+  for (const r of rows) {
+    const key = `${r.model}|${r.manufacturer}|${r.deviceType}|${r.room}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      grouped.set(key, { row: r, count: 1 });
+    }
+  }
+  const header = ["Qty", "Device", "Manufacturer", "Model", "Type", "Room", "Ports"];
   const lines = [
     header.join(","),
-    ...rows.map((r) =>
+    ...[...grouped.values()].map(({ row: r, count }) =>
       [
-        csvEscape(r.label),
-        csvEscape(r.deviceType),
+        count,
+        csvEscape(r.model),
         csvEscape(r.manufacturer),
         csvEscape(r.model),
+        csvEscape(r.deviceType),
         csvEscape(r.room),
         r.portCount,
-        r.color,
       ].join(","),
     ),
   ];
