@@ -147,6 +147,7 @@ export function computePackList(
   for (const n of nodes) {
     if (n.type !== "device") continue;
     const data = n.data as DeviceData;
+    if (data.isVenueProvided) continue;
     const model = data.model ?? data.baseLabel ?? data.label;
     const room = getRoomLabel(nodes, n.parentId);
 

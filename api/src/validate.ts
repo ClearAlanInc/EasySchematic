@@ -21,6 +21,7 @@ interface TemplateInput {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  isVenueProvided?: boolean;
   sortOrder?: number;
 }
 
@@ -180,6 +181,11 @@ export function validateTemplate(body: unknown): ValidationResult {
     }
   }
 
+  // Venue-provided flag — optional boolean
+  if (obj.isVenueProvided != null && typeof obj.isVenueProvided !== "boolean") {
+    return { ok: false, error: "isVenueProvided must be a boolean" };
+  }
+
   // Power fields — optional numbers and string
   if (obj.powerDrawW != null && (typeof obj.powerDrawW !== "number" || obj.powerDrawW < 0)) {
     return { ok: false, error: "powerDrawW must be a non-negative number" };
@@ -210,6 +216,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.powerDrawW != null && { powerDrawW: obj.powerDrawW as number }),
       ...(obj.powerCapacityW != null && { powerCapacityW: obj.powerCapacityW as number }),
       ...(obj.voltage != null && { voltage: obj.voltage as string }),
+      ...(obj.isVenueProvided != null && { isVenueProvided: obj.isVenueProvided as boolean }),
       ...(obj.sortOrder != null && { sortOrder: obj.sortOrder as number }),
     },
   };

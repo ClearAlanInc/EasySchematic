@@ -78,6 +78,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "wired-mic": "Audio",
   "iem-transmitter": "Audio",
   "expansion-card": "Expansion Cards",
+  "company-switch": "Infrastructure",
   "power-distribution": "Infrastructure",
   "patch-panel": "Infrastructure",
   "cloud-service": "Cloud Services",

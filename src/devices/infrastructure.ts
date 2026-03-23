@@ -2,6 +2,65 @@ import { port, ports } from "./_helpers";
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
+  // Company Switches (venue-provided power sources)
+  {
+    id: "c0a80101-0300-4000-8000-000000000700",
+    deviceType: "company-switch",
+    label: "Company Switch 200A 3-Phase",
+    isVenueProvided: true,
+    searchTerms: ["company switch", "house power", "venue power", "tie-in", "200 amp", "3 phase", "service"],
+    powerCapacityW: 72000,
+    voltage: "208V 3-Phase",
+    ports: [
+      port("Cam-Lok Out A", "power", "output", "cam-lok"),
+      port("Cam-Lok Out B", "power", "output", "cam-lok"),
+      port("Cam-Lok Out C", "power", "output", "cam-lok"),
+      port("Cam-Lok Out N", "power", "output", "cam-lok"),
+    ],
+  },
+  {
+    id: "c0a80101-0301-4000-8000-000000000701",
+    deviceType: "company-switch",
+    label: "Company Switch 400A 3-Phase",
+    isVenueProvided: true,
+    searchTerms: ["company switch", "house power", "venue power", "tie-in", "400 amp", "3 phase", "service", "main"],
+    powerCapacityW: 144000,
+    voltage: "208V 3-Phase",
+    ports: [
+      port("Cam-Lok Out A1", "power", "output", "cam-lok"),
+      port("Cam-Lok Out B1", "power", "output", "cam-lok"),
+      port("Cam-Lok Out C1", "power", "output", "cam-lok"),
+      port("Cam-Lok Out A2", "power", "output", "cam-lok"),
+      port("Cam-Lok Out B2", "power", "output", "cam-lok"),
+      port("Cam-Lok Out C2", "power", "output", "cam-lok"),
+    ],
+  },
+  {
+    id: "c0a80101-0302-4000-8000-000000000702",
+    deviceType: "company-switch",
+    label: "Company Switch 100A Single Phase",
+    isVenueProvided: true,
+    searchTerms: ["company switch", "house power", "venue power", "tie-in", "100 amp", "single phase"],
+    powerCapacityW: 12000,
+    voltage: "120V",
+    ports: [
+      port("Cam-Lok Out 1", "power", "output", "cam-lok"),
+      port("Cam-Lok Out 2", "power", "output", "cam-lok"),
+    ],
+  },
+  {
+    id: "c0a80101-0303-4000-8000-000000000703",
+    deviceType: "company-switch",
+    label: "Wall Outlet / Convenience Power",
+    isVenueProvided: true,
+    searchTerms: ["wall outlet", "convenience power", "house power", "venue power", "edison", "wall plug"],
+    powerCapacityW: 1800,
+    voltage: "120V",
+    ports: [
+      port("Outlet 1", "power", "output", "edison"),
+      port("Outlet 2", "power", "output", "edison"),
+    ],
+  },
   // Power Distribution
   {
     id: "c0a80101-003b-4000-8000-000000000059",

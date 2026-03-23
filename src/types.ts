@@ -134,6 +134,7 @@ export interface DeviceData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  isVenueProvided?: boolean;
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -212,6 +213,7 @@ export interface DeviceTemplate {
   powerDrawW?: number;           // Max power consumption in watts
   powerCapacityW?: number;       // Total supply capacity in watts (distros only)
   voltage?: string;              // Informational: "100-240V", "208V", "120V"
+  isVenueProvided?: boolean;     // Venue-owned gear — excluded from pack list
 }
 
 export interface TemplatePreset {

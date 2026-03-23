@@ -20,6 +20,7 @@ export interface DeviceFormData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  isVenueProvided?: boolean;
 }
 
 interface DeviceFormProps {
@@ -54,6 +55,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
   const [powerDrawW, setPowerDrawW] = useState<string>("");
   const [powerCapacityW, setPowerCapacityW] = useState<string>("");
   const [voltage, setVoltage] = useState("");
+  const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -87,6 +89,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
+        setIsVenueProvided((t as DeviceTemplate & { isVenueProvided?: boolean }).isVenueProvided ?? false);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -144,6 +147,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         ...(powerDrawW.trim() && { powerDrawW: Number(powerDrawW) }),
         ...(powerCapacityW.trim() && { powerCapacityW: Number(powerCapacityW) }),
         ...(voltage.trim() && { voltage: voltage.trim() }),
+        ...(isVenueProvided && { isVenueProvided: true }),
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
@@ -201,7 +205,11 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
           <span className="block text-sm font-medium text-slate-700 mb-1">Voltage</span>
           <input value={voltage} onChange={(e) => setVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
-        {deviceType.includes("power-distribution") && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={isVenueProvided} onChange={(e) => setIsVenueProvided(e.target.checked)} className="cursor-pointer" />
+          <span className="text-sm font-medium text-slate-700">Venue provided (exclude from pack list)</span>
+        </label>
+        {(deviceType.includes("power-distribution") || deviceType.includes("company-switch")) && (
           <label>
             <span className="block text-sm font-medium text-slate-700 mb-1">Power Capacity (W)</span>
             <input type="number" min="0" value={powerCapacityW} onChange={(e) => setPowerCapacityW(e.target.value)} placeholder="e.g. 2400" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />

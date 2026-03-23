@@ -86,6 +86,7 @@ export default function DeviceEditor() {
   // Cable accessory flags
   const [isCableAccessory, setIsCableAccessory] = useState(false);
   const [integratedWithCable, setIntegratedWithCable] = useState(false);
+  const [isVenueProvided, setIsVenueProvided] = useState(false);
 
   // Login dialog for community submission
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -124,6 +125,7 @@ export default function DeviceEditor() {
     setVoltage(node.data.voltage);
     setIsCableAccessory(node.data.isCableAccessory ?? false);
     setIntegratedWithCable(node.data.integratedWithCable ?? false);
+    setIsVenueProvided(node.data.isVenueProvided ?? false);
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -170,12 +172,13 @@ export default function DeviceEditor() {
       ...(voltage ? { voltage } : {}),
       ...(isCableAccessory ? { isCableAccessory: true } : {}),
       ...(integratedWithCable ? { integratedWithCable: true } : {}),
+      ...(isVenueProvided ? { isVenueProvided: true } : {}),
       ...(existing?.baseLabel ? { baseLabel: existing.baseLabel } : {}),
       ...(existing?.slots ? { slots: existing.slots } : {}),
     };
     updateDevice(editingNodeId, data);
     close();
-  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, isCableAccessory, integratedWithCable]);
+  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, isCableAccessory, integratedWithCable, isVenueProvided]);
 
   const handleSaveAsTemplate = useCallback(() => {
     const finalPorts: Port[] = ports
@@ -696,6 +699,15 @@ export default function DeviceEditor() {
                   Integrated with cable
                 </label>
               )}
+              <label className="flex items-center gap-1.5 text-[var(--color-text)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isVenueProvided}
+                  onChange={(e) => setIsVenueProvided(e.target.checked)}
+                  className="cursor-pointer"
+                />
+                Venue provided (exclude from pack list)
+              </label>
             </div>
           </details>
         </div>

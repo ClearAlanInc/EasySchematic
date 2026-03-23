@@ -627,6 +627,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ...(template.powerCapacityW != null ? { powerCapacityW: template.powerCapacityW } : {}),
         ...(template.voltage ? { voltage: template.voltage } : {}),
         ...(hiddenPorts && hiddenPorts.length > 0 ? { hiddenPorts } : {}),
+        ...(template.isVenueProvided ? { isVenueProvided: true } : {}),
         ...(template.deviceType === "cable-accessory" ? { isCableAccessory: true } : {}),
         ...(template.deviceType === "cable-accessory" &&
           template.ports.some((p) => p.isMulticable && p.connectorType === "none")
