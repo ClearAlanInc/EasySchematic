@@ -33,6 +33,12 @@ jobs:
       - name: Install API dependencies
         run: cd api && npm ci
 
+      - name: Apply D1 migrations
+        run: cd api && npx wrangler d1 migrations apply easyschematic-db --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy API worker
         run: cd api && npx wrangler deploy
         env:
