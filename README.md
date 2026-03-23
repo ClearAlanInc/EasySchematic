@@ -12,7 +12,7 @@
 
 ### Canvas & Devices
 
-- **350+ built-in device templates** across 20 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Speakers & Amps, Networking, KVM/Extenders, Wireless, LED Video, Media Servers, Lighting, Control, Infrastructure, Cloud Services, Cable Accessories
+- **365+ built-in device templates** across 20 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Speakers & Amps, Networking, KVM/Extenders, Wireless, LED Video, Media Servers, Lighting, Control, Infrastructure, Cloud Services, Cable Accessories
 - **User templates** — save modified devices as reusable templates
 - **Favorite devices** — star templates in the library for quick access; favorites pin to the top and sort first in search
 - **Template presets** — save a device configuration as the project default for that template; new placements auto-apply the preset
@@ -37,7 +37,7 @@
 - **Line jump arcs** at connection crossings
 - **Stubbed connections** — render as short stubs instead of full routed lines
 - **Connector mismatch override** — force-connect ports with incompatible connectors
-- **27 signal types**, all color-coded (see below)
+- **30 signal types**, all color-coded (see below)
 
 ### Ports
 
@@ -59,7 +59,7 @@
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · MIDI · Tally · S/PDIF · ADAT · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · MIDI · Tally · S/PDIF · ADAT · Ultranet · AES50 · StageConnect · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
@@ -97,6 +97,8 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 ### Save & Export
 
 - **Auto-save** to browser localStorage
+- **Cloud storage** — create a free account to save up to 10 schematics to the cloud and access them from any browser
+- **Sharing** — generate a shareable link for any cloud-saved schematic
 - **JSON import/export** with schema versioning and automatic migrations
 - **Print** — configurable paper size (Letter through Arch E), orientation, scale, title block
 - **PNG** — 4x resolution raster export
@@ -110,7 +112,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Copy/paste** with offset positioning
 - **Double-click device** to open device editor (label, type, ports, presets)
 - **Double-click canvas** to quick-add a device via search dialog
-- **Preferences** — scroll wheel configuration via Edit menu
+- **Preferences** — scroll wheel configuration, trackpad support with sensitivity sliders, via Edit menu
 - **Right-click room** for context menu — edit properties (label, colors, border style) or lock/unlock the room
 
 ## Getting Started

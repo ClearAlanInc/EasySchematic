@@ -9,8 +9,8 @@ export default function OverviewPage() {
         out how devices connect.
       </p>
       <p>
-        Everything runs in the browser — no backend, no accounts, no install. Your work saves to localStorage
-        automatically.
+        Everything runs in the browser — no install required. Your work auto-saves to localStorage, or create a
+        free account to save schematics to the cloud and access them from any browser.
       </p>
       <p>
         <strong>
@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 27 signal types total)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 30 signal types total)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -42,7 +42,7 @@ export default function OverviewPage() {
           <strong>Line jump arcs</strong> — arc markers at connection crossings for visual clarity
         </li>
         <li>
-          <strong>Device library</strong> — 350+ real-world device templates across cameras, switchers, audio, lighting,
+          <strong>Device library</strong> — 365+ real-world device templates across cameras, switchers, audio, lighting,
           LED video, and more
         </li>
         <li>
@@ -59,6 +59,15 @@ export default function OverviewPage() {
         </li>
         <li>
           <strong>Room styling</strong> — customize background color, border style, and label size via right-click context menu
+        </li>
+        <li>
+          <strong>Cloud storage</strong> — save up to 10 schematics to the cloud with a free account; access from any browser
+        </li>
+        <li>
+          <strong>Sharing</strong> — generate a link to share any cloud-saved schematic with anyone
+        </li>
+        <li>
+          <strong>Trackpad support</strong> — pinch-to-zoom and two-finger pan with configurable sensitivity
         </li>
         <li>
           <strong>Alignment tools</strong> — align and distribute selected devices horizontally or vertically
@@ -82,7 +91,8 @@ export default function OverviewPage() {
         </li>
         <li>Zustand for state management</li>
         <li>Tailwind CSS v4</li>
-        <li>Deployed on Cloudflare Workers (static assets)</li>
+        <li>Cloudflare Workers + D1 + R2 for API and cloud storage</li>
+        <li>Deployed on Cloudflare Workers</li>
       </ul>
     </>
   );

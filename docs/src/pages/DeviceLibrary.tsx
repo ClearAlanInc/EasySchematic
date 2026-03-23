@@ -5,7 +5,7 @@ export default function DeviceLibraryPage() {
 
       <h2>Built-in templates</h2>
       <p>
-        The device library sidebar contains <strong>350+ real-world device templates</strong> organized by category:
+        The device library sidebar contains <strong>365+ real-world device templates</strong> organized by category:
       </p>
       <ul>
         <li><strong>Sources</strong> — cameras, PTZ cameras, graphics, computers, media players</li>
@@ -113,6 +113,8 @@ export default function DeviceLibraryPage() {
           moderators (and you) can verify specs</li>
         <li><strong>Contributor credit</strong> — approved submissions are attributed to you on the device page and
           the contributors hall of fame</li>
+        <li><strong>Submit from the app</strong> — right-click any custom device on the canvas and choose
+          "Submit to Community" to submit it directly without re-entering the details on the devices site</li>
       </ul>
     </>
   );

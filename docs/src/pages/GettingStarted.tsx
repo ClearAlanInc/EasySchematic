@@ -19,7 +19,8 @@ export default function GettingStartedPage() {
           <strong>Connect ports</strong> by clicking an output port, then clicking a matching input port
         </li>
         <li>
-          <strong>Save</strong> happens automatically to your browser's localStorage
+          <strong>Save</strong> happens automatically to your browser's localStorage. Optionally, create a free
+          account to save to the cloud
         </li>
       </ol>
 
@@ -76,13 +77,30 @@ export default function GettingStartedPage() {
         Use the <strong>Reset to defaults</strong> button to restore the default bindings.
       </p>
 
-      <h2>Saving your work</h2>
-      <p>
-        EasySchematic auto-saves to your browser's localStorage after every change. To share or back up your work:
-      </p>
+      <h3>Trackpad support</h3>
       <ul>
         <li>
-          <strong>Save</strong> — exports a <code>.json</code> file you can re-import later
+          <strong>Trackpad mode</strong> — enable trackpad detection for pinch-to-zoom and two-finger pan
+        </li>
+        <li>
+          <strong>Sensitivity</strong> — zoom speed and pan speed sliders (0.25x–3x) to fine-tune trackpad responsiveness
+        </li>
+      </ul>
+
+      <h2>Saving your work</h2>
+      <ul>
+        <li>
+          <strong>Auto-save</strong> — saves to localStorage after every change (always on, no account needed)
+        </li>
+        <li>
+          <strong>Cloud save</strong> — create a free account (magic-link email login, no password) to save up to
+          10 schematics to the cloud. Access them from any browser via <strong>File → My Schematics</strong>
+        </li>
+        <li>
+          <strong>Share</strong> — toggle sharing on any cloud-saved schematic to generate a link anyone can open
+        </li>
+        <li>
+          <strong>Save as file</strong> — exports a <code>.json</code> file you can re-import later
         </li>
         <li>
           <strong>Export → PNG/SVG</strong> — image export for documentation

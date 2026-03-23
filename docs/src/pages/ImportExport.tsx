@@ -3,6 +3,18 @@ export default function ImportExportPage() {
     <>
       <h1>Import / Export</h1>
 
+      <h2>Cloud storage</h2>
+      <p>
+        Cloud storage is separate from file export — it saves the full schematic to EasySchematic's servers so you
+        can access it from any browser.
+      </p>
+      <ul>
+        <li>Create a free account via magic-link email login (no password needed)</li>
+        <li>Save via <strong>File → Save to Cloud</strong> or manage all saved schematics via <strong>File → My Schematics</strong></li>
+        <li>Up to 10 schematics per account</li>
+        <li>Toggle sharing on any saved schematic in My Schematics to generate a link anyone can open</li>
+      </ul>
+
       <h2>JSON (native format)</h2>
       <p>
         The JSON format is EasySchematic's native file format. It contains the complete schematic — all devices,
