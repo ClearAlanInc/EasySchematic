@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchCurrentUser, getAdminToken } from "./api";
+import { fetchCurrentUser, claimAuthToken, getAdminToken } from "./api";
 import type { User } from "./api";
 import BrowsePage from "./pages/BrowsePage";
 import DeviceDetailPage from "./pages/DeviceDetailPage";
@@ -14,11 +14,12 @@ import ProfilePage from "./pages/ProfilePage";
 import ContributorsPage from "./pages/ContributorsPage";
 import UserMenu from "./components/UserMenu";
 
-function parseHash(): { page: string; id?: string; draft?: string } {
+function parseHash(): { page: string; id?: string; draft?: string; auth?: string } {
   const hash = window.location.hash.slice(1) || "/";
   const [path, query] = hash.split("?");
   const params = new URLSearchParams(query || "");
   const draft = params.get("draft") || undefined;
+  const auth = params.get("auth") || undefined;
 
   if (path.startsWith("/admin/edit/")) return { page: "admin-edit", id: path.slice(12) };
   if (path === "/admin/edit") return { page: "admin-edit" };
@@ -26,8 +27,8 @@ function parseHash(): { page: string; id?: string; draft?: string } {
   if (path === "/admin") return { page: "admin-users" };
   if (path.startsWith("/device/")) return { page: "device", id: path.slice(8) };
   if (path === "/login") return { page: "login" };
-  if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft };
-  if (path === "/submit") return { page: "submit", draft };
+  if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, auth };
+  if (path === "/submit") return { page: "submit", draft, auth };
   if (path === "/my-submissions") return { page: "my-submissions" };
   if (path === "/review") return { page: "review" };
   if (path.startsWith("/review/")) return { page: "review-detail", id: path.slice(8) };
@@ -48,9 +49,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetchCurrentUser()
-      .then(setUser)
-      .finally(() => setAuthLoading(false));
+    const init = async () => {
+      // Check for auth handoff token in URL
+      const { auth } = parseHash();
+      if (auth) {
+        try {
+          const claimed = await claimAuthToken(auth);
+          setUser(claimed);
+          // Strip auth param from URL
+          const hash = window.location.hash;
+          const cleaned = hash.replace(/([?&])auth=[^&]+(&|$)/, (_, p, s) => s ? p : "");
+          window.location.hash = cleaned;
+          setAuthLoading(false);
+          return;
+        } catch {
+          // Token invalid/expired — fall through to normal session check
+        }
+      }
+      const u = await fetchCurrentUser();
+      setUser(u);
+      setAuthLoading(false);
+    };
+    init();
   }, []);
 
   const isMod = user?.role === "moderator" || user?.role === "admin";

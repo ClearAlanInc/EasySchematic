@@ -62,6 +62,19 @@ export async function createDraft(data: unknown): Promise<string> {
   return result.id;
 }
 
+export async function createHandoff(): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/handoff`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to create handoff token");
+  }
+  const result = (await res.json()) as { token: string };
+  return result.token;
+}
+
 // ==================== TEMPLATES ====================
 
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {

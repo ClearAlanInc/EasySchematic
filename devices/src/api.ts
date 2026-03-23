@@ -167,6 +167,20 @@ export async function fetchContributorTemplates(userId: string): Promise<Contrib
   return res.json();
 }
 
+export async function claimAuthToken(token: string): Promise<User> {
+  const res = await fetch(`${API_URL}/auth/claim`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) {
+    const err = await res.json() as { error: string };
+    throw new Error(err.error || "Failed to claim auth token");
+  }
+  return res.json();
+}
+
 export async function logout(): Promise<void> {
   await fetch(`${API_URL}/auth/logout`, {
     method: "POST",

@@ -40,8 +40,10 @@ const NO_CACHE_HEADERS = {
   "Cache-Control": "no-cache",
 };
 
-function sessionCookie(sessionId: string, maxAge: number): string {
-  return `session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}`;
+function sessionCookie(sessionId: string, maxAge: number, requestUrl?: string): string {
+  const isLocalhost = requestUrl ? new URL(requestUrl).hostname === "localhost" : false;
+  const domain = isLocalhost ? "" : "; Domain=easyschematic.live";
+  return `session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}${domain}`;
 }
 
 function getClientIP(c: { req: { header: (name: string) => string | undefined } }): string {
@@ -180,7 +182,7 @@ app.get("/auth/verify", async (c) => {
     status: 302,
     headers: {
       Location: validReturnTo || "https://devices.easyschematic.live/#/",
-      "Set-Cookie": sessionCookie(sessionId, 30 * 24 * 60 * 60),
+      "Set-Cookie": sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url),
     },
   });
 });
@@ -197,7 +199,7 @@ app.post("/auth/logout", async (c) => {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Set-Cookie": sessionCookie("", 0),
+      "Set-Cookie": sessionCookie("", 0, c.req.url),
     },
   });
 });
@@ -246,6 +248,74 @@ app.put("/auth/me", async (c) => {
   }
 
   return c.json({ ok: true });
+});
+
+// ==================== AUTH HANDOFF ENDPOINTS ====================
+
+app.post("/auth/handoff", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+
+  const limit = await checkRateLimit(db, `handoff:user:${user.id}`, 10);
+  if (!limit.allowed) {
+    return c.json({ error: "Too many handoff tokens. Try again later." }, 429);
+  }
+
+  const id = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+  await db
+    .prepare("INSERT INTO auth_handoffs (id, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(id, user.id, expiresAt)
+    .run();
+
+  return c.json({ token: id });
+});
+
+app.post("/auth/claim", async (c) => {
+  const body = await c.req.json<{ token?: string }>();
+  if (!body.token) return c.json({ error: "Token required" }, 400);
+
+  const db = c.env.easyschematic_db;
+
+  const handoff = await db
+    .prepare("SELECT * FROM auth_handoffs WHERE id = ? AND used = 0 AND expires_at > datetime('now')")
+    .bind(body.token)
+    .first<{ id: string; user_id: string }>();
+
+  if (!handoff) {
+    return c.json({ error: "Invalid or expired token" }, 401);
+  }
+
+  // Mark as used
+  await db.prepare("UPDATE auth_handoffs SET used = 1 WHERE id = ?").bind(handoff.id).run();
+
+  // Look up user
+  const user = await db
+    .prepare("SELECT id, email, name, role FROM users WHERE id = ?")
+    .bind(handoff.user_id)
+    .first<{ id: string; email: string; name: string | null; role: string }>();
+
+  if (!user) return c.json({ error: "User not found" }, 404);
+
+  // Create session
+  const sessionId = crypto.randomUUID();
+  const sessionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  await db
+    .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(sessionId, user.id, sessionExpires)
+    .run();
+
+  return new Response(JSON.stringify({ id: user.id, email: user.email, name: user.name, role: user.role }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url),
+    },
+  });
 });
 
 // ==================== DRAFT ENDPOINTS ====================

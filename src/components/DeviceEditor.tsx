@@ -16,7 +16,7 @@ import {
   type SlotDefinition,
 } from "../types";
 import { DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES } from "../connectorTypes";
-import { getBundledTemplates, getCardsByFamily, checkSession, createDraft } from "../templateApi";
+import { getBundledTemplates, getCardsByFamily, checkSession, createDraft, createHandoff } from "../templateApi";
 import LoginDialog from "./LoginDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
@@ -229,7 +229,12 @@ export default function DeviceEditor() {
 
     try {
       const draftId = await createDraft(draftData);
-      window.open(`${devicesUrl}/#/submit?draft=${draftId}`, "_blank");
+      let url = `${devicesUrl}/#/submit?draft=${draftId}`;
+      try {
+        const authToken = await createHandoff();
+        url += `&auth=${authToken}`;
+      } catch { /* cookie domain should handle it */ }
+      window.open(url, "_blank");
     } catch (e) {
       console.error("Failed to create draft:", e);
     }

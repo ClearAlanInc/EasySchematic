@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { checkSession, createDraft } from "../templateApi";
+import { checkSession, createDraft, createHandoff } from "../templateApi";
 
 const STORAGE_KEY = "easyschematic-pending-submission";
 const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
@@ -30,7 +30,12 @@ export default function PendingSubmissionBanner() {
         // Auto-submit immediately
         try {
           const draftId = await createDraft(pending.data);
-          window.open(`${DEVICES_URL}/#/submit?draft=${draftId}`, "_blank");
+          let url = `${DEVICES_URL}/#/submit?draft=${draftId}`;
+          try {
+            const authToken = await createHandoff();
+            url += `&auth=${authToken}`;
+          } catch { /* cookie domain should handle it */ }
+          window.open(url, "_blank");
           localStorage.removeItem(STORAGE_KEY);
         } catch {
           // Auto-submit failed — show banner as fallback
@@ -53,7 +58,12 @@ export default function PendingSubmissionBanner() {
     try {
       const pending = JSON.parse(raw) as { data: unknown };
       const draftId = await createDraft(pending.data);
-      window.open(`${DEVICES_URL}/#/submit?draft=${draftId}`, "_blank");
+      let url = `${DEVICES_URL}/#/submit?draft=${draftId}`;
+      try {
+        const authToken = await createHandoff();
+        url += `&auth=${authToken}`;
+      } catch { /* cookie domain should handle it */ }
+      window.open(url, "_blank");
       localStorage.removeItem(STORAGE_KEY);
       setVisible(false);
     } catch {
