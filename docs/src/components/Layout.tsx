@@ -78,6 +78,14 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
         >
           Support &rarr;
         </a>
+        <a
+          href="https://discord.gg/dxXn3Jk2a6"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-blue-600 hover:text-blue-800"
+        >
+          Discord &rarr;
+        </a>
       </div>
     </>
   );
