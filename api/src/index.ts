@@ -25,6 +25,14 @@ app.use(
   })
 );
 
+// Security response headers
+app.use("*", async (c, next) => {
+  await next();
+  c.res.headers.set("X-Content-Type-Options", "nosniff");
+  c.res.headers.set("X-Frame-Options", "DENY");
+  c.res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+});
+
 // Session middleware on all routes
 app.use("*", sessionMiddleware);
 
@@ -138,11 +146,24 @@ app.get("/auth/verify", async (c) => {
 
   const db = c.env.easyschematic_db;
 
-  // Find and validate magic link
-  const link = await db
-    .prepare("SELECT * FROM magic_links WHERE token = ? AND used = 0 AND expires_at > datetime('now')")
+  // Atomically mark as used — only succeeds if not already used
+  const markResult = await db
+    .prepare("UPDATE magic_links SET used = 1 WHERE token = ? AND used = 0 AND expires_at > datetime('now')")
     .bind(token)
-    .first<{ id: string; email: string }>();
+    .run();
+
+  if (!markResult.meta.changes) {
+    const errorUrl = validReturnTo
+      ? `${new URL(validReturnTo).origin}/?error=expired`
+      : "https://devices.easyschematic.live/#/login?error=expired";
+    return c.redirect(errorUrl);
+  }
+
+  // Fetch the email (safe — we own the row after the atomic UPDATE)
+  const link = await db
+    .prepare("SELECT email FROM magic_links WHERE token = ?")
+    .bind(token)
+    .first<{ email: string }>();
 
   if (!link) {
     const errorUrl = validReturnTo
@@ -150,9 +171,6 @@ app.get("/auth/verify", async (c) => {
       : "https://devices.easyschematic.live/#/login?error=expired";
     return c.redirect(errorUrl);
   }
-
-  // Mark as used
-  await db.prepare("UPDATE magic_links SET used = 1 WHERE id = ?").bind(link.id).run();
 
   // Find or create user
   let user = await db.prepare("SELECT id FROM users WHERE email = ?").bind(link.email).first<{ id: string }>();
@@ -949,6 +967,10 @@ app.post("/support-emails/:id/reply", async (c) => {
   const auth = requireModeratorOrToken(c);
   if (!auth) return c.json({ error: "Moderator access required" }, 403);
 
+  const replyKey = typeof auth === "string" ? "support-reply:token" : `support-reply:${auth.id}`;
+  const limit = await checkRateLimit(c.env.easyschematic_db, replyKey, 30);
+  if (!limit.allowed) return c.json({ error: "Too many replies. Try again later." }, 429);
+
   const id = c.req.param("id");
   const body = await c.req.json<{ text: string }>();
 
@@ -972,8 +994,8 @@ app.post("/support-emails/:id/reply", async (c) => {
     headers["References"] = row.message_id;
   }
 
-  // Convert plain text to HTML body with signature
-  const bodyHtml = body.text.split("\n").map((l: string) => l || "<br>").join("<br>") +
+  // Convert plain text to HTML body with signature (escape to prevent HTML injection)
+  const bodyHtml = body.text.split("\n").map((l: string) => escapeHtml(l) || "<br>").join("<br>") +
     `<br><br>` +
     `<table cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;font-size:13px;color:#334155">` +
     `<tr><td style="padding-right:12px;vertical-align:middle">` +
@@ -1188,6 +1210,10 @@ app.post("/schematics/:id/share", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
   const db = c.env.easyschematic_db;
+
+  const limit = await checkRateLimit(db, `share:user:${user.id}`, 30);
+  if (!limit.allowed) return c.json({ error: "Too many share requests. Try again later." }, 429);
+
   const id = c.req.param("id");
 
   const existing = await db
@@ -1242,6 +1268,10 @@ app.put("/schematics/:id/rename", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
   const db = c.env.easyschematic_db;
+
+  const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
+  if (!limit.allowed) return c.json({ error: "Too many requests. Try again later." }, 429);
+
   const id = c.req.param("id");
 
   const existing = await db
@@ -1269,9 +1299,11 @@ app.put("/schematics/:id/rename", async (c) => {
 });
 
 app.get("/health", async (c) => {
-  // Opportunistically clean up expired rate limits and drafts
+  // Opportunistically clean up expired rate limits, drafts, sessions, and magic links
   await cleanupExpiredRateLimits(c.env.easyschematic_db).catch(() => {});
   await c.env.easyschematic_db.prepare("DELETE FROM drafts WHERE expires_at < datetime('now')").run().catch(() => {});
+  await c.env.easyschematic_db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run().catch(() => {});
+  await c.env.easyschematic_db.prepare("DELETE FROM magic_links WHERE expires_at < datetime('now')").run().catch(() => {});
   return c.json({ ok: true });
 });
 
@@ -1285,6 +1317,10 @@ export default {
 };
 
 // ==================== HELPERS ====================
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 interface SubmissionRow {
   id: string;
