@@ -81,6 +81,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "company-switch": "Infrastructure",
   "power-distribution": "Infrastructure",
   "patch-panel": "Infrastructure",
+  "presentation-system": "Switching",
   "cloud-service": "Cloud Services",
 };
 

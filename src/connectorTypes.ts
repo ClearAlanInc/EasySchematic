@@ -94,6 +94,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   db25: "DB25",
   "din-5": "DIN-5",
   phoenix: "Phoenix",
+  "terminal-block": "Terminal Block",
   powercon: "powerCON",
   edison: "Edison",
   iec: "IEC",

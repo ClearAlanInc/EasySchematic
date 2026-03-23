@@ -5,7 +5,7 @@ export type ConnectorType =
   | "xlr-3" | "xlr-5" | "trs-quarter" | "trs-eighth" | "combo-xlr-trs"
   | "rj45" | "ethercon" | "sfp" | "lc" | "sc"
   | "usb-a" | "usb-b" | "usb-c"
-  | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
+  | "db9" | "db25" | "din-5" | "phoenix" | "terminal-block" | "powercon" | "edison" | "iec"
   | "speakon" | "socapex" | "multipin" | "rca" | "toslink" | "barrel"
   | "banana" | "binding-post" | "binding-post-banana" | "dvi" | "mini-xlr" | "opticalcon"
   | "l5-20" | "l6-20" | "l6-30" | "l21-30" | "cam-lok"
@@ -384,6 +384,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   db25: "DB25",
   "din-5": "DIN-5",
   phoenix: "Phoenix",
+  "terminal-block": "Terminal Block",
   powercon: "powerCON",
   edison: "Edison",
   iec: "IEC C13",
