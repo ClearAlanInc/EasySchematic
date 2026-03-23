@@ -121,9 +121,16 @@ export default function SchematicBrowser({ onClose }: { onClose: () => void }) {
       >
         {/* Header */}
         <div className="px-5 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-heading)" }}>
-            My Schematics
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-heading)" }}>
+              My Schematics
+            </h2>
+            {!loading && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-text-muted)" }}>
+                {schematics.length} / 10
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-[var(--color-surface-hover)] transition-colors cursor-pointer"
