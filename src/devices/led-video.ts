@@ -11,6 +11,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera SX40",
     referenceUrl: "https://www.bromptontech.com/product/sx40/",
     searchTerms: ["brompton", "tessera", "sx40", "led processor", "led wall"],
+    powerDrawW: 250, // typical
     ports: [
       port("12G-SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -35,6 +36,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera S4",
     referenceUrl: "https://www.bromptontech.com/product/s4/",
     searchTerms: ["brompton", "tessera", "s4", "led processor"],
+    powerDrawW: 60, // typical
     ports: [
       port("DVI-D In", "hdmi", "input", "dvi"),
       port("LED Out 1", "ethernet", "output", "rj45"),
@@ -53,6 +55,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera M2",
     referenceUrl: "https://www.bromptontech.com/product/r2-plus/",
     searchTerms: ["brompton", "tessera", "m2", "receiver card", "led"],
+    powerDrawW: 5, // typical — powered via LED panel
     ports: [
       port("LED Data In", "ethernet", "input"),
       port("LED Data Link", "ethernet", "output"),
@@ -66,6 +69,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "NovaPro HD",
     referenceUrl: "https://www.novastar.tech/product/detail.html?catid=3&id=36",
     searchTerms: ["novastar", "novapro", "led processor", "led wall"],
+    powerDrawW: 120, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -94,6 +98,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VX2000 Pro",
     referenceUrl: "https://www.novastar.tech/product/detail.html?catid=3&id=34",
     searchTerms: ["novastar", "vx2000", "led processor", "all-in-one"],
+    powerDrawW: 300, // typical
     ports: [
       port("HDMI 2.0 In 1", "hdmi", "input"),
       port("HDMI 2.0 In 2", "hdmi", "input"),
@@ -118,6 +123,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "NovaPro UHD Jr",
     referenceUrl: "https://www.novastar.tech/product/detail.html?catid=3&id=36",
     searchTerms: ["novastar", "novapro", "uhd", "led processor"],
+    powerDrawW: 150, // typical
     ports: [
       port("HDMI In 1", "hdmi", "input"),
       port("HDMI In 2", "hdmi", "input"),
@@ -138,6 +144,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera S8",
     referenceUrl: "https://www.bromptontech.com/product/s8/",
     searchTerms: ["brompton", "tessera", "s8", "led processor"],
+    powerDrawW: 120, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DP In", "displayport", "input"),
@@ -164,6 +171,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera R2+",
     referenceUrl: "https://www.bromptontech.com/product/r2-plus/",
     searchTerms: ["brompton", "tessera", "r2", "receiver", "led"],
+    powerDrawW: 5, // typical — powered via LED panel
     ports: [
       port("Data In", "ethernet", "input", "ethercon"),
       port("Data Out", "ethernet", "output", "ethercon"),
@@ -178,6 +186,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tessera XD 10G",
     referenceUrl: "https://www.bromptontech.com/product/xd/",
     searchTerms: ["brompton", "tessera", "xd", "10g", "distribution", "led"],
+    powerDrawW: 80, // typical
     ports: [
       port("10G Copper In", "ethernet", "input", "rj45"),
       port("10G Fiber In", "fiber", "input", "sfp"),
@@ -195,6 +204,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HELIOS",
     referenceUrl: "https://megapixelvr.com/helios/",
     searchTerms: ["megapixel", "helios", "led processor", "led wall", "virtual production"],
+    powerDrawW: 500, // typical
     ports: [
       port("QSFP Fiber In", "fiber", "input", "other"),
       port("HDMI In", "hdmi", "input"),

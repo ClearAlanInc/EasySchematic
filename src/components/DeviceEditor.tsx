@@ -78,6 +78,11 @@ export default function DeviceEditor() {
   // DHCP server config
   const [dhcpServer, setDhcpServer] = useState<DhcpServerConfig | undefined>(undefined);
 
+  // Power fields
+  const [powerDrawW, setPowerDrawW] = useState<number | undefined>(undefined);
+  const [powerCapacityW, setPowerCapacityW] = useState<number | undefined>(undefined);
+  const [voltage, setVoltage] = useState<string | undefined>(undefined);
+
   // Cable accessory flags
   const [isCableAccessory, setIsCableAccessory] = useState(false);
   const [integratedWithCable, setIntegratedWithCable] = useState(false);
@@ -114,6 +119,9 @@ export default function DeviceEditor() {
     setHiddenPorts(node.data.hiddenPorts ?? []);
     setPortVisOpen(false);
     setDhcpServer(node.data.dhcpServer ? { ...node.data.dhcpServer } : undefined);
+    setPowerDrawW(node.data.powerDrawW);
+    setPowerCapacityW(node.data.powerCapacityW);
+    setVoltage(node.data.voltage);
     setIsCableAccessory(node.data.isCableAccessory ?? false);
     setIntegratedWithCable(node.data.integratedWithCable ?? false);
   }, [node]);
@@ -157,6 +165,9 @@ export default function DeviceEditor() {
       ...(finalHiddenPorts.length > 0 ? { hiddenPorts: finalHiddenPorts } : {}),
       // Always persist dhcpServer if set (preserves range config when toggling off)
       ...(dhcpServer ? { dhcpServer } : {}),
+      ...(powerDrawW != null ? { powerDrawW } : {}),
+      ...(powerCapacityW != null ? { powerCapacityW } : {}),
+      ...(voltage ? { voltage } : {}),
       ...(isCableAccessory ? { isCableAccessory: true } : {}),
       ...(integratedWithCable ? { integratedWithCable: true } : {}),
       ...(existing?.baseLabel ? { baseLabel: existing.baseLabel } : {}),
@@ -164,7 +175,7 @@ export default function DeviceEditor() {
     };
     updateDevice(editingNodeId, data);
     close();
-  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, isCableAccessory, integratedWithCable]);
+  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, isCableAccessory, integratedWithCable]);
 
   const handleSaveAsTemplate = useCallback(() => {
     const finalPorts: Port[] = ports
@@ -603,6 +614,58 @@ export default function DeviceEditor() {
               />
             );
           })()}
+
+          {/* Power */}
+          {(ports.some((p) => p.signalType === "power") || deviceType.includes("power")) && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text)] select-none py-1">
+                Power
+              </summary>
+              <div className="grid grid-cols-2 gap-2 pt-1 pl-2">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                    Power Draw (W)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    value={powerDrawW ?? ""}
+                    onChange={(e) => setPowerDrawW(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="0"
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                    Voltage
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    value={voltage ?? ""}
+                    onChange={(e) => setVoltage(e.target.value || undefined)}
+                    placeholder="100-240V"
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                </div>
+                {deviceType.includes("power-distribution") && (
+                  <div className="col-span-2">
+                    <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                      Power Capacity (W)
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                      value={powerCapacityW ?? ""}
+                      onChange={(e) => setPowerCapacityW(e.target.value ? Number(e.target.value) : undefined)}
+                      placeholder="0"
+                      onKeyDown={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
 
           {/* Flags */}
           <details className="text-xs">

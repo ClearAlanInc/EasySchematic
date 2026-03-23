@@ -7,6 +7,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0005-4000-8000-000000000005",
     deviceType: "audio-mixer",
     label: "Audio Mixer",
+    powerDrawW: 100, // typical
     ports: [
       port("Analog In 1", "analog-audio", "input"),
       port("Analog In 2", "analog-audio", "input"),
@@ -29,6 +30,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Teranex Mini SDI to Audio 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini/techspecs/W-TERAMIN-05",
     searchTerms: ["blackmagic", "teranex", "de-embedder", "deembed", "audio extract"],
+    powerDrawW: 16,
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Loop", "sdi", "output"),
@@ -50,6 +52,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Teranex Mini Audio to SDI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini/techspecs/W-TERAMIN-06",
     searchTerms: ["blackmagic", "teranex", "embedder", "audio embed"],
+    powerDrawW: 16,
     ports: [
       port("SDI In", "sdi", "input"),
       port("Analog In L", "analog-audio", "input"),
@@ -72,6 +75,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "ULXD4Q",
     referenceUrl: "https://www.shure.com/en-US/products/wireless-systems/ulx-d_digital_wireless/ulxd4q",
     searchTerms: ["shure", "ulx-d", "wireless", "microphone", "receiver", "quad"],
+    powerDrawW: 40, // typical
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
       port("Analog Out 2", "analog-audio", "output"),
@@ -95,6 +99,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EW-DX EM 4 Dante",
     referenceUrl: "https://www.sennheiser.com/en-us/catalog/products/wireless-systems/ew-dx-em-4-dante/ew-dx-em-4-dante-q1-9-509370",
     searchTerms: ["sennheiser", "ew-dx", "wireless", "microphone", "receiver", "dante"],
+    powerDrawW: 37,
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
       port("Analog Out 2", "analog-audio", "output"),
@@ -116,6 +121,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "RedNet A16R MkII",
     referenceUrl: "https://us.focusrite.com/products/rednet-a16r-mkii",
     searchTerms: ["focusrite", "rednet", "dante", "audio interface", "a16r"],
+    powerDrawW: 40, // typical
     ports: [
       port("Analog In 1-8", "analog-audio", "input", "db25"),
       port("Analog In 9-16", "analog-audio", "input", "db25"),
@@ -139,6 +145,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CL5",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/cl_series/index.html",
     searchTerms: ["yamaha", "cl5", "digital console", "72 channel"],
+    powerDrawW: 170,
     slots: [
       { id: "cl5-my-1", label: "MY Slot 1", slotFamily: "yamaha-my" },
       { id: "cl5-my-2", label: "MY Slot 2", slotFamily: "yamaha-my" },
@@ -171,6 +178,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CL3",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/cl_series/index.html",
     searchTerms: ["yamaha", "cl3", "digital console", "64 channel"],
+    powerDrawW: 170,
     slots: [
       { id: "cl3-my-1", label: "MY Slot 1", slotFamily: "yamaha-my" },
       { id: "cl3-my-2", label: "MY Slot 2", slotFamily: "yamaha-my" },
@@ -203,6 +211,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CL1",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/cl_series/index.html",
     searchTerms: ["yamaha", "cl1", "digital console", "48 channel"],
+    powerDrawW: 170,
     slots: [
       { id: "cl1-my-1", label: "MY Slot 1", slotFamily: "yamaha-my" },
       { id: "cl1-my-2", label: "MY Slot 2", slotFamily: "yamaha-my" },
@@ -235,6 +244,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "QL5",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/ql_series/index.html",
     searchTerms: ["yamaha", "ql5", "digital console", "32 channel"],
+    powerDrawW: 200,
     slots: [
       { id: "ql5-my-1", label: "MY Slot 1", slotFamily: "yamaha-my" },
       { id: "ql5-my-2", label: "MY Slot 2", slotFamily: "yamaha-my" },
@@ -264,6 +274,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "QL1",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/ql_series/index.html",
     searchTerms: ["yamaha", "ql1", "digital console", "16 channel"],
+    powerDrawW: 135,
     slots: [
       { id: "ql1-my-1", label: "MY Slot 1", slotFamily: "yamaha-my" },
       { id: "ql1-my-2", label: "MY Slot 2", slotFamily: "yamaha-my" },
@@ -293,6 +304,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "TF5",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/tf/index.html",
     searchTerms: ["yamaha", "tf5", "digital console", "32 channel", "touchflow"],
+    powerDrawW: 120,
     ports: [
       ...ports("Analog In", "analog-audio", "input", 32),
       ...ports("Analog Out", "analog-audio", "output", 16),
@@ -316,6 +328,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "TF3",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/tf/index.html",
     searchTerms: ["yamaha", "tf3", "digital console", "24 channel"],
+    powerDrawW: 110,
     ports: [
       ...ports("Analog In", "analog-audio", "input", 24),
       ...ports("Analog Out", "analog-audio", "output", 16),
@@ -339,6 +352,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "TF1",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/tf/index.html",
     searchTerms: ["yamaha", "tf1", "digital console", "16 channel"],
+    powerDrawW: 100,
     ports: [
       ...ports("Analog In", "analog-audio", "input", 16),
       ...ports("Analog Out", "analog-audio", "output", 16),
@@ -362,6 +376,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "dLive S7000",
     referenceUrl: "https://www.allen-heath.com/hardware/dlive/dlive-s-class/s7000/",
     searchTerms: ["allen heath", "dlive", "s7000", "digital console"],
+    powerDrawW: 350, // typical
     slots: [
       { id: "dlive-io-1", label: "I/O Port 1", slotFamily: "ah-dlive-io" },
       { id: "dlive-io-2", label: "I/O Port 2", slotFamily: "ah-dlive-io" },
@@ -426,6 +441,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SQ-7",
     referenceUrl: "https://www.allen-heath.com/hardware/sq/sq-7/",
     searchTerms: ["allen heath", "sq7", "digital console", "32 channel"],
+    powerDrawW: 120, // typical
     slots: [
       { id: "sq7-slink-exp", label: "SLink Expansion", slotFamily: "ah-sq-slink" },
     ],
@@ -460,6 +476,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SQ-5",
     referenceUrl: "https://www.allen-heath.com/hardware/sq/sq-5/",
     searchTerms: ["allen heath", "sq5", "digital console", "16 channel"],
+    powerDrawW: 100, // typical
     slots: [
       { id: "sq5-slink-exp", label: "SLink Expansion", slotFamily: "ah-sq-slink" },
     ],
@@ -494,6 +511,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SD7",
     referenceUrl: "https://digico.biz/consoles/sd7/",
     searchTerms: ["digico", "sd7", "digital console", "flagship"],
+    powerDrawW: 600, // typical
     slots: [
       { id: "sd7-dmi-1", label: "DMI Slot 1", slotFamily: "digico-dmi" },
       { id: "sd7-dmi-2", label: "DMI Slot 2", slotFamily: "digico-dmi" },
@@ -568,6 +586,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SD12",
     referenceUrl: "https://digico.biz/consoles/sd12/",
     searchTerms: ["digico", "sd12", "digital console"],
+    powerDrawW: 250, // typical
     slots: [
       { id: "sd12-dmi-1", label: "DMI Slot 1", slotFamily: "digico-dmi" },
       { id: "sd12-dmi-2", label: "DMI Slot 2", slotFamily: "digico-dmi" },
@@ -595,6 +614,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Rio3224-D2",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/rio3224-d2/index.html",
     searchTerms: ["yamaha", "rio", "stage box", "dante", "32 channel"],
+    powerDrawW: 85, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 32),
       ...ports("Analog Out", "analog-audio", "output", 24),
@@ -617,6 +637,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Rio1608-D",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/interfaces/rio1608-d2/index.html",
     searchTerms: ["yamaha", "rio", "stage box", "dante", "16 channel"],
+    powerDrawW: 55, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 16),
       ...ports("Analog Out", "analog-audio", "output", 8),
@@ -633,6 +654,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Core 110f",
     referenceUrl: "https://www.qsc.com/resource-files/productresources/dsp/q-sys_core/q_qsc_core_110f_spec.pdf",
     searchTerms: ["qsc", "q-sys", "core", "dsp", "audio processor"],
+    powerDrawW: 60, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 8, "phoenix"),
       ...ports("Analog Out", "analog-audio", "output", 8, "phoenix"),
@@ -654,6 +676,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Tesira SERVER",
     referenceUrl: "https://www.biamp.com/products/tesira-platform",
     searchTerms: ["biamp", "tesira", "server", "dsp", "avb"],
+    powerDrawW: 100, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 12, "phoenix"),
       ...ports("Analog Out", "analog-audio", "output", 8, "phoenix"),
@@ -673,6 +696,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "RedNet PCIeNX",
     referenceUrl: "https://us.focusrite.com/products/rednet-pcienx",
     searchTerms: ["focusrite", "rednet", "pcie", "dante", "card"],
+    powerDrawW: 7, // typical (PCIe bus powered)
     ports: [
       port("Dante Primary", "dante", "bidirectional"),
       port("Dante Secondary", "dante", "bidirectional"),
@@ -686,6 +710,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "AVIO Analog Input 2ch",
     referenceUrl: "https://www.audinate.com/products/devices/dante-avio",
     searchTerms: ["audinate", "avio", "dante", "analog input", "adapter"],
+    powerDrawW: 5, // typical (PoE powered)
     ports: [
       port("Analog In 1", "analog-audio", "input", "phoenix"),
       port("Analog In 2", "analog-audio", "input", "phoenix"),
@@ -700,6 +725,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "AVIO Analog Output 2ch",
     referenceUrl: "https://www.audinate.com/products/devices/dante-avio",
     searchTerms: ["audinate", "avio", "dante", "analog output", "adapter"],
+    powerDrawW: 5, // typical (PoE powered)
     ports: [
       port("Analog Out 1", "analog-audio", "output", "phoenix"),
       port("Analog Out 2", "analog-audio", "output", "phoenix"),
@@ -714,6 +740,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "AVIO USB",
     referenceUrl: "https://www.audinate.com/products/devices/dante-avio",
     searchTerms: ["audinate", "avio", "dante", "usb"],
+    powerDrawW: 5, // typical (PoE powered)
     ports: [
       port("USB", "usb", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -728,6 +755,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "AD4Q",
     referenceUrl: "https://www.shure.com/en-US/products/wireless-systems/axient_digital/ad4q",
     searchTerms: ["shure", "axient", "digital", "quad", "wireless", "receiver"],
+    powerDrawW: 50, // typical
     ports: [
       ...ports("Analog Out", "analog-audio", "output", 4),
       port("AES Out", "aes", "output"),
@@ -745,6 +773,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "QLXD4",
     referenceUrl: "https://www.shure.com/en-US/products/wireless-systems/qlx-d/qlxd4",
     searchTerms: ["shure", "qlx-d", "wireless", "receiver"],
+    powerDrawW: 12, // typical
     ports: [
       port("Analog Out", "analog-audio", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -759,6 +788,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SLXD4",
     referenceUrl: "https://www.shure.com/en-US/products/wireless-systems/slx-d/slxd4",
     searchTerms: ["shure", "slx-d", "wireless", "receiver"],
+    powerDrawW: 12, // typical
     ports: [
       port("Analog Out", "analog-audio", "output"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -773,6 +803,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EM 6000",
     referenceUrl: "https://www.sennheiser.com/en-us/catalog/products/wireless-systems/digital-6000/digital-6000-em-6000-509360",
     searchTerms: ["sennheiser", "digital 6000", "wireless", "receiver"],
+    powerDrawW: 30, // typical
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
       port("Analog Out 2", "analog-audio", "output"),
@@ -795,6 +826,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Galileo Galaxy 816",
     referenceUrl: "https://meyersound.com/product/galileo-galaxy-816/",
     searchTerms: ["meyer", "galileo", "galaxy", "816", "processor"],
+    powerDrawW: 80, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 8),
       ...ports("Analog Out", "analog-audio", "output", 16),
@@ -816,6 +848,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DM7",
     referenceUrl: "https://usa.yamaha.com/products/proaudio/mixers/dm7/index.html",
     searchTerms: ["yamaha", "dm7", "digital console"],
+    powerDrawW: 150, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 16),
       ...ports("Analog Out", "analog-audio", "output", 8),
@@ -836,6 +869,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "ANI4IN-XLR",
     referenceUrl: "https://www.shure.com/en-US/products/mixers/ani/ani4in-xlr",
     searchTerms: ["shure", "ani", "dante", "audio network interface", "4 input"],
+    powerDrawW: 5, // typical (PoE powered)
     ports: [
       port("Analog In 1", "analog-audio", "input"),
       port("Analog In 2", "analog-audio", "input"),
@@ -854,6 +888,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "ANI4OUT-XLR",
     referenceUrl: "https://www.shure.com/en-US/products/mixers/ani/ani4out-xlr",
     searchTerms: ["shure", "ani", "dante", "audio network interface", "4 output"],
+    powerDrawW: 5, // typical (PoE powered)
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
       port("Analog Out 2", "analog-audio", "output"),
@@ -880,6 +915,7 @@ export const templates: DeviceTemplate[] = [
       "digital console",
       "96khz",
     ],
+    powerDrawW: 350, // typical
     slots: [
       { id: "csr3-hy-1", label: "HY Slot 1", slotFamily: "yamaha-hy" },
       { id: "csr3-hy-2", label: "HY Slot 2", slotFamily: "yamaha-hy" },
@@ -919,6 +955,7 @@ export const templates: DeviceTemplate[] = [
       "digital console",
       "96khz",
     ],
+    powerDrawW: 400, // typical
     slots: [
       { id: "csr5-hy-1", label: "HY Slot 1", slotFamily: "yamaha-hy" },
       { id: "csr5-hy-2", label: "HY Slot 2", slotFamily: "yamaha-hy" },
@@ -962,6 +999,7 @@ export const templates: DeviceTemplate[] = [
       "dante",
       "compact",
     ],
+    powerDrawW: 40, // typical
     ports: [
       ...ports("Mic/Line In", "analog-audio", "input", 12),
       ...ports("Mic/Line In", "analog-audio", "input", 4, "combo-xlr-trs"),
@@ -991,6 +1029,7 @@ export const templates: DeviceTemplate[] = [
       "digital mixer",
       "midas preamp",
     ],
+    powerDrawW: 80, // typical
     ports: [
       ...ports("Mic/Line In", "analog-audio", "input", 16),
       ...ports("Aux In", "analog-audio", "input", 6, "trs-quarter"),
@@ -1026,6 +1065,7 @@ export const templates: DeviceTemplate[] = [
       "usb",
       "effects",
     ],
+    powerDrawW: 50, // typical
     ports: [
       ...ports("Mic/Line In", "analog-audio", "input", 12, "combo-xlr-trs"),
       ...ports("Stereo In", "analog-audio", "input", 4, "trs-quarter"),
@@ -1058,6 +1098,7 @@ export const templates: DeviceTemplate[] = [
       "quad",
       "ad4q",
     ],
+    powerDrawW: 50, // typical
     ports: [
       port("Analog Out 1", "analog-audio", "output"),
       port("Analog Out 2", "analog-audio", "output"),
@@ -1092,6 +1133,7 @@ export const templates: DeviceTemplate[] = [
       "monitor",
       "transmitter",
     ],
+    powerDrawW: 18, // typical
     ports: [
       port("Audio In 1", "analog-audio", "input", "combo-xlr-trs"),
       port("Audio In 2", "analog-audio", "input", "combo-xlr-trs"),
@@ -1120,6 +1162,7 @@ export const templates: DeviceTemplate[] = [
       "microphone",
       "studio",
     ],
+    powerDrawW: 0,
     ports: [port("XLR Out", "analog-audio", "output", "xlr-3")],
   },
   // ── Shure Beta 87A ────────────────────────────────────────────────
@@ -1140,6 +1183,7 @@ export const templates: DeviceTemplate[] = [
       "vocal",
       "microphone",
     ],
+    powerDrawW: 0,
     ports: [port("XLR Out", "analog-audio", "output", "xlr-3")],
   },
   // ── Shure MX412 ──────────────────────────────────────────────────
@@ -1159,6 +1203,7 @@ export const templates: DeviceTemplate[] = [
       "microflex",
       "podium",
     ],
+    powerDrawW: 0,
     ports: [port("XLR Out", "analog-audio", "output", "xlr-3")],
   },
   // ── Shure MX418 ──────────────────────────────────────────────────
@@ -1179,6 +1224,7 @@ export const templates: DeviceTemplate[] = [
       "podium",
       "18 inch",
     ],
+    powerDrawW: 0,
     ports: [port("XLR Out", "analog-audio", "output", "xlr-3")],
   },
 ];

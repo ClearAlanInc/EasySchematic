@@ -18,6 +18,9 @@ interface TemplateInput {
   ports: PortInput[];
   slots?: SlotInput[];
   slotFamily?: string;
+  powerDrawW?: number;
+  powerCapacityW?: number;
+  voltage?: string;
   sortOrder?: number;
 }
 
@@ -177,6 +180,18 @@ export function validateTemplate(body: unknown): ValidationResult {
     }
   }
 
+  // Power fields — optional numbers and string
+  if (obj.powerDrawW != null && (typeof obj.powerDrawW !== "number" || obj.powerDrawW < 0)) {
+    return { ok: false, error: "powerDrawW must be a non-negative number" };
+  }
+  if (obj.powerCapacityW != null && (typeof obj.powerCapacityW !== "number" || obj.powerCapacityW < 0)) {
+    return { ok: false, error: "powerCapacityW must be a non-negative number" };
+  }
+  if (obj.voltage != null) {
+    const vErr = checkString(obj.voltage, "voltage", 50);
+    if (vErr) return { ok: false, error: vErr };
+  }
+
   return {
     ok: true,
     data: {
@@ -192,6 +207,9 @@ export function validateTemplate(body: unknown): ValidationResult {
       ports: obj.ports as PortInput[],
       ...(obj.slots != null && { slots: obj.slots as SlotInput[] }),
       ...(obj.slotFamily != null && { slotFamily: obj.slotFamily as string }),
+      ...(obj.powerDrawW != null && { powerDrawW: obj.powerDrawW as number }),
+      ...(obj.powerCapacityW != null && { powerCapacityW: obj.powerCapacityW as number }),
+      ...(obj.voltage != null && { voltage: obj.voltage as string }),
       ...(obj.sortOrder != null && { sortOrder: obj.sortOrder as number }),
     },
   };

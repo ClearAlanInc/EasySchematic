@@ -10,6 +10,7 @@ export const templates: DeviceTemplate[] = [
     manufacturer: "Panasonic",
     modelNumber: "PT-DZ13K",
     referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-dz13ku-3-chip-dlptm-large-venue-projector",
+    powerDrawW: 1000,
     ports: [
       port("RGBHV In (BNC)", "vga", "input"),
       port("RGB In (VGA)", "vga", "input"),
@@ -33,6 +34,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PT-RZ21K",
     referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-rz21ku-3-chip-dlptm-solid-shine-laser-projector",
     searchTerms: ["panasonic", "laser", "dlp", "21k", "projector"],
+    powerDrawW: 1510,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input"),
@@ -55,6 +57,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PT-RZ12K",
     referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-rz12ku",
     searchTerms: ["panasonic", "laser", "12k lumens", "projector"],
+    powerDrawW: 1200,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input"),
@@ -76,6 +79,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HDX-W20 Flex",
     referenceUrl: "https://www.barco.com/en/support/hdx-w20-flex",
     searchTerms: ["barco", "hdx", "w20", "flex", "20000 lumens", "projector", "dlp"],
+    powerDrawW: 2200, // typical
     ports: [
       port("DVI-D In", "hdmi", "input", "dvi"),
       port("SDI In 1", "sdi", "input"),
@@ -95,6 +99,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UDX-4K32",
     referenceUrl: "https://www.barco.com/en/product/udx-4k32",
     searchTerms: ["barco", "udx", "4k32", "31000 lumens", "4k", "projector", "laser"],
+    powerDrawW: 3100,
     ports: [
       port("HDMI 2.0 In", "hdmi", "input"),
       port("DP 1.2 In", "displayport", "input"),
@@ -114,6 +119,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UDM-W22",
     referenceUrl: "https://www.barco.com/en/product/udm-w22",
     searchTerms: ["barco", "udm", "w22", "22000 lumens", "wuxga", "projector", "laser"],
+    powerDrawW: 2400,
     ports: [
       port("HDMI 2.0 In", "hdmi", "input"),
       port("DP 1.2 In", "displayport", "input"),
@@ -133,6 +139,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UDM-4K22",
     referenceUrl: "https://www.barco.com/en/product/udm-4k22",
     searchTerms: ["barco", "udm", "4k22", "22000 lumens", "4k", "projector", "laser"],
+    powerDrawW: 2400,
     ports: [
       port("HDMI 2.0 In", "hdmi", "input"),
       port("DP 1.2 In", "displayport", "input"),
@@ -152,6 +159,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PT-RZ34K",
     referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-rz34ku-3-chip-dlptm-wuxga-large-venue-laser-projector",
     searchTerms: ["panasonic", "rz34k", "30500 lumens", "wuxga", "projector", "laser"],
+    powerDrawW: 2450,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input", "dvi"),
@@ -172,6 +180,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PT-RQ25K",
     referenceUrl: "https://eu.connect.panasonic.com/gb/en/projectors/pt-rq25k-series/pt-rq25k",
     searchTerms: ["panasonic", "rq25k", "21000 lumens", "4k", "projector", "laser"],
+    powerDrawW: 1520,
     ports: [
       port("HDMI In 1", "hdmi", "input"),
       port("HDMI In 2", "hdmi", "input"),
@@ -191,6 +200,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PT-RQ35K",
     referenceUrl: "https://eu.connect.panasonic.com/gb/en/products/projectors/pt-rq35k",
     searchTerms: ["panasonic", "rq35k", "30500 lumens", "4k", "projector", "laser"],
+    powerDrawW: 2550,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input", "dvi"),
@@ -211,6 +221,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EB-PU2220B",
     referenceUrl: "https://epson.com/For-Work/Projectors/Large-Venue/EB-PU2220B-20,000-Lumen-3LCD-Large-Venue-Laser-Projector-with-4K-Enhancement/p/V11HA66820",
     searchTerms: ["epson", "pu2220b", "20000 lumens", "wuxga", "projector", "laser"],
+    powerDrawW: 1301,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input", "dvi"),
@@ -232,6 +243,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Pro L1755U",
     referenceUrl: "https://epson.com/For-Work/Projectors/Large-Venue/Pro-L1755UNL-WUXGA-3LCD-Laser-Projector-with-4K-Enhancement-Without-Lens/p/V11H892820",
     searchTerms: ["epson", "l1755u", "15000 lumens", "wuxga", "projector", "laser"],
+    powerDrawW: 1082,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI-D In", "hdmi", "input", "dvi"),

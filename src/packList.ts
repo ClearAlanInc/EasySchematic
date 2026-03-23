@@ -25,6 +25,7 @@ export interface PackListDevice {
   manufacturer: string;
   modelNumber: string;
   cards: PackListDeviceCard[];
+  powerDrawW: number;
 }
 
 export interface PackListCable {
@@ -96,7 +97,7 @@ export function mergeDevicesByModel(devices: PackListDevice[]): PackListDevice[]
         else existing.cards.push({ ...card });
       }
     } else {
-      map.set(key, { ...d, room: "", cards: d.cards.map((c) => ({ ...c })) });
+      map.set(key, { ...d, room: "", cards: d.cards.map((c) => ({ ...c })), powerDrawW: d.powerDrawW });
     }
   }
   return [...map.values()].sort(
@@ -179,6 +180,7 @@ export function computePackList(
         manufacturer: data.manufacturer ?? "",
         modelNumber: data.modelNumber ?? "",
         cards: [],
+        powerDrawW: data.powerDrawW ?? 0,
       });
     }
 
@@ -377,6 +379,7 @@ export function getPackListTableData(
       modelNumber: d.modelNumber,
       deviceType: d.deviceType,
       room: d.room,
+      powerDrawW: d.powerDrawW > 0 ? `${d.powerDrawW}` : "",
     });
     for (const c of d.cards) {
       deviceRows.push({

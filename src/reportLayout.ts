@@ -188,6 +188,7 @@ export function createDefaultPackListLayout(): ReportLayout {
           { key: "model", header: "Device", widthMm: 60, visible: true },
           { key: "deviceType", header: "Type", widthMm: 40, visible: true },
           { key: "room", header: "Room", widthMm: 50, visible: true },
+          { key: "powerDrawW", header: "Power (W)", widthMm: 22, visible: false },
         ],
         groupBy: null,
         groupByOptions: [
@@ -293,6 +294,75 @@ export function createDefaultCableScheduleLayout(): ReportLayout {
       },
     ],
     orientation: "landscape",
+    paperSize: "letter",
+  };
+}
+
+// ─── Power Report Defaults ───
+
+export function createDefaultPowerReportHeaderLayout(): TitleBlockLayout {
+  return {
+    columns: normalizeSizes([0.6, 0.4]),
+    rows: normalizeSizes([0.55, 0.45]),
+    widthIn: 8,
+    heightIn: 0.8,
+    cells: [
+      layoutCell(0, 0, { type: "static", text: "Power Report" }, { fontSize: 14, fontWeight: "bold" }),
+      layoutCell(0, 1, { type: "logo" }, { align: "right" }),
+      layoutCell(1, 0, { type: "field", field: "showName" }, { fontSize: 8 }),
+      layoutCell(1, 1, { type: "field", field: "date" }, { fontSize: 8, align: "right", color: "#666666" }),
+    ],
+  };
+}
+
+export function createDefaultPowerReportLayout(): ReportLayout {
+  return {
+    headerLayout: createDefaultPowerReportHeaderLayout(),
+    headerHeightMm: 22,
+    footerLayout: createDefaultPackListFooterLayout(),
+    footerHeightMm: 8,
+    tables: [
+      {
+        id: "powerDevices",
+        label: "Device Power Draw",
+        columns: [
+          { key: "count", header: "Qty", widthMm: 12, visible: true },
+          { key: "model", header: "Device", widthMm: 50, visible: true },
+          { key: "deviceType", header: "Type", widthMm: 35, visible: true },
+          { key: "room", header: "Room", widthMm: 35, visible: true },
+          { key: "powerDrawW", header: "Power (W)", widthMm: 22, visible: true },
+          { key: "totalPowerW", header: "Total (W)", widthMm: 22, visible: true },
+          { key: "voltage", header: "Voltage", widthMm: 25, visible: true },
+        ],
+        groupBy: null,
+        groupByOptions: [
+          { key: "", label: "None" },
+          { key: "room", label: "Room" },
+        ],
+        sortBy: null,
+        sortDir: "asc",
+      },
+      {
+        id: "powerDistros",
+        label: "Distribution Loading",
+        columns: [
+          { key: "label", header: "Distro", widthMm: 45, visible: true },
+          { key: "room", header: "Room", widthMm: 35, visible: true },
+          { key: "capacityW", header: "Capacity (W)", widthMm: 28, visible: true },
+          { key: "loadW", header: "Load (W)", widthMm: 24, visible: true },
+          { key: "loadPercent", header: "Load %", widthMm: 20, visible: true },
+          { key: "status", header: "Status", widthMm: 20, visible: true },
+        ],
+        groupBy: null,
+        groupByOptions: [
+          { key: "", label: "None" },
+          { key: "room", label: "Room" },
+        ],
+        sortBy: null,
+        sortDir: "asc",
+      },
+    ],
+    orientation: "portrait",
     paperSize: "letter",
   };
 }

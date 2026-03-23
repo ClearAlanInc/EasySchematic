@@ -23,6 +23,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
     searchTerms: ["Adder", "AdderLink", "XDIP", "KVM", "extender", "IP", "matrix"],
+    powerDrawW: 15, // typical
   },
   // HDBaseT Extenders
   // Extron DTP T HD2 4K 230 — HDBaseT Transmitter
@@ -34,6 +35,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DTP T HD2 4K 230",
     referenceUrl: "https://www.extron.com/product/dtpthd24k230",
     searchTerms: ["extron", "dtp", "hdbaset", "transmitter", "extender"],
+    powerDrawW: 12, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Loop", "hdmi", "output"),
@@ -51,6 +53,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DTP R HD2 4K 230",
     referenceUrl: "https://www.extron.com/product/dtphdmi230rx",
     searchTerms: ["extron", "dtp", "hdbaset", "receiver", "extender"],
+    powerDrawW: 12, // typical
     ports: [
       port("HDBaseT In", "hdbaset", "input"),
       port("HDMI Out", "hdmi", "output"),

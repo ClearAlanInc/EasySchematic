@@ -31,9 +31,12 @@ allTemplates.forEach((t, i) => {
   const slots = t.slots ? `'${escapeSQL(JSON.stringify(t.slots))}'` : "NULL";
   const slotFamily = t.slotFamily ? `'${escapeSQL(t.slotFamily)}'` : "NULL";
   const referenceUrl = t.referenceUrl ? `'${escapeSQL(t.referenceUrl)}'` : "NULL";
+  const powerDrawW = t.powerDrawW != null ? `${t.powerDrawW}` : "NULL";
+  const powerCapacityW = t.powerCapacityW != null ? `${t.powerCapacityW}` : "NULL";
+  const voltage = t.voltage ? `'${escapeSQL(t.voltage)}'` : "NULL";
 
   lines.push(
-    `INSERT OR REPLACE INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${category}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${referenceUrl}, ${searchTerms}, '${ports}', ${slots}, ${slotFamily}, ${i});`
+    `INSERT OR REPLACE INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${category}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${referenceUrl}, ${searchTerms}, '${ports}', ${slots}, ${slotFamily}, ${powerDrawW}, ${powerCapacityW}, ${voltage}, ${i});`
   );
 });
 

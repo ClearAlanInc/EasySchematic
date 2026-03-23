@@ -7,6 +7,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-001a-4000-8000-000000000026",
     deviceType: "recorder",
     label: "Recorder",
+    powerDrawW: 30, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -24,6 +25,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HyperDeck Extreme 8K HDR",
     referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckextreme/techspecs",
     searchTerms: ["blackmagic", "hyperdeck", "4k", "hdr", "recorder", "player"],
+    powerDrawW: 80, // typical
     ports: [
       port("SDI In 1", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -69,6 +71,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Shogun Ultra",
     referenceUrl: "https://www.atomos.com/products/shogun-ultra",
     searchTerms: ["atomos", "shogun", "ultra", "monitor recorder", "12g"],
+    powerDrawW: 30, // typical
     ports: [
       port("12G-SDI In 1", "sdi", "input"),
       port("12G-SDI In 2", "sdi", "input"),
@@ -95,6 +98,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ninja V",
     referenceUrl: "https://www.atomos.com/products/ninja-v",
     searchTerms: ["atomos", "ninja", "monitor recorder", "hdmi"],
+    powerDrawW: 20, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -111,6 +115,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HyperDeck Studio HD Mini",
     referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckstudio",
     searchTerms: ["blackmagic", "hyperdeck", "mini", "recorder"],
+    powerDrawW: 12, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -141,6 +146,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HyperDeck Studio HD Plus",
     referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckstudio",
     searchTerms: ["blackmagic", "hyperdeck", "plus", "recorder"],
+    powerDrawW: 30, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -173,6 +179,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HyperDeck Studio 4K Pro",
     referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckstudio",
     searchTerms: ["blackmagic", "hyperdeck", "4k pro", "recorder"],
+    powerDrawW: 40, // typical
     ports: [
       port("12G-SDI In 1", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -204,6 +211,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ki Pro Ultra 12G",
     referenceUrl: "https://www.aja.com/products/ki-pro-ultra-12g",
     searchTerms: ["aja", "ki pro", "ultra", "12g", "recorder", "player"],
+    powerDrawW: 60, // typical
     ports: [
       port("12G-SDI In 1", "sdi", "input"),
       port("12G-SDI In 2", "sdi", "input"),
@@ -230,6 +238,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PIX 270i",
     referenceUrl: "https://www.sounddevices.com/product/pix-270i/",
     searchTerms: ["sound devices", "pix", "270i", "recorder"],
+    powerDrawW: 30, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -260,6 +269,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Video Assist 7 inch 12G HDR",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicvideoassist",
     searchTerms: ["blackmagic", "video assist", "monitor recorder", "12g", "hdr"],
+    powerDrawW: 25, // typical
     ports: [
       port("12G-SDI In", "sdi", "input"),
       port("12G-SDI Out", "sdi", "output"),
@@ -280,6 +290,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Video Assist 5 inch 12G HDR",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicvideoassist",
     searchTerms: ["blackmagic", "video assist", "monitor recorder", "5 inch", "12g"],
+    powerDrawW: 20, // typical
     ports: [
       port("12G-SDI In", "sdi", "input"),
       port("12G-SDI Out", "sdi", "output"),
@@ -298,6 +309,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ninja Ultra",
     referenceUrl: "https://www.atomos.com/product/ninja-ultra/",
     searchTerms: ["atomos", "ninja", "ultra", "monitor recorder", "5 inch"],
+    powerDrawW: 25, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -316,6 +328,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ki Pro GO2",
     referenceUrl: "https://www.aja.com/products/ki-pro-go2",
     searchTerms: ["aja", "ki pro", "go2", "multi-channel", "recorder", "h265", "hevc"],
+    powerDrawW: 50, // typical
     ports: [
       ...ports("3G-SDI In", "sdi", "input", 4),
       ...ports("HDMI In", "hdmi", "input", 4),
@@ -338,6 +351,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HyperDeck Studio Pro 2",
     referenceUrl: "https://www.blackmagicdesign.com/products/hyperdeckstudio",
     searchTerms: ["blackmagic", "hyperdeck", "studio pro", "recorder", "4k", "6g"],
+    powerDrawW: 40, // typical
     ports: [
       ...ports("3G-SDI In", "sdi", "input", 3),
       port("6G-SDI In", "sdi", "input"),

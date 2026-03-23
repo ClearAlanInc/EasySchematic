@@ -11,6 +11,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "ColorSource 20",
     referenceUrl: "https://www.etcconnect.com/Products/Consoles/ColorSource/Features.aspx",
     searchTerms: ["etc", "colorsource", "lighting console", "compact"],
+    powerDrawW: 100, // typical
     ports: [
       port("DMX Out", "dmx", "output"),
       port("USB", "usb", "bidirectional"),
@@ -25,6 +26,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Road Hog 4",
     referenceUrl: "https://www.etcconnect.com/Products/Consoles/Hog/",
     searchTerms: ["high end", "hog", "road hog", "lighting console"],
+    powerDrawW: 350, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 8),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -42,6 +44,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Eos Ti",
     referenceUrl: "https://www.etcconnect.com/Products/Consoles/Eos-Family/Eos-Ti/Features.aspx",
     searchTerms: ["etc", "eos", "ti", "lighting console", "flagship"],
+    powerDrawW: 500, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -66,6 +69,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "grandMA3 light",
     referenceUrl: "https://www.malighting.com/product/grandma3-light-4010502/",
     searchTerms: ["ma", "grandma", "grandma3", "lighting console"],
+    powerDrawW: 300,
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -92,6 +96,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MAC Aura XIP",
     referenceUrl: "https://www.martin.com/products/mac-aura-xip",
     searchTerms: ["martin", "mac", "aura", "xip", "moving light", "wash"],
+    powerDrawW: 340,
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -107,6 +112,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Diablo",
     referenceUrl: "https://www.ayrton.eu/produit/diablo/",
     searchTerms: ["ayrton", "diablo", "moving light", "profile", "spot"],
+    powerDrawW: 550,
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -121,6 +127,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Color Force 72",
     referenceUrl: "https://chroma-q.com/products/color-force-ii-72/",
     searchTerms: ["chroma-q", "color force", "led wash", "cyclorama"],
+    powerDrawW: 400, // typical
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -135,6 +142,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "ColorSource Spot",
     referenceUrl: "https://www.etcconnect.com/Products/Entertainment-Fixtures/ColorSource-Spot/",
     searchTerms: ["etc", "colorsource", "spot", "led", "leko", "ellipsoidal"],
+    powerDrawW: 150, // typical
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -151,6 +159,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Freedom Flex H4",
     referenceUrl: "https://www.chauvetprofessional.com/products/freedom-flex-h4/",
     searchTerms: ["chauvet", "freedom", "battery", "wireless", "led par", "uplight"],
+    powerDrawW: 50, // typical
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -164,6 +173,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Astra 1x1",
     referenceUrl: "https://www.litepanels.com/en/products",
     searchTerms: ["litepanels", "astra", "led panel", "soft light", "bi-color"],
+    powerDrawW: 75, // typical
     ports: [
       port("DMX In", "dmx", "input"),
       port("Power In", "power", "input", "barrel"),
@@ -175,6 +185,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "dmx-splitter",
     label: "DMX Opto-Splitter",
     searchTerms: ["dmx", "splitter", "opto", "distribution", "isolated"],
+    powerDrawW: 15, // typical
     ports: [
       port("DMX In", "dmx", "input"),
       ...ports("DMX Out", "dmx", "output", 6),
@@ -186,6 +197,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "dmx-splitter",
     label: "DMX-over-Ethernet Node",
     searchTerms: ["dmx", "artnet", "sacn", "node", "gateway", "ethernet"],
+    powerDrawW: 30, // typical
     ports: [
       port("Ethernet", "ethernet", "bidirectional"),
       ...ports("DMX Out", "dmx", "output", 4),
@@ -203,6 +215,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Eos Apex",
     referenceUrl: "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/",
     searchTerms: ["etc", "eos", "apex", "lighting console"],
+    powerDrawW: 500, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -228,6 +241,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "grandMA3 full-size",
     referenceUrl: "https://www.malighting.com/grandma3/",
     searchTerms: ["ma", "grandma3", "full", "lighting console"],
+    powerDrawW: 600, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 8),
       port("DMX In", "dmx", "input"),
@@ -249,6 +263,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "grandMA3 compact XT",
     referenceUrl: "https://www.malighting.com/grandma3/",
     searchTerms: ["ma", "grandma3", "compact", "xt", "lighting console"],
+    powerDrawW: 400, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 6),
       port("DMX In", "dmx", "input"),
@@ -270,6 +285,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MAC Ultra Performance",
     referenceUrl: "https://www.martin.com/products/mac-ultra-performance",
     searchTerms: ["martin", "mac ultra", "moving light", "performance"],
+    powerDrawW: 1450,
     ports: [
       port("DMX In", "dmx", "input"),
       port("DMX Out", "dmx", "output"),
@@ -288,6 +304,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.malighting.com/product-archive/product/grandma2-full-size-120111/",
     searchTerms: ["ma", "grandma", "grandma2", "lighting console"],
+    powerDrawW: 350,
     ports: [
       ...ports("DMX Out", "dmx", "output", 6),
       port("DMX In", "dmx", "input"),
@@ -308,6 +325,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.malighting.com/product-archive/product/ma-npu-network-processing-unit-130032/",
     searchTerms: ["ma", "npu", "network processing unit", "dmx node"],
+    powerDrawW: 150,
     ports: [
       ...ports("DMX Out", "dmx", "output", 8, "xlr-5"),
       port("Ethernet", "ethernet", "bidirectional", "ethercon"),
@@ -324,6 +342,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.malighting.com/product-archive/product/ma-onpc-command-wing-120120/",
     searchTerms: ["ma", "grandma2", "onpc", "command wing", "lighting console"],
+    powerDrawW: 40,
     ports: [
       ...ports("DMX Out", "dmx", "output", 2),
       port("DMX In", "dmx", "input"),
@@ -341,6 +360,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Arena",
     referenceUrl: "https://www.avolites.com/product/arena/",
     searchTerms: ["avolites", "arena", "titan", "lighting console"],
+    powerDrawW: 300, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 8),
       port("Ethernet 1", "ethernet", "bidirectional", "ethercon"),
@@ -364,6 +384,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/Element/Features.aspx",
     searchTerms: ["etc", "element", "element 2", "lighting console"],
+    powerDrawW: 100, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -381,6 +402,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/Gio-@5/Tech-Specs.aspx",
     searchTerms: ["etc", "gio", "gio @5", "eos", "lighting console"],
+    powerDrawW: 300, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -405,6 +427,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/Ion-Xe/Tech-Specs.aspx",
     searchTerms: ["etc", "ion", "ion xe", "eos", "lighting console"],
+    powerDrawW: 200, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -427,6 +450,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/Ion-Xe/Tech-Specs.aspx",
     searchTerms: ["etc", "ion", "ion xe", "ion xe 20", "eos", "lighting console"],
+    powerDrawW: 200, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -449,6 +473,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Family/ETCnomad-ETCnomad-Puck/ETCnomad-Puck.aspx",
     searchTerms: ["etc", "nomad", "etcnomad", "puck", "lighting console"],
+    powerDrawW: 30, // typical
     ports: [
       port("Ethernet", "ethernet", "bidirectional"),
       port("HDMI Out", "hdmi", "output"),
@@ -465,6 +490,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Legacy/Networking/Net3-4-Port-Gateway/Features.aspx",
     searchTerms: ["etc", "net3", "gateway", "sacn", "dmx node"],
+    powerDrawW: 30, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 4),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -480,6 +506,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/Consoles/Eos-Consoles/Accessories/Fader-Wings.aspx",
     searchTerms: ["etc", "fader wing", "eos", "wing", "lighting console"],
+    powerDrawW: 15, // typical
     ports: [
       port("USB", "usb", "bidirectional", "usb-b"),
       port("DC Power", "power", "input", "barrel"),
@@ -494,6 +521,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://www.etcconnect.com/Products/High-End-Systems/Hog-4-Consoles/Full-Boar-4/Features.aspx",
     searchTerms: ["high end", "hog", "full boar", "hog 4", "lighting console"],
+    powerDrawW: 350, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 4),
       port("HogNet", "ethernet", "bidirectional", "ethercon"),
@@ -519,6 +547,7 @@ export const templates: DeviceTemplate[] = [
       "hog 4",
       "lighting console",
     ],
+    powerDrawW: 200, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -536,6 +565,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DMX Processor 8000",
     referenceUrl: "https://www.etcconnect.com/DP8K.aspx",
     searchTerms: ["high end", "dp8k", "dmx processor", "hog", "dmx node"],
+    powerDrawW: 60, // typical
     ports: [
       ...ports("DMX Out", "dmx", "output", 8),
       port("HogNet", "ethernet", "bidirectional", "ethercon"),
@@ -559,6 +589,7 @@ export const templates: DeviceTemplate[] = [
       "zeros",
       "lighting console",
     ],
+    powerDrawW: 50, // typical
     ports: [
       port("DMX Out 1", "dmx", "output"),
       port("DMX Out 2", "dmx", "output"),
@@ -583,6 +614,7 @@ export const templates: DeviceTemplate[] = [
       "tracking",
       "lighting console",
     ],
+    powerDrawW: 15, // typical
     ports: [
       port("Ethernet (PoE)", "ethernet", "bidirectional"),
     ],
@@ -603,6 +635,7 @@ export const templates: DeviceTemplate[] = [
       "tracking",
       "lighting console",
     ],
+    powerDrawW: 5, // typical
     ports: [
       port("Link In", "custom", "input", "xlr-5"),
     ],
@@ -626,6 +659,7 @@ export const templates: DeviceTemplate[] = [
       "spot",
       "wash",
     ],
+    powerDrawW: 700,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -649,6 +683,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "profile",
     ],
+    powerDrawW: 1400,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -671,6 +706,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "profile",
     ],
+    powerDrawW: 1500,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -692,6 +728,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "profile",
     ],
+    powerDrawW: 1470,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -713,6 +750,7 @@ export const templates: DeviceTemplate[] = [
       "ip65",
       "moving light",
     ],
+    powerDrawW: 700,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -736,6 +774,7 @@ export const templates: DeviceTemplate[] = [
       "spot",
       "moving light",
     ],
+    powerDrawW: 1180,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -760,6 +799,7 @@ export const templates: DeviceTemplate[] = [
       "ip65",
       "moving light",
     ],
+    powerDrawW: 291,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -782,6 +822,7 @@ export const templates: DeviceTemplate[] = [
       "ip65",
       "blinder",
     ],
+    powerDrawW: 740,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -805,6 +846,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "hybrid",
     ],
+    powerDrawW: 1000, // typical
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -821,6 +863,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl:
       "https://glp.de/en/products/entertainment-lighting/strobes/jdc1-en",
     searchTerms: ["glp", "jdc1", "strobe", "led", "blinder"],
+    powerDrawW: 1200,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -844,6 +887,7 @@ export const templates: DeviceTemplate[] = [
       "batten",
       "wash",
     ],
+    powerDrawW: 400,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -866,6 +910,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "profile",
     ],
+    powerDrawW: 1100, // typical
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -890,6 +935,7 @@ export const templates: DeviceTemplate[] = [
       "beam",
       "hybrid",
     ],
+    powerDrawW: 850, // typical
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -911,6 +957,7 @@ export const templates: DeviceTemplate[] = [
       "moving light",
       "profile",
     ],
+    powerDrawW: 800, // typical
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -937,6 +984,7 @@ export const templates: DeviceTemplate[] = [
       "soft light",
       "panel",
     ],
+    powerDrawW: 400,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -961,6 +1009,7 @@ export const templates: DeviceTemplate[] = [
       "soft light",
       "panel",
     ],
+    powerDrawW: 1500,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -985,6 +1034,7 @@ export const templates: DeviceTemplate[] = [
       "led",
       "pixel",
     ],
+    powerDrawW: 48,
     ports: [
       port("DC Power", "power", "input", "barrel"),
     ],
@@ -1006,6 +1056,7 @@ export const templates: DeviceTemplate[] = [
       "par",
       "uplight",
     ],
+    powerDrawW: 45,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -1028,6 +1079,7 @@ export const templates: DeviceTemplate[] = [
       "soft light",
       "batten",
     ],
+    powerDrawW: 550,
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),
@@ -1052,6 +1104,7 @@ export const templates: DeviceTemplate[] = [
       "leko",
       "ellipsoidal",
     ],
+    powerDrawW: 160, // typical
     ports: [
       port("DMX In", "dmx", "input", "xlr-5"),
       port("DMX Out", "dmx", "output", "xlr-5"),

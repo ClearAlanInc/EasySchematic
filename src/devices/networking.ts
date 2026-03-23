@@ -7,6 +7,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0012-4000-8000-000000000018",
     deviceType: "ndi-encoder",
     label: "NDI Encoder",
+    powerDrawW: 15, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -20,6 +21,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0013-4000-8000-000000000019",
     deviceType: "ndi-decoder",
     label: "NDI Decoder",
+    powerDrawW: 15, // typical
     ports: [
       port("NDI In", "ndi", "input"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -34,6 +36,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "network-switch",
     label: "Ethernet Switch (4-port)",
     searchTerms: ["switch", "network", "poe"],
+    powerDrawW: 15, // typical
     ports: [
       port("Port 1", "ethernet", "bidirectional", undefined, false),
       port("Port 2", "ethernet", "bidirectional", undefined, false),
@@ -48,6 +51,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "network-switch",
     label: "Ethernet Switch (8-port)",
     searchTerms: ["switch", "network", "poe"],
+    powerDrawW: 25, // typical
     ports: [
       port("Port 1", "ethernet", "bidirectional", undefined, false),
       port("Port 2", "ethernet", "bidirectional", undefined, false),
@@ -70,6 +74,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Prism Flex",
     referenceUrl: "https://teradek.com/pages/prism-flex",
     searchTerms: ["teradek", "prism", "streaming", "encoder", "rtmp", "srt", "hevc"],
+    powerDrawW: 30, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -95,6 +100,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DM-NVX-351",
     referenceUrl: "https://www.crestron.com/Products/Catalog/AV-Over-IP/DM-NVX-AV-Over-IP/Video-Endpoint/DM-NVX-351",
     searchTerms: ["crestron", "nvx", "av-over-ip", "networked av", "encoder", "decoder"],
+    powerDrawW: 30, // typical
     ports: [
       port("HDMI In 1", "hdmi", "input"),
       port("HDMI In 2", "hdmi", "input"),
@@ -116,6 +122,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Pro Convert HDMI Plus",
     referenceUrl: "https://www.magewell.com/products/pro-convert-hdmi-plus",
     searchTerms: ["magewell", "pro convert", "ndi", "encoder", "hdmi"],
+    powerDrawW: 13,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Loop", "hdmi", "output"),
@@ -130,6 +137,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Pro Convert HDMI 4K Plus",
     referenceUrl: "https://www.magewell.com/products/pro-convert-hdmi-4k-plus",
     searchTerms: ["magewell", "pro convert", "ndi", "encoder", "4k"],
+    powerDrawW: 13,
     ports: [
       port("HDMI 2.0 In", "hdmi", "input"),
       port("HDMI Loop", "hdmi", "output"),
@@ -144,6 +152,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Pro Convert NDI to HDMI",
     referenceUrl: "https://www.magewell.com/products/pro-convert-for-ndi-to-hdmi",
     searchTerms: ["magewell", "pro convert", "ndi", "decoder"],
+    powerDrawW: 13,
     ports: [
       port("Ethernet", "ethernet", "bidirectional"),
       port("HDMI Out", "hdmi", "output"),
@@ -158,6 +167,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Web Presenter HD",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicwebpresenter",
     searchTerms: ["blackmagic", "web presenter", "streaming", "webcam"],
+    powerDrawW: 18,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -174,6 +184,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Web Presenter 4K",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicwebpresenter",
     searchTerms: ["blackmagic", "web presenter", "4k", "streaming"],
+    powerDrawW: 18,
     ports: [
       port("12G-SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -192,6 +203,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Cube 755",
     referenceUrl: "https://teradek.com/products/cube-755",
     searchTerms: ["teradek", "cube", "encoder", "hevc", "h265"],
+    powerDrawW: 12, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -207,6 +219,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Cube 775",
     referenceUrl: "https://teradek.com/products/cube-775",
     searchTerms: ["teradek", "cube", "decoder", "hevc"],
+    powerDrawW: 12, // typical
     ports: [
       port("Ethernet", "ethernet", "bidirectional"),
       port("SDI Out", "sdi", "output"),
@@ -223,6 +236,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CS-KIT-K9",
     referenceUrl: "https://www.cisco.com/c/en/us/products/collateral/collaboration-endpoints/spark-room-kit-series/datasheet-c78-738729.html",
     searchTerms: ["cisco", "room kit", "video conferencing", "webex", "collaboration"],
+    powerDrawW: 100, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Out 1", "hdmi", "output"),
@@ -241,6 +255,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CS-CODEC-PRO-K9",
     referenceUrl: "https://help.webex.com/article/n86suwx/Get-started-with-your-Cisco-Codec-Pro",
     searchTerms: ["cisco", "codec pro", "video conferencing", "webex", "collaboration", "sdi"],
+    powerDrawW: 200, // typical
     ports: [
       port("HDMI Cam In 1", "hdmi", "input"),
       port("HDMI Cam In 2", "hdmi", "input"),
@@ -274,6 +289,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "NAV E 101",
     referenceUrl: "https://www.extron.com/product/nave101",
     searchTerms: ["extron", "nav", "encoder", "av over ip", "streaming", "pure3"],
+    powerDrawW: 12, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Loop", "hdmi", "output"),
@@ -292,6 +308,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "NAV SD 101",
     referenceUrl: "https://www.extron.com/product/navsd101",
     searchTerms: ["extron", "nav", "decoder", "av over ip", "scaling", "pure3"],
+    powerDrawW: 12, // typical
     ports: [
       port("HDMI Out", "hdmi", "output"),
       port("Network", "ethernet", "bidirectional"),
@@ -310,6 +327,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Streaming Decoder 4K",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicwebpresenter",
     searchTerms: ["blackmagic", "streaming", "decoder", "srt", "rtmp"],
+    powerDrawW: 18, // typical
     ports: [
       port("12G-SDI Out", "sdi", "output"),
       port("HDMI Out", "hdmi", "output"),
@@ -328,6 +346,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Mini HDMI",
     referenceUrl: "https://birddog.tv/mini-overview/",
     searchTerms: ["birddog", "mini", "ndi", "encoder", "hdmi", "poe"],
+    powerDrawW: 7, // PoE powered
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -342,6 +361,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "E2",
     referenceUrl: "https://www.kiloview.com/en/ndi/ndi-wired/",
     searchTerms: ["kiloview", "e2", "ndi", "encoder", "hdmi"],
+    powerDrawW: 12, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("Ethernet", "ethernet", "bidirectional"),
@@ -356,6 +376,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "USB Capture HDMI Plus",
     referenceUrl: "https://www.magewell.com/products/usb-capture-hdmi-plus",
     searchTerms: ["magewell", "usb capture", "hdmi", "capture card"],
+    powerDrawW: 0, // USB bus-powered
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("HDMI Loop", "hdmi", "output"),
@@ -373,6 +394,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Pro Convert SDI Plus",
     referenceUrl: "https://www.magewell.com/products/pro-convert-sdi-plus",
     searchTerms: ["magewell", "pro convert", "ndi", "encoder", "sdi"],
+    powerDrawW: 13,
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Loop", "sdi", "output"),

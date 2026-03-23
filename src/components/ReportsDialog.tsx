@@ -16,8 +16,9 @@ import {
   getCableScheduleTableData,
   type CableScheduleRow,
 } from "../cableSchedule";
-import { createDefaultPackListLayout, createDefaultNetworkReportLayout, createDefaultCableScheduleLayout } from "../reportLayout";
+import { createDefaultPackListLayout, createDefaultNetworkReportLayout, createDefaultCableScheduleLayout, createDefaultPowerReportLayout } from "../reportLayout";
 import { getNetworkReportTableData } from "../networkReport";
+import { computePowerReport, exportPowerReportCsv, getPowerReportTableData } from "../powerReport";
 import ReportPreviewDialog from "./ReportPreviewDialog";
 import IpInput from "./IpInput";
 import type { DeviceData, SchematicNode, RoomData, ConnectionData } from "../types";
@@ -25,7 +26,7 @@ import { useSpreadsheetSelection } from "../spreadsheet/useSpreadsheetSelection"
 import type { SpreadsheetColumn } from "../spreadsheet/types";
 import FillSeriesDialog from "../spreadsheet/FillSeriesDialog";
 
-export type ReportsTab = "network" | "devices" | "packList" | "cableSchedule";
+export type ReportsTab = "network" | "devices" | "packList" | "cableSchedule" | "power";
 
 interface ReportsDialogProps {
   initialTab: ReportsTab;
@@ -35,6 +36,7 @@ interface ReportsDialogProps {
 const PACKLIST_LAYOUT_KEY = "easyschematic-packlist-layout";
 const NETWORK_LAYOUT_KEY = "easyschematic-network-report-layout";
 const CABLE_SCHEDULE_LAYOUT_KEY = "easyschematic-cable-schedule-layout";
+const POWER_LAYOUT_KEY = "easyschematic-power-report-layout";
 
 function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const [tab, setTab] = useState<ReportsTab>(initialTab);
@@ -42,6 +44,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [showNetworkPreview, setShowNetworkPreview] = useState(false);
   const [showCableSchedulePreview, setShowCableSchedulePreview] = useState(false);
+  const [showPowerPreview, setShowPowerPreview] = useState(false);
 
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
@@ -67,6 +70,9 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
       const cableNamingScheme = useSchematicStore.getState().cableNamingScheme;
       const rows = computeCableSchedule(nodes, edges, cableNamingScheme);
       exportCableScheduleCsv(rows, schematicName);
+    } else if (tab === "power") {
+      const data = computePowerReport(nodes, edges);
+      exportPowerReportCsv(data, schematicName);
     } else {
       const data = computePackList(nodes, edges);
       exportPackListCsv(data, schematicName);
@@ -76,12 +82,14 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const defaultLayout = useMemo(() => createDefaultPackListLayout(), []);
   const networkDefaultLayout = useMemo(() => createDefaultNetworkReportLayout(), []);
   const cableScheduleDefaultLayout = useMemo(() => createDefaultCableScheduleLayout(), []);
+  const powerDefaultLayout = useMemo(() => createDefaultPowerReportLayout(), []);
 
   const tabLabels: Record<ReportsTab, string> = {
     network: "Network",
     devices: "Devices",
     packList: "Pack List",
     cableSchedule: "Cable Schedule",
+    power: "Power",
   };
 
   return (
@@ -119,6 +127,11 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
             )}
             {tab === "cableSchedule" && (
               <button onClick={() => setShowCableSchedulePreview(true)} className={btnClass}>
+                PDF
+              </button>
+            )}
+            {tab === "power" && (
+              <button onClick={() => setShowPowerPreview(true)} className={btnClass}>
                 PDF
               </button>
             )}
@@ -161,6 +174,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
             {tab === "devices" && <DeviceReportTab />}
             {tab === "packList" && <PackListTabInline />}
             {tab === "cableSchedule" && <CableScheduleTabInline />}
+            {tab === "power" && <PowerReportTab />}
           </div>
         </div>
       </div>
@@ -201,6 +215,19 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           }
           onClose={() => setShowCableSchedulePreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Cable Schedule.pdf`}
+        />
+      )}
+
+      {showPowerPreview && (
+        <ReportPreviewDialog
+          reportKey={POWER_LAYOUT_KEY}
+          defaultLayout={powerDefaultLayout}
+          titleBlock={titleBlock}
+          getTableData={(layout) =>
+            getPowerReportTableData(computePowerReport(nodes, edges), layout)
+          }
+          onClose={() => setShowPowerPreview(false)}
+          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Power Report.pdf`}
         />
       )}
     </>
@@ -1740,6 +1767,119 @@ function exportDevicesCsv(nodes: SchematicNode[], schematicName: string) {
     ),
   ];
   downloadCsv(lines.join("\n"), `${schematicName} - Device List.csv`);
+}
+
+// ─── Power Report Tab ─────────────────────────────────────────
+
+function PowerReportTab() {
+  const nodes = useSchematicStore((s) => s.nodes);
+  const edges = useSchematicStore((s) => s.edges);
+
+  const report = useMemo(() => computePowerReport(nodes, edges), [nodes, edges]);
+
+  if (report.devices.length === 0) {
+    return (
+      <div className="text-sm text-[var(--color-text-muted)] text-center py-8">
+        No devices with power data in this schematic.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Summary */}
+      <div className="flex gap-4 text-xs">
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-3 py-2">
+          <div className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wide">Total Power</div>
+          <div className="text-sm font-semibold text-[var(--color-text-heading)]">{report.totalPowerW.toLocaleString()}W</div>
+          <div className="text-[10px] text-[var(--color-text-muted)]">
+            {(report.totalPowerW / 120).toFixed(1)}A @120V &middot; {(report.totalPowerW / 208).toFixed(1)}A @208V
+          </div>
+        </div>
+        {report.unconnectedPowerW > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2">
+            <div className="text-[10px] text-amber-600 uppercase tracking-wide">Unconnected</div>
+            <div className="text-sm font-semibold text-amber-700">{report.unconnectedPowerW.toLocaleString()}W</div>
+            <div className="text-[10px] text-amber-600">Not wired to any distro</div>
+          </div>
+        )}
+      </div>
+
+      {/* Distribution Loading */}
+      {report.distros.length > 0 && (
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-2">
+            Distribution Loading
+          </div>
+          <table className="w-full border-collapse border border-[var(--color-border)] rounded overflow-hidden">
+            <thead>
+              <tr>
+                <th className={thClass}>Distro</th>
+                <th className={thClass}>Room</th>
+                <th className={thClass}>Capacity (W)</th>
+                <th className={thClass}>Load (W)</th>
+                <th className={thClass}>Load %</th>
+                <th className={thClass}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.distros.map((d, i) => (
+                <tr key={d.nodeId} className={rowClass(i)}>
+                  <td className={tdClass}>{d.label}</td>
+                  <td className={tdClass}>{d.room}</td>
+                  <td className={tdClass}>{d.capacityW.toLocaleString()}</td>
+                  <td className={tdClass}>{d.loadW.toLocaleString()}</td>
+                  <td className={tdClass}>{d.loadPercent}%</td>
+                  <td className={tdClass}>
+                    <span className={
+                      d.status === "Overloaded" ? "text-red-600 font-semibold" :
+                      d.status === "Warning" ? "text-amber-600 font-semibold" :
+                      "text-green-600"
+                    }>
+                      {d.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Device Power Draw */}
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-2">
+          Device Power Draw
+        </div>
+        <table className="w-full border-collapse border border-[var(--color-border)] rounded overflow-hidden">
+          <thead>
+            <tr>
+              <th className={thClass}>Qty</th>
+              <th className={thClass}>Device</th>
+              <th className={thClass}>Type</th>
+              <th className={thClass}>Room</th>
+              <th className={thClass}>Power (W)</th>
+              <th className={thClass}>Total (W)</th>
+              <th className={thClass}>Voltage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.devices.map((d, i) => (
+              <tr key={`${d.model}-${d.room}-${i}`} className={rowClass(i)}>
+                <td className={tdClass}>{d.count}x</td>
+                <td className={tdClass}>{d.model}</td>
+                <td className={tdClass}>{d.deviceType}</td>
+                <td className={tdClass}>{d.room}</td>
+                <td className={tdClass}>{d.powerDrawW > 0 ? d.powerDrawW.toLocaleString() : "—"}</td>
+                <td className={tdClass}>{d.powerDrawW > 0 ? (d.powerDrawW * d.count).toLocaleString() : "—"}</td>
+                <td className={tdClass}>{d.voltage || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function csvEscape(s: string): string {

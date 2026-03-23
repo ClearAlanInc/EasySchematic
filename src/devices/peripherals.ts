@@ -8,6 +8,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "mouse",
     label: "Mouse",
     searchTerms: ["mouse", "pointer", "trackpad"],
+    powerDrawW: 0, // USB-powered
     ports: [
       port("USB-A", "usb", "bidirectional", "usb-a"),
     ],
@@ -18,6 +19,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "keyboard",
     label: "Keyboard",
     searchTerms: ["keyboard", "keypad"],
+    powerDrawW: 0, // USB-powered
     ports: [
       port("USB-A", "usb", "bidirectional", "usb-a"),
     ],

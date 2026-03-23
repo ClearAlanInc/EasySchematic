@@ -12,6 +12,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "CP4N",
     referenceUrl: "https://www.crestron.com/Products/Catalog/Control-and-Management/Control-System/Rack-Mount/CP4N",
     searchTerms: ["crestron", "control", "processor", "automation", "cp4"],
+    powerDrawW: 50, // typical
     ports: [
       port("LAN", "ethernet", "bidirectional"),
       port("Control Subnet", "ethernet", "bidirectional"),
@@ -34,6 +35,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GPI and Tally Interface",
     referenceUrl: "https://www.blackmagicdesign.com/products/atemconstellation/techspecs/W-ATC-03",
     searchTerms: ["blackmagic", "tally", "gpi", "gpio", "indicator"],
+    powerDrawW: 5, // typical
     ports: [
       port("Ethernet In", "ethernet", "bidirectional"),
       port("Ethernet Loop", "ethernet", "bidirectional"),
@@ -51,6 +53,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Perfect Cue",
     referenceUrl: "https://dsanproducts.com/",
     searchTerms: ["dsan", "perfect cue", "speaker timer", "presentation"],
+    powerDrawW: 10, // typical
     ports: [
       port("Ethernet", "ethernet", "bidirectional"),
       port("RS-232", "serial", "bidirectional"),
@@ -65,6 +68,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SR-112",
     referenceUrl: "https://www.brainstormtime.com/products/sr-112/",
     searchTerms: ["brainstorm", "sr-112", "timecode", "smpte", "ltc", "generator"],
+    powerDrawW: 15, // typical
     ports: [
       port("LTC Out 1", "analog-audio", "output"),
       port("LTC Out 2", "analog-audio", "output"),
@@ -80,6 +84,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "midi-device",
     label: "MIDI Merge 4x2",
     searchTerms: ["midi", "merge", "combiner"],
+    powerDrawW: 5, // typical
     ports: [
       ...ports("MIDI In", "midi", "input", 4, "din-5"),
       port("MIDI Out 1", "midi", "output", "din-5"),
@@ -91,6 +96,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "midi-device",
     label: "MIDI Thru 1x4",
     searchTerms: ["midi", "thru", "splitter"],
+    powerDrawW: 5, // typical
     ports: [
       port("MIDI In", "midi", "input", "din-5"),
       ...ports("MIDI Thru", "midi", "output", 4, "din-5"),

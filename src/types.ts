@@ -8,6 +8,7 @@ export type ConnectorType =
   | "db9" | "db25" | "din-5" | "phoenix" | "powercon" | "edison" | "iec"
   | "speakon" | "socapex" | "multipin" | "rca" | "toslink" | "barrel"
   | "banana" | "binding-post" | "binding-post-banana" | "dvi" | "mini-xlr" | "opticalcon"
+  | "l5-20" | "l6-20" | "l6-30" | "l21-30" | "cam-lok"
   | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -130,6 +131,9 @@ export interface DeviceData {
   isCableAccessory?: boolean;
   integratedWithCable?: boolean;
   slots?: InstalledSlot[];
+  powerDrawW?: number;
+  powerCapacityW?: number;
+  voltage?: string;
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -205,6 +209,9 @@ export interface DeviceTemplate {
   referenceUrl?: string;
   slots?: SlotDefinition[];
   slotFamily?: string;           // only set on expansion card templates
+  powerDrawW?: number;           // Max power consumption in watts
+  powerCapacityW?: number;       // Total supply capacity in watts (distros only)
+  voltage?: string;              // Informational: "100-240V", "208V", "120V"
 }
 
 export interface TemplatePreset {
@@ -390,6 +397,11 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   dvi: "DVI",
   "mini-xlr": "Mini XLR",
   opticalcon: "opticalCON",
+  "l5-20": "NEMA L5-20",
+  "l6-20": "NEMA L6-20",
+  "l6-30": "NEMA L6-30",
+  "l21-30": "NEMA L21-30",
+  "cam-lok": "Cam-Lok",
   none: "None",
   other: "Other",
 };

@@ -11,6 +11,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Leopard",
     referenceUrl: "https://meyersound.com/product/leopard/",
     searchTerms: ["meyer", "leopard", "line array", "powered"],
+    powerDrawW: 450, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -26,6 +27,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "KIVA II",
     referenceUrl: "https://www.l-acoustics.com/products/kiva-ii/",
     searchTerms: ["l-acoustics", "kiva", "line array", "passive"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -39,6 +41,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VRX928LA",
     referenceUrl: "https://jblpro.com/products/vrx928la",
     searchTerms: ["jbl", "vrx", "line array", "passive", "compact"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -52,6 +55,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UPM-1P",
     referenceUrl: "https://meyersound.com/product/upm-1p/",
     searchTerms: ["meyer", "upm", "powered", "fill", "delay"],
+    powerDrawW: 200, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -66,6 +70,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UPA-1P",
     referenceUrl: "https://meyersound.com/product/upa-1p/",
     searchTerms: ["meyer", "upa", "powered", "loudspeaker"],
+    powerDrawW: 400, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -80,6 +85,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "K12.2",
     referenceUrl: "https://www.qsc.com/products-solutions/loudspeakers/powered-loudspeakers/k2-series/k122/",
     searchTerms: ["qsc", "k12", "k series", "powered", "portable"],
+    powerDrawW: 200, // typical
     ports: [
       port("Combo In 1", "analog-audio", "input", "combo-xlr-trs"),
       port("Combo In 2", "analog-audio", "input", "combo-xlr-trs"),
@@ -95,6 +101,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "900-LFC",
     referenceUrl: "https://meyersound.com/product/900-lfc/",
     searchTerms: ["meyer", "900", "lfc", "subwoofer", "powered"],
+    powerDrawW: 1100, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -110,6 +117,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SB15m",
     referenceUrl: "https://www.l-acoustics.com/products/sb15m/",
     searchTerms: ["l-acoustics", "sb15", "subwoofer", "passive"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -123,6 +131,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MJF-210",
     referenceUrl: "https://meyersound.com/product/mjf-210/",
     searchTerms: ["meyer", "mjf", "wedge", "monitor", "stage"],
+    powerDrawW: 200, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -137,6 +146,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PLD 4.5",
     referenceUrl: "https://www.qsc.com/products-solutions/power-amplifiers/installed/pld-series/pld-4-5/",
     searchTerms: ["qsc", "pld", "amplifier", "dsp", "4 channel"],
+    powerDrawW: 1800, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 4),
       port("Dante Primary", "dante", "bidirectional"),
@@ -154,6 +164,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "LA4X",
     referenceUrl: "https://www.l-acoustics.com/products/la4x/",
     searchTerms: ["l-acoustics", "la4x", "amplified controller", "4 channel"],
+    powerDrawW: 1800, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 4),
       ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
@@ -177,6 +188,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "A15 Wide",
     referenceUrl: "https://www.l-acoustics.com/products/a15-wide/",
     searchTerms: ["l-acoustics", "a15", "wide", "line array", "passive", "a series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -190,6 +202,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "K3",
     referenceUrl: "https://www.l-acoustics.com/products/k3/",
     searchTerms: ["l-acoustics", "k3", "line array", "passive", "k series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -203,6 +216,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SYVA",
     referenceUrl: "https://www.l-acoustics.com/products/syva/",
     searchTerms: ["l-acoustics", "syva", "column", "passive", "segment source"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -216,6 +230,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "X15 HiQ",
     referenceUrl: "https://www.l-acoustics.com/products/x15-hiq/",
     searchTerms: ["l-acoustics", "x15", "hiq", "coaxial", "stage monitor", "passive"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -229,6 +244,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "X8",
     referenceUrl: "https://www.l-acoustics.com/products/x8/",
     searchTerms: ["l-acoustics", "x8", "coaxial", "passive", "compact"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -242,6 +258,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "X12",
     referenceUrl: "https://www.l-acoustics.com/products/x12/",
     searchTerms: ["l-acoustics", "x12", "coaxial", "passive", "point source"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -255,6 +272,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "KS28",
     referenceUrl: "https://www.l-acoustics.com/products/ks28/",
     searchTerms: ["l-acoustics", "ks28", "subwoofer", "passive", "k series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
     ],
@@ -267,6 +285,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "K2",
     referenceUrl: "https://www.l-acoustics.com/products/k2/",
     searchTerms: ["l-acoustics", "k2", "line array", "passive", "k series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -280,6 +299,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Kara II",
     referenceUrl: "https://www.l-acoustics.com/products/kara-ii/",
     searchTerms: ["l-acoustics", "kara", "line array", "passive", "k series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -293,6 +313,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "5XT",
     referenceUrl: "https://www.l-acoustics.com/products/5xt/",
     searchTerms: ["l-acoustics", "5xt", "coaxial", "passive", "ultra-compact"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -306,6 +327,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "SB18",
     referenceUrl: "https://www.l-acoustics.com/products/sb18/",
     searchTerms: ["l-acoustics", "sb18", "subwoofer", "passive"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -321,6 +343,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "LA7.16",
     referenceUrl: "https://www.l-acoustics.com/products/la7-16/",
     searchTerms: ["l-acoustics", "la7", "amplified controller", "16 channel", "milan", "avb"],
+    powerDrawW: 3700, // typical
     ports: [
       port("Analog In", "analog-audio", "input"),
       port("AES In 1-2", "aes", "input"),
@@ -338,6 +361,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "LA-RAK II AVB",
     referenceUrl: "https://www.l-acoustics.com/products/la-rak-ii-avb/",
     searchTerms: ["l-acoustics", "la-rak", "rack", "amplified controller", "touring", "avb", "milan"],
+    powerDrawW: 5400, // typical (3x LA4X)
     ports: [
       ...ports("Analog In", "analog-audio", "input", 6),
       port("AES In 1-2", "aes", "input"),
@@ -360,6 +384,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "750-LFC",
     referenceUrl: "https://meyersound.com/product/750-lfc/",
     searchTerms: ["meyer", "750", "lfc", "subwoofer", "powered", "low frequency"],
+    powerDrawW: 900, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -375,6 +400,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "LINA",
     referenceUrl: "https://meyersound.com/product/lina/",
     searchTerms: ["meyer", "lina", "line array", "powered", "compact"],
+    powerDrawW: 350, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -390,6 +416,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ultra-X23",
     referenceUrl: "https://meyersound.com/product/ultra-x23/",
     searchTerms: ["meyer", "ultra", "x23", "powered", "point source", "compact"],
+    powerDrawW: 200, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -404,6 +431,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UPM-1P",
     referenceUrl: "https://meyersound.com/product/upm-1p/",
     searchTerms: ["meyer", "upm", "um-1p", "powered", "ultracompact"],
+    powerDrawW: 200, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -418,6 +446,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MM-4XP",
     referenceUrl: "https://meyersound.com/product/mm-4xp/",
     searchTerms: ["meyer", "mm-4xp", "miniature", "powered", "self-powered"],
+    powerDrawW: 30, // typical
     ports: [
       port("Audio/Power In", "analog-audio", "input", "other"),
     ],
@@ -430,6 +459,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "M1D",
     referenceUrl: "https://meyersound.com/products/",
     searchTerms: ["meyer", "m1d", "miniature", "line array", "powered", "curvilinear"],
+    powerDrawW: 100, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -444,6 +474,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Ultra-X40",
     referenceUrl: "https://meyersound.com/product/ultra-x40/",
     searchTerms: ["meyer", "ultra", "x40", "powered", "point source"],
+    powerDrawW: 300, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -458,6 +489,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UPJ-1P",
     referenceUrl: "https://meyersound.com/product/upj-1p/",
     searchTerms: ["meyer", "upj", "powered", "compact", "vario"],
+    powerDrawW: 350, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -474,6 +506,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Y7P",
     referenceUrl: "https://www.dbaudio.com/global/en/products/series/y-series/y7p/",
     searchTerms: ["d&b", "y7p", "point source", "passive", "y series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -487,6 +520,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "V8",
     referenceUrl: "https://www.dbaudio.com/global/en/products/series/v-series/v8/",
     searchTerms: ["d&b", "v8", "line array", "passive", "v series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -500,6 +534,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "V-SUB",
     referenceUrl: "https://www.dbaudio.com/global/en/products/series/v-series/v-sub/",
     searchTerms: ["d&b", "v-sub", "subwoofer", "passive", "v series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -513,6 +548,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "E8",
     referenceUrl: "https://www.dbaudio.com/global/en/products/series/e-series/e8/",
     searchTerms: ["d&b", "e8", "coaxial", "passive", "point source", "e series"],
+    powerDrawW: 0,
     ports: [
       port("Input", "analog-audio", "input", "speakon"),
       port("Link", "analog-audio", "output", "speakon"),
@@ -526,6 +562,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "D20",
     referenceUrl: "https://www.dbaudio.com/global/en/products/amplifiers/d20/",
     searchTerms: ["d&b", "d20", "amplifier", "4 channel"],
+    powerDrawW: 3200, // typical
     ports: [
       ...ports("Analog In", "analog-audio", "input", 4),
       port("AES In 1-2", "aes", "input"),
@@ -546,6 +583,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EON610",
     referenceUrl: "https://jblpro.com/en/products/eon610",
     searchTerms: ["jbl", "eon", "610", "powered", "portable", "bluetooth"],
+    powerDrawW: 250, // typical
     ports: [
       port("Combo In 1", "analog-audio", "input", "combo-xlr-trs"),
       port("Combo In 2", "analog-audio", "input", "combo-xlr-trs"),
@@ -562,6 +600,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VRX932LAP",
     referenceUrl: "https://jblpro.com/en/products/vrx932lap",
     searchTerms: ["jbl", "vrx", "932", "line array", "powered"],
+    powerDrawW: 720, // typical
     ports: [
       port("Audio In", "analog-audio", "input"),
       port("Audio Link", "analog-audio", "output"),
@@ -576,6 +615,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "305P MkII",
     referenceUrl: "https://jblpro.com/en-US/products/305p-mkii",
     searchTerms: ["jbl", "305p", "studio monitor", "powered", "3 series"],
+    powerDrawW: 82,
     ports: [
       port("XLR In", "analog-audio", "input"),
       port("TRS In", "analog-audio", "input", "trs-quarter"),
@@ -592,6 +632,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Evolve 50",
     referenceUrl: "https://products.electrovoice.com/na/en/evolve-50",
     searchTerms: ["electro-voice", "ev", "evolve", "50", "column", "powered", "portable"],
+    powerDrawW: 150, // typical
     ports: [
       port("Combo In 1", "analog-audio", "input", "combo-xlr-trs"),
       port("Combo In 2", "analog-audio", "input", "combo-xlr-trs"),
@@ -608,6 +649,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "6301B",
     referenceUrl: "https://www.fostex.jp/en/products/6301b-h/",
     searchTerms: ["fostex", "6301", "monitor", "powered", "broadcast", "compact"],
+    powerDrawW: 30,
     ports: [
       port("XLR In", "analog-audio", "input"),
       port("TRS In", "analog-audio", "input", "trs-quarter"),

@@ -11,6 +11,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "d3 4x4pro",
     referenceUrl: "https://www.disguise.one/en/products/legacy-products/",
     searchTerms: ["disguise", "d3", "4x4pro", "media server"],
+    powerDrawW: 1200, // typical
     slots: [
       { id: "d3-4x4-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-dp12", slotFamily: "disguise-vfc" },
       { id: "d3-4x4-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-dp12", slotFamily: "disguise-vfc" },
@@ -34,6 +35,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "d3 Solo",
     referenceUrl: "https://www.disguise.one/en/products/legacy-products/",
     searchTerms: ["disguise", "d3", "solo", "media server", "compact"],
+    powerDrawW: 500, // typical
     slots: [
       { id: "d3-solo-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-dp12", slotFamily: "disguise-vfc" },
     ],
@@ -54,6 +56,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "WATCHPAX 60",
     referenceUrl: "https://www.dataton.com/watchpax/watchpax-64",
     searchTerms: ["dataton", "watchpax", "watchout", "media server"],
+    powerDrawW: 200, // typical
     ports: [
       ...ports("HDMI Out", "hdmi", "output", 4),
       port("HDMI In", "hdmi", "input"),
@@ -71,6 +74,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "WATCHPAX 40",
     referenceUrl: "https://www.dataton.com/watchpax/watchpax-64",
     searchTerms: ["dataton", "watchpax", "watchout", "media server", "compact"],
+    powerDrawW: 120, // typical
     ports: [
       port("HDMI Out 1", "hdmi", "output"),
       port("HDMI Out 2", "hdmi", "output"),
@@ -91,6 +95,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VX 4+",
     referenceUrl: "https://www.disguise.one/en/products/vx-range/",
     searchTerms: ["disguise", "vx4", "media server", "d3"],
+    powerDrawW: 1500, // typical
     slots: [
       { id: "vfc-slot-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
       { id: "vfc-slot-b", label: "VFC Slot B", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
@@ -117,6 +122,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VX 1",
     referenceUrl: "https://www.disguise.one/en/products/vx-range/",
     searchTerms: ["disguise", "vx1", "media server", "d3"],
+    powerDrawW: 600, // typical
     slots: [
       { id: "vx1-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
     ],
@@ -138,6 +144,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VX 2",
     referenceUrl: "https://www.disguise.one/en/products/vx-range/",
     searchTerms: ["disguise", "vx2", "media server", "d3"],
+    powerDrawW: 900, // typical
     slots: [
       { id: "vx2-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
       { id: "vx2-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
@@ -162,6 +169,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "VX 3",
     referenceUrl: "https://www.disguise.one/en/products/vx-range/",
     searchTerms: ["disguise", "vx3", "media server", "d3"],
+    powerDrawW: 1200, // typical
     slots: [
       { id: "vx3-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
       { id: "vx3-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
@@ -187,6 +195,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GX 1",
     referenceUrl: "https://www.disguise.one/en/products/gx-range/",
     searchTerms: ["disguise", "gx1", "media server", "gpu"],
+    powerDrawW: 800, // typical
     slots: [
       { id: "gx1-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
     ],
@@ -208,6 +217,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GX 2",
     referenceUrl: "https://www.disguise.one/en/products/gx-range/",
     searchTerms: ["disguise", "gx2", "media server", "gpu"],
+    powerDrawW: 1200, // typical
     slots: [
       { id: "gx2-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-dp12", slotFamily: "disguise-vfc" },
       { id: "gx2-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-dp12", slotFamily: "disguise-vfc" },
@@ -232,6 +242,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GX 2C",
     referenceUrl: "https://www.disguise.one/en/products/gx-range/",
     searchTerms: ["disguise", "gx2c", "media server", "gpu", "compact"],
+    powerDrawW: 1000, // typical
     slots: [
       { id: "gx2c-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
       { id: "gx2c-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
@@ -256,6 +267,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GX 3",
     referenceUrl: "https://www.disguise.one/en/products/gx-range/",
     searchTerms: ["disguise", "gx3", "media server", "gpu"],
+    powerDrawW: 1500, // typical
     slots: [
       { id: "gx3-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-dp14", slotFamily: "disguise-vfc" },
       { id: "gx3-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-dp14", slotFamily: "disguise-vfc" },
@@ -280,6 +292,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EX 2",
     referenceUrl: "https://www.disguise.one/en/products/ex-range/",
     searchTerms: ["disguise", "ex2", "media server", "d3"],
+    powerDrawW: 400, // typical
     ports: [
       port("DP Out 1", "displayport", "output"),
       port("DP Out 2", "displayport", "output"),
@@ -300,6 +313,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "WATCHPAX 64",
     referenceUrl: "https://www.dataton.com/watchpax/watchpax-64",
     searchTerms: ["dataton", "watchpax", "watchout", "media server"],
+    powerDrawW: 200, // typical
     ports: [
       port("DP Out 1", "displayport", "output"),
       port("DP Out 2", "displayport", "output"),
@@ -320,6 +334,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EX 3",
     referenceUrl: "https://www.disguise.one/en/products/ex-range/",
     searchTerms: ["disguise", "ex3", "media server", "playback"],
+    powerDrawW: 800, // typical
     ports: [
       ...ports("DP Out", "displayport", "output", 3),
       port("Genlock In", "genlock", "input"),
@@ -342,6 +357,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "EX 3+",
     referenceUrl: "https://www.disguise.one/en/products/ex-range/",
     searchTerms: ["disguise", "ex3+", "media server", "playback"],
+    powerDrawW: 1200, // typical
     ports: [
       ...ports("DP Out", "displayport", "output", 3),
       port("HDMI In", "hdmi", "input"),
@@ -364,6 +380,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "GX 3+",
     referenceUrl: "https://www.disguise.one/en/products/gx-range/",
     searchTerms: ["disguise", "gx3+", "media server", "gpu"],
+    powerDrawW: 2000, // typical
     slots: [
       { id: "gx3p-vfc-a", label: "VFC Slot A", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
       { id: "gx3p-vfc-b", label: "VFC Slot B", defaultCardId: "vfc-card-hdmi20", slotFamily: "disguise-vfc" },
@@ -394,6 +411,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Rack Server",
     referenceUrl: "https://follow-me.com/hardware-product/follow-me-rack-server/",
     searchTerms: ["follow-me", "follow me", "tracking", "follow spot", "rack server"],
+    powerDrawW: 300, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("SDI In", "sdi", "input"),
@@ -412,6 +430,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "PlaybackPro Plus",
     referenceUrl: "https://www.dtvideolabs.com/playbackpro-plus-3/",
     searchTerms: ["dt videolabs", "playbackpro", "playback pro", "video playback"],
+    powerDrawW: 100, // typical — software on Mac hardware
     ports: [
       port("HDMI Out", "hdmi", "output"),
       port("Thunderbolt", "thunderbolt", "bidirectional", "usb-c"),

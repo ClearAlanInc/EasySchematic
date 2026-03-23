@@ -105,6 +105,29 @@ export default function DeviceDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
+      {(template.powerDrawW != null || template.powerCapacityW != null || template.voltage) && (
+        <div className="mb-6 flex flex-wrap gap-4">
+          {template.powerDrawW != null && (
+            <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider">Power Draw</div>
+              <div className="text-sm font-semibold text-slate-900">{template.powerDrawW}W</div>
+            </div>
+          )}
+          {template.powerCapacityW != null && (
+            <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider">Capacity</div>
+              <div className="text-sm font-semibold text-slate-900">{template.powerCapacityW}W</div>
+            </div>
+          )}
+          {template.voltage && (
+            <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider">Voltage</div>
+              <div className="text-sm font-semibold text-slate-900">{template.voltage}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {template.searchTerms && template.searchTerms.length > 0 && (
         <div className="mb-6">
           <span className="text-xs text-slate-400 uppercase tracking-wider">Search Terms</span>

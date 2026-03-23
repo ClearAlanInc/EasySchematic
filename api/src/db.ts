@@ -14,6 +14,9 @@ interface TemplateOutput {
   ports: unknown[];
   slots?: unknown[];
   slotFamily?: string;
+  powerDrawW?: number;
+  powerCapacityW?: number;
+  voltage?: string;
 }
 
 export interface TemplateRow {
@@ -31,6 +34,9 @@ export interface TemplateRow {
   ports: string;
   slots: string | null;
   slot_family: string | null;
+  power_draw_w: number | null;
+  power_capacity_w: number | null;
+  voltage: string | null;
   sort_order: number;
 }
 
@@ -48,6 +54,9 @@ interface TemplateInput {
   ports: unknown[];
   slots?: unknown[];
   slotFamily?: string;
+  powerDrawW?: number;
+  powerCapacityW?: number;
+  voltage?: string;
   sortOrder?: number;
 }
 
@@ -66,6 +75,9 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     ports: JSON.stringify(input.ports),
     slots: input.slots ? JSON.stringify(input.slots) : null,
     slot_family: input.slotFamily ?? null,
+    power_draw_w: input.powerDrawW ?? null,
+    power_capacity_w: input.powerCapacityW ?? null,
+    voltage: input.voltage ?? null,
     sort_order: input.sortOrder ?? 0,
   };
 }
@@ -86,5 +98,8 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ports: JSON.parse(row.ports) as unknown[],
     ...(row.slots && { slots: JSON.parse(row.slots) as unknown[] }),
     ...(row.slot_family && { slotFamily: row.slot_family }),
+    ...(row.power_draw_w != null && { powerDrawW: row.power_draw_w }),
+    ...(row.power_capacity_w != null && { powerCapacityW: row.power_capacity_w }),
+    ...(row.voltage && { voltage: row.voltage }),
   };
 }

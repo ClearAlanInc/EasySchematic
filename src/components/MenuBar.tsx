@@ -404,6 +404,7 @@ export default function MenuBar() {
       { type: "item", label: "Device List...", onClick: () => setReportsTab("devices") },
       { type: "item", label: "Pack List...", onClick: () => setReportsTab("packList") },
       { type: "item", label: "Cable Schedule...", onClick: () => setReportsTab("cableSchedule") },
+      { type: "item", label: "Power Report...", onClick: () => setReportsTab("power") },
     ],
     Help: [
       {

@@ -109,6 +109,11 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   dvi: "DVI",
   "mini-xlr": "Mini XLR",
   opticalcon: "opticalCON Fiber",
+  "l5-20": "L5-20",
+  "l6-20": "L6-20",
+  "l6-30": "L6-30",
+  "l21-30": "L21-30",
+  "cam-lok": "Cam-Lok",
   none: "",
   other: "Other",
 };

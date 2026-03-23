@@ -27,6 +27,9 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   const [editPorts, setEditPorts] = useState<Port[]>([]);
   const [editSlots, setEditSlots] = useState<SlotDefinition[]>([]);
   const [editSlotFamily, setEditSlotFamily] = useState("");
+  const [editPowerDrawW, setEditPowerDrawW] = useState("");
+  const [editPowerCapacityW, setEditPowerCapacityW] = useState("");
+  const [editVoltage, setEditVoltage] = useState("");
 
   useEffect(() => {
     fetchSubmission(id)
@@ -58,6 +61,9 @@ export default function ReviewDetailPage({ id }: { id: string }) {
     setEditPorts((d.ports ?? []) as Port[]);
     setEditSlots((d.slots ?? []) as SlotDefinition[]);
     setEditSlotFamily((d as Record<string, unknown>).slotFamily as string ?? "");
+    setEditPowerDrawW((d as Record<string, unknown>).powerDrawW != null ? String((d as Record<string, unknown>).powerDrawW) : "");
+    setEditPowerCapacityW((d as Record<string, unknown>).powerCapacityW != null ? String((d as Record<string, unknown>).powerCapacityW) : "");
+    setEditVoltage((d as Record<string, unknown>).voltage as string ?? "");
     setEditing(true);
   };
 
@@ -77,6 +83,9 @@ export default function ReviewDetailPage({ id }: { id: string }) {
           ...(editSearchTerms.trim() && { searchTerms: editSearchTerms.split(",").map((s) => s.trim()).filter(Boolean) }),
           ...(editSlots.length > 0 && { slots: editSlots }),
           ...(editSlotFamily.trim() && { slotFamily: editSlotFamily.trim() }),
+          ...(editPowerDrawW.trim() && { powerDrawW: Number(editPowerDrawW) }),
+          ...(editPowerCapacityW.trim() && { powerCapacityW: Number(editPowerCapacityW) }),
+          ...(editVoltage.trim() && { voltage: editVoltage.trim() }),
         };
       }
       await approveSubmission(id, editedData);
@@ -267,7 +276,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   );
 }
 
-function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType" | "manufacturer" | "modelNumber" | "color" | "referenceUrl" | "slots" | "slotFamily"> }) {
+function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType" | "manufacturer" | "modelNumber" | "color" | "referenceUrl" | "slots" | "slotFamily" | "powerDrawW" | "powerCapacityW" | "voltage"> }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-4">
       <div><span className="text-slate-500">Label:</span> <span className="font-medium">{data.label}</span></div>
@@ -292,6 +301,15 @@ function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType
       )}
       {data.slotFamily && (
         <div><span className="text-slate-500">Slot Family:</span> {data.slotFamily}</div>
+      )}
+      {data.powerDrawW != null && (
+        <div><span className="text-slate-500">Power Draw:</span> {data.powerDrawW}W</div>
+      )}
+      {data.powerCapacityW != null && (
+        <div><span className="text-slate-500">Power Capacity:</span> {data.powerCapacityW}W</div>
+      )}
+      {data.voltage && (
+        <div><span className="text-slate-500">Voltage:</span> {data.voltage}</div>
       )}
     </div>
   );

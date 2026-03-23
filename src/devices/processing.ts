@@ -11,6 +11,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter SDI to HDMI 3G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-12",
     searchTerms: ["blackmagic", "micro converter", "microconverter"],
+    powerDrawW: 2,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -26,6 +27,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter HDMI to SDI 3G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-11",
     searchTerms: ["blackmagic", "micro converter", "microconverter"],
+    powerDrawW: 2,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -41,6 +43,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MD-LX",
     referenceUrl: "https://decimator.com/Products/MiniConverters/MD-LX/MD-LX.html",
     searchTerms: ["decimator", "cross converter", "bidirectional"],
+    powerDrawW: 2, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -57,6 +60,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter BiDirectional SDI/HDMI 3G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters/techspecs/W-CONU-09",
     searchTerms: ["blackmagic", "micro converter", "bidirectional", "3g"],
+    powerDrawW: 3,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -73,6 +77,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FiDO-4T",
     referenceUrl: "https://www.aja.com/products/fido-4t",
     searchTerms: ["aja", "fido", "fiber", "transmitter", "quad"],
+    powerDrawW: 12, // typical
     ports: [
       port("SDI In 1", "sdi", "input"),
       port("SDI In 2", "sdi", "input"),
@@ -93,6 +98,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FiDO-4R",
     referenceUrl: "https://www.aja.com/products/fido-4r",
     searchTerms: ["aja", "fido", "fiber", "receiver", "quad"],
+    powerDrawW: 12, // typical
     ports: [
       port("Fiber In 1", "fiber", "input"),
       port("Fiber In 2", "fiber", "input"),
@@ -113,6 +119,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FiDO-T",
     referenceUrl: "https://www.aja.com/products/fido-t",
     searchTerms: ["aja", "fido", "fiber", "transmitter", "single"],
+    powerDrawW: 5, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("Fiber Out", "fiber", "output"),
@@ -128,6 +135,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FiDO-R",
     referenceUrl: "https://www.aja.com/products/fido-r",
     searchTerms: ["aja", "fido", "fiber", "receiver", "single"],
+    powerDrawW: 5, // typical
     ports: [
       port("Fiber In", "fiber", "input"),
       port("SDI Out 1", "sdi", "output"),
@@ -143,6 +151,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DAC-70",
     referenceUrl: "https://www.datavideo.com/us/product/DAC-70",
     searchTerms: ["datavideo", "cross converter", "dac", "vga"],
+    powerDrawW: 6,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -167,6 +176,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MD-HX",
     referenceUrl: "https://decimator.com/Products/MiniConverters/MD-HX/MD-HX.html",
     searchTerms: ["decimator", "cross converter", "scaler", "upconverter", "downconverter"],
+    powerDrawW: 5, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -184,6 +194,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DSC 301 HD",
     referenceUrl: "https://www.extron.com/product/dsc301hd",
     searchTerms: ["extron", "presentation scaler", "vga", "scan converter"],
+    powerDrawW: 20, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("VGA In", "vga", "input"),
@@ -201,6 +212,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0011-4000-8000-000000000017",
     deviceType: "converter",
     label: "Converter",
+    powerDrawW: 5, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -211,6 +223,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0018-4000-8000-000000000024",
     deviceType: "multiviewer",
     label: "Multiviewer",
+    powerDrawW: 30, // typical
     ports: [
       port("SDI In 1", "sdi", "input"),
       port("SDI In 2", "sdi", "input"),
@@ -226,6 +239,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-0019-4000-8000-000000000025",
     deviceType: "frame-sync",
     label: "Frame Sync",
+    powerDrawW: 15, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("Ref In", "genlock", "input"),
@@ -240,6 +254,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "TB → HDMI Adapter",
     searchTerms: ["thunderbolt", "usb-c", "dongle"],
+    powerDrawW: 0,
     ports: [
       port("TB In", "thunderbolt", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -254,6 +269,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UltraStudio 4K Mini",
     referenceUrl: "https://www.blackmagicdesign.com/products/ultrastudio/techspecs/W-DLUS-11",
     searchTerms: ["blackmagic", "ultrastudio", "capture", "playback", "thunderbolt"],
+    powerDrawW: 75,
     ports: [
       port("SDI In 1", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -283,6 +299,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter SDI to HDMI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters",
     searchTerms: ["blackmagic", "micro converter", "12g", "sdi to hdmi"],
+    powerDrawW: 4,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -297,6 +314,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter HDMI to SDI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters",
     searchTerms: ["blackmagic", "micro converter", "12g", "hdmi to sdi"],
+    powerDrawW: 4,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("SDI Out 1", "sdi", "output"),
@@ -311,6 +329,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Micro Converter BiDirectional SDI/HDMI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/microconverters",
     searchTerms: ["blackmagic", "micro converter", "bidirectional", "12g"],
+    powerDrawW: 5,
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -326,6 +345,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Teranex Mini SDI to HDMI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini",
     searchTerms: ["blackmagic", "teranex", "sdi to hdmi", "12g"],
+    powerDrawW: 16,
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Loop", "sdi", "output"),
@@ -344,6 +364,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Teranex Mini HDMI to SDI 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini",
     searchTerms: ["blackmagic", "teranex", "hdmi to sdi", "12g"],
+    powerDrawW: 16,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -359,6 +380,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Hi5-12G",
     referenceUrl: "https://www.aja.com/products/hi5-12g",
     searchTerms: ["aja", "hi5", "12g", "sdi to hdmi"],
+    powerDrawW: 7, // typical
     ports: [
       port("12G-SDI In", "sdi", "input"),
       port("SDI Loop", "sdi", "output"),
@@ -378,6 +400,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "HA5-12G",
     referenceUrl: "https://www.aja.com/products/ha5-12g",
     searchTerms: ["aja", "ha5", "12g", "hdmi to sdi"],
+    powerDrawW: 7, // typical
     ports: [
       port("HDMI 2.0 In", "hdmi", "input"),
       port("12G-SDI Out 1", "sdi", "output"),
@@ -397,6 +420,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FS-HDR",
     referenceUrl: "https://www.aja.com/products/fs-hdr",
     searchTerms: ["aja", "fs-hdr", "hdr", "frame sync", "converter", "wcg"],
+    powerDrawW: 40, // typical
     ports: [
       ...ports("SDI In", "sdi", "input", 4),
       ...ports("SDI Out", "sdi", "output", 4),
@@ -414,6 +438,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MD-CROSS",
     referenceUrl: "https://decimator.com/Products/MiniConverters/MD-CROSS/MD-CROSS.html",
     searchTerms: ["decimator", "cross converter", "md-cross"],
+    powerDrawW: 5, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -431,6 +456,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MultiView 4",
     referenceUrl: "https://www.blackmagicdesign.com/products/multiview",
     searchTerms: ["blackmagic", "multiview", "4 input", "quad"],
+    powerDrawW: 16,
     ports: [
       ...ports("SDI In", "sdi", "input", 4),
       port("SDI Out", "sdi", "output"),
@@ -454,6 +480,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "MultiView 16",
     referenceUrl: "https://www.blackmagicdesign.com/products/multiview",
     searchTerms: ["blackmagic", "multiview", "16 input"],
+    powerDrawW: 45,
     ports: [
       ...ports("SDI In", "sdi", "input", 16),
       port("SDI Out", "sdi", "output"),
@@ -477,6 +504,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DMON-QUAD",
     referenceUrl: "https://decimator.com/Products/MultiViewers/DMON-QUAD/DMON-QUAD.html",
     searchTerms: ["decimator", "dmon", "quad", "multiviewer"],
+    powerDrawW: 7, // typical
     ports: [
       ...ports("SDI In", "sdi", "input", 4),
       ...ports("SDI Loop", "sdi", "output", 4),
@@ -492,6 +520,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DMON-4S",
     referenceUrl: "https://decimator.com/Products/MultiViewers/DMON-4S/DMON-4S.html",
     searchTerms: ["decimator", "dmon", "4s", "multiviewer"],
+    powerDrawW: 5, // typical
     ports: [
       ...ports("SDI In", "sdi", "input", 4),
       ...ports("SDI Pass", "sdi", "output", 4),
@@ -506,6 +535,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DMON-16S",
     referenceUrl: "https://decimator.com/Products/MultiViewers/DMON-16S/DMON-16S.html",
     searchTerms: ["decimator", "dmon", "16s", "16 input", "multiviewer"],
+    powerDrawW: 24, // typical
     ports: [
       ...ports("SDI In", "sdi", "input", 16),
       ...ports("SDI Pass", "sdi", "output", 16),
@@ -525,6 +555,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DeckLink SDI 4K",
     referenceUrl: "https://www.blackmagicdesign.com/products/decklink",
     searchTerms: ["blackmagic", "decklink", "pcie", "capture"],
+    powerDrawW: 18, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -542,6 +573,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DeckLink Duo 2",
     referenceUrl: "https://www.blackmagicdesign.com/products/decklink",
     searchTerms: ["blackmagic", "decklink", "duo", "pcie", "4 channel"],
+    powerDrawW: 18, // typical
     ports: [
       ...ports("SDI", "sdi", "bidirectional", 4),
     
@@ -556,6 +588,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "DeckLink Quad 2",
     referenceUrl: "https://www.blackmagicdesign.com/products/decklink",
     searchTerms: ["blackmagic", "decklink", "quad", "pcie", "8 channel"],
+    powerDrawW: 25, // typical
     ports: [
       ...ports("SDI", "sdi", "bidirectional", 8),
     
@@ -570,6 +603,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "UltraStudio 4K Extreme 3",
     referenceUrl: "https://www.blackmagicdesign.com/products/ultrastudio",
     searchTerms: ["blackmagic", "ultrastudio", "extreme", "thunderbolt", "capture"],
+    powerDrawW: 120, // typical
     ports: [
       port("12G-SDI In 1", "sdi", "input"),
       port("12G-SDI In 2", "sdi", "input"),
@@ -605,6 +639,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "USB-C → HDMI Adapter",
     searchTerms: ["usb-c", "hdmi", "dongle", "adapter"],
+    powerDrawW: 0,
     ports: [
       port("USB-C In", "usb", "input", "usb-c"),
       port("HDMI Out", "hdmi", "output"),
@@ -615,6 +650,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "USB-C → DP Adapter",
     searchTerms: ["usb-c", "displayport", "dongle", "adapter"],
+    powerDrawW: 0,
     ports: [
       port("USB-C In", "usb", "input", "usb-c"),
       port("DP Out", "displayport", "output"),
@@ -625,6 +661,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "HDMI → DVI Adapter",
     searchTerms: ["hdmi", "dvi", "adapter"],
+    powerDrawW: 0,
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DVI Out", "hdmi", "output", "other"),
@@ -635,6 +672,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "Mini DP → DP Adapter",
     searchTerms: ["mini displayport", "displayport", "adapter", "mdp"],
+    powerDrawW: 0,
     ports: [
       port("Mini DP In", "displayport", "input", "other"),
       port("DP Out", "displayport", "output"),
@@ -645,6 +683,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "DP → HDMI Adapter",
     searchTerms: ["displayport", "hdmi", "adapter"],
+    powerDrawW: 0,
     ports: [
       port("DP In", "displayport", "input"),
       port("HDMI Out", "hdmi", "output"),
@@ -655,6 +694,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "BNC Barrel / SDI Coupler",
     searchTerms: ["bnc", "barrel", "coupler", "sdi", "adapter"],
+    powerDrawW: 0,
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -665,6 +705,7 @@ export const templates: DeviceTemplate[] = [
     deviceType: "adapter",
     label: "TB → Ethernet Adapter",
     searchTerms: ["thunderbolt", "usb-c", "ethernet", "dongle", "network"],
+    powerDrawW: 0,
     ports: [
       port("TB In", "thunderbolt", "input"),
       port("Ethernet Out", "ethernet", "output"),
@@ -679,6 +720,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Mini Converter Optical Fiber 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/miniconverters",
     searchTerms: ["blackmagic", "mini converter", "optical", "fiber", "12g", "sdi"],
+    powerDrawW: 2,
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out", "sdi", "output"),
@@ -696,6 +738,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "12G-CROSS",
     referenceUrl: "https://decimator.com/Products/MiniConverters/12G-CROSS/12G-CROSS.html",
     searchTerms: ["decimator", "12g", "cross converter", "4k", "scaler"],
+    powerDrawW: 7, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("HDMI In", "hdmi", "input"),
@@ -716,6 +759,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Studio Fiber Converter",
     referenceUrl: "https://www.blackmagicdesign.com/products/blackmagicfiberconverters",
     searchTerms: ["blackmagic", "studio fiber", "smpte", "fiber converter", "camera"],
+    powerDrawW: 60, // typical
     ports: [
       ...ports("12G-SDI In", "sdi", "input", 3),
       ...ports("12G-SDI Out", "sdi", "output", 2),

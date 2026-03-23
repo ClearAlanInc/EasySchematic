@@ -494,8 +494,8 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, sort_order, submitted_by)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, sort_order, submitted_by)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         templateRow.id,
@@ -511,6 +511,9 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.ports,
         templateRow.slots,
         templateRow.slot_family,
+        templateRow.power_draw_w,
+        templateRow.power_capacity_w,
+        templateRow.voltage,
         templateRow.sort_order,
         submission.user_id,
       )
@@ -523,7 +526,8 @@ app.post("/submissions/:id/approve", async (c) => {
       .prepare(
         `UPDATE templates
          SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
-             color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?, sort_order = ?,
+             color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
+             power_draw_w = ?, power_capacity_w = ?, voltage = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?
          WHERE id = ?`,
       )
@@ -540,6 +544,9 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.ports,
         templateRow.slots,
         templateRow.slot_family,
+        templateRow.power_draw_w,
+        templateRow.power_capacity_w,
+        templateRow.voltage,
         templateRow.sort_order,
         submission.user_id,
         submission.template_id,
@@ -781,8 +788,8 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
@@ -798,6 +805,9 @@ app.post("/templates", async (c) => {
       row.ports,
       row.slots,
       row.slot_family,
+      row.power_draw_w,
+      row.power_capacity_w,
+      row.voltage,
       row.sort_order,
     )
     .run();
@@ -835,7 +845,8 @@ app.put("/templates/:id", async (c) => {
     .prepare(
       `UPDATE templates
      SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
-         color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?, sort_order = ?,
+         color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
+         power_draw_w = ?, power_capacity_w = ?, voltage = ?, sort_order = ?,
          version = version + 1, updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`,
     )
@@ -852,6 +863,9 @@ app.put("/templates/:id", async (c) => {
       row.ports,
       row.slots,
       row.slot_family,
+      row.power_draw_w,
+      row.power_capacity_w,
+      row.voltage,
       row.sort_order,
       id,
     )

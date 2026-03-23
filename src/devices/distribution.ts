@@ -7,6 +7,7 @@ export const templates: DeviceTemplate[] = [
     id: "c0a80101-001d-4000-8000-000000000029",
     deviceType: "da",
     label: "Distribution Amp",
+    powerDrawW: 5, // typical
     ports: [
       port("SDI In", "sdi", "input"),
       port("SDI Out 1", "sdi", "output"),
@@ -24,6 +25,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "FX4 SDI",
     referenceUrl: "https://www.datapath.co.uk/datapath-products/video-wall-controllers/datapath-fx4-sdi/",
     searchTerms: ["datapath", "video wall"],
+    powerDrawW: 35,
     ports: [
       port("SDI In", "sdi", "input"),
       port("DP In", "displayport", "input"),
@@ -51,6 +53,7 @@ export const templates: DeviceTemplate[] = [
     manufacturer: "Datapath",
     modelNumber: "FX4 HDMI",
     referenceUrl: "https://www.datapath.co.uk/datapath-products/video-wall-controllers/datapath-fx4/",
+    powerDrawW: 35,
     ports: [
       port("DP In", "displayport", "input"),
       port("HDMI In 1", "hdmi", "input"),
@@ -78,6 +81,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Mini Converter SDI Distribution",
     referenceUrl: "https://www.blackmagicdesign.com/products/miniconverters",
     searchTerms: ["blackmagic", "mini converter", "distribution", "da", "1x8"],
+    powerDrawW: 5,
     ports: [
       port("SDI In", "sdi", "input"),
       ...ports("SDI Out", "sdi", "output", 8),
@@ -92,6 +96,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Mini Converter SDI Distribution 4K",
     referenceUrl: "https://www.blackmagicdesign.com/products/miniconverters",
     searchTerms: ["blackmagic", "mini converter", "distribution", "4k", "6g", "da"],
+    powerDrawW: 5,
     ports: [
       port("SDI In", "sdi", "input"),
       ...ports("SDI Out", "sdi", "output", 8),
@@ -107,6 +112,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Teranex Mini SDI Distribution 12G",
     referenceUrl: "https://www.blackmagicdesign.com/products/teranexmini",
     searchTerms: ["blackmagic", "teranex", "distribution", "da", "12g"],
+    powerDrawW: 16,
     ports: [
       port("SDI In", "sdi", "input"),
       ...ports("SDI Out", "sdi", "output", 8),
@@ -123,6 +129,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "Hx4",
     referenceUrl: "https://www.datapath.co.uk/products/video-wall-controllers/hx4/",
     searchTerms: ["datapath", "hx4", "video wall", "4k"],
+    powerDrawW: 35, // typical
     ports: [
       port("HDMI In", "hdmi", "input"),
       port("DP In", "displayport", "input"),
@@ -146,6 +153,7 @@ export const templates: DeviceTemplate[] = [
     modelNumber: "12GDA",
     referenceUrl: "https://www.aja.com/products/12gda",
     searchTerms: ["aja", "12gda", "distribution amplifier", "da", "12g", "sdi"],
+    powerDrawW: 7, // typical
     ports: [
       port("12G-SDI In", "sdi", "input"),
       ...ports("12G-SDI Out", "sdi", "output", 6),

@@ -623,6 +623,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ...(template.version ? { templateVersion: template.version } : {}),
         ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
         ...(template.modelNumber ? { modelNumber: template.modelNumber } : {}),
+        ...(template.powerDrawW != null ? { powerDrawW: template.powerDrawW } : {}),
+        ...(template.powerCapacityW != null ? { powerCapacityW: template.powerCapacityW } : {}),
+        ...(template.voltage ? { voltage: template.voltage } : {}),
         ...(hiddenPorts && hiddenPorts.length > 0 ? { hiddenPorts } : {}),
         ...(template.deviceType === "cable-accessory" ? { isCableAccessory: true } : {}),
         ...(template.deviceType === "cable-accessory" &&
