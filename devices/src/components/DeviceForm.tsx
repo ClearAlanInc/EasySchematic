@@ -20,6 +20,7 @@ export interface DeviceFormData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  poeBudgetW?: number;
   isVenueProvided?: boolean;
   submitterNote?: string;
 }
@@ -56,6 +57,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
   const [powerDrawW, setPowerDrawW] = useState<string>("");
   const [powerCapacityW, setPowerCapacityW] = useState<string>("");
   const [voltage, setVoltage] = useState("");
+  const [poeBudgetW, setPoeBudgetW] = useState<string>("");
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [submitterNote, setSubmitterNote] = useState("");
   const [loading, setLoading] = useState(!!id);
@@ -91,6 +93,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
+        setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
         setIsVenueProvided((t as DeviceTemplate & { isVenueProvided?: boolean }).isVenueProvided ?? false);
       })
       .catch((e) => setError(e.message))
@@ -115,6 +118,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage((t.voltage as string) ?? "");
+        setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -149,6 +153,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         ...(powerDrawW.trim() && { powerDrawW: Number(powerDrawW) }),
         ...(powerCapacityW.trim() && { powerCapacityW: Number(powerCapacityW) }),
         ...(voltage.trim() && { voltage: voltage.trim() }),
+        ...(poeBudgetW.trim() && { poeBudgetW: Number(poeBudgetW) }),
         ...(isVenueProvided && { isVenueProvided: true }),
         ...(submitterNote.trim() && { submitterNote: submitterNote.trim() }),
       });
@@ -217,6 +222,13 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
             <span className="block text-sm font-medium text-slate-700 mb-1">Power Capacity (W)</span>
             <input type="number" min="0" value={powerCapacityW} onChange={(e) => setPowerCapacityW(e.target.value)} placeholder="e.g. 2400" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <span className="text-xs text-slate-400 mt-1 block">Total supply capacity (distros only)</span>
+          </label>
+        )}
+        {deviceType.includes("network-switch") && (
+          <label>
+            <span className="block text-sm font-medium text-slate-700 mb-1">PoE Budget (W)</span>
+            <input type="number" min="0" value={poeBudgetW} onChange={(e) => setPoeBudgetW(e.target.value)} placeholder="e.g. 370" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span className="text-xs text-slate-400 mt-1 block">Total PoE power budget (0 or empty = no PoE)</span>
           </label>
         )}
         {category === "Expansion Cards" && (

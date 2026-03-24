@@ -210,8 +210,9 @@ export default function DeviceEditor() {
       ports: finalPorts,
       ...(existing?.manufacturer ? { manufacturer: existing.manufacturer } : {}),
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
+      ...(poeBudgetW != null ? { poeBudgetW } : {}),
     });
-  }, [ports, label, node, addCustomTemplate]);
+  }, [ports, label, node, addCustomTemplate, poeBudgetW]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -240,6 +241,7 @@ export default function DeviceEditor() {
       ...(existing?.category ? { category: existing.category } : {}),
       ...(existing?.slots ? { slots: existing.slots } : {}),
       ...(existing?.slotFamily ? { slotFamily: existing.slotFamily } : {}),
+      ...(poeBudgetW != null ? { poeBudgetW } : {}),
     };
 
     const devicesUrl = import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
@@ -628,16 +630,26 @@ export default function DeviceEditor() {
             <>
               <DhcpServerSection dhcpServer={dhcpServer} onChange={setDhcpServer} />
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] text-[var(--color-text-muted)]">PoE Budget (W):</span>
-                <input
-                  className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
-                  type="number"
-                  value={poeBudgetW ?? ""}
-                  onChange={(e) => setPoeBudgetW(e.target.value ? Number(e.target.value) : undefined)}
-                  placeholder="e.g. 370"
-                  min={0}
-                  onKeyDown={(e) => e.stopPropagation()}
-                />
+                <label className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={poeBudgetW != null}
+                    onChange={(e) => setPoeBudgetW(e.target.checked ? 0 : undefined)}
+                    className="cursor-pointer"
+                  />
+                  PoE Source
+                </label>
+                {poeBudgetW != null && (
+                  <input
+                    className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                    type="number"
+                    value={poeBudgetW || ""}
+                    onChange={(e) => setPoeBudgetW(e.target.value ? Number(e.target.value) : 0)}
+                    placeholder="Budget (W)"
+                    min={0}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                )}
               </div>
             </>
           )}

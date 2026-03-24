@@ -30,6 +30,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   const [editPowerDrawW, setEditPowerDrawW] = useState("");
   const [editPowerCapacityW, setEditPowerCapacityW] = useState("");
   const [editVoltage, setEditVoltage] = useState("");
+  const [editPoeBudgetW, setEditPoeBudgetW] = useState("");
 
   useEffect(() => {
     fetchSubmission(id)
@@ -64,6 +65,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
     setEditPowerDrawW((d as Record<string, unknown>).powerDrawW != null ? String((d as Record<string, unknown>).powerDrawW) : "");
     setEditPowerCapacityW((d as Record<string, unknown>).powerCapacityW != null ? String((d as Record<string, unknown>).powerCapacityW) : "");
     setEditVoltage((d as Record<string, unknown>).voltage as string ?? "");
+    setEditPoeBudgetW((d as Record<string, unknown>).poeBudgetW != null ? String((d as Record<string, unknown>).poeBudgetW) : "");
     setEditing(true);
   };
 
@@ -86,6 +88,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
           ...(editPowerDrawW.trim() && { powerDrawW: Number(editPowerDrawW) }),
           ...(editPowerCapacityW.trim() && { powerCapacityW: Number(editPowerCapacityW) }),
           ...(editVoltage.trim() && { voltage: editVoltage.trim() }),
+          ...(editPoeBudgetW.trim() && { poeBudgetW: Number(editPoeBudgetW) }),
         };
       }
       await approveSubmission(id, editedData);
@@ -369,6 +372,9 @@ function DeviceInfo({ data }: { data: Pick<DeviceTemplate, "label" | "deviceType
       )}
       {data.powerCapacityW != null && (
         <div><span className="text-slate-500">Power Capacity:</span> {data.powerCapacityW}W</div>
+      )}
+      {(data as Record<string, unknown>).poeBudgetW != null && (
+        <div><span className="text-slate-500">PoE Budget:</span> {String((data as Record<string, unknown>).poeBudgetW)}W</div>
       )}
       {data.voltage && (
         <div><span className="text-slate-500">Voltage:</span> {data.voltage}</div>
