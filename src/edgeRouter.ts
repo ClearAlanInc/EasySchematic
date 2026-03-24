@@ -96,9 +96,18 @@ export interface PrintConfig {
 // ---------- Constants ----------
 
 const DPI = 96;
-const SEPARATION_THRESHOLD = 8;
-const MAX_ITERATIONS = 5;
-const STUB_GAP = 6;
+
+/** Tunable routing orchestration parameters. */
+export const ROUTER_PARAMS = {
+  MAX_ITERATIONS: 5,
+  SEPARATION_THRESHOLD: 8,
+  CX_THRESHOLD: 15,
+  EDGE_GAP: 12,
+  Y_GAP_THRESHOLD: 50,
+  STUB_GAP: 6,
+  /** Edge sort strategy: 0=default(signal-type→shortest→position), 1=longest-first, 2=most-connected-first */
+  SORT_STRATEGY: 0 as number,
+};
 
 // ---------- Handle resolution ----------
 
@@ -173,7 +182,7 @@ function computeStubSpread(
   );
   const index = allFromSource.findIndex((e) => e.edgeId === edgeId);
   const mid = (allFromSource.length - 1) / 2;
-  return (index - mid) * STUB_GAP;
+  return (index - mid) * ROUTER_PARAMS.STUB_GAP;
 }
 
 // ---------- Segment extraction ----------
@@ -212,22 +221,22 @@ function segmentsOverlap(a: Segment, b: Segment): boolean {
 
   if (a.axis === "v") {
     // Vertical segments: close in X, overlapping Y range
-    if (Math.abs(a.x1 - b.x1) >= SEPARATION_THRESHOLD) return false;
+    if (Math.abs(a.x1 - b.x1) >= ROUTER_PARAMS.SEPARATION_THRESHOLD) return false;
     const aMinY = Math.min(a.y1, a.y2);
     const aMaxY = Math.max(a.y1, a.y2);
     const bMinY = Math.min(b.y1, b.y2);
     const bMaxY = Math.max(b.y1, b.y2);
     const overlapLen = Math.min(aMaxY, bMaxY) - Math.max(aMinY, bMinY);
-    return overlapLen > SEPARATION_THRESHOLD;
+    return overlapLen > ROUTER_PARAMS.SEPARATION_THRESHOLD;
   } else {
     // Horizontal segments: close in Y, overlapping X range
-    if (Math.abs(a.y1 - b.y1) >= SEPARATION_THRESHOLD) return false;
+    if (Math.abs(a.y1 - b.y1) >= ROUTER_PARAMS.SEPARATION_THRESHOLD) return false;
     const aMinX = Math.min(a.x1, a.x2);
     const aMaxX = Math.max(a.x1, a.x2);
     const bMinX = Math.min(b.x1, b.x2);
     const bMaxX = Math.max(b.x1, b.x2);
     const overlapLen = Math.min(aMaxX, bMaxX) - Math.max(aMinX, bMinX);
-    return overlapLen > SEPARATION_THRESHOLD;
+    return overlapLen > ROUTER_PARAMS.SEPARATION_THRESHOLD;
   }
 }
 
@@ -688,39 +697,62 @@ export function routeAllEdges(
 
   // Sort order determines corridor priority — edges routed first claim corridors,
   // later edges route around them via penalty zones.
-  // 1. Manual edges first (user-placed handles get priority)
-  // 2. Smallest Y-change first — edges with less vertical adjustment need
-  //    the most direct (inner) corridor. Larger-change edges fan out around
-  //    them, naturally creating non-crossing fan patterns from shared sources.
-  // 3. Top-to-bottom, left-to-right as tiebreaker.
-  // Count edges per signal type — types with more edges route first
-  // to establish primary corridor patterns. Smaller groups route around them.
+  // Strategy 0 (default): signal-type grouping → shortest Manhattan distance → position
+  // Strategy 1: longest Manhattan distance first
+  // Strategy 2: most-connected device first
   const signalTypeCounts = new Map<string, number>();
   for (const ep of edgeEndpoints) {
     const sig = ep.edge.data?.signalType ?? "";
     signalTypeCounts.set(sig, (signalTypeCounts.get(sig) ?? 0) + 1);
   }
 
+  // Strategy 2 pre-computation: count edges per device
+  let deviceEdgeCounts: Map<string, number> | undefined;
+  if (ROUTER_PARAMS.SORT_STRATEGY === 2) {
+    deviceEdgeCounts = new Map<string, number>();
+    for (const ep of edgeEndpoints) {
+      deviceEdgeCounts.set(ep.edge.source, (deviceEdgeCounts.get(ep.edge.source) ?? 0) + 1);
+      deviceEdgeCounts.set(ep.edge.target, (deviceEdgeCounts.get(ep.edge.target) ?? 0) + 1);
+    }
+  }
+
   edgeEndpoints.sort((a, b) => {
+    // Manual edges always route first regardless of strategy
     const aManual = a.edge.data?.manualWaypoints?.length ? 1 : 0;
     const bManual = b.edge.data?.manualWaypoints?.length ? 1 : 0;
     if (aManual !== bManual) return bManual - aManual; // manual first
-    // Group by signal type — most common type routes first to establish
-    // primary corridors. Same-signal edges route consecutively for clustering.
-    const aSig = a.edge.data?.signalType ?? "";
-    const bSig = b.edge.data?.signalType ?? "";
-    if (aSig !== bSig) {
-      const aCount = signalTypeCounts.get(aSig) ?? 0;
-      const bCount = signalTypeCounts.get(bSig) ?? 0;
-      if (aCount !== bCount) return bCount - aCount; // more edges first
-      return aSig < bSig ? -1 : 1; // alphabetical tiebreaker
+
+    if (ROUTER_PARAMS.SORT_STRATEGY === 1) {
+      // Strategy 1: longest Manhattan distance first
+      const aDist = Math.abs(a.targetX - a.sourceX) + Math.abs(a.targetY - a.sourceY);
+      const bDist = Math.abs(b.targetX - b.sourceX) + Math.abs(b.targetY - b.sourceY);
+      if (aDist !== bDist) return bDist - aDist; // longest first
+    } else if (ROUTER_PARAMS.SORT_STRATEGY === 2) {
+      // Strategy 2: most-connected device first
+      const aMax = Math.max(deviceEdgeCounts!.get(a.edge.source) ?? 0, deviceEdgeCounts!.get(a.edge.target) ?? 0);
+      const bMax = Math.max(deviceEdgeCounts!.get(b.edge.source) ?? 0, deviceEdgeCounts!.get(b.edge.target) ?? 0);
+      if (aMax !== bMax) return bMax - aMax; // most connections first
+    } else {
+      // Strategy 0 (default): signal-type grouping → shortest distance → position
+      // Group by signal type — most common type routes first to establish
+      // primary corridors. Same-signal edges route consecutively for clustering.
+      const aSig = a.edge.data?.signalType ?? "";
+      const bSig = b.edge.data?.signalType ?? "";
+      if (aSig !== bSig) {
+        const aCount = signalTypeCounts.get(aSig) ?? 0;
+        const bCount = signalTypeCounts.get(bSig) ?? 0;
+        if (aCount !== bCount) return bCount - aCount; // more edges first
+        return aSig < bSig ? -1 : 1; // alphabetical tiebreaker
+      }
+      // Shortest connection length routes first — short connections need
+      // direct corridors, longer ones can afford detours. Manhattan distance
+      // captures both X and Y span, improving dense-layout convergence (#14).
+      const aDist = Math.abs(a.targetX - a.sourceX) + Math.abs(a.targetY - a.sourceY);
+      const bDist = Math.abs(b.targetX - b.sourceX) + Math.abs(b.targetY - b.sourceY);
+      if (aDist !== bDist) return aDist - bDist;
     }
-    // Shortest connection length routes first — short connections need
-    // direct corridors, longer ones can afford detours. Manhattan distance
-    // captures both X and Y span, improving dense-layout convergence (#14).
-    const aDist = Math.abs(a.targetX - a.sourceX) + Math.abs(a.targetY - a.sourceY);
-    const bDist = Math.abs(b.targetX - b.sourceX) + Math.abs(b.targetY - b.sourceY);
-    if (aDist !== bDist) return aDist - bDist;
+
+    // Position tiebreaker (shared by all strategies)
     const aY = Math.min(a.sourceY, a.targetY);
     const bY = Math.min(b.sourceY, b.targetY);
     if (aY !== bY) return aY - bY;
@@ -959,99 +991,126 @@ export function routeAllEdges(
     }
   }
 
-  // PHASE 2 — Violation detection
-  const badIds = findViolations(
-    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
-  );
-  for (const rs of routeStates) {
-    if (badIds.has(rs.edgeId) && !rs.turns.startsWith("manual")) {
-      rs.status = "bad";
-    }
-  }
+  // PHASE 2+3 — PathFinder-style negotiation (rip-up and re-route ALL edges)
+  //
+  // Instead of only re-routing "bad" edges, rip up ALL non-manual edges each
+  // iteration with escalating congestion costs. Corridors that are contested
+  // (used by multiple edges) accumulate historical congestion, forcing edges
+  // to spread into different lanes over successive iterations.
+  //
+  // Reference: McMurchie & Ebeling, "PathFinder: A Negotiation-Based
+  // Performance-Driven Router for FPGAs" (1995)
 
-  // PHASE 3 — Iterative re-routing
-  // Helper to attempt re-routing a single bad edge
-  const tryReroute = (bad: RouteState): boolean => {
-    const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
-    if (!ep) return false;
+  const CONGESTION_INCREMENT = 50; // How much historical cost increases per iteration for contested points
+  const congestionMap = new Map<string, number>(); // "x,y" → accumulated historical cost
+  const NEGOTIATION_ITERATIONS = ROUTER_PARAMS.MAX_ITERATIONS;
 
-    const goodEdges = routeStates.filter(
-      (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
-    );
-    const penalties = buildPenaltyZones(goodEdges);
-    const sigType = ep.edge.data?.signalType;
-
-    let result = computeEdgePath(
-      ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-      obs.rects, 0, ep.stubSpread, penalties, sigType,
-    );
-
-    if (!result) {
-      const excludeSet3 = new Set([ep.edge.source, ep.edge.target]);
-      const relaxedRects3 = obs.rects.filter((r) => !r.nodeId || !excludeSet3.has(r.nodeId));
-      result = computeEdgePath(
-        ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        relaxedRects3, 0, ep.stubSpread, penalties, sigType,
-      );
-    }
-
-    if (!result) return false;
-
-    const newSegments = extractSegments(result.waypoints);
-    const goodEdgeSegments = routeStates
-      .filter((rs) => rs.status === "good" && rs.edgeId !== bad.edgeId)
-      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType }));
-
-    const newViolations = findViolations([
-      { edgeId: bad.edgeId, segments: newSegments, signalType: sigType },
-      ...goodEdgeSegments,
-    ]);
-
-    if (!newViolations.has(bad.edgeId)) {
-      bad.waypoints = result.waypoints;
-      bad.segments = newSegments;
-      bad.svgPath = result.path;
-      bad.labelX = result.labelX;
-      bad.labelY = result.labelY;
-      bad.turns = result.turns;
-      bad.status = "good";
-      return true;
-    }
-    return false;
-  };
-
-  for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-    const badEdges = routeStates.filter((rs) => rs.status === "bad");
-    if (badEdges.length === 0) break;
-
-    // Alternate sort order: even iterations shortest-first, odd iterations longest-first.
-    // This breaks deadlocks where the first-routed edge claims a corridor that
-    // forces the second edge to cross it.
-    if (iter % 2 === 0) {
-      badEdges.sort((a, b) => a.waypoints.length - b.waypoints.length);
-    } else {
-      badEdges.sort((a, b) => b.waypoints.length - a.waypoints.length);
-    }
-
-    let anyImproved = false;
-    for (const bad of badEdges) {
-      if (tryReroute(bad)) anyImproved = true;
-    }
-
-    if (!anyImproved) {
-      // Stuck — try resetting all bad edges' status so they route against
-      // each other from scratch. Pick a different "winner" by reversing
-      // the order: the last bad edge gets to go first with a clean slate.
-      const stillBad = routeStates.filter((rs) => rs.status === "bad");
-      if (stillBad.length < 2) break; // single bad edge can't unstick itself
-
-      // Reverse order and re-try each one
-      stillBad.reverse();
-      let unstuck = false;
-      for (const bad of stillBad) {
-        if (tryReroute(bad)) unstuck = true;
+  for (let iter = 0; iter < NEGOTIATION_ITERATIONS; iter++) {
+    // Detect congestion: find grid points used by multiple edges' vertical segments
+    const pointUsage = new Map<string, number>(); // "x,y" → edge count
+    for (const rs of routeStates) {
+      if (rs.turns.startsWith("manual")) continue;
+      for (const seg of rs.segments) {
+        // Sample points along each segment to detect corridor sharing
+        if (seg.axis === "v") {
+          const x = seg.x1;
+          const yMin = Math.min(seg.y1, seg.y2);
+          const yMax = Math.max(seg.y1, seg.y2);
+          for (let y = yMin; y <= yMax; y += 20) {
+            const key = `${x},${y}`;
+            pointUsage.set(key, (pointUsage.get(key) ?? 0) + 1);
+          }
+        } else {
+          const y = seg.y1;
+          const xMin = Math.min(seg.x1, seg.x2);
+          const xMax = Math.max(seg.x1, seg.x2);
+          for (let x = xMin; x <= xMax; x += 20) {
+            const key = `${x},${y}`;
+            pointUsage.set(key, (pointUsage.get(key) ?? 0) + 1);
+          }
+        }
       }
-      if (!unstuck) break; // truly stuck
+    }
+
+    // Check if any congestion remains (points used by 2+ edges)
+    let hasCongestion = false;
+    for (const [key, count] of pointUsage) {
+      if (count > 1) {
+        hasCongestion = true;
+        // Increase historical congestion for contested points
+        congestionMap.set(key, (congestionMap.get(key) ?? 0) + CONGESTION_INCREMENT);
+      }
+    }
+
+    if (!hasCongestion) break; // All edges in separate corridors — done!
+
+    // Rip up ALL non-manual edges and re-route with congestion costs
+    const manualStates = routeStates.filter((rs) => rs.turns.startsWith("manual"));
+    routeStates.length = 0;
+    routeStates.push(...manualStates);
+
+    for (const ep of edgeEndpoints) {
+      if (ep.edge.data?.manualWaypoints?.length) continue; // skip manual edges
+      const sigType = ep.edge.data?.signalType;
+
+      // Build penalties from all currently-routed edges (manual + already re-routed this iteration)
+      const penalties = buildPenaltyZones(routeStates);
+
+      let result = computeEdgePath(
+        ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+        obs.rects, 0, ep.stubSpread,
+        penalties.length > 0 ? penalties : undefined,
+        sigType,
+        undefined, undefined, undefined, undefined,
+        congestionMap.size > 0 ? congestionMap : undefined,
+      );
+
+      if (!result) {
+        const excludeSet = new Set([ep.edge.source, ep.edge.target]);
+        const relaxedRects = obs.rects.filter((r) => !r.nodeId || !excludeSet.has(r.nodeId));
+        result = computeEdgePath(
+          ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+          relaxedRects, 0, ep.stubSpread,
+          penalties.length > 0 ? penalties : undefined,
+          sigType,
+          undefined, undefined, undefined, undefined,
+          congestionMap.size > 0 ? congestionMap : undefined,
+        );
+      }
+
+      if (result) {
+        routeStates.push({
+          edgeId: ep.edge.id,
+          waypoints: result.waypoints,
+          segments: extractSegments(result.waypoints),
+          svgPath: result.path,
+          labelX: result.labelX,
+          labelY: result.labelY,
+          turns: result.turns,
+          status: "good",
+          signalType: sigType,
+        });
+      } else {
+        // Fallback: orthogonal L-shape
+        const midX = Math.max(ep.sourceX, ep.targetX) + 40;
+        const wp: Point[] = [
+          { x: ep.sourceX, y: ep.sourceY },
+          { x: midX, y: ep.sourceY },
+          { x: midX, y: ep.targetY },
+          { x: ep.targetX, y: ep.targetY },
+        ];
+        routeStates.push({
+          edgeId: ep.edge.id,
+          waypoints: wp,
+          segments: extractSegments(wp),
+          svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
+          labelX: midX,
+          labelY: (ep.sourceY + ep.targetY) / 2,
+          turns: "fallback",
+          status: "good",
+          signalType: sigType,
+        });
+      }
     }
   }
 

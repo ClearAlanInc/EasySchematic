@@ -2,7 +2,7 @@ import type { DeviceTemplate } from "./types";
 import fallbackData from "./deviceLibrary.fallback.json";
 
 const API_URL =
-  import.meta.env.VITE_TEMPLATE_API_URL ?? "https://api.easyschematic.live";
+  import.meta.env?.VITE_TEMPLATE_API_URL ?? "https://api.easyschematic.live";
 
 let cached: DeviceTemplate[] | null = null;
 

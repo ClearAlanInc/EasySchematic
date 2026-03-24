@@ -46,20 +46,24 @@ interface GridNode {
 
 // ---------- Constants ----------
 
-const PAD = 20; // Padding around device nodes for obstacle rects
-const GAP = 8; // Extra grid lines just outside obstacle edges (routing channel)
-const STUB = 30; // Minimum horizontal distance from handle before first turn
-const TURN_PENALTY = 100; // Penalty for changing direction (strongly prefer fewer turns)
+/** Tunable routing parameters. Modify for headless parameter search. */
+export const ROUTING_PARAMS = {
+  TURN_PENALTY: 140,
+  SEPARATION_PX: 24,
+  CROSS_TYPE_SEPARATION: 20,
+  PROXIMITY_PENALTY: 200,
+  SAME_TYPE_PROXIMITY: 80,
+  CROSSING_PENALTY: 350,
+  EARLY_TURN_BIAS: 300,
+  PAD: 20,
+  GAP: 8,
+  ESCAPE_MARGIN: 40,
+  STUB: 30,
+};
+
 const CORNER_RADIUS = 8;
 export const ARC_R = 6; // Arc radius for crossing hop arcs / gap cuts
 const GAP_HALF = 3;    // Half-width of the gap cut on vertical edges (clears the arc stroke at its peak)
-const ESCAPE_MARGIN = 40; // Grid lines beyond the overall bounding box
-const SEPARATION_PX = 16; // Offset distance for penalty zone grid lines (>= 2*ARC_R+4 for non-overlapping hops)
-const CROSS_TYPE_SEPARATION = 20; // Wider separation between edges of different signal types
-const PROXIMITY_PENALTY = 150; // Extra A* cost when near a different-signal-type edge (parallel)
-const SAME_TYPE_PROXIMITY = 20; // Gentle nudge for same-signal edges — allows clustering in adjacent corridors
-const CROSSING_PENALTY = 350; // Extra A* cost when crossing a penalty zone (perpendicular)
-const EARLY_TURN_BIAS = 50; // Extra cost for turning far from target (spreads vertical segments)
 const PENALTY_BUCKET = 200; // Spatial grid bucket size for penalty zone lookups (pixels)
 
 // ---------- Obstacles ----------
@@ -77,10 +81,10 @@ export function buildObstacles(
     const w = n.measured?.width ?? 180;
     const h = n.measured?.height ?? 60;
     const rect: Rect = {
-      left: pos.x - PAD,
-      top: pos.y - PAD,
-      right: pos.x + w + PAD,
-      bottom: pos.y + h + PAD,
+      left: pos.x - ROUTING_PARAMS.PAD,
+      top: pos.y - ROUTING_PARAMS.PAD,
+      right: pos.x + w + ROUTING_PARAMS.PAD,
+      bottom: pos.y + h + ROUTING_PARAMS.PAD,
       nodeId: n.id,
     };
     rects.push(rect);
@@ -122,12 +126,12 @@ export function buildSparseGrid(
     // Obstacle edges + narrow routing channels just outside
     xSet.add(r.left);
     xSet.add(r.right);
-    xSet.add(r.left - GAP);
-    xSet.add(r.right + GAP);
+    xSet.add(r.left - ROUTING_PARAMS.GAP);
+    xSet.add(r.right + ROUTING_PARAMS.GAP);
     ySet.add(r.top);
     ySet.add(r.bottom);
-    ySet.add(r.top - GAP);
-    ySet.add(r.bottom + GAP);
+    ySet.add(r.top - ROUTING_PARAMS.GAP);
+    ySet.add(r.bottom + ROUTING_PARAMS.GAP);
   }
 
   // Inject penalty zone coordinates as additional grid lines so A* can route around them
@@ -136,21 +140,21 @@ export function buildSparseGrid(
       const crossType = currentSignalType && pz.signalType && pz.signalType !== currentSignalType;
       if (pz.axis === "v") {
         // Vertical penalty: add offset X lines on both sides
-        xSet.add(pz.coordinate - SEPARATION_PX);
-        xSet.add(pz.coordinate + SEPARATION_PX);
+        xSet.add(pz.coordinate - ROUTING_PARAMS.SEPARATION_PX);
+        xSet.add(pz.coordinate + ROUTING_PARAMS.SEPARATION_PX);
         if (crossType) {
-          xSet.add(pz.coordinate - CROSS_TYPE_SEPARATION);
-          xSet.add(pz.coordinate + CROSS_TYPE_SEPARATION);
+          xSet.add(pz.coordinate - ROUTING_PARAMS.CROSS_TYPE_SEPARATION);
+          xSet.add(pz.coordinate + ROUTING_PARAMS.CROSS_TYPE_SEPARATION);
         }
         ySet.add(pz.rangeMin);
         ySet.add(pz.rangeMax);
       } else {
         // Horizontal penalty: add offset Y lines on both sides
-        ySet.add(pz.coordinate - SEPARATION_PX);
-        ySet.add(pz.coordinate + SEPARATION_PX);
+        ySet.add(pz.coordinate - ROUTING_PARAMS.SEPARATION_PX);
+        ySet.add(pz.coordinate + ROUTING_PARAMS.SEPARATION_PX);
         if (crossType) {
-          ySet.add(pz.coordinate - CROSS_TYPE_SEPARATION);
-          ySet.add(pz.coordinate + CROSS_TYPE_SEPARATION);
+          ySet.add(pz.coordinate - ROUTING_PARAMS.CROSS_TYPE_SEPARATION);
+          ySet.add(pz.coordinate + ROUTING_PARAMS.CROSS_TYPE_SEPARATION);
         }
         xSet.add(pz.rangeMin);
         xSet.add(pz.rangeMax);
@@ -169,10 +173,10 @@ export function buildSparseGrid(
     allTop = Math.min(allTop, r.top);
     allBottom = Math.max(allBottom, r.bottom);
   }
-  xSet.add(allLeft - ESCAPE_MARGIN);
-  xSet.add(allRight + ESCAPE_MARGIN);
-  ySet.add(allTop - ESCAPE_MARGIN);
-  ySet.add(allBottom + ESCAPE_MARGIN);
+  xSet.add(allLeft - ROUTING_PARAMS.ESCAPE_MARGIN);
+  xSet.add(allRight + ROUTING_PARAMS.ESCAPE_MARGIN);
+  ySet.add(allTop - ROUTING_PARAMS.ESCAPE_MARGIN);
+  ySet.add(allBottom + ROUTING_PARAMS.ESCAPE_MARGIN);
 
   const xs = [...xSet].sort((a, b) => a - b);
   const ys = [...ySet].sort((a, b) => a - b);
@@ -279,6 +283,8 @@ export function astarOrthogonal(
   excludeStartDir?: number,
   /** Direction to exclude from arriving (reserves exit side at target handle). */
   excludeEndDir?: number,
+  /** Historical congestion costs (PathFinder-style). Keys are "x,y" grid coords. */
+  congestion?: Map<string, number>,
 ): { path: Point[]; arrivalDir: number } | null {
   const { xs, ys, blocked } = grid;
 
@@ -295,7 +301,7 @@ export function astarOrthogonal(
   let penaltyGrid: Map<number, PenaltyZone[]> | null = null;
   if (penalties && penalties.length > 0) {
     // Pre-filter: only keep penalties whose range overlaps the search area
-    const searchMargin = ESCAPE_MARGIN + CROSS_TYPE_SEPARATION;
+    const searchMargin = ROUTING_PARAMS.ESCAPE_MARGIN + ROUTING_PARAMS.CROSS_TYPE_SEPARATION;
     const sLeft = Math.min(startX, endX) - searchMargin;
     const sRight = Math.max(startX, endX) + searchMargin;
     const sTop = Math.min(startY, endY) - searchMargin;
@@ -315,15 +321,15 @@ export function astarOrthogonal(
         // Bucket each zone into all grid cells it could affect
         let minX: number, maxX: number, minY: number, maxY: number;
         if (pz.axis === "v") {
-          minX = pz.coordinate - CROSS_TYPE_SEPARATION;
-          maxX = pz.coordinate + CROSS_TYPE_SEPARATION;
+          minX = pz.coordinate - ROUTING_PARAMS.CROSS_TYPE_SEPARATION;
+          maxX = pz.coordinate + ROUTING_PARAMS.CROSS_TYPE_SEPARATION;
           minY = pz.rangeMin;
           maxY = pz.rangeMax;
         } else {
           minX = pz.rangeMin;
           maxX = pz.rangeMax;
-          minY = pz.coordinate - CROSS_TYPE_SEPARATION;
-          maxY = pz.coordinate + CROSS_TYPE_SEPARATION;
+          minY = pz.coordinate - ROUTING_PARAMS.CROSS_TYPE_SEPARATION;
+          maxY = pz.coordinate + ROUTING_PARAMS.CROSS_TYPE_SEPARATION;
         }
         const bxMin = Math.floor(minX / PENALTY_BUCKET) * PENALTY_BUCKET;
         const bxMax = Math.floor(maxX / PENALTY_BUCKET) * PENALTY_BUCKET;
@@ -363,19 +369,19 @@ export function astarOrthogonal(
     let h = dx + dy;
     // If goal is not on same row or column, at least one turn is required
     if (dx > 0 && dy > 0) {
-      h += TURN_PENALTY;
+      h += ROUTING_PARAMS.TURN_PENALTY;
     }
     // If we're moving in a direction that can't reach the goal without turning,
     // and the goal is on the same axis, we still might need a turn
     if (dx > 0 && dy === 0 && dir !== 0 && dir !== 2 && dir >= 0) {
-      h += TURN_PENALTY;
+      h += ROUTING_PARAMS.TURN_PENALTY;
     }
     if (dy > 0 && dx === 0 && dir !== 1 && dir !== 3 && dir >= 0) {
-      h += TURN_PENALTY;
+      h += ROUTING_PARAMS.TURN_PENALTY;
     }
     // Must arrive at goal horizontally (unless freeEndDir allows any direction)
     if (!freeEndDir && dx === 0 && dy === 0 && (dir === 1 || dir === 3)) {
-      h += TURN_PENALTY;
+      h += ROUTING_PARAMS.TURN_PENALTY;
     }
     return h;
   };
@@ -389,7 +395,7 @@ export function astarOrthogonal(
     // Seed all 4 directions — heavily penalize the excluded direction (the reverse
     // of the previous leg's arrival) to prevent doubling back, but don't hard-block
     // it since some handle placements may require it as a last resort.
-    const UTURN_START_PENALTY = TURN_PENALTY * 10;
+    const UTURN_START_PENALTY = ROUTING_PARAMS.TURN_PENALTY * 10;
     for (let d = 0; d < NUM_DIRS; d++) {
       const g = d === excludeStartDir ? UTURN_START_PENALTY : 0;
       const sk = stateKey(sxi, syi, d);
@@ -446,10 +452,17 @@ export function astarOrthogonal(
       const dist = Math.abs(nx - cx) + Math.abs(ny - cy);
       let g = current.g + dist;
 
+      // Penalize overshooting past the target — discourages going beyond the destination
+      const startX = xs[sxi];
+      const overshootX = (startX <= goalX)
+        ? Math.max(0, nx - goalX - ROUTING_PARAMS.STUB)   // source is left of target
+        : Math.max(0, goalX - nx + ROUTING_PARAMS.STUB);  // source is right of target (reversed)
+      if (overshootX > 0) g += overshootX * 0.5;
+
       if (d !== current.dir && current.dir >= 0) {
         // U-turn (180° reversal) is much worse than a 90° turn
         const isUturn = d === ((current.dir + 2) % 4);
-        g += isUturn ? TURN_PENALTY * 5 : TURN_PENALTY;
+        g += isUturn ? ROUTING_PARAMS.TURN_PENALTY * 5 : ROUTING_PARAMS.TURN_PENALTY;
 
         // Bias: prefer turns closer to target — penalize early turns.
         // This spreads vertical segments across X corridors instead of
@@ -457,7 +470,7 @@ export function astarOrthogonal(
         const totalXSpan = Math.abs(goalX - startX);
         if (totalXSpan > 0) {
           const distFromTarget = Math.abs(cx - goalX);
-          g += EARLY_TURN_BIAS * (distFromTarget / totalXSpan);
+          g += ROUTING_PARAMS.EARLY_TURN_BIAS * (distFromTarget / totalXSpan);
         }
       }
 
@@ -480,22 +493,27 @@ export function astarOrthogonal(
             if (!bucket) continue;
             for (const pz of bucket) {
               const crossType = currentSignalType && pz.signalType && pz.signalType !== currentSignalType;
-              const proxThreshold = crossType ? CROSS_TYPE_SEPARATION : SEPARATION_PX;
-              const proxPenalty = crossType ? PROXIMITY_PENALTY : SAME_TYPE_PROXIMITY;
+              const proxThreshold = crossType ? ROUTING_PARAMS.CROSS_TYPE_SEPARATION : ROUTING_PARAMS.SEPARATION_PX;
+              const proxPenalty = crossType ? ROUTING_PARAMS.PROXIMITY_PENALTY : ROUTING_PARAMS.SAME_TYPE_PROXIMITY;
               if (pz.axis === "v" && (d === 1 || d === 3)) {
-                if (Math.abs(nx - pz.coordinate) < proxThreshold) {
+                const dist = Math.abs(nx - pz.coordinate);
+                if (dist < proxThreshold) {
                   const segMinY = Math.min(cy, ny);
                   const segMaxY = Math.max(cy, ny);
                   if (segMaxY > pz.rangeMin && segMinY < pz.rangeMax) {
-                    g += proxPenalty;
+                    // Distance-scaled: on top = full penalty, at threshold edge = zero
+                    const closeness = 1 - dist / proxThreshold;
+                    g += proxPenalty * closeness * closeness;
                   }
                 }
               } else if (pz.axis === "h" && (d === 0 || d === 2)) {
-                if (Math.abs(ny - pz.coordinate) < proxThreshold) {
+                const dist = Math.abs(ny - pz.coordinate);
+                if (dist < proxThreshold) {
                   const segMinX = Math.min(cx, nx);
                   const segMaxX = Math.max(cx, nx);
                   if (segMaxX > pz.rangeMin && segMinX < pz.rangeMax) {
-                    g += proxPenalty;
+                    const closeness = 1 - dist / proxThreshold;
+                    g += proxPenalty * closeness * closeness;
                   }
                 }
               }
@@ -505,19 +523,27 @@ export function astarOrthogonal(
                 const maxX = Math.max(cx, nx);
                 if (pz.coordinate > minX && pz.coordinate <= maxX &&
                     cy >= pz.rangeMin && cy <= pz.rangeMax) {
-                  g += CROSSING_PENALTY;
+                  g += ROUTING_PARAMS.CROSSING_PENALTY;
                 }
               } else if (pz.axis === "h" && (d === 1 || d === 3)) {
                 const minY = Math.min(cy, ny);
                 const maxY = Math.max(cy, ny);
                 if (pz.coordinate > minY && pz.coordinate <= maxY &&
                     cx >= pz.rangeMin && cx <= pz.rangeMax) {
-                  g += CROSSING_PENALTY;
+                  g += ROUTING_PARAMS.CROSSING_PENALTY;
                 }
               }
             }
           }
         }
+      }
+
+      // PathFinder historical congestion: grid cells used by many edges in previous
+      // iterations accumulate cost, forcing edges to spread into different corridors.
+      if (congestion) {
+        const cKey = `${nx},${ny}`;
+        const hCost = congestion.get(cKey);
+        if (hCost) g += hCost;
       }
 
       const prev = bestG.get(nk);
@@ -932,6 +958,8 @@ export function computeEdgePath(
   excludeStartDir?: number,
   /** Direction to exclude from arriving (reserves exit side at target handle). */
   excludeEndDir?: number,
+  /** Historical congestion costs (PathFinder-style). */
+  congestion?: Map<string, number>,
 ): { path: string; labelX: number; labelY: number; turns: string; waypoints: Point[]; arrivalDir: number } | null {
   // Short-circuit: if source and target are at (nearly) the same Y and the direct
   // horizontal path is unobstructed, just draw a straight line — no stubs, no offset.
@@ -978,8 +1006,8 @@ export function computeEdgePath(
   // Stub lengths:
   // - stubSpread: small per-port spread from same-device sibling counting (prevents stub overlaps)
   // - noStubs: skip stubs entirely (for handle-to-handle legs in manual routing)
-  let stubSX = noSourceStub ? sourceX : sourceX + STUB + stubSpread;
-  let stubTX = noTargetStub ? targetX : targetX - STUB - stubSpread;
+  let stubSX = noSourceStub ? sourceX : sourceX + ROUTING_PARAMS.STUB + stubSpread;
+  let stubTX = noTargetStub ? targetX : targetX - ROUTING_PARAMS.STUB - stubSpread;
 
   // If stubs cross (source/target close in X with large spread), clamp to midpoint.
   if (!noSourceStub && !noTargetStub && sourceX < targetX && stubSX >= stubTX) {
@@ -997,7 +1025,7 @@ export function computeEdgePath(
   ];
   const grid = buildSparseGrid(stubSX, sourceY, stubTX, targetY, obstacles, forceOpen, penalties, currentSignalType);
 
-  const astarResult = astarOrthogonal(grid, stubSX, sourceY, stubTX, targetY, obstacles, penalties, currentSignalType, noSourceStub, noTargetStub, excludeStartDir, excludeEndDir);
+  const astarResult = astarOrthogonal(grid, stubSX, sourceY, stubTX, targetY, obstacles, penalties, currentSignalType, noSourceStub, noTargetStub, excludeStartDir, excludeEndDir, congestion);
   if (!astarResult) {
     return null;
   }
