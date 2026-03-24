@@ -19,6 +19,7 @@ export interface Rect {
   top: number;
   right: number;
   bottom: number;
+  nodeId?: string; // for obstacle caching — filter instead of rebuild
 }
 
 export interface Point {
@@ -59,6 +60,7 @@ const PROXIMITY_PENALTY = 150; // Extra A* cost when near a different-signal-typ
 const SAME_TYPE_PROXIMITY = 20; // Gentle nudge for same-signal edges — allows clustering in adjacent corridors
 const CROSSING_PENALTY = 350; // Extra A* cost when crossing a penalty zone (perpendicular)
 const EARLY_TURN_BIAS = 50; // Extra cost for turning far from target (spreads vertical segments)
+const PENALTY_BUCKET = 200; // Spatial grid bucket size for penalty zone lookups (pixels)
 
 // ---------- Obstacles ----------
 
@@ -79,6 +81,7 @@ export function buildObstacles(
       top: pos.y - PAD,
       right: pos.x + w + PAD,
       bottom: pos.y + h + PAD,
+      nodeId: n.id,
     };
     rects.push(rect);
   }
@@ -287,6 +290,60 @@ export function astarOrthogonal(
   if (sxi < 0 || syi < 0 || exi < 0 || eyi < 0) return null;
   if (blocked[sxi][syi] || blocked[exi][eyi]) return null;
 
+  // Build spatial grid index for penalty zones — buckets penalties by position
+  // so each A* step only checks nearby zones instead of all of them.
+  let penaltyGrid: Map<number, PenaltyZone[]> | null = null;
+  if (penalties && penalties.length > 0) {
+    // Pre-filter: only keep penalties whose range overlaps the search area
+    const searchMargin = ESCAPE_MARGIN + CROSS_TYPE_SEPARATION;
+    const sLeft = Math.min(startX, endX) - searchMargin;
+    const sRight = Math.max(startX, endX) + searchMargin;
+    const sTop = Math.min(startY, endY) - searchMargin;
+    const sBottom = Math.max(startY, endY) + searchMargin;
+    const relevant = penalties.filter((pz) => {
+      if (pz.axis === "v") {
+        return pz.coordinate >= sLeft && pz.coordinate <= sRight &&
+               pz.rangeMax >= sTop && pz.rangeMin <= sBottom;
+      }
+      return pz.coordinate >= sTop && pz.coordinate <= sBottom &&
+             pz.rangeMax >= sLeft && pz.rangeMin <= sRight;
+    });
+
+    if (relevant.length > 0) {
+      penaltyGrid = new Map();
+      for (const pz of relevant) {
+        // Bucket each zone into all grid cells it could affect
+        let minX: number, maxX: number, minY: number, maxY: number;
+        if (pz.axis === "v") {
+          minX = pz.coordinate - CROSS_TYPE_SEPARATION;
+          maxX = pz.coordinate + CROSS_TYPE_SEPARATION;
+          minY = pz.rangeMin;
+          maxY = pz.rangeMax;
+        } else {
+          minX = pz.rangeMin;
+          maxX = pz.rangeMax;
+          minY = pz.coordinate - CROSS_TYPE_SEPARATION;
+          maxY = pz.coordinate + CROSS_TYPE_SEPARATION;
+        }
+        const bxMin = Math.floor(minX / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const bxMax = Math.floor(maxX / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const byMin = Math.floor(minY / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const byMax = Math.floor(maxY / PENALTY_BUCKET) * PENALTY_BUCKET;
+        for (let bx = bxMin; bx <= bxMax; bx += PENALTY_BUCKET) {
+          for (let by = byMin; by <= byMax; by += PENALTY_BUCKET) {
+            const key = bx * 100003 + by;
+            let bucket = penaltyGrid.get(key);
+            if (!bucket) {
+              bucket = [];
+              penaltyGrid.set(key, bucket);
+            }
+            bucket.push(pz);
+          }
+        }
+      }
+    }
+  }
+
   const cols = xs.length;
   const rows = ys.length;
 
@@ -408,50 +465,56 @@ export function astarOrthogonal(
       // and close to an existing good edge's segment.
       // Use wider threshold for edges of different signal types to visually
       // separate signal groups (e.g., ethernet columns vs SDI columns).
-      if (penalties) {
-        for (const pz of penalties) {
-          const crossType = currentSignalType && pz.signalType && pz.signalType !== currentSignalType;
-          const proxThreshold = crossType ? CROSS_TYPE_SEPARATION : SEPARATION_PX;
-          // Same-signal edges get a gentle proximity penalty (allows clustering),
-          // different-signal edges get a strong penalty (forces separation into lanes).
-          const proxPenalty = crossType ? PROXIMITY_PENALTY : SAME_TYPE_PROXIMITY;
-          if (pz.axis === "v" && (d === 1 || d === 3)) {
-            // Moving vertically — check if X is close to a vertical penalty
-            if (Math.abs(nx - pz.coordinate) < proxThreshold) {
-              const segMinY = Math.min(cy, ny);
-              const segMaxY = Math.max(cy, ny);
-              if (segMaxY > pz.rangeMin && segMinY < pz.rangeMax) {
-                g += proxPenalty;
+      if (penaltyGrid) {
+        // Look up penalty zones near this step using spatial grid index
+        const bx = Math.floor(cx / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const by = Math.floor(cy / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const bx2 = Math.floor(nx / PENALTY_BUCKET) * PENALTY_BUCKET;
+        const by2 = Math.floor(ny / PENALTY_BUCKET) * PENALTY_BUCKET;
+        // Collect zones from all buckets the step spans
+        const minBx = Math.min(bx, bx2), maxBx = Math.max(bx, bx2);
+        const minBy = Math.min(by, by2), maxBy = Math.max(by, by2);
+        for (let gbx = minBx; gbx <= maxBx; gbx += PENALTY_BUCKET) {
+          for (let gby = minBy; gby <= maxBy; gby += PENALTY_BUCKET) {
+            const bucket = penaltyGrid.get(gbx * 100003 + gby);
+            if (!bucket) continue;
+            for (const pz of bucket) {
+              const crossType = currentSignalType && pz.signalType && pz.signalType !== currentSignalType;
+              const proxThreshold = crossType ? CROSS_TYPE_SEPARATION : SEPARATION_PX;
+              const proxPenalty = crossType ? PROXIMITY_PENALTY : SAME_TYPE_PROXIMITY;
+              if (pz.axis === "v" && (d === 1 || d === 3)) {
+                if (Math.abs(nx - pz.coordinate) < proxThreshold) {
+                  const segMinY = Math.min(cy, ny);
+                  const segMaxY = Math.max(cy, ny);
+                  if (segMaxY > pz.rangeMin && segMinY < pz.rangeMax) {
+                    g += proxPenalty;
+                  }
+                }
+              } else if (pz.axis === "h" && (d === 0 || d === 2)) {
+                if (Math.abs(ny - pz.coordinate) < proxThreshold) {
+                  const segMinX = Math.min(cx, nx);
+                  const segMaxX = Math.max(cx, nx);
+                  if (segMaxX > pz.rangeMin && segMinX < pz.rangeMax) {
+                    g += proxPenalty;
+                  }
+                }
               }
-            }
-          } else if (pz.axis === "h" && (d === 0 || d === 2)) {
-            // Moving horizontally — check if Y is close to a horizontal penalty
-            if (Math.abs(ny - pz.coordinate) < proxThreshold) {
-              const segMinX = Math.min(cx, nx);
-              const segMaxX = Math.max(cx, nx);
-              if (segMaxX > pz.rangeMin && segMinX < pz.rangeMax) {
-                g += proxPenalty;
+              // Crossing penalty
+              if (pz.axis === "v" && (d === 0 || d === 2)) {
+                const minX = Math.min(cx, nx);
+                const maxX = Math.max(cx, nx);
+                if (pz.coordinate > minX && pz.coordinate <= maxX &&
+                    cy >= pz.rangeMin && cy <= pz.rangeMax) {
+                  g += CROSSING_PENALTY;
+                }
+              } else if (pz.axis === "h" && (d === 1 || d === 3)) {
+                const minY = Math.min(cy, ny);
+                const maxY = Math.max(cy, ny);
+                if (pz.coordinate > minY && pz.coordinate <= maxY &&
+                    cx >= pz.rangeMin && cx <= pz.rangeMax) {
+                  g += CROSSING_PENALTY;
+                }
               }
-            }
-          }
-          // Crossing penalty: moving perpendicular across a penalty zone's segment.
-          // Uses <= on upper bound so crossings are detected even when the penalty
-          // coordinate is itself a grid line (from overlapping penalty zone offsets).
-          if (pz.axis === "v" && (d === 0 || d === 2)) {
-            // Moving horizontally — does this step cross a vertical segment?
-            const minX = Math.min(cx, nx);
-            const maxX = Math.max(cx, nx);
-            if (pz.coordinate > minX && pz.coordinate <= maxX &&
-                cy >= pz.rangeMin && cy <= pz.rangeMax) {
-              g += CROSSING_PENALTY;
-            }
-          } else if (pz.axis === "h" && (d === 1 || d === 3)) {
-            // Moving vertically — does this step cross a horizontal segment?
-            const minY = Math.min(cy, ny);
-            const maxY = Math.max(cy, ny);
-            if (pz.coordinate > minY && pz.coordinate <= maxY &&
-                cx >= pz.rangeMin && cx <= pz.rangeMax) {
-              g += CROSSING_PENALTY;
             }
           }
         }

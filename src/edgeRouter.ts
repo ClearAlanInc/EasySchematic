@@ -814,16 +814,13 @@ export function routeAllEdges(
           reservedAtTarget,
         );
 
-        // Retry with relaxed obstacles if A* fails
+        // Retry with relaxed obstacles if A* fails (filter cached list instead of rebuilding)
         if (!legResult) {
-          const relaxedObs = buildObstacles(
-            nodes,
-            [ep.edge.source, ep.edge.target],
-            getAbsPosAdapter,
-          );
+          const excludeSet = new Set([ep.edge.source, ep.edge.target]);
+          const relaxedRects = obs.rects.filter((r) => !r.nodeId || !excludeSet.has(r.nodeId));
           legResult = computeEdgePath(
             from.x, from.y, to.x, to.y,
-            relaxedObs.rects, 0, spread,
+            relaxedRects, 0, spread,
             penalties.length > 0 ? penalties : undefined,
             sigType,
             noSourceStub,
@@ -906,17 +903,14 @@ export function routeAllEdges(
     // retry with endpoint devices excluded from obstacles so the edge can route
     // through the visible gap between the devices it connects.
     if (!result) {
-      const relaxedObs = buildObstacles(
-        nodes,
-        [ep.edge.source, ep.edge.target],
-        getAbsPosAdapter,
-      );
+      const excludeSet2 = new Set([ep.edge.source, ep.edge.target]);
+      const relaxedRects2 = obs.rects.filter((r) => !r.nodeId || !excludeSet2.has(r.nodeId));
       result = computeEdgePath(
         ep.sourceX,
         ep.sourceY,
         ep.targetX,
         ep.targetY,
-        relaxedObs.rects,
+        relaxedRects2,
         0,
         ep.stubSpread,
         penalties.length > 0 ? penalties : undefined,
@@ -993,12 +987,11 @@ export function routeAllEdges(
     );
 
     if (!result) {
-      const relaxedObs = buildObstacles(
-        nodes, [ep.edge.source, ep.edge.target], getAbsPosAdapter,
-      );
+      const excludeSet3 = new Set([ep.edge.source, ep.edge.target]);
+      const relaxedRects3 = obs.rects.filter((r) => !r.nodeId || !excludeSet3.has(r.nodeId));
       result = computeEdgePath(
         ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        relaxedObs.rects, 0, ep.stubSpread, penalties, sigType,
+        relaxedRects3, 0, ep.stubSpread, penalties, sigType,
       );
     }
 
