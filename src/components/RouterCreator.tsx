@@ -81,7 +81,7 @@ export default function RouterCreator({ onClose, position }: { onClose: () => vo
       // Center on the provided position (from quick-add double-click)
       const w = 180;
       const portRows = Math.max(totalInputs, totalOutputs);
-      const h = Math.max(60, 32 + portRows * 20);
+      const h = 60 + portRows * 20;
       pos = {
         x: Math.round((position.x - w / 2) / GRID_SIZE) * GRID_SIZE,
         y: Math.round((position.y - h / 2) / GRID_SIZE) * GRID_SIZE,

@@ -117,7 +117,7 @@ export default function QuickAddDevice({
         template.ports.filter((p) => p.direction === "input").length,
         template.ports.filter((p) => p.direction === "output").length,
       ) + template.ports.filter((p) => p.direction === "bidirectional").length;
-      const h = Math.max(60, 32 + portRows * 20);
+      const h = 60 + portRows * 20;
       const centered = {
         x: Math.round((position.x - w / 2) / GRID_SIZE) * GRID_SIZE,
         y: Math.round((position.y - h / 2) / GRID_SIZE) * GRID_SIZE,
