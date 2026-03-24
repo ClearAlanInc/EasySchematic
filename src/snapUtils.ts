@@ -31,10 +31,12 @@ interface Rect {
 
 function estimateDeviceHeight(node: SchematicNode): number {
   const ports = (node.data as DeviceData).ports ?? [];
-  const inputs = ports.filter((p) => p.direction === "input" || p.direction === "bidirectional").length;
-  const outputs = ports.filter((p) => p.direction === "output" || p.direction === "bidirectional").length;
-  const portRows = Math.max(inputs, outputs);
-  return Math.max(60, 32 + portRows * 20);
+  const inputs = ports.filter((p) => p.direction === "input").length;
+  const outputs = ports.filter((p) => p.direction === "output").length;
+  const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
+  const portRows = Math.max(inputs, outputs) + bidirs;
+  // Device height = 1px border + 40px header + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20
+  return 60 + portRows * 20;
 }
 
 function nodeRect(node: SchematicNode): Rect {

@@ -143,9 +143,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         )}
       </div>
 
-      {/* Port area — 9px top padding aligns all handle centers to the 20px grid.
-           Math: 1px (node border) + 40px (header) + 9px (pad) + 10px (half row) = 60px ≡ 0 mod 20 */}
-      <div className="pt-[9px]">
+      {/* Port area — 9px top padding aligns handle centers to the 20px grid.
+           Math: 1px (border) + 40px (header) + 9px (pad) + 10px (half row) = 60px ≡ 0 mod 20
+           9px bottom padding makes total height a multiple of 20 (60 + rows×20). */}
+      <div className="pt-[9px] pb-[9px]">
       {/* Input/Output Ports — two independent columns */}
       {(inputs.length > 0 || outputs.length > 0) && (
         hasSections ? (
