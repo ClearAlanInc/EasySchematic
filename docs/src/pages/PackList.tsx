@@ -14,11 +14,20 @@ export default function PackListPage() {
       </p>
       <ul>
         <li><strong>Devices</strong> — every device in your schematic with quantity, manufacturer, model number, model, type, and room</li>
-        <li><strong>Cables</strong> — cable counts summarized by cable type, signal type, and route</li>
+        <li>
+          <strong>Cables</strong> — cable counts summarized by cable type, signal type, and route.
+          <strong> Adapters</strong> (passive dongles, cable adapters, barrels) appear at the bottom of the
+          cables tab with their own section header. Active converters appear in the devices tab instead.
+        </li>
       </ul>
       <p>
         Both tabs support a <strong>Group by</strong> toggle — group devices by room, or cables by signal path.
         When grouping is off, identical items are merged into a single row with a combined count.
+      </p>
+      <p>
+        Adapters always appear in the pack list even when <strong>hidden</strong> on the schematic — the pack
+        list is the complete bill of materials. Connections marked as <strong>direct-attach</strong> (where the
+        adapter plugs directly into a device) are excluded from cable counts since no separate cable is needed.
       </p>
 
       <h2>Cable schedule</h2>

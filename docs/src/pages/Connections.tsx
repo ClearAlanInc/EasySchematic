@@ -24,7 +24,7 @@ export default function ConnectionsPage() {
       <h2>Connection rules</h2>
       <ul>
         <li>Connections go from <strong>output → input</strong> (left to right)</li>
-        <li>Only ports with <strong>matching signal types</strong> can connect (SDI to SDI, HDMI to HDMI, etc.)</li>
+        <li>Ports with <strong>matching signal types</strong> connect directly. Mismatched signal types can connect via an <strong>adapter</strong> (see below)</li>
         <li>Each <strong>input</strong> port accepts only <strong>one</strong> connection</li>
         <li><strong>Output</strong> ports can feed multiple inputs</li>
         <li>
@@ -66,6 +66,101 @@ export default function ConnectionsPage() {
         <li>Trunk connections display as thicker lines on the canvas</li>
         <li>Right-click a trunk connection to set a <strong>cable label</strong></li>
       </ul>
+
+      <h2>Adapters</h2>
+      <p>
+        When you connect ports with incompatible signal types or different connector types, EasySchematic
+        can automatically insert an <strong>adapter</strong> device between them.
+      </p>
+
+      <h3>Connection preview colors</h3>
+      <p>While dragging a connection, the preview line color tells you what will happen:</p>
+      <ul>
+        <li><strong style={{ color: "#22c55e" }}>Green</strong> — compatible, connection will be made directly</li>
+        <li><strong style={{ color: "#eab308" }}>Yellow</strong> — incompatible, but an adapter is available and will be inserted</li>
+        <li><strong style={{ color: "#ef4444" }}>Red</strong> — incompatible, no adapter available</li>
+      </ul>
+
+      <h3>Auto-insertion</h3>
+      <p>When you complete an incompatible connection:</p>
+      <ul>
+        <li>If exactly <strong>one</strong> adapter template matches, it's inserted automatically between the two devices</li>
+        <li>If <strong>multiple</strong> adapters match, a dialog lets you choose which one to insert</li>
+        <li>You can also click <strong>Connect Anyway</strong> to force the connection without an adapter</li>
+      </ul>
+
+      <h3>Adapters vs converters</h3>
+      <ul>
+        <li>
+          <strong>Adapters</strong> are passive devices (dongles, cable adapters, barrels) — they appear
+          in the <strong>cables</strong> section of the pack list
+        </li>
+        <li>
+          <strong>Converters</strong> are active devices (e.g., Decimator, BMD Mini Converter) — they appear
+          in the <strong>devices</strong> section and must be placed manually from the device library
+        </li>
+      </ul>
+
+      <h3>Gender labeling (M/F)</h3>
+      <p>
+        Adapter templates include gender labels — e.g., "USB-C (M) → HDMI (F) Adapter".
+        <strong> M</strong> = male plug, <strong>F</strong> = female socket. This distinction matters for
+        pack lists so you know exactly which adapter to pull.
+      </p>
+
+      <h3>Direct attach</h3>
+      <p>
+        Some adapter ports are <strong>direct-attach</strong> — they plug directly into a device with no
+        separate cable needed. For example, a USB-C dongle's USB-C end plugs straight into a laptop.
+      </p>
+      <ul>
+        <li>Direct-attach connections render as <strong>thin gray lines</strong> instead of colored cable lines</li>
+        <li>They don't appear in the cable schedule or get cable ID numbers</li>
+        <li>They're excluded from pack list cable counts</li>
+        <li>
+          Toggle direct-attach per port in the <strong>device editor</strong> — look for the
+          <strong> DA</strong> badge on each port row (only visible on adapter devices)
+        </li>
+      </ul>
+
+      <h3>Barrels</h3>
+      <p>
+        Barrel couplers (F↔F) join two cables end-to-end — for example, an HDMI barrel connects two HDMI
+        cables. They have no direct-attach ports since both sides need cables. Search "barrel" in the device
+        library to find them.
+      </p>
+
+      <h3>Hiding adapters</h3>
+      <p>For cleaner schematics, you can hide adapter devices from the canvas:</p>
+      <ul>
+        <li>
+          <strong>Hide all adapters</strong> — open the <strong>View Options</strong> panel (right sidebar)
+          → <strong>Adapters</strong> section → check <strong>Hide all adapters</strong>
+        </li>
+        <li>
+          <strong>Hide one adapter</strong> — right-click any connection to an adapter and
+          select <strong>Hide Adapter</strong>
+        </li>
+        <li>
+          <strong>Show a hidden adapter</strong> — right-click the merged connection line where the adapter
+          was and select <strong>Show Adapter</strong>
+        </li>
+        <li>Hidden adapters collapse into a single connection line between the real devices</li>
+        <li>When a hidden adapter bridges different signal types, the line renders as a <strong>color gradient</strong></li>
+      </ul>
+      <p>
+        For finer control, double-click an adapter → <strong>Advanced</strong> →
+        <strong> Visibility</strong> dropdown:
+      </p>
+      <ul>
+        <li><strong>Default</strong> — follows the global "Hide all adapters" toggle</li>
+        <li><strong>Always Show</strong> — stays visible even when "Hide all adapters" is on</li>
+        <li><strong>Always Hide</strong> — hidden even when "Hide all adapters" is off</li>
+      </ul>
+      <p>
+        Hidden adapters <strong>still appear in the pack list</strong> — the pack list is always the
+        complete bill of materials regardless of what's visible on the canvas.
+      </p>
 
       <h2>Signal colors</h2>
       <p>
@@ -124,26 +219,22 @@ export default function ConnectionsPage() {
       </p>
       <ul>
         <li>
-          <strong>Combo connectors</strong> — some connectors natively accept multiple plug types. For example, an
-          XLR/TRS Combo jack accepts both XLR-3 and 1/4" TRS plugs without adapters. The cable schedule automatically
-          labels the cable based on the plug type, not the jack type.
+          <strong>Native acceptance</strong> — some connectors physically accept other plug types with no adapter.
+          EtherCon accepts RJ45, opticalCON accepts LC, and XLR/TRS Combo jacks accept both XLR-3 and 1/4" TRS.
         </li>
         <li>
-          <strong>Adapter connections</strong> — some connector pairs are compatible but require an adapter cable
-          (e.g. USB-A to USB-C, DVI to HDMI). These connections are allowed automatically and the cable schedule
-          labels them as adapter cables.
-        </li>
-        <li>
-          <strong>Native acceptance</strong> — connectors like EtherCon (accepts RJ45) and opticalCON (accepts LC)
-          are physically compatible with no adapter needed.
+          <strong>Adapter required</strong> — when two ports have the same signal type but different connectors
+          (e.g., IEC to Edison, USB-C to USB-A), EasySchematic will prompt you to insert an adapter device
+          or auto-insert one if there's a single match.
         </li>
       </ul>
 
-      <h2>Incompatible connector override</h2>
+      <h2>Force-connecting incompatible ports</h2>
       <p>
-        If you need to force-connect ports with truly mismatched connectors that aren't covered by the automatic
-        compatibility rules, right-click a connection and select <strong>Allow Incompatible Connectors</strong> to
-        override the check for that connection.
+        If no adapter template exists for a connector or signal mismatch, you can still force the connection.
+        The dialog offers a <strong>Connect Anyway</strong> button, or you can right-click an existing
+        connection and select <strong>Allow Incompatible Connectors</strong>. Use this sparingly — forced
+        connections won't accurately reflect your cable needs in the pack list.
       </p>
     </>
   );

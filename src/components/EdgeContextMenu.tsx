@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { resolvePort } from "../packList";
+import type { DeviceData } from "../types";
 
 /** Project a point onto the nearest segment and return the projected point. */
 function projectOntoSegments(
@@ -222,6 +223,33 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
+  const toggleAdapterVisibility = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    if (!edge) return;
+
+    // Find the adapter node — could be source, target, or a hidden adapter in between
+    let adapterId: string | null = null;
+    const srcData = store.nodes.find((n) => n.id === edge.source)?.data as DeviceData | undefined;
+    const tgtData = store.nodes.find((n) => n.id === edge.target)?.data as DeviceData | undefined;
+
+    if (srcData?.deviceType === "adapter") adapterId = edge.source;
+    else if (tgtData?.deviceType === "adapter") adapterId = edge.target;
+    // Check for hidden adapter (virtual edge — target is hidden adapter)
+    else if (store.hiddenAdapterNodeIds.has(edge.target)) adapterId = edge.target;
+
+    if (!adapterId) return;
+
+    const adapterData = store.nodes.find((n) => n.id === adapterId)?.data as DeviceData | undefined;
+    const current = adapterData?.adapterVisibility ?? "default";
+    const isCurrentlyHidden = current === "force-hide" || (current === "default" && store.hideAdapters);
+    const newVisibility = isCurrentlyHidden ? "force-show" : "force-hide";
+
+    store.patchDeviceData(adapterId, { adapterVisibility: newVisibility });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
   const goToNode = useCallback((nodeId: string | undefined) => {
     if (!menu || !nodeId) return;
     const internal = getInternalNode(nodeId);
@@ -249,6 +277,16 @@ export default function EdgeContextMenu() {
   const srcPort = resolvePort(srcNode, edge?.sourceHandle);
   const tgtPort = resolvePort(tgtNode, edge?.targetHandle);
   const isTrunkEdge = !!(srcPort?.isMulticable || tgtPort?.isMulticable);
+
+  // Check if edge connects to an adapter (visible or hidden)
+  const srcIsAdapter = (srcNode?.data as DeviceData)?.deviceType === "adapter";
+  const tgtIsAdapter = (tgtNode?.data as DeviceData)?.deviceType === "adapter";
+  const hiddenAdapterTarget = edge ? store.hiddenAdapterNodeIds.has(edge.target) : false;
+  const connectsToAdapter = srcIsAdapter || tgtIsAdapter || hiddenAdapterTarget;
+  const adapterId = srcIsAdapter ? edge?.source : tgtIsAdapter ? edge?.target : hiddenAdapterTarget ? edge?.target : null;
+  const adapterData = adapterId ? store.nodes.find((n) => n.id === adapterId)?.data as DeviceData | undefined : undefined;
+  const adapterVisibility = adapterData?.adapterVisibility ?? "default";
+  const adapterIsHidden = adapterVisibility === "force-hide" || (adapterVisibility === "default" && store.hideAdapters);
 
   let nearWaypoint = false;
   if (hasManual) {
@@ -337,6 +375,12 @@ export default function EdgeContextMenu() {
         <MenuItem
           label={allowIncompatible ? "Disallow Incompatible" : "Allow Incompatible"}
           onClick={toggleAllowIncompatible}
+        />
+      )}
+      {connectsToAdapter && (
+        <MenuItem
+          label={adapterIsHidden ? "Show Adapter" : "Hide Adapter"}
+          onClick={toggleAdapterVisibility}
         />
       )}
       <div className="h-px bg-gray-200 my-1" />

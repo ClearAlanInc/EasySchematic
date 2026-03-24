@@ -1,13 +1,13 @@
 {
-  "version": 17,
+  "version": 19,
   "name": "Untitled Schematic",
   "nodes": [
     {
       "id": "room-5",
       "type": "room",
       "position": {
-        "x": 1031,
-        "y": 1498
+        "x": 1040,
+        "y": 1500
       },
       "data": {
         "label": "TECH TABLE",
@@ -181,80 +181,6 @@
       "measured": {
         "width": 180,
         "height": 251
-      },
-      "parentId": "room-3",
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "device-36",
-      "type": "device",
-      "position": {
-        "x": 920,
-        "y": 120
-      },
-      "data": {
-        "label": "TB → HDMI Adapter 1",
-        "deviceType": "adapter",
-        "ports": [
-          {
-            "id": "p1773360222505-0",
-            "label": "TB In",
-            "signalType": "thunderbolt",
-            "direction": "input",
-            "connectorType": "usb-c"
-          },
-          {
-            "id": "p1773360222505-1",
-            "label": "HDMI Out",
-            "signalType": "hdmi",
-            "direction": "output",
-            "connectorType": "hdmi"
-          }
-        ],
-        "baseLabel": "TB → HDMI Adapter",
-        "model": "TB → HDMI Adapter"
-      },
-      "measured": {
-        "width": 180,
-        "height": 71
-      },
-      "parentId": "room-3",
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "device-37",
-      "type": "device",
-      "position": {
-        "x": 920,
-        "y": 220
-      },
-      "data": {
-        "label": "TB → HDMI Adapter 2",
-        "deviceType": "adapter",
-        "ports": [
-          {
-            "id": "p1773360225872-0",
-            "label": "TB In",
-            "signalType": "thunderbolt",
-            "direction": "input",
-            "connectorType": "usb-c"
-          },
-          {
-            "id": "p1773360225872-1",
-            "label": "HDMI Out",
-            "signalType": "hdmi",
-            "direction": "output",
-            "connectorType": "hdmi"
-          }
-        ],
-        "baseLabel": "TB → HDMI Adapter",
-        "model": "TB → HDMI Adapter"
-      },
-      "measured": {
-        "width": 180,
-        "height": 71
       },
       "parentId": "room-3",
       "selected": false,
@@ -1203,7 +1129,7 @@
       "type": "device",
       "position": {
         "x": 920,
-        "y": 440
+        "y": 520
       },
       "data": {
         "label": "Ethernet Switch (8-port)",
@@ -1625,43 +1551,6 @@
         "height": 111
       },
       "parentId": "room-5",
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "device-69",
-      "type": "device",
-      "position": {
-        "x": 920,
-        "y": 340
-      },
-      "data": {
-        "label": "TB → HDMI Adapter 3",
-        "deviceType": "adapter",
-        "ports": [
-          {
-            "id": "p1773418162658-0",
-            "label": "TB In",
-            "signalType": "thunderbolt",
-            "direction": "input",
-            "connectorType": "usb-c"
-          },
-          {
-            "id": "p1773418162658-1",
-            "label": "HDMI Out",
-            "signalType": "hdmi",
-            "direction": "output",
-            "connectorType": "hdmi"
-          }
-        ],
-        "baseLabel": "TB → HDMI Adapter",
-        "model": "TB → HDMI Adapter"
-      },
-      "measured": {
-        "width": 180,
-        "height": 71
-      },
-      "parentId": "room-3",
       "selected": false,
       "dragging": false
     },
@@ -2095,39 +1984,425 @@
       "parentId": "room-3",
       "selected": false,
       "dragging": false
+    },
+    {
+      "id": "device-79",
+      "type": "device",
+      "position": {
+        "x": 580,
+        "y": 1100
+      },
+      "data": {
+        "label": "Lex DB-100",
+        "deviceType": "power-distribution",
+        "ports": [
+          {
+            "id": "p1774317685062-0",
+            "label": "Cam-Lok In L1",
+            "signalType": "power-l1",
+            "direction": "input",
+            "connectorType": "cam-lok",
+            "section": "3-Phase Input"
+          },
+          {
+            "id": "p1774317685062-1",
+            "label": "Cam-Lok In L2",
+            "signalType": "power-l2",
+            "direction": "input",
+            "connectorType": "cam-lok",
+            "section": "3-Phase Input"
+          },
+          {
+            "id": "p1774317685062-2",
+            "label": "Cam-Lok In L3",
+            "signalType": "power-l3",
+            "direction": "input",
+            "connectorType": "cam-lok",
+            "section": "3-Phase Input"
+          },
+          {
+            "id": "p1774317685062-3",
+            "label": "Cam-Lok In N",
+            "signalType": "power-neutral",
+            "direction": "input",
+            "connectorType": "cam-lok",
+            "section": "3-Phase Input"
+          },
+          {
+            "id": "p1774317685062-4",
+            "label": "Cam-Lok In G",
+            "signalType": "power-ground",
+            "direction": "input",
+            "connectorType": "cam-lok",
+            "section": "3-Phase Input"
+          },
+          {
+            "id": "p1774317685062-5",
+            "label": "L5-20 Out 1",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-6",
+            "label": "L5-20 Out 2",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-7",
+            "label": "L5-20 Out 3",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-8",
+            "label": "L5-20 Out 4",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-9",
+            "label": "L5-20 Out 5",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-10",
+            "label": "L5-20 Out 6",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774317685062-11",
+            "label": "L6-20 Out 1",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          },
+          {
+            "id": "p1774317685062-12",
+            "label": "L6-20 Out 2",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          },
+          {
+            "id": "p1774317685062-13",
+            "label": "L6-20 Out 3",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          },
+          {
+            "id": "p1774317685062-14",
+            "label": "L6-20 Out 4",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          },
+          {
+            "id": "p1774317685062-15",
+            "label": "L6-20 Out 5",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          },
+          {
+            "id": "p1774317685062-16",
+            "label": "L6-20 Out 6",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "l6-20"
+          }
+        ],
+        "baseLabel": "Lex DB-100",
+        "model": "Lex DB-100",
+        "templateId": "c0a80101-021b-4000-8000-000000000539",
+        "templateVersion": 1,
+        "manufacturer": "Lex Products",
+        "modelNumber": "DB-100",
+        "powerCapacityW": 20800,
+        "voltage": "208V"
+      },
+      "measured": {
+        "width": 180,
+        "height": 291
+      },
+      "selected": true,
+      "dragging": false
+    },
+    {
+      "id": "device-80",
+      "type": "device",
+      "position": {
+        "x": 880,
+        "y": 140
+      },
+      "parentId": "room-3",
+      "data": {
+        "label": "TB (M) → HDMI (F) Adapter 1",
+        "deviceType": "adapter",
+        "ports": [
+          {
+            "id": "p1774318146564-0",
+            "label": "TB In",
+            "signalType": "thunderbolt",
+            "direction": "input",
+            "connectorType": "usb-c",
+            "directAttach": true
+          },
+          {
+            "id": "p1774318146564-1",
+            "label": "HDMI Out",
+            "signalType": "hdmi",
+            "direction": "output",
+            "connectorType": "hdmi"
+          }
+        ],
+        "templateId": "c0a80101-001e-4000-8000-000000000030",
+        "model": "TB (M) → HDMI (F) Adapter"
+      },
+      "measured": {
+        "width": 191,
+        "height": 71
+      },
+      "selected": false,
+      "dragging": false,
+      "style": {}
+    },
+    {
+      "id": "device-81",
+      "type": "device",
+      "position": {
+        "x": 880,
+        "y": 240
+      },
+      "parentId": "room-3",
+      "data": {
+        "label": "TB (M) → HDMI (F) Adapter 1",
+        "deviceType": "adapter",
+        "ports": [
+          {
+            "id": "p1774318632632-0",
+            "label": "TB In",
+            "signalType": "thunderbolt",
+            "direction": "input",
+            "connectorType": "usb-c",
+            "directAttach": true
+          },
+          {
+            "id": "p1774318632632-1",
+            "label": "HDMI Out",
+            "signalType": "hdmi",
+            "direction": "output",
+            "connectorType": "hdmi"
+          }
+        ],
+        "baseLabel": "TB (M) → HDMI (F) Adapter",
+        "model": "TB (M) → HDMI (F) Adapter",
+        "templateId": "c0a80101-001e-4000-8000-000000000030"
+      },
+      "measured": {
+        "width": 191,
+        "height": 71
+      },
+      "style": {},
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "device-82",
+      "type": "device",
+      "position": {
+        "x": 880,
+        "y": 391
+      },
+      "parentId": "room-3",
+      "data": {
+        "label": "TB (M) → HDMI (F) Adapter 2",
+        "deviceType": "adapter",
+        "ports": [
+          {
+            "id": "p1774318838122-0",
+            "label": "TB In",
+            "signalType": "thunderbolt",
+            "direction": "input",
+            "connectorType": "usb-c",
+            "directAttach": true
+          },
+          {
+            "id": "p1774318838122-1",
+            "label": "HDMI Out",
+            "signalType": "hdmi",
+            "direction": "output",
+            "connectorType": "hdmi"
+          }
+        ],
+        "baseLabel": "TB (M) → HDMI (F) Adapter",
+        "model": "TB (M) → HDMI (F) Adapter",
+        "templateId": "c0a80101-001e-4000-8000-000000000030"
+      },
+      "measured": {
+        "width": 193,
+        "height": 71
+      },
+      "selected": false,
+      "dragging": false,
+      "style": {}
+    },
+    {
+      "id": "device-83",
+      "type": "device",
+      "position": {
+        "x": 240,
+        "y": 1100
+      },
+      "data": {
+        "label": "Company Switch 400A 3-Phase",
+        "deviceType": "company-switch",
+        "ports": [
+          {
+            "id": "p1774320816606-0",
+            "label": "Feed 1 L1",
+            "signalType": "power-l1",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 1"
+          },
+          {
+            "id": "p1774320816606-1",
+            "label": "Feed 1 L2",
+            "signalType": "power-l2",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 1"
+          },
+          {
+            "id": "p1774320816606-2",
+            "label": "Feed 1 L3",
+            "signalType": "power-l3",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 1"
+          },
+          {
+            "id": "p1774320816606-3",
+            "label": "Feed 1 N",
+            "signalType": "power-neutral",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 1"
+          },
+          {
+            "id": "p1774320816606-4",
+            "label": "Feed 1 G",
+            "signalType": "power-ground",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 1"
+          },
+          {
+            "id": "p1774320816606-5",
+            "label": "Feed 2 L1",
+            "signalType": "power-l1",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 2"
+          },
+          {
+            "id": "p1774320816606-6",
+            "label": "Feed 2 L2",
+            "signalType": "power-l2",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 2"
+          },
+          {
+            "id": "p1774320816606-7",
+            "label": "Feed 2 L3",
+            "signalType": "power-l3",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 2"
+          },
+          {
+            "id": "p1774320816606-8",
+            "label": "Feed 2 N",
+            "signalType": "power-neutral",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 2"
+          },
+          {
+            "id": "p1774320816606-9",
+            "label": "Feed 2 G",
+            "signalType": "power-ground",
+            "direction": "output",
+            "connectorType": "cam-lok",
+            "section": "Feed 2"
+          }
+        ],
+        "baseLabel": "Company Switch 400A 3-Phase",
+        "model": "Company Switch 400A 3-Phase",
+        "templateId": "c0a80101-0301-4000-8000-000000000701",
+        "templateVersion": 1,
+        "powerCapacityW": 144000,
+        "voltage": "208V 3-Phase",
+        "isVenueProvided": true
+      },
+      "measured": {
+        "width": 214,
+        "height": 291
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "device-84",
+      "type": "device",
+      "position": {
+        "x": 225,
+        "y": 920
+      },
+      "data": {
+        "label": "L5-20 (M) → Edison (F) Adapter",
+        "deviceType": "adapter",
+        "ports": [
+          {
+            "id": "p1774320860171-0",
+            "label": "L5-20 In",
+            "signalType": "power",
+            "direction": "input",
+            "connectorType": "l5-20"
+          },
+          {
+            "id": "p1774320860171-1",
+            "label": "Edison Out",
+            "signalType": "power",
+            "direction": "output",
+            "connectorType": "edison"
+          }
+        ],
+        "baseLabel": "L5-20 (M) → Edison (F) Adapter",
+        "model": "L5-20 (M) → Edison (F) Adapter",
+        "templateId": "c0a80101-00d4-4000-8000-000000000212"
+      },
+      "measured": {
+        "width": 210,
+        "height": 71
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "room-3"
     }
   ],
   "edges": [
-    {
-      "id": "edge-16",
-      "source": "device-36",
-      "target": "device-47",
-      "sourceHandle": "p1773360222505-1",
-      "targetHandle": "p1773360761700-2",
-      "data": {
-        "signalType": "hdmi"
-      },
-      "style": {
-        "stroke": "var(--color-hdmi)",
-        "strokeWidth": 2
-      },
-      "selected": false
-    },
-    {
-      "id": "edge-17",
-      "source": "device-37",
-      "target": "device-48",
-      "sourceHandle": "p1773360225872-1",
-      "targetHandle": "p1773360771090-2",
-      "data": {
-        "signalType": "hdmi"
-      },
-      "style": {
-        "stroke": "var(--color-hdmi)",
-        "strokeWidth": 2
-      },
-      "selected": false
-    },
     {
       "id": "edge-18",
       "source": "device-47",
@@ -2140,8 +2415,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-19",
@@ -2155,8 +2429,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-20",
@@ -2170,8 +2443,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-21",
@@ -2185,8 +2457,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-22",
@@ -2200,8 +2471,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-26",
@@ -2215,8 +2485,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-27",
@@ -2230,8 +2499,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-28",
@@ -2245,8 +2513,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-29",
@@ -2260,8 +2527,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-30",
@@ -2275,8 +2541,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-31",
@@ -2290,8 +2555,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-32",
@@ -2305,8 +2569,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-33",
@@ -2320,38 +2583,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
-    },
-    {
-      "id": "edge-34",
-      "source": "device-33",
-      "target": "device-37",
-      "sourceHandle": "p1773360118182-1-out",
-      "targetHandle": "p1773360225872-0",
-      "data": {
-        "signalType": "thunderbolt"
-      },
-      "style": {
-        "stroke": "var(--color-thunderbolt)",
-        "strokeWidth": 2
-      },
-      "selected": false
-    },
-    {
-      "id": "edge-39",
-      "source": "device-33",
-      "target": "device-60",
-      "sourceHandle": "p1773360118182-9",
-      "targetHandle": "p1773415859541-0-in",
-      "data": {
-        "signalType": "ethernet"
-      },
-      "style": {
-        "stroke": "var(--color-ethernet)",
-        "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-41",
@@ -2365,8 +2597,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-43",
@@ -2380,8 +2611,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-56",
@@ -2395,8 +2625,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-59",
@@ -2410,8 +2639,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-60",
@@ -2425,8 +2653,7 @@
       "style": {
         "stroke": "var(--color-usb)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-62",
@@ -2440,8 +2667,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-63",
@@ -2455,8 +2681,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-64",
@@ -2470,23 +2695,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
-    },
-    {
-      "id": "edge-65",
-      "source": "device-69",
-      "target": "device-73",
-      "sourceHandle": "p1773418162658-1",
-      "targetHandle": "p1773420713933-0",
-      "data": {
-        "signalType": "hdmi"
-      },
-      "style": {
-        "stroke": "var(--color-hdmi)",
-        "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-66",
@@ -2500,8 +2709,7 @@
       "style": {
         "stroke": "var(--color-sdi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-67",
@@ -2515,8 +2723,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-68",
@@ -2530,8 +2737,7 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-69",
@@ -2545,8 +2751,7 @@
       "style": {
         "stroke": "var(--color-usb)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-70",
@@ -2560,8 +2765,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-71",
@@ -2575,23 +2779,7 @@
       "style": {
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
-      },
-      "selected": false
-    },
-    {
-      "id": "edge-57",
-      "source": "device-33",
-      "target": "device-69",
-      "sourceHandle": "p1773360118182-2-out",
-      "targetHandle": "p1773418162658-0",
-      "data": {
-        "signalType": "thunderbolt"
-      },
-      "style": {
-        "stroke": "var(--color-thunderbolt)",
-        "strokeWidth": 2
-      },
-      "selected": false
+      }
     },
     {
       "id": "edge-72",
@@ -2605,15 +2793,29 @@
       "style": {
         "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
-      },
-      "selected": true
+      }
     },
     {
-      "id": "edge-73",
+      "id": "edge-76",
+      "source": "device-33",
+      "target": "device-81",
+      "sourceHandle": "p1773360118182-1-out",
+      "targetHandle": "p1774318632632-0",
+      "data": {
+        "signalType": "thunderbolt",
+        "directAttach": true
+      },
+      "style": {
+        "stroke": "#9ca3af",
+        "strokeWidth": 1
+      }
+    },
+    {
+      "type": "smoothstep",
       "source": "device-77",
       "target": "device-60",
       "sourceHandle": "p1773508594582-7",
-      "targetHandle": "p1773415859541-1-in",
+      "targetHandle": "p1773415859541-3-in",
       "data": {
         "signalType": "ethernet"
       },
@@ -2621,23 +2823,179 @@
         "stroke": "var(--color-ethernet)",
         "strokeWidth": 2
       },
-      "selected": false
+      "id": "xy-edge__device-77p1773508594582-7-device-60p1773415859541-3-in"
     },
     {
       "type": "smoothstep",
       "source": "device-33",
-      "target": "device-36",
-      "sourceHandle": "p1773360118182-0-out",
-      "targetHandle": "p1773360222505-0",
+      "target": "device-82",
+      "sourceHandle": "p1773360118182-2-out",
+      "targetHandle": "p1774318838122-0",
       "data": {
-        "signalType": "thunderbolt"
+        "signalType": "thunderbolt",
+        "directAttach": true
       },
       "style": {
-        "stroke": "var(--color-thunderbolt)",
+        "stroke": "#9ca3af",
+        "strokeWidth": 1
+      },
+      "id": "xy-edge__device-33p1773360118182-2-out-device-82p1774318838122-0"
+    },
+    {
+      "id": "edge-77",
+      "source": "device-33",
+      "target": "device-80",
+      "sourceHandle": "p1773360118182-0-out",
+      "targetHandle": "p1774318146564-0",
+      "data": {
+        "signalType": "thunderbolt",
+        "directAttach": true
+      },
+      "style": {
+        "stroke": "#9ca3af",
+        "strokeWidth": 1
+      }
+    },
+    {
+      "id": "edge-79",
+      "source": "device-80",
+      "target": "device-47",
+      "sourceHandle": "p1774318146564-1",
+      "targetHandle": "p1773360761700-2",
+      "data": {
+        "signalType": "hdmi"
+      },
+      "style": {
+        "stroke": "var(--color-hdmi)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "type": "smoothstep",
+      "source": "device-82",
+      "target": "device-73",
+      "sourceHandle": "p1774318838122-1",
+      "targetHandle": "p1773420713933-0",
+      "data": {
+        "signalType": "hdmi"
+      },
+      "style": {
+        "stroke": "var(--color-hdmi)",
         "strokeWidth": 2
       },
-      "selected": false,
-      "id": "xy-edge__device-33p1773360118182-0-out-device-36p1773360222505-0"
+      "id": "xy-edge__device-82p1774318838122-1-device-73p1773420713933-0"
+    },
+    {
+      "id": "edge-80",
+      "source": "device-81",
+      "target": "device-48",
+      "sourceHandle": "p1774318632632-1",
+      "targetHandle": "p1773360771090-2",
+      "data": {
+        "signalType": "hdmi"
+      },
+      "style": {
+        "stroke": "var(--color-hdmi)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-81",
+      "source": "device-83",
+      "target": "device-79",
+      "sourceHandle": "p1774320816606-0",
+      "targetHandle": "p1774317685062-0",
+      "data": {
+        "signalType": "power-l1"
+      },
+      "style": {
+        "stroke": "var(--color-power-l1)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-82",
+      "source": "device-83",
+      "target": "device-79",
+      "sourceHandle": "p1774320816606-1",
+      "targetHandle": "p1774317685062-1",
+      "data": {
+        "signalType": "power-l2"
+      },
+      "style": {
+        "stroke": "var(--color-power-l2)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-83",
+      "source": "device-83",
+      "target": "device-79",
+      "sourceHandle": "p1774320816606-2",
+      "targetHandle": "p1774317685062-2",
+      "data": {
+        "signalType": "power-l3"
+      },
+      "style": {
+        "stroke": "var(--color-power-l3)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-84",
+      "source": "device-83",
+      "target": "device-79",
+      "sourceHandle": "p1774320816606-3",
+      "targetHandle": "p1774317685062-3",
+      "data": {
+        "signalType": "power-neutral"
+      },
+      "style": {
+        "stroke": "var(--color-power-neutral)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-85",
+      "source": "device-83",
+      "target": "device-79",
+      "sourceHandle": "p1774320816606-4",
+      "targetHandle": "p1774317685062-4",
+      "data": {
+        "signalType": "power-ground"
+      },
+      "style": {
+        "stroke": "var(--color-power-ground)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-86",
+      "source": "device-79",
+      "target": "device-84",
+      "sourceHandle": "p1774317685062-5",
+      "targetHandle": "p1774320860171-0",
+      "data": {
+        "signalType": "power"
+      },
+      "style": {
+        "stroke": "var(--color-power)",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "edge-87",
+      "source": "device-84",
+      "target": "device-77",
+      "sourceHandle": "p1774320860171-1",
+      "targetHandle": "pw-device-77",
+      "data": {
+        "signalType": "power"
+      },
+      "style": {
+        "stroke": "var(--color-power)",
+        "strokeWidth": 2
+      }
     }
   ],
   "printPaperId": "arch-d",
