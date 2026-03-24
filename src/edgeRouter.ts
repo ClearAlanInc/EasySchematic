@@ -991,126 +991,93 @@ export function routeAllEdges(
     }
   }
 
-  // PHASE 2+3 — PathFinder-style negotiation (rip-up and re-route ALL edges)
-  //
-  // Instead of only re-routing "bad" edges, rip up ALL non-manual edges each
-  // iteration with escalating congestion costs. Corridors that are contested
-  // (used by multiple edges) accumulate historical congestion, forcing edges
-  // to spread into different lanes over successive iterations.
-  //
-  // Reference: McMurchie & Ebeling, "PathFinder: A Negotiation-Based
-  // Performance-Driven Router for FPGAs" (1995)
-
-  const CONGESTION_INCREMENT = 50; // How much historical cost increases per iteration for contested points
-  const congestionMap = new Map<string, number>(); // "x,y" → accumulated historical cost
-  const NEGOTIATION_ITERATIONS = ROUTER_PARAMS.MAX_ITERATIONS;
-
-  for (let iter = 0; iter < NEGOTIATION_ITERATIONS; iter++) {
-    // Detect congestion: find grid points used by multiple edges' vertical segments
-    const pointUsage = new Map<string, number>(); // "x,y" → edge count
-    for (const rs of routeStates) {
-      if (rs.turns.startsWith("manual")) continue;
-      for (const seg of rs.segments) {
-        // Sample points along each segment to detect corridor sharing
-        if (seg.axis === "v") {
-          const x = seg.x1;
-          const yMin = Math.min(seg.y1, seg.y2);
-          const yMax = Math.max(seg.y1, seg.y2);
-          for (let y = yMin; y <= yMax; y += 20) {
-            const key = `${x},${y}`;
-            pointUsage.set(key, (pointUsage.get(key) ?? 0) + 1);
-          }
-        } else {
-          const y = seg.y1;
-          const xMin = Math.min(seg.x1, seg.x2);
-          const xMax = Math.max(seg.x1, seg.x2);
-          for (let x = xMin; x <= xMax; x += 20) {
-            const key = `${x},${y}`;
-            pointUsage.set(key, (pointUsage.get(key) ?? 0) + 1);
-          }
-        }
-      }
+  // PHASE 2 — Violation detection
+  const badIds = findViolations(
+    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
+  );
+  for (const rs of routeStates) {
+    if (badIds.has(rs.edgeId) && !rs.turns.startsWith("manual")) {
+      rs.status = "bad";
     }
+  }
 
-    // Check if any congestion remains (points used by 2+ edges)
-    let hasCongestion = false;
-    for (const [key, count] of pointUsage) {
-      if (count > 1) {
-        hasCongestion = true;
-        // Increase historical congestion for contested points
-        congestionMap.set(key, (congestionMap.get(key) ?? 0) + CONGESTION_INCREMENT);
-      }
-    }
+  // PHASE 3 — Iterative re-routing
+  // Helper to attempt re-routing a single bad edge
+  const tryReroute = (bad: RouteState): boolean => {
+    const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
+    if (!ep) return false;
 
-    if (!hasCongestion) break; // All edges in separate corridors — done!
+    const goodEdges = routeStates.filter(
+      (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
+    );
+    const penalties = buildPenaltyZones(goodEdges);
+    const sigType = ep.edge.data?.signalType;
 
-    // Rip up ALL non-manual edges and re-route with congestion costs
-    const manualStates = routeStates.filter((rs) => rs.turns.startsWith("manual"));
-    routeStates.length = 0;
-    routeStates.push(...manualStates);
+    let result = computeEdgePath(
+      ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+      obs.rects, 0, ep.stubSpread, penalties, sigType,
+    );
 
-    for (const ep of edgeEndpoints) {
-      if (ep.edge.data?.manualWaypoints?.length) continue; // skip manual edges
-      const sigType = ep.edge.data?.signalType;
-
-      // Build penalties from all currently-routed edges (manual + already re-routed this iteration)
-      const penalties = buildPenaltyZones(routeStates);
-
-      let result = computeEdgePath(
+    if (!result) {
+      const excludeSet3 = new Set([ep.edge.source, ep.edge.target]);
+      const relaxedRects3 = obs.rects.filter((r) => !r.nodeId || !excludeSet3.has(r.nodeId));
+      result = computeEdgePath(
         ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        obs.rects, 0, ep.stubSpread,
-        penalties.length > 0 ? penalties : undefined,
-        sigType,
-        undefined, undefined, undefined, undefined,
-        congestionMap.size > 0 ? congestionMap : undefined,
+        relaxedRects3, 0, ep.stubSpread, penalties, sigType,
       );
+    }
 
-      if (!result) {
-        const excludeSet = new Set([ep.edge.source, ep.edge.target]);
-        const relaxedRects = obs.rects.filter((r) => !r.nodeId || !excludeSet.has(r.nodeId));
-        result = computeEdgePath(
-          ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-          relaxedRects, 0, ep.stubSpread,
-          penalties.length > 0 ? penalties : undefined,
-          sigType,
-          undefined, undefined, undefined, undefined,
-          congestionMap.size > 0 ? congestionMap : undefined,
-        );
-      }
+    if (!result) return false;
 
-      if (result) {
-        routeStates.push({
-          edgeId: ep.edge.id,
-          waypoints: result.waypoints,
-          segments: extractSegments(result.waypoints),
-          svgPath: result.path,
-          labelX: result.labelX,
-          labelY: result.labelY,
-          turns: result.turns,
-          status: "good",
-          signalType: sigType,
-        });
-      } else {
-        // Fallback: orthogonal L-shape
-        const midX = Math.max(ep.sourceX, ep.targetX) + 40;
-        const wp: Point[] = [
-          { x: ep.sourceX, y: ep.sourceY },
-          { x: midX, y: ep.sourceY },
-          { x: midX, y: ep.targetY },
-          { x: ep.targetX, y: ep.targetY },
-        ];
-        routeStates.push({
-          edgeId: ep.edge.id,
-          waypoints: wp,
-          segments: extractSegments(wp),
-          svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
-          labelX: midX,
-          labelY: (ep.sourceY + ep.targetY) / 2,
-          turns: "fallback",
-          status: "good",
-          signalType: sigType,
-        });
+    const newSegments = extractSegments(result.waypoints);
+    const goodEdgeSegments = routeStates
+      .filter((rs) => rs.status === "good" && rs.edgeId !== bad.edgeId)
+      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType }));
+
+    const newViolations = findViolations([
+      { edgeId: bad.edgeId, segments: newSegments, signalType: sigType },
+      ...goodEdgeSegments,
+    ]);
+
+    if (!newViolations.has(bad.edgeId)) {
+      bad.waypoints = result.waypoints;
+      bad.segments = newSegments;
+      bad.svgPath = result.path;
+      bad.labelX = result.labelX;
+      bad.labelY = result.labelY;
+      bad.turns = result.turns;
+      bad.status = "good";
+      return true;
+    }
+    return false;
+  };
+
+  for (let iter = 0; iter < ROUTER_PARAMS.MAX_ITERATIONS; iter++) {
+    const badEdges = routeStates.filter((rs) => rs.status === "bad");
+    if (badEdges.length === 0) break;
+
+    // Alternate sort order: even iterations shortest-first, odd iterations longest-first.
+    if (iter % 2 === 0) {
+      badEdges.sort((a, b) => a.waypoints.length - b.waypoints.length);
+    } else {
+      badEdges.sort((a, b) => b.waypoints.length - a.waypoints.length);
+    }
+
+    let anyImproved = false;
+    for (const bad of badEdges) {
+      if (tryReroute(bad)) anyImproved = true;
+    }
+
+    if (!anyImproved) {
+      const stillBad = routeStates.filter((rs) => rs.status === "bad");
+      if (stillBad.length < 2) break;
+
+      stillBad.reverse();
+      let unstuck = false;
+      for (const bad of stillBad) {
+        if (tryReroute(bad)) unstuck = true;
       }
+      if (!unstuck) break;
     }
   }
 
