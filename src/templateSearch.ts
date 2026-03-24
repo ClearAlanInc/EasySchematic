@@ -11,7 +11,7 @@ export function scoreTemplate(template: DeviceTemplate, query: string): number {
   const manufacturer = template.manufacturer?.toLowerCase() ?? "";
   const modelNumber = template.modelNumber?.toLowerCase() ?? "";
   const searchTerms = template.searchTerms?.map((t) => t.toLowerCase()) ?? [];
-  const signalLabels = [...new Set(template.ports.map((p) => SIGNAL_LABELS[p.signalType].toLowerCase()))];
+  const signalLabels = [...new Set(template.ports.map((p) => (SIGNAL_LABELS[p.signalType] ?? p.signalType).toLowerCase()))];
   const signalTypes = [...new Set(template.ports.map((p) => p.signalType.toLowerCase().replace(/-/g, " ")))];
   const portLabels = template.ports.map((p) => p.label.toLowerCase());
 
