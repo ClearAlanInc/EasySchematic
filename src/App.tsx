@@ -33,7 +33,7 @@ import RoomContextMenu from "./components/RoomContextMenu";
 import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import RouterCreator from "./components/RouterCreator";
-import { computeSnap, enforceMinSpacing, detectOverlap, type GuideLine } from "./snapUtils";
+import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, type GuideLine } from "./snapUtils";
 import type { DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
 import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
@@ -732,13 +732,16 @@ function SchematicCanvas() {
           n.id === draggedNode.id ? snappedNode : n,
         );
         // Show red overlap indicator when device conflicts with a neighbor
-        const overlap = detectOverlap(snappedNode, updated as SchematicNode[], state.hiddenAdapterNodeIds);
+        // Speculatively reparent so overlap works when dragging into a room
+        const checkNode = speculativeReparent(snappedNode, updated as SchematicNode[]);
+        const overlap = detectOverlap(checkNode, updated as SchematicNode[], state.hiddenAdapterNodeIds);
         useSchematicStore.setState({
           nodes: updated as SchematicNode[],
           overlapNodeId: overlap ? draggedNode.id : null,
         });
       } else {
-        const overlap = detectOverlap(draggedNode as SchematicNode, state.nodes, state.hiddenAdapterNodeIds);
+        const checkNode = speculativeReparent(draggedNode as SchematicNode, state.nodes);
+        const overlap = detectOverlap(checkNode, state.nodes, state.hiddenAdapterNodeIds);
         useSchematicStore.setState({ overlapNodeId: overlap ? draggedNode.id : null });
       }
     },
@@ -756,12 +759,22 @@ function SchematicCanvas() {
       let finalY = snap.y;
 
       // Enforce minimum spacing so stubs don't land inside neighbor obstacle rects
-      // Pass snap result so the nudge preserves active alignment
+      // Speculatively reparent so enforcement works when dragging into a room
       const snappedNode = { ...draggedNode, position: { x: finalX, y: finalY } } as SchematicNode;
-      const spacing = enforceMinSpacing(snappedNode, state.nodes, state.hiddenAdapterNodeIds, snap);
+      const checkNode = speculativeReparent(snappedNode, state.nodes);
+      const spacing = enforceMinSpacing(checkNode, state.nodes, state.hiddenAdapterNodeIds, snap);
       if (spacing) {
-        finalX = spacing.x;
-        finalY = spacing.y;
+        // Convert back to absolute coords if speculatively reparented
+        if (checkNode.parentId && !draggedNode.parentId) {
+          const room = state.nodes.find((n) => n.id === checkNode.parentId);
+          if (room) {
+            finalX = spacing.x + room.position.x;
+            finalY = spacing.y + room.position.y;
+          }
+        } else {
+          finalX = spacing.x;
+          finalY = spacing.y;
+        }
       }
 
       if (finalX !== draggedNode.position.x || finalY !== draggedNode.position.y) {

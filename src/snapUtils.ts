@@ -554,3 +554,40 @@ export function detectOverlap(
 ): boolean {
   return enforceMinSpacing(draggedNode, allNodes, hiddenNodeIds) !== null;
 }
+
+/**
+ * Pure speculative reparent: if the node's center falls inside a room,
+ * return a copy with parentId set and position converted to room-relative.
+ * Used before enforcement so overlap detection works across room boundaries.
+ */
+export function speculativeReparent(
+  node: SchematicNode,
+  allNodes: SchematicNode[],
+): SchematicNode {
+  if (node.parentId || node.type === "room") return node;
+
+  const nodeW = node.measured?.width ?? 180;
+  const nodeH = node.measured?.height ?? estimateDeviceHeight(node);
+  const centerX = node.position.x + nodeW / 2;
+  const centerY = node.position.y + nodeH / 2;
+
+  for (const room of allNodes) {
+    if (room.type !== "room") continue;
+    const rw = room.measured?.width ?? (room.style?.width as number) ?? (room.width as number) ?? 400;
+    const rh = room.measured?.height ?? (room.style?.height as number) ?? (room.height as number) ?? 300;
+    if (
+      centerX >= room.position.x && centerX <= room.position.x + rw &&
+      centerY >= room.position.y && centerY <= room.position.y + rh
+    ) {
+      return {
+        ...node,
+        parentId: room.id,
+        position: {
+          x: node.position.x - room.position.x,
+          y: node.position.y - room.position.y,
+        },
+      };
+    }
+  }
+  return node;
+}
