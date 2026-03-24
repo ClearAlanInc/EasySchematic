@@ -27,7 +27,8 @@ import type { Orientation } from "./printConfig";
 import { computeAlignment, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { routeAllEdges, type RoutedEdge } from "./edgeRouter";
-import { areConnectorsCompatible } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge } from "./connectorTypes";
+import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getTemplateById } from "./templateApi";
@@ -226,10 +227,21 @@ interface SchematicState {
     connection: Connection;
     sourcePort: Port;
     targetPort: Port;
+    reason: "signal-mismatch" | "connector-mismatch";
   } | null;
   dismissIncompatibleDialog: () => void;
   forceIncompatibleConnection: () => void;
   insertAdapterBetween: (template: DeviceTemplate) => void;
+
+  // Adapter visibility (#adapter-overhaul)
+  hideAdapters: boolean;
+  setHideAdapters: (hide: boolean) => void;
+  /** Set of node IDs for adapters that should be visually hidden */
+  hiddenAdapterNodeIds: Set<string>;
+  /** Set of edge IDs that are the "hidden half" of a virtual edge pair (no route, invisible) */
+  hiddenVirtualEdgeIds: Set<string>;
+  /** Map from edge ID to gradient colors for virtual edges bridging different signal types */
+  virtualEdgeGradients: Record<string, { sourceColor: string; targetColor: string }>;
 
   // Line jumps (#18)
   showLineJumps: boolean;
@@ -483,6 +495,28 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cloudSchematicId: null,
   cloudSavedAt: null,
   pendingIncompatibleConnection: null,
+  hideAdapters: false,
+  hiddenAdapterNodeIds: new Set(),
+  hiddenVirtualEdgeIds: new Set(),
+  virtualEdgeGradients: {},
+
+  setHideAdapters: (hide) => {
+    const state = get();
+    // Update node styles so React Flow re-measures hidden/shown adapters
+    const updatedNodes = state.nodes.map((n) => {
+      if (n.type !== "device") return n;
+      const data = n.data as DeviceData;
+      if (data.deviceType !== "adapter") return n;
+      const visibility = data.adapterVisibility ?? "default";
+      if (visibility === "force-show" || visibility === "force-hide") return n;
+      // This adapter follows the global toggle — update its style to force RF re-measure
+      return hide
+        ? { ...n, style: { ...n.style, width: 1, height: 1, opacity: 0, pointerEvents: "none" as const } }
+        : { ...n, style: { ...n.style, width: undefined, height: undefined, opacity: undefined, pointerEvents: undefined } };
+    });
+    set({ hideAdapters: hide, nodes: updatedNodes });
+    get().saveToLocalStorage();
+  },
 
   onNodesChange: (changes) => {
     const updated = applyNodeChanges(changes, get().nodes) as SchematicNode[];
@@ -514,12 +548,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         const canSource = srcPort.direction === "output" || srcPort.direction === "bidirectional";
         const canTarget = tgtPort.direction === "input" || tgtPort.direction === "bidirectional";
         if (canSource && canTarget && srcPort.signalType !== tgtPort.signalType) {
-          set({ pendingIncompatibleConnection: { connection, sourcePort: srcPort, targetPort: tgtPort } });
+          // Auto-insert if exactly one adapter matches
+          const allTemplates = [...DEVICE_TEMPLATES, ...state.customTemplates];
+          const adapterMatches = findAdaptersForSignalBridge(srcPort.signalType, tgtPort.signalType, allTemplates);
+          if (adapterMatches.length === 1) {
+            pushUndo({ nodes: state.nodes, edges: state.edges });
+            set({ pendingIncompatibleConnection: { connection, sourcePort: srcPort, targetPort: tgtPort, reason: "signal-mismatch" } });
+            get().insertAdapterBetween(adapterMatches[0]);
+            return;
+          }
+          set({ pendingIncompatibleConnection: { connection, sourcePort: srcPort, targetPort: tgtPort, reason: "signal-mismatch" } });
         }
       }
       return;
     }
-    pushUndo({ nodes: state.nodes, edges: state.edges });
 
     const sourcePort = getPortFromHandle(
       state.nodes,
@@ -531,6 +573,57 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       connection.target,
       connection.targetHandle,
     );
+
+    // Check if connector types are mismatched (any mismatch, not just CONNECTOR_ACCEPTS pairs)
+    const connectorsDiffer = sourcePort && targetPort &&
+      sourcePort.connectorType && targetPort.connectorType &&
+      sourcePort.connectorType !== targetPort.connectorType &&
+      !areConnectorsCompatible(sourcePort.connectorType, targetPort.connectorType);
+
+    if (connectorsDiffer) {
+      const allTemplates = [...DEVICE_TEMPLATES, ...state.customTemplates];
+      const adapterMatches = findAdaptersForConnectorBridge(
+        sourcePort.connectorType!,
+        targetPort.connectorType!,
+        sourcePort.signalType,
+        allTemplates,
+      );
+
+      if (adapterMatches.length === 1) {
+        // Auto-insert the single matching adapter
+        pushUndo({ nodes: state.nodes, edges: state.edges });
+        set({ pendingIncompatibleConnection: { connection, sourcePort, targetPort, reason: "connector-mismatch" } });
+        get().insertAdapterBetween(adapterMatches[0]);
+        return;
+      } else {
+        // Zero or multiple matches — show dialog for user to choose (or connect anyway)
+        set({ pendingIncompatibleConnection: { connection, sourcePort, targetPort, reason: "connector-mismatch" } });
+        return;
+      }
+    }
+
+    // Also handle CONNECTOR_ACCEPTS adapter pairs (compatible but needs adapter cable)
+    if (sourcePort && targetPort && needsAdapter(sourcePort.connectorType, targetPort.connectorType)) {
+      const allTemplates = [...DEVICE_TEMPLATES, ...state.customTemplates];
+      const adapterMatches = findAdaptersForConnectorBridge(
+        sourcePort.connectorType!,
+        targetPort.connectorType!,
+        sourcePort.signalType,
+        allTemplates,
+      );
+
+      if (adapterMatches.length === 1) {
+        pushUndo({ nodes: state.nodes, edges: state.edges });
+        set({ pendingIncompatibleConnection: { connection, sourcePort, targetPort, reason: "connector-mismatch" } });
+        get().insertAdapterBetween(adapterMatches[0]);
+        return;
+      } else {
+        set({ pendingIncompatibleConnection: { connection, sourcePort, targetPort, reason: "connector-mismatch" } });
+        return;
+      }
+    }
+
+    pushUndo({ nodes: state.nodes, edges: state.edges });
 
     const connectorMismatch = !areConnectorsCompatible(
       sourcePort?.connectorType,
@@ -1399,10 +1492,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         data: {
           signalType: pending.sourcePort.signalType,
           ...(!areConnectorsCompatible(pending.sourcePort.connectorType, adapterInput.connectorType) ? { connectorMismatch: true } : {}),
+          ...(adapterInput.directAttach ? { directAttach: true } : {}),
         },
         style: {
-          stroke: `var(--color-${pending.sourcePort.signalType})`,
-          strokeWidth: 2,
+          stroke: adapterInput.directAttach ? "#9ca3af" : `var(--color-${pending.sourcePort.signalType})`,
+          strokeWidth: adapterInput.directAttach ? 1 : 2,
         },
       });
     }
@@ -1418,10 +1512,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         data: {
           signalType: pending.targetPort.signalType,
           ...(!areConnectorsCompatible(adapterOutput.connectorType, pending.targetPort.connectorType) ? { connectorMismatch: true } : {}),
+          ...(adapterOutput.directAttach ? { directAttach: true } : {}),
         },
         style: {
-          stroke: `var(--color-${pending.targetPort.signalType})`,
-          strokeWidth: 2,
+          stroke: adapterOutput.directAttach ? "#9ca3af" : `var(--color-${pending.targetPort.signalType})`,
+          strokeWidth: adapterOutput.directAttach ? 1 : 2,
         },
       });
     }
@@ -1593,6 +1688,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showConnectionLabels: !state.showConnectionLabels ? false : undefined,
+      hideAdapters: state.hideAdapters || undefined,
     };
     // Persist cloud identity alongside autosave (not part of SchematicFile export)
     const blob: Record<string, unknown> = { ...data };
@@ -1648,6 +1744,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
             showLineJumps: data.showLineJumps ?? true,
             showConnectionLabels: data.showConnectionLabels ?? true,
+            hideAdapters: data.hideAdapters ?? false,
           });
           hydrated = true;
           get().saveToLocalStorage();
@@ -1687,6 +1784,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
         showLineJumps: data.showLineJumps ?? true,
         showConnectionLabels: data.showConnectionLabels ?? true,
+        hideAdapters: data.hideAdapters ?? false,
         // Restore cloud identity from autosave (not part of SchematicFile)
         cloudSchematicId: parsed.cloudSchematicId ?? null,
         cloudSavedAt: parsed.cloudSavedAt ?? null,
@@ -1726,6 +1824,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showConnectionLabels: !state.showConnectionLabels ? false : undefined,
+      hideAdapters: state.hideAdapters || undefined,
     };
   },
 
@@ -1782,6 +1881,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
       showLineJumps: data.showLineJumps ?? true,
       showConnectionLabels: data.showConnectionLabels ?? true,
+      hideAdapters: data.hideAdapters ?? false,
       // File imports and shared schematics always start as local-only
       cloudSchematicId: null,
       cloudSavedAt: null,
@@ -1892,10 +1992,98 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   recomputeRoutes: (rfInstance) => {
     const state = get();
     const hiddenSet = state.hiddenSignalTypes ? new Set(state.hiddenSignalTypes.split(",")) : null;
-    const visibleEdges = hiddenSet
+    let visibleEdges = hiddenSet
       ? state.edges.filter((e) => !hiddenSet.has(e.data?.signalType ?? ""))
       : state.edges;
-    const results = routeAllEdges(state.nodes, visibleEdges, rfInstance, state.debugEdges);
+
+    // --- Adapter visibility: compute hidden adapters and virtual edges ---
+    const hiddenAdapterNodeIds = new Set<string>();
+    const hiddenVirtualEdgeIds = new Set<string>();
+    const virtualEdgeGradients: Record<string, { sourceColor: string; targetColor: string }> = {};
+    // Map from virtual edge ID back to the hidden partner edge ID
+    const virtualEdgeSources = new Map<string, { primaryEdgeId: string; secondaryEdgeId: string; adapterNodeId: string }>();
+
+    for (const n of state.nodes) {
+      if (n.type !== "device") continue;
+      const data = n.data as DeviceData;
+      if (data.deviceType !== "adapter") continue;
+      // Resolve visibility
+      if (data.adapterVisibility === "force-show") continue;
+      if (data.adapterVisibility === "force-hide" || state.hideAdapters) {
+        hiddenAdapterNodeIds.add(n.id);
+      }
+    }
+
+    if (hiddenAdapterNodeIds.size > 0) {
+      // For each hidden adapter, find its edge pair and create virtual edges
+      const virtualEdges: ConnectionEdge[] = [];
+      const replacedEdgeIds = new Set<string>();
+
+      for (const adapterId of hiddenAdapterNodeIds) {
+        // Find edges connected to this adapter
+        const inboundEdge = visibleEdges.find((e) => e.target === adapterId);
+        const outboundEdge = visibleEdges.find((e) => e.source === adapterId);
+
+        if (inboundEdge && outboundEdge) {
+          // Create virtual edge: source of inbound → target of outbound
+          const virtualId = `virtual-${inboundEdge.id}-${outboundEdge.id}`;
+          const srcSignalType = inboundEdge.data?.signalType ?? "custom";
+          const tgtSignalType = outboundEdge.data?.signalType ?? "custom";
+
+          virtualEdges.push({
+            id: virtualId,
+            source: inboundEdge.source,
+            target: outboundEdge.target,
+            sourceHandle: inboundEdge.sourceHandle,
+            targetHandle: outboundEdge.targetHandle,
+            data: {
+              signalType: srcSignalType as SignalType,
+            },
+            style: inboundEdge.style,
+          });
+
+          replacedEdgeIds.add(inboundEdge.id);
+          replacedEdgeIds.add(outboundEdge.id);
+          hiddenVirtualEdgeIds.add(outboundEdge.id);
+
+          virtualEdgeSources.set(virtualId, {
+            primaryEdgeId: inboundEdge.id,
+            secondaryEdgeId: outboundEdge.id,
+            adapterNodeId: adapterId,
+          });
+
+          // If signal types differ, store gradient info for the primary edge
+          if (srcSignalType !== tgtSignalType) {
+            virtualEdgeGradients[inboundEdge.id] = {
+              sourceColor: `var(--color-${srcSignalType})`,
+              targetColor: `var(--color-${tgtSignalType})`,
+            };
+          }
+        }
+      }
+
+      // Replace real edge pairs with virtual edges for routing
+      visibleEdges = [
+        ...visibleEdges.filter((e) => !replacedEdgeIds.has(e.id)),
+        ...virtualEdges,
+      ];
+    }
+
+    // Exclude hidden adapter nodes from obstacle computation
+    const routingNodes = hiddenAdapterNodeIds.size > 0
+      ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id))
+      : state.nodes;
+
+    const results = routeAllEdges(routingNodes, visibleEdges, rfInstance, state.debugEdges);
+
+    // Map virtual edge routes back to primary real edge IDs
+    for (const [virtualId, mapping] of virtualEdgeSources) {
+      const route = results[virtualId];
+      if (route) {
+        results[mapping.primaryEdgeId] = { ...route, edgeId: mapping.primaryEdgeId };
+        delete results[virtualId];
+      }
+    }
 
     // Always normalize edge zIndex: boost edges with line-jump hops to 1,
     // set all others to 0. This prevents stale zIndex from selected/undo state.
@@ -1913,7 +2101,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         : { ...e, zIndex: 0 },
     );
 
-    set({ routedEdges: results, edges: updatedEdges });
+    set({
+      routedEdges: results,
+      edges: updatedEdges,
+      hiddenAdapterNodeIds,
+      hiddenVirtualEdgeIds,
+      virtualEdgeGradients,
+    });
   },
 
   toggleDebugEdges: () => {

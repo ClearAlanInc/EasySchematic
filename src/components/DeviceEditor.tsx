@@ -36,6 +36,7 @@ interface PortDraft {
   capabilities?: PortCapabilities;
   isMulticable?: boolean;
   channelCount?: number;
+  directAttach?: boolean;
 }
 
 function newPortDraft(direction: PortDirection): PortDraft {
@@ -87,6 +88,7 @@ export default function DeviceEditor() {
   const [isCableAccessory, setIsCableAccessory] = useState(false);
   const [integratedWithCable, setIntegratedWithCable] = useState(false);
   const [isVenueProvided, setIsVenueProvided] = useState(false);
+  const [adapterVisibility, setAdapterVisibility] = useState<"default" | "force-show" | "force-hide">("default");
 
   // Login dialog for community submission
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -114,6 +116,7 @@ export default function DeviceEditor() {
         capabilities: p.capabilities ? { ...p.capabilities } : undefined,
         isMulticable: p.isMulticable,
         channelCount: p.channelCount,
+        directAttach: p.directAttach,
       })),
     );
     setShowAllPorts(node.data.showAllPorts ?? false);
@@ -126,6 +129,7 @@ export default function DeviceEditor() {
     setIsCableAccessory(node.data.isCableAccessory ?? false);
     setIntegratedWithCable(node.data.integratedWithCable ?? false);
     setIsVenueProvided(node.data.isVenueProvided ?? false);
+    setAdapterVisibility(node.data.adapterVisibility ?? "default");
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -173,12 +177,13 @@ export default function DeviceEditor() {
       ...(isCableAccessory ? { isCableAccessory: true } : {}),
       ...(integratedWithCable ? { integratedWithCable: true } : {}),
       ...(isVenueProvided ? { isVenueProvided: true } : {}),
+      ...(adapterVisibility !== "default" ? { adapterVisibility } : {}),
       ...(existing?.baseLabel ? { baseLabel: existing.baseLabel } : {}),
       ...(existing?.slots ? { slots: existing.slots } : {}),
     };
     updateDevice(editingNodeId, data);
     close();
-  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, isCableAccessory, integratedWithCable, isVenueProvided]);
+  }, [editingNodeId, ports, label, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility]);
 
   const handleSaveAsTemplate = useCallback(() => {
     const finalPorts: Port[] = ports
@@ -298,6 +303,7 @@ export default function DeviceEditor() {
       connectorType: p.connectorType,
       networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
       capabilities: p.capabilities ? { ...p.capabilities } : undefined,
+      directAttach: p.directAttach,
     })));
     setHiddenPorts([]);
     setColor(tpl.color);
@@ -317,6 +323,7 @@ export default function DeviceEditor() {
       connectorType: p.connectorType,
       networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
       capabilities: p.capabilities ? { ...p.capabilities } : undefined,
+      directAttach: p.directAttach,
     })));
     setHiddenPorts(preset.hiddenPorts ?? []);
     setColor(preset.color);
@@ -551,6 +558,7 @@ export default function DeviceEditor() {
           <PortSection
             title="Inputs"
             direction="input"
+            deviceType={deviceType}
             ports={inputs}
             onAdd={() => addPort("input")}
             onBulkAdd={bulkAddPorts}
@@ -568,6 +576,7 @@ export default function DeviceEditor() {
           <PortSection
             title="Outputs"
             direction="output"
+            deviceType={deviceType}
             ports={outputs}
             onAdd={() => addPort("output")}
             onBulkAdd={bulkAddPorts}
@@ -585,6 +594,7 @@ export default function DeviceEditor() {
           <PortSection
             title="Bidirectional"
             direction="bidirectional"
+            deviceType={deviceType}
             ports={bidir}
             onAdd={() => addPort("bidirectional")}
             onBulkAdd={bulkAddPorts}
@@ -697,6 +707,20 @@ export default function DeviceEditor() {
                     className="cursor-pointer"
                   />
                   Integrated with cable
+                </label>
+              )}
+              {deviceType === "adapter" && (
+                <label className="flex items-center gap-1.5 text-[var(--color-text)] select-none">
+                  <span className="text-[var(--color-text-muted)]">Visibility:</span>
+                  <select
+                    value={adapterVisibility}
+                    onChange={(e) => setAdapterVisibility(e.target.value as "default" | "force-show" | "force-hide")}
+                    className="text-xs border border-[var(--color-border)] rounded px-1.5 py-0.5 bg-white cursor-pointer"
+                  >
+                    <option value="default">Default</option>
+                    <option value="force-show">Always Show</option>
+                    <option value="force-hide">Always Hide</option>
+                  </select>
                 </label>
               )}
               <label className="flex items-center gap-1.5 text-[var(--color-text)] cursor-pointer select-none">
@@ -1006,6 +1030,7 @@ function PortVisibilitySection({
 function PortSection({
   title,
   direction,
+  deviceType,
   ports,
   onAdd,
   onBulkAdd,
@@ -1021,6 +1046,7 @@ function PortSection({
 }: {
   title: string;
   direction: PortDirection;
+  deviceType: string;
   ports: PortDraft[];
   onAdd: () => void;
   onBulkAdd: (direction: PortDirection, prefix: string, start: number, count: number, signalType: SignalType, section: string) => void;
@@ -1136,6 +1162,7 @@ function PortSection({
                   port={port}
                   index={startIndex + i}
                   direction={direction}
+                  deviceType={deviceType}
                   onRemove={() => onRemove(port.id)}
                   onUpdate={(u) => onUpdate(port.id, u)}
                   isDragging={draggedPortId === port.id}
@@ -1166,6 +1193,7 @@ function PortRow({
   port,
   index,
   direction,
+  deviceType,
   onRemove,
   onUpdate,
   isDragging,
@@ -1180,6 +1208,7 @@ function PortRow({
   port: PortDraft;
   index: number;
   direction: PortDirection;
+  deviceType: string;
   onRemove: () => void;
   onUpdate: (updates: Partial<PortDraft>) => void;
   isDragging: boolean;
@@ -1342,6 +1371,26 @@ function PortRow({
             title="Channel count"
             onKeyDown={(e) => e.stopPropagation()}
           />
+        )}
+
+        {/* Direct attach toggle (adapters only) */}
+        {deviceType === "adapter" && (
+          <label
+            className={`text-[9px] px-1 py-0.5 rounded cursor-pointer transition-colors shrink-0 select-none ${
+              port.directAttach
+                ? "bg-green-100 text-green-700"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text)] opacity-0 group-hover:opacity-100"
+            }`}
+            title="Direct attach — plugs directly into device, no separate cable"
+          >
+            <input
+              type="checkbox"
+              checked={port.directAttach ?? false}
+              onChange={(e) => onUpdate({ directAttach: e.target.checked || undefined })}
+              className="hidden"
+            />
+            DA
+          </label>
         )}
 
         {/* Section badge */}

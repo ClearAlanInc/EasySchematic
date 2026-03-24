@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 18;
+export const CURRENT_SCHEMA_VERSION = 19;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -218,6 +218,11 @@ const migrations: Record<number, Migration> = {
     }
 
     data.version = 18;
+    return data;
+  },
+  18: (data) => {
+    // v18 → v19: adapter visibility fields — all optional, no transform needed
+    data.version = 19;
     return data;
   },
 };

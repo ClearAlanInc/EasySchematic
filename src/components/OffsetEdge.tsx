@@ -43,10 +43,32 @@ function OffsetEdgeComponent({
     return edge?.data?.connectorMismatch === true;
   });
 
+  // Check if this edge is hidden (part of a virtual pair, the secondary half)
+  const isHiddenVirtualEdge = useSchematicStore((s) => s.hiddenVirtualEdgeIds.has(id));
+
+  // Check if this edge is the primary half of a virtual pair (target is a hidden adapter)
+  const isVirtualPrimary = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    return edge ? s.hiddenAdapterNodeIds.has(edge.target) : false;
+  });
+
+  // Check if this edge should render as a gradient (virtual edge bridging different signal types)
+  const gradientColors = useSchematicStore((s) => {
+    const g = s.virtualEdgeGradients[id];
+    if (!g) return "";
+    return `${g.sourceColor}\0${g.targetColor}`;
+  });
+
   // Read allow incompatible override (stable primitive selector)
   const allowIncompatible = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.allowIncompatible === true;
+  });
+
+  // Read direct-attach flag (edge represents physical plug-in, not a cable)
+  const directAttach = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    return edge?.data?.directAttach === true;
   });
 
   // Read user-defined connection label (stable primitive selector)
@@ -103,11 +125,44 @@ function OffsetEdgeComponent({
     turns = "pending";
   }
 
+  // Gradient for virtual edges bridging different signal types
+  const hasGradient = gradientColors.length > 0;
+  const gradientId = hasGradient ? `gradient-${id}` : "";
+  let gradientDef: React.ReactNode = null;
+  if (hasGradient && routeStr) {
+    const [srcColor, tgtColor] = gradientColors.split("\0");
+    // Use the first and last waypoints for gradient direction
+    const routeData = useSchematicStore.getState().routedEdges[id];
+    const wps = routeData?.waypoints;
+    if (wps && wps.length >= 2) {
+      const first = wps[0];
+      const last = wps[wps.length - 1];
+      gradientDef = (
+        <defs>
+          <linearGradient
+            id={gradientId}
+            gradientUnits="userSpaceOnUse"
+            x1={first.x}
+            y1={first.y}
+            x2={last.x}
+            y2={last.y}
+          >
+            <stop offset="0%" stopColor={srcColor} />
+            <stop offset="100%" stopColor={tgtColor} />
+          </linearGradient>
+        </defs>
+      );
+    }
+  }
+
   const edgeStyle = routeStr
     ? {
         ...style,
-        strokeWidth: selected ? 3 : 2,
+        ...(directAttach
+          ? { stroke: "#9ca3af", strokeWidth: selected ? 2 : 1 }
+          : { strokeWidth: selected ? 3 : 2 }),
         ...(connectorMismatch && !allowIncompatible ? { strokeDasharray: "6 3" } : {}),
+        ...(hasGradient ? { stroke: `url(#${gradientId})` } : {}),
       }
     : { ...style, strokeWidth: 0, opacity: 0 };
 
@@ -449,10 +504,25 @@ function OffsetEdgeComponent({
     );
   };
 
+  // For virtual primary edges, the target label should be at the end of the routed path
+  // (not at the hidden adapter's handle position)
+  let tgtLabelX = targetX;
+  let tgtLabelY = targetY;
+  if (isVirtualPrimary && routeWpStr) {
+    const wps = routeWpStr.split("|").map((s) => {
+      const [x, y] = s.split(",");
+      return { x: Number(x), y: Number(y) };
+    });
+    if (wps.length >= 1) {
+      tgtLabelX = wps[wps.length - 1].x;
+      tgtLabelY = wps[wps.length - 1].y;
+    }
+  }
+
   const cableIdLabels = showConnectionLabels && !hideLabel && labelText && routeStr ? (
     <>
       {makeCableIdLabel(sourceX, sourceY, srcDx, srcDy, "lbl-src")}
-      {makeCableIdLabel(targetX, targetY, -tgtDx, -tgtDy, "lbl-tgt")}
+      {makeCableIdLabel(tgtLabelX, tgtLabelY, -tgtDx, -tgtDy, "lbl-tgt")}
     </>
   ) : null;
 
@@ -491,9 +561,15 @@ function OffsetEdgeComponent({
     );
   };
 
+  // Hidden virtual edges (secondary half of adapter pair) — render nothing
+  if (isHiddenVirtualEdge) {
+    return null;
+  }
+
   if (stubbed && stubPaths) {
     return (
       <>
+        {gradientDef}
         <path d={stubPaths.srcPath} fill="none" style={edgeStyle} markerEnd={undefined} />
         <path d={stubPaths.tgtPath} fill="none" style={edgeStyle} markerEnd={markerEnd} />
         {renderSlash(stubPaths.srcEnd, "slash-src")}
@@ -506,6 +582,7 @@ function OffsetEdgeComponent({
 
   return (
     <>
+      {gradientDef}
       <BaseEdge
         id={id}
         path={edgePath}

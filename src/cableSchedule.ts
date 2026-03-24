@@ -72,7 +72,7 @@ export function computeCableSchedule(
   namingScheme: "sequential" | "type-prefix" = "sequential",
 ): CableScheduleRow[] {
   const connections = edges
-    .filter((e) => e.data?.signalType)
+    .filter((e) => e.data?.signalType && !e.data?.directAttach)
     .map((e) => {
       const srcNode = nodes.find((n) => n.id === e.source);
       const tgtNode = nodes.find((n) => n.id === e.target);

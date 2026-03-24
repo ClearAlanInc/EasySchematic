@@ -382,6 +382,7 @@ function maxSpread(portCount: number): number {
 export function enforceMinSpacing(
   draggedNode: SchematicNode,
   allNodes: SchematicNode[],
+  hiddenNodeIds?: Set<string>,
 ): { x: number; y: number } | null {
   if (draggedNode.type === "room") return null;
 
@@ -394,6 +395,7 @@ export function enforceMinSpacing(
     if (other.id === draggedNode.id) continue;
     if (other.type === "room") continue;
     if (other.parentId !== draggedNode.parentId) continue;
+    if (hiddenNodeIds?.has(other.id)) continue;
 
     const or = nodeRect(other);
 

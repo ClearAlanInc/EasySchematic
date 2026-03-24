@@ -26,6 +26,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const hideDeviceTypes = useSchematicStore((s) => s.hideDeviceTypes);
+  const isHiddenAdapter = useSchematicStore((s) => s.hiddenAdapterNodeIds.has(id));
 
   const hiddenSignalTypes = useMemo(
     () => (hiddenSignalTypesStr ? new Set(hiddenSignalTypesStr.split(",")) : null),
@@ -89,6 +90,34 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
 
   // Build bidirectional items with section support
   const bidirItems = useMemo(() => buildColumnItems(bidirectional), [bidirectional]);
+
+  if (isHiddenAdapter) {
+    // Render 1x1 invisible placeholder — keeps React Flow handle refs valid but
+    // doesn't block device placement (RF re-measures this as ~1px)
+    return (
+      <div style={{ width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
+        {data.ports.map((p) => {
+          if (p.direction === "bidirectional") {
+            return (
+              <span key={p.id}>
+                <Handle type="target" position={Position.Left} id={`${p.id}-in`} style={{ opacity: 0 }} />
+                <Handle type="source" position={Position.Right} id={`${p.id}-out`} style={{ opacity: 0 }} />
+              </span>
+            );
+          }
+          return (
+            <Handle
+              key={p.id}
+              type={p.direction === "input" ? "target" : "source"}
+              position={p.direction === "input" ? Position.Left : Position.Right}
+              id={p.id}
+              style={{ opacity: 0 }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div

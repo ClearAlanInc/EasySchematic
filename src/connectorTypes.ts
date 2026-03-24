@@ -55,6 +55,15 @@ export const CONNECTOR_ACCEPTS: Partial<Record<ConnectorType, ConnectorAcceptanc
   "dvi":           { adapter: ["hdmi"] },
   "iec":           { adapter: ["edison", "powercon"] },
   "powercon":      { adapter: ["edison"] },
+  "l5-20":         { adapter: ["edison", "powercon"] },
+  "l6-20":         { adapter: ["edison", "powercon"] },
+  "l6-30":         { adapter: ["edison", "powercon"] },
+  "l21-30":        { adapter: ["edison", "powercon"] },
+  "xlr-3":         { adapter: ["trs-quarter", "rca"] },
+  "trs-quarter":   { adapter: ["xlr-3", "trs-eighth"] },
+  "trs-eighth":    { adapter: ["trs-quarter"] },
+  "rca":           { adapter: ["xlr-3"] },
+  "edison":        { adapter: ["iec", "powercon", "l5-20", "l6-20", "l6-30", "l21-30"] },
 };
 
 /** Check if two connector types are compatible (same type or one accepts the other) */
@@ -131,7 +140,7 @@ export function findAdaptersForSignalBridge(
   templates: DeviceTemplate[],
 ): DeviceTemplate[] {
   const results = templates.filter((t) => {
-    if (t.deviceType !== "converter" && t.deviceType !== "adapter") return false;
+    if (t.deviceType !== "adapter") return false;
     const hasMatchingInput = t.ports.some(
       (p) =>
         (p.direction === "input" || p.direction === "bidirectional") &&
@@ -141,6 +150,41 @@ export function findAdaptersForSignalBridge(
       (p) =>
         (p.direction === "output" || p.direction === "bidirectional") &&
         p.signalType === targetSignalType,
+    );
+    return hasMatchingInput && hasMatchingOutput;
+  });
+
+  // Sort: fewest total ports first (tightest match), then alphabetically
+  results.sort((a, b) => {
+    const aPorts = a.ports.filter((p) => p.signalType !== "power").length;
+    const bPorts = b.ports.filter((p) => p.signalType !== "power").length;
+    if (aPorts !== bPorts) return aPorts - bPorts;
+    return a.label.localeCompare(b.label);
+  });
+
+  return results;
+}
+
+/** Find adapter templates that bridge two different connector types within the same signal type */
+export function findAdaptersForConnectorBridge(
+  sourceConnector: ConnectorType,
+  targetConnector: ConnectorType,
+  signalType: SignalType,
+  templates: DeviceTemplate[],
+): DeviceTemplate[] {
+  const results = templates.filter((t) => {
+    if (t.deviceType !== "adapter") return false;
+    const hasMatchingInput = t.ports.some(
+      (p) =>
+        (p.direction === "input" || p.direction === "bidirectional") &&
+        p.signalType === signalType &&
+        p.connectorType === sourceConnector,
+    );
+    const hasMatchingOutput = t.ports.some(
+      (p) =>
+        (p.direction === "output" || p.direction === "bidirectional") &&
+        p.signalType === signalType &&
+        p.connectorType === targetConnector,
     );
     return hasMatchingInput && hasMatchingOutput;
   });

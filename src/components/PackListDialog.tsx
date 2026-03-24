@@ -8,6 +8,7 @@ import {
   getPackListTableData,
   type PackListDevice,
   type PackListSummaryRow,
+  type PackListAdapter,
 } from "../packList";
 import { createDefaultPackListLayout } from "../reportLayout";
 import ReportPreviewDialog from "./ReportPreviewDialog";
@@ -122,7 +123,7 @@ function PackListDialog({ onClose }: PackListDialogProps) {
                     Group by Path
                   </label>
                 </div>
-                <CablesTab summary={data.summary} groupByPath={groupCablesByPath} />
+                <CablesTab summary={data.summary} adapters={data.adapters} groupByPath={groupCablesByPath} />
               </>
             )}
           </div>
@@ -253,14 +254,36 @@ function DevicesTab({
 
 function CablesTab({
   summary,
+  adapters,
   groupByPath,
 }: {
   summary: PackListSummaryRow[];
+  adapters: PackListAdapter[];
   groupByPath: boolean;
 }) {
-  if (summary.length === 0) {
+  if (summary.length === 0 && adapters.length === 0) {
     return <Empty>No connections in this schematic.</Empty>;
   }
+
+  const adapterRows = adapters.length > 0 && (
+    <>
+      <tr>
+        <td
+          colSpan={99}
+          className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+        >
+          Adapters ({adapters.reduce((sum, a) => sum + a.count, 0)})
+        </td>
+      </tr>
+      {adapters.map((a, i) => (
+        <tr key={`adapter-${i}`} className={rowClass(i)}>
+          <td className={tdClass}>{a.count}×</td>
+          <td className={tdClass}>{a.model}</td>
+          <td className={tdClass}></td>
+        </tr>
+      ))}
+    </>
+  );
 
   if (groupByPath) {
     const groups = groupBy(summary, (s) => {
@@ -292,6 +315,7 @@ function CablesTab({
               ))}
             </>
           ))}
+          {adapterRows}
         </tbody>
       </table>
     );
@@ -299,24 +323,27 @@ function CablesTab({
 
   const merged = mergeCablesByType(summary);
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr>
-          <th className={thClass}>Qty</th>
-          <th className={thClass}>Cable Type</th>
-          <th className={thClass}>Signal</th>
-        </tr>
-      </thead>
-      <tbody>
-        {merged.map((s, i) => (
-          <tr key={i} className={rowClass(i)}>
-            <td className={tdClass}>{s.count}×</td>
-            <td className={tdClass}>{s.cableType}</td>
-            <td className={tdClass}>{s.signalType}</td>
+    <>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className={thClass}>Qty</th>
+            <th className={thClass}>Cable Type</th>
+            <th className={thClass}>Signal</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {merged.map((s, i) => (
+            <tr key={i} className={rowClass(i)}>
+              <td className={tdClass}>{s.count}×</td>
+              <td className={tdClass}>{s.cableType}</td>
+              <td className={tdClass}>{s.signalType}</td>
+            </tr>
+          ))}
+          {adapterRows}
+        </tbody>
+      </table>
+    </>
   );
 }
 

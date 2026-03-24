@@ -34,7 +34,9 @@ import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import RouterCreator from "./components/RouterCreator";
 import { computeSnap, enforceMinSpacing, type GuideLine } from "./snapUtils";
-import type { DeviceTemplate, SchematicFile, SchematicNode } from "./types";
+import type { DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
+import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
+import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic } from "./templateApi";
 
 /** Darkens the canvas area left of x=0 and above y=0, marking the printable origin. */
@@ -136,7 +138,7 @@ function SchematicCanvas() {
   const isClickConnectMode = useRef(false);
   const [connectPreview, setConnectPreview] = useState<{
     fromX: number; fromY: number; toX: number; toY: number; fromSource: boolean;
-    snapped: boolean; valid: boolean;
+    snapped: boolean; valid: boolean; adaptable: boolean;
   } | null>(null);
 
   // Quick-add device dialog state
@@ -161,6 +163,11 @@ function SchematicCanvas() {
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const printView = useSchematicStore((s) => s.printView);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
+  const hideAdapters = useSchematicStore((s) => s.hideAdapters);
+  const adapterVisibilityDigest = useSchematicStore((s) =>
+    s.nodes.filter((n) => n.type === "device" && (n.data as DeviceData).deviceType === "adapter")
+      .map((n) => `${n.id}:${(n.data as DeviceData).adapterVisibility ?? "default"}`).join("|"),
+  );
   const nodeCount = useSchematicStore((s) => s.nodes.length);
   const edgeCount = useSchematicStore((s) => s.edges.length);
   // Digest of node positions + sizes to detect moves
@@ -187,7 +194,7 @@ function SchematicCanvas() {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
     }, 50);
     return () => clearTimeout(timer);
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest]);
 
   // Recompute cable ID map when edges/nodes/naming change
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
@@ -497,7 +504,7 @@ function SchematicCanvas() {
       setConnectPreview({
         fromX: pos.x, fromY: pos.y,
         toX: mouseFlow.x, toY: mouseFlow.y,
-        fromSource, snapped: false, valid: true,
+        fromSource, snapped: false, valid: true, adaptable: false,
       });
 
       // Snap detection
@@ -539,8 +546,36 @@ function SchematicCanvas() {
         const connection = fromSource
           ? { source: sourceNodeId, sourceHandle: sourceHandleId, target: best.nodeId, targetHandle: best.handleId }
           : { source: best.nodeId, sourceHandle: best.handleId, target: sourceNodeId, targetHandle: sourceHandleId };
-        const valid = useSchematicStore.getState().isValidConnection(connection as Connection);
-        return { x: best.x, y: best.y, valid };
+        const state2 = useSchematicStore.getState();
+        const valid = state2.isValidConnection(connection as Connection);
+
+        // Check if an adapter exists for this mismatch (yellow indicator)
+        let adaptable = false;
+        if (!valid) {
+          const srcNodeId = fromSource ? sourceNodeId : best.nodeId;
+          const srcHandleId = fromSource ? sourceHandleId : best.handleId;
+          const tgtNodeId = fromSource ? best.nodeId : sourceNodeId;
+          const tgtHandleId = fromSource ? best.handleId : sourceHandleId;
+          const srcNode = state2.nodes.find((n) => n.id === srcNodeId);
+          const tgtNode = state2.nodes.find((n) => n.id === tgtNodeId);
+          if (srcNode?.type === "device" && tgtNode?.type === "device") {
+            const srcPortId = srcHandleId?.replace(/-(in|out)$/, "");
+            const tgtPortId = tgtHandleId?.replace(/-(in|out)$/, "");
+            const srcPort = (srcNode.data as DeviceData).ports.find((p) => p.id === srcPortId);
+            const tgtPort = (tgtNode.data as DeviceData).ports.find((p) => p.id === tgtPortId);
+            if (srcPort && tgtPort) {
+              const allTemplates = [...DEVICE_TEMPLATES, ...state2.customTemplates];
+              if (srcPort.signalType !== tgtPort.signalType) {
+                adaptable = findAdaptersForSignalBridge(srcPort.signalType, tgtPort.signalType, allTemplates).length > 0;
+              } else if (srcPort.connectorType && tgtPort.connectorType && srcPort.connectorType !== tgtPort.connectorType) {
+                adaptable = findAdaptersForConnectorBridge(srcPort.connectorType, tgtPort.connectorType, srcPort.signalType, allTemplates).length > 0
+                  || !areConnectorsCompatible(srcPort.connectorType, tgtPort.connectorType);
+              }
+            }
+          }
+        }
+
+        return { x: best.x, y: best.y, valid, adaptable };
       };
 
       const onMove = (e: MouseEvent) => {
@@ -552,6 +587,7 @@ function SchematicCanvas() {
           fromSource: from.fromSource,
           snapped: !!snap,
           valid: snap ? snap.valid : true,
+          adaptable: snap ? snap.adaptable : false,
         });
       };
       window.addEventListener("mousemove", onMove);
@@ -683,7 +719,7 @@ function SchematicCanvas() {
 
       // Enforce minimum spacing so stubs don't land inside neighbor obstacle rects
       const snappedNode = { ...draggedNode, position: { x: finalX, y: finalY } } as SchematicNode;
-      const spacing = enforceMinSpacing(snappedNode, state.nodes);
+      const spacing = enforceMinSpacing(snappedNode, state.nodes, state.hiddenAdapterNodeIds);
       if (spacing) {
         finalX = spacing.x;
         finalY = spacing.y;
@@ -863,13 +899,13 @@ function SchematicCanvas() {
       <ResizeSnapGuides dragGuides={snapGuides} />
       {printView && <PageBoundaryOverlay />}
       {connectPreview && (() => {
-        const { fromX, fromY, toX, toY, fromSource, snapped, valid } = connectPreview;
+        const { fromX, fromY, toX, toY, fromSource, snapped, valid, adaptable } = connectPreview;
         const dx = Math.abs(toX - fromX);
         const ctrl = Math.max(dx * 0.5, 50);
         const c1x = fromSource ? fromX + ctrl : fromX - ctrl;
         const c2x = fromSource ? toX - ctrl : toX + ctrl;
         const d = `M ${fromX} ${fromY} C ${c1x} ${fromY}, ${c2x} ${toY}, ${toX} ${toY}`;
-        const color = snapped ? (valid ? "#22c55e" : "#ef4444") : "#b1b1b7";
+        const color = snapped ? (valid ? "#22c55e" : adaptable ? "#eab308" : "#ef4444") : "#b1b1b7";
         return (
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1000 }}>
             <svg style={{

@@ -16,6 +16,8 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const setShowLineJumps = useSchematicStore((s) => s.setShowLineJumps);
   const showConnectionLabels = useSchematicStore((s) => s.showConnectionLabels);
   const setShowConnectionLabels = useSchematicStore((s) => s.setShowConnectionLabels);
+  const hideAdapters = useSchematicStore((s) => s.hideAdapters);
+  const setHideAdapters = useSchematicStore((s) => s.setHideAdapters);
   const showAllSignalTypes = useSchematicStore((s) => s.showAllSignalTypes);
 
   const hiddenSet = useMemo(
@@ -148,6 +150,23 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
             className="w-3 h-3 accent-blue-500 cursor-pointer"
           />
           <span className="text-xs text-[var(--color-text)]">Show cable IDs on connections</span>
+        </label>
+
+        {/* Divider */}
+        <div className="border-t border-[var(--color-border)] my-2" />
+
+        {/* Adapters */}
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+          Adapters
+        </div>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hideAdapters}
+            onChange={(e) => setHideAdapters(e.target.checked)}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Hide all adapters</span>
         </label>
 
       </div>

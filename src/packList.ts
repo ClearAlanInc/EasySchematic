@@ -118,11 +118,20 @@ export interface PackListAccessory {
   integratedWithCable: boolean;
 }
 
+export interface PackListAdapter {
+  model: string;
+  room: string;
+  count: number;
+  manufacturer: string;
+  modelNumber: string;
+}
+
 export interface PackListData {
   devices: PackListDevice[];
   cables: PackListCable[];
   summary: PackListSummaryRow[];
   accessories: PackListAccessory[];
+  adapters: PackListAdapter[];
 }
 
 /** Merge summary rows by (cableType, signalType, cableLength), dropping route (for non-room-grouped views) */
@@ -203,9 +212,10 @@ export function computePackList(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
 ): PackListData {
-  // Devices — grouped by (model, room) with counts (excluding cable accessories)
+  // Devices — grouped by (model, room) with counts (excluding cable accessories and passive adapters)
   const deviceMap = new Map<string, PackListDevice>();
   const accessoryMap = new Map<string, PackListAccessory>();
+  const adapterMap = new Map<string, PackListAdapter>();
   for (const n of nodes) {
     if (n.type !== "device") continue;
     const data = n.data as DeviceData;
@@ -225,6 +235,24 @@ export function computePackList(
           room,
           count: 1,
           integratedWithCable: data.integratedWithCable ?? false,
+        });
+      }
+      continue;
+    }
+
+    // Passive adapters go to their own section (shown in cables tab)
+    if (data.deviceType === "adapter") {
+      const key = `${model}|${room}`;
+      const existing = adapterMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        adapterMap.set(key, {
+          model,
+          room,
+          count: 1,
+          manufacturer: data.manufacturer ?? "",
+          modelNumber: data.modelNumber ?? "",
         });
       }
       continue;
@@ -278,9 +306,23 @@ export function computePackList(
     .filter((a) => !a.integratedWithCable)
     .sort((a, b) => a.room.localeCompare(b.room) || a.model.localeCompare(b.model));
 
-  // Cables
+  // Adapters — passive adapters shown in cables section
+  const adapters = [...adapterMap.values()].sort(
+    (a, b) => a.room.localeCompare(b.room) || a.model.localeCompare(b.model),
+  );
+
+  // Cables — exclude edges where one side is a direct-attach adapter port
   const cables: PackListCable[] = edges
-    .filter((e) => e.data?.signalType)
+    .filter((e) => {
+      if (!e.data?.signalType) return false;
+      const srcNode = nodes.find((n) => n.id === e.source);
+      const tgtNode = nodes.find((n) => n.id === e.target);
+      const srcPort = resolvePort(srcNode, e.sourceHandle);
+      const tgtPort = resolvePort(tgtNode, e.targetHandle);
+      if (srcNode?.type === "device" && (srcNode.data as DeviceData).deviceType === "adapter" && srcPort?.directAttach) return false;
+      if (tgtNode?.type === "device" && (tgtNode.data as DeviceData).deviceType === "adapter" && tgtPort?.directAttach) return false;
+      return true;
+    })
     .map((e) => {
       const srcNode = nodes.find((n) => n.id === e.source);
       const tgtNode = nodes.find((n) => n.id === e.target);
@@ -342,7 +384,7 @@ export function computePackList(
       a.cableType.localeCompare(b.cableType),
   );
 
-  return { devices, cables, summary, accessories };
+  return { devices, cables, summary, accessories, adapters };
 }
 
 // --------------- CSV Export ---------------
@@ -385,6 +427,16 @@ export function exportPackListCsv(
     lines.push(csvRow(["Qty", "Accessory", "Type", "Room"]));
     for (const a of data.accessories) {
       lines.push(csvRow([`${a.count}`, a.model, a.accessoryType, a.room]));
+    }
+    lines.push("");
+  }
+
+  // Adapters
+  if (data.adapters.length > 0) {
+    lines.push("ADAPTERS");
+    lines.push(csvRow(["Qty", "Adapter", "Manufacturer", "Model #", "Room"]));
+    for (const a of data.adapters) {
+      lines.push(csvRow([`${a.count}`, a.model, a.manufacturer, a.modelNumber, a.room]));
     }
     lines.push("");
   }
@@ -467,20 +519,31 @@ export function getPackListTableData(
   const cabGroupBy = cablesTableDef?.groupBy;
   const useRawCables = cabGroupBy === "path" || routeColVisible;
   const summarySource = useRawCables ? data.summary : mergeCablesByType(data.summary);
-  const cableRows = summarySource.map((s) => ({
-    count: `${s.count}x`,
-    cableType: s.cableType,
-    signalType: s.signalType,
-    cableLength: s.cableLength,
-    route: s.route,
+  const adapterCableRows = data.adapters.map((a) => ({
+    count: `${a.count}x`,
+    cableType: a.model,
+    signalType: "",
+    cableLength: "",
+    route: "",
   }));
+  const cableRows = [
+    ...summarySource.map((s) => ({
+      count: `${s.count}x`,
+      cableType: s.cableType,
+      signalType: s.signalType,
+      cableLength: s.cableLength,
+      route: s.route,
+    })),
+    ...adapterCableRows,
+  ];
 
   let cableGroupedRows: Map<string, Record<string, string>[]> | undefined;
   if (cabGroupBy === "path") {
-    cableGroupedRows = groupBy(cableRows, (r) => {
+    cableGroupedRows = groupBy(cableRows.filter((r) => r.signalType !== ""), (r) => {
       const match = r.route.match(/^Within (.+)$|^(.+?) >/);
       return match?.[1] ?? match?.[2] ?? "Unassigned";
     });
+    if (adapterCableRows.length > 0) cableGroupedRows.set("Adapters", adapterCableRows);
   } else if (cabGroupBy === "category") {
     // Group by cable category in the defined order (Video, Audio, Control, Data, Power, Custom)
     const ordered = groupCablesByCategory(summarySource);
@@ -496,6 +559,7 @@ export function getPackListTableData(
         })),
       ]),
     );
+    if (adapterCableRows.length > 0) cableGroupedRows.set("Adapters", adapterCableRows);
   }
 
   // Apply sorting
@@ -524,10 +588,11 @@ export function getPackListTableData(
 
   let sortedCableGrouped = cableGroupedRows;
   if (cabGroupBy === "path" && cablesTableDef?.sortBy) {
-    sortedCableGrouped = groupBy(sortedCableRows, (r) => {
+    sortedCableGrouped = groupBy(sortedCableRows.filter((r) => r.signalType !== ""), (r) => {
       const match = r.route.match(/^Within (.+)$|^(.+?) >/);
       return match?.[1] ?? match?.[2] ?? "Unassigned";
     });
+    if (adapterCableRows.length > 0) sortedCableGrouped.set("Adapters", adapterCableRows);
   } else if (cabGroupBy === "category" && cablesTableDef?.sortBy) {
     // Re-group sorted rows by category, preserving category order
     sortedCableGrouped = new Map(
@@ -536,6 +601,7 @@ export function getPackListTableData(
         return [g.category, sortedCableRows.filter((r) => catSignals.has(r.signalType))];
       }).filter(([, rows]) => rows.length > 0),
     );
+    if (adapterCableRows.length > 0) sortedCableGrouped.set("Adapters", adapterCableRows);
   }
 
   // Accessories table

@@ -1602,62 +1602,85 @@ function PackListTabInline() {
 
       {subTab === "cables" && (
         <>
-          {data.summary.length === 0 ? (
+          {data.summary.length === 0 && data.adapters.length === 0 ? (
             <div className="text-sm text-[var(--color-text-muted)] text-center py-8">
               No connections in this schematic.
             </div>
           ) : (
-            (() => {
-              const showPath = cableGrouping === "path";
-              const cableRows = showPath ? data.summary : mergeCablesByType(data.summary);
-              const renderRow = (s: PackListSummaryRow, i: number) => (
-                <tr key={i} className={rowClass(i)}>
-                  <td className={tdClass}>{s.count}&times;</td>
-                  <td className={tdClass}>{s.cableType}</td>
-                  <td className={tdClass}>{s.signalType}</td>
-                  <td className={tdClass}>{s.cableLength}</td>
-                  {showPath && <td className={tdClass}>{s.route}</td>}
-                </tr>
-              );
+            <>
+              {(() => {
+                const showPath = cableGrouping === "path";
+                const cableRows = showPath ? data.summary : mergeCablesByType(data.summary);
+                const renderRow = (s: PackListSummaryRow, i: number) => (
+                  <tr key={i} className={rowClass(i)}>
+                    <td className={tdClass}>{s.count}&times;</td>
+                    <td className={tdClass}>{s.cableType}</td>
+                    <td className={tdClass}>{s.signalType}</td>
+                    <td className={tdClass}>{s.cableLength}</td>
+                    {showPath && <td className={tdClass}>{s.route}</td>}
+                  </tr>
+                );
 
-              const categories = cableGrouping === "category" ? groupCablesByCategory(cableRows) : null;
-              let rowIdx = 0;
+                const categories = cableGrouping === "category" ? groupCablesByCategory(cableRows) : null;
+                let rowIdx = 0;
 
-              return (
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className={plThClass}>Qty</th>
-                      <th className={plThClass}>Cable Type</th>
-                      <th className={plThClass}>Signal</th>
-                      <th className={plThClass}>Length</th>
-                      {showPath && <th className={plThClass}>Route</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories
-                      ? categories.map((group) => {
-                          const rows = group.rows.map((s) => renderRow(s, rowIdx++));
-                          return categories.length > 1 ? (
-                            <React.Fragment key={group.category}>
-                              <tr>
-                                <td
-                                  colSpan={99}
-                                  className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
-                                >
-                                  {group.category} ({group.total} cable{group.total !== 1 ? "s" : ""})
-                                </td>
-                              </tr>
-                              {rows}
-                            </React.Fragment>
-                          ) : rows;
-                        })
-                      : cableRows.map((s, i) => renderRow(s, i))
-                    }
-                  </tbody>
-                </table>
-              );
-            })()
+                return (
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className={plThClass}>Qty</th>
+                        <th className={plThClass}>Cable Type</th>
+                        <th className={plThClass}>Signal</th>
+                        <th className={plThClass}>Length</th>
+                        {showPath && <th className={plThClass}>Route</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories
+                        ? categories.map((group) => {
+                            const rows = group.rows.map((s) => renderRow(s, rowIdx++));
+                            return categories.length > 1 ? (
+                              <React.Fragment key={group.category}>
+                                <tr>
+                                  <td
+                                    colSpan={99}
+                                    className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+                                  >
+                                    {group.category} ({group.total} cable{group.total !== 1 ? "s" : ""})
+                                  </td>
+                                </tr>
+                                {rows}
+                              </React.Fragment>
+                            ) : rows;
+                          })
+                        : cableRows.map((s, i) => renderRow(s, i))
+                      }
+                      {data.adapters.length > 0 && (
+                        <>
+                          <tr>
+                            <td
+                              colSpan={99}
+                              className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
+                            >
+                              Adapters ({data.adapters.reduce((sum, a) => sum + a.count, 0)})
+                            </td>
+                          </tr>
+                          {data.adapters.map((a, i) => (
+                            <tr key={`adapter-${i}`} className={rowClass(i)}>
+                              <td className={tdClass}>{a.count}&times;</td>
+                              <td className={tdClass}>{a.model}</td>
+                              <td className={tdClass}></td>
+                              <td className={tdClass}></td>
+                              {showPath && <td className={tdClass}></td>}
+                            </tr>
+                          ))}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </>
           )}
         </>
       )}

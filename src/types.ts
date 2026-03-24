@@ -93,6 +93,8 @@ export interface Port {
   activeConfig?: PortActiveConfig;
   isMulticable?: boolean;
   channelCount?: number;
+  /** When true, this port attaches directly to the connected device (no separate cable needed in pack list) */
+  directAttach?: boolean;
 }
 
 export interface SlotDefinition {
@@ -140,6 +142,8 @@ export interface DeviceData {
   powerCapacityW?: number;
   voltage?: string;
   isVenueProvided?: boolean;
+  /** Adapter visibility override — only meaningful for deviceType "adapter" */
+  adapterVisibility?: "default" | "force-show" | "force-hide";
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -196,6 +200,8 @@ export interface ConnectionData {
   allowIncompatible?: boolean;
   /** When true, hide cable ID labels on this specific connection (#5) */
   hideLabel?: boolean;
+  /** Edge represents a direct physical attachment, not a separate cable */
+  directAttach?: boolean;
 }
 
 export type ConnectionEdge = Edge<ConnectionData>;
@@ -306,6 +312,8 @@ export interface SchematicFile {
   showLineJumps?: boolean;
   /** Show cable ID labels at connection endpoints (#5) */
   showConnectionLabels?: boolean;
+  /** Global toggle: when true, all adapters default to hidden on schematic */
+  hideAdapters?: boolean;
 }
 
 export type ScrollAction = "zoom" | "pan-x" | "pan-y";

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSchematicStore } from "../store";
-import { findAdaptersForSignalBridge } from "../connectorTypes";
+import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge } from "../connectorTypes";
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "../types";
 import type { DeviceTemplate } from "../types";
 import { DEVICE_TEMPLATES } from "../deviceLibrary";
@@ -17,6 +17,14 @@ export default function IncompatibleConnectionDialog() {
   const adapters = useMemo(() => {
     if (!pending) return [];
     const allTemplates = [...DEVICE_TEMPLATES, ...customTemplates];
+    if (pending.reason === "connector-mismatch") {
+      return findAdaptersForConnectorBridge(
+        pending.sourcePort.connectorType!,
+        pending.targetPort.connectorType!,
+        pending.sourcePort.signalType,
+        allTemplates,
+      );
+    }
     return findAdaptersForSignalBridge(
       pending.sourcePort.signalType,
       pending.targetPort.signalType,
@@ -26,6 +34,7 @@ export default function IncompatibleConnectionDialog() {
 
   if (!pending) return null;
 
+  const isConnectorMismatch = pending.reason === "connector-mismatch";
   const srcSignal = SIGNAL_LABELS[pending.sourcePort.signalType];
   const tgtSignal = SIGNAL_LABELS[pending.targetPort.signalType];
   const srcConn = pending.sourcePort.connectorType ? CONNECTOR_LABELS[pending.sourcePort.connectorType] : "";
@@ -48,7 +57,7 @@ export default function IncompatibleConnectionDialog() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)]">
           <span className="text-sm font-semibold text-[var(--color-text-heading)]">
-            Incompatible Connection
+            {isConnectorMismatch ? "Connector Mismatch" : "Incompatible Connection"}
           </span>
           <button
             onClick={dismiss}
@@ -61,10 +70,16 @@ export default function IncompatibleConnectionDialog() {
         {/* Body */}
         <div className="px-5 py-4 flex flex-col gap-3">
           <p className="text-xs text-[var(--color-text-muted)]">
-            {srcSignal}{srcConn ? ` (${srcConn})` : ""} &rarr; {tgtSignal}{tgtConn ? ` (${tgtConn})` : ""}
+            {isConnectorMismatch
+              ? <>{srcConn} &rarr; {tgtConn} ({srcSignal})</>
+              : <>{srcSignal}{srcConn ? ` (${srcConn})` : ""} &rarr; {tgtSignal}{tgtConn ? ` (${tgtConn})` : ""}</>
+            }
           </p>
           <p className="text-xs text-[var(--color-text)]">
-            These ports use different signal types. You can insert an adapter/converter or force the connection.
+            {isConnectorMismatch
+              ? "These ports use different connector types. Select an adapter to insert between them."
+              : "These ports use different signal types. You can insert an adapter/converter or force the connection."
+            }
           </p>
 
           {/* Adapter list */}
