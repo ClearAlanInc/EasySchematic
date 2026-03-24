@@ -105,6 +105,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "usb-a": "USB",
   "usb-b": "USB",
   "usb-c": "USB-C",
+  db7w2: "D-Sub 7W2",
   db9: "DB9",
   db25: "DB25",
   "din-5": "DIN-5",
