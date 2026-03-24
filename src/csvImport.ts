@@ -368,9 +368,24 @@ function findPort(
 
 // ---------- Auto Layout ----------
 
+/** Estimate device height from port count (matches DeviceNode rendering: 60 + rows×20). */
+function estimateHeight(ports: Port[]): number {
+  const inputs = ports.filter((p) => p.direction === "input").length;
+  const outputs = ports.filter((p) => p.direction === "output").length;
+  const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
+  return 60 + (Math.max(inputs, outputs) + bidirs) * 20;
+}
+
+const DEVICE_WIDTH = 180;
+const COLUMN_SPACING = 400; // 180px device + 220px gap (generous for routing stubs)
+const VERTICAL_GAP = 40;   // 2 grid steps between devices
+const ROOM_GAP = 80;       // gap between room bands
+
 function autoLayout(
   connections: ParsedConnection[],
   deviceNames: string[],
+  deviceSizes: Map<string, number>,    // csvName → estimated height
+  deviceRooms: Map<string, string>,    // csvName → room name
 ): Map<string, { x: number; y: number }> {
   // Build directed graph
   const outgoing = new Map<string, Set<string>>();
@@ -429,17 +444,60 @@ function autoLayout(
   // Sort within each layer alphabetically for determinism
   for (const group of layerGroups.values()) group.sort();
 
-  // Position
+  // Collect unique rooms (preserving order)
+  const roomNames = [...new Set(deviceRooms.values())];
+  const hasRooms = roomNames.length > 0;
+
+  // Position devices with size-aware spacing
   const positions = new Map<string, { x: number; y: number }>();
-  for (const [layer, devices] of layerGroups) {
-    for (let i = 0; i < devices.length; i++) {
-      const x = Math.round((layer * 300) / GRID_SIZE) * GRID_SIZE;
-      const y = Math.round((i * 140) / GRID_SIZE) * GRID_SIZE;
-      positions.set(devices[i], { x, y });
+
+  if (hasRooms) {
+    // Room-aware layout: each room gets its own vertical band to prevent overlap
+    // Devices without a room go in a separate band at the top
+    const bands = ["", ...roomNames]; // "" = no-room band
+    let bandY = 0;
+
+    for (const band of bands) {
+      let bandMaxHeight = 0; // track tallest column in this band
+
+      for (const [layer, devices] of layerGroups) {
+        const bandDevices = devices.filter((d) =>
+          band === "" ? !deviceRooms.has(d) : deviceRooms.get(d) === band,
+        );
+        if (bandDevices.length === 0) continue;
+
+        const x = snap(layer * COLUMN_SPACING);
+        let y = bandY;
+        for (const name of bandDevices) {
+          positions.set(name, { x, y: snap(y) });
+          const h = deviceSizes.get(name) ?? 60;
+          y += h + VERTICAL_GAP;
+        }
+        bandMaxHeight = Math.max(bandMaxHeight, y - bandY);
+      }
+
+      if (bandMaxHeight > 0) {
+        bandY += bandMaxHeight + ROOM_GAP;
+      }
+    }
+  } else {
+    // Simple layout: no rooms, just stack by layer with size-aware spacing
+    for (const [layer, devices] of layerGroups) {
+      const x = snap(layer * COLUMN_SPACING);
+      let y = 0;
+      for (const name of devices) {
+        positions.set(name, { x, y: snap(y) });
+        const h = deviceSizes.get(name) ?? 60;
+        y += h + VERTICAL_GAP;
+      }
     }
   }
 
   return positions;
+}
+
+function snap(v: number): number {
+  return Math.round(v / GRID_SIZE) * GRID_SIZE;
 }
 
 // ---------- Build Import Result ----------
@@ -463,16 +521,27 @@ export function buildImportResult(
     if (!seen.has(c.destDevice)) { seen.add(c.destDevice); deviceNames.push(c.destDevice); }
   }
 
-  // Compute layout
-  const positions = autoLayout(connections, deviceNames);
+  // Compute device sizes for layout
+  const deviceSizes = new Map<string, number>();
+  for (const name of deviceNames) {
+    const match = deviceMatches.get(name);
+    if (!match) continue;
+    const ports = match.template ? match.template.ports : match.inferredPorts;
+    deviceSizes.set(name, estimateHeight(ports));
+  }
 
-  // Create room nodes if rooms are specified
-  const roomMap = new Map<string, string>(); // room name → room node ID
+  // Build room assignments
   const deviceRoom = new Map<string, string>(); // device csvName → room name
   for (const c of connections) {
     if (c.sourceRoom) deviceRoom.set(c.sourceDevice, c.sourceRoom);
     if (c.destRoom) deviceRoom.set(c.destDevice, c.destRoom);
   }
+
+  // Compute layout with size + room awareness
+  const positions = autoLayout(connections, deviceNames, deviceSizes, deviceRoom);
+
+  // Create room nodes if rooms are specified
+  const roomMap = new Map<string, string>(); // room name → room node ID
   const uniqueRooms = [...new Set(deviceRoom.values())];
   for (const roomName of uniqueRooms) {
     const roomId = `room-import-${++importCounter}`;
@@ -553,16 +622,18 @@ export function buildImportResult(
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const child of children) {
+      const childData = (child as DeviceNode).data;
+      const h = estimateHeight(childData.ports);
       minX = Math.min(minX, child.position.x);
       minY = Math.min(minY, child.position.y);
-      maxX = Math.max(maxX, child.position.x + 180);
-      maxY = Math.max(maxY, child.position.y + 100);
+      maxX = Math.max(maxX, child.position.x + DEVICE_WIDTH);
+      maxY = Math.max(maxY, child.position.y + h);
     }
 
-    const pad = 40;
+    const pad = 60; // generous padding for room label + routing space
     roomNode.position = { x: minX - pad, y: minY - pad };
-    (roomNode.style as Record<string, number>).width = maxX - minX + 180 + pad * 2;
-    (roomNode.style as Record<string, number>).height = maxY - minY + 100 + pad * 2;
+    (roomNode.style as Record<string, number>).width = maxX - minX + pad * 2;
+    (roomNode.style as Record<string, number>).height = maxY - minY + pad * 2;
 
     // Convert child positions to room-relative
     for (const child of children) {
