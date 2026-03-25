@@ -478,10 +478,13 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
           dxf.addText("EasySchematic-Ports", ax + 8, dxfY, 4, port.label, aci);
         }
         bidirLabeled.add(portId);
-      } else if (port.direction === "input") {
-        dxf.addText("EasySchematic-Ports", ax + 8, dxfY, 4, port.label, aci);
-      } else if (port.direction === "output") {
-        dxf.addTextRight("EasySchematic-Ports", ax + w - 8, dxfY, 4, port.label, aci);
+      } else {
+        const isLeft = port.direction === "input" ? !port.flipped : !!port.flipped;
+        if (isLeft) {
+          dxf.addText("EasySchematic-Ports", ax + 8, dxfY, 4, port.label, aci);
+        } else {
+          dxf.addTextRight("EasySchematic-Ports", ax + w - 8, dxfY, 4, port.label, aci);
+        }
       }
     }
 

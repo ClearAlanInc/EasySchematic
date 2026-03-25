@@ -1,7 +1,7 @@
 import { memo, useMemo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
-import { SIGNAL_COLORS, SIGNAL_LABELS } from "../types";
+import { SIGNAL_COLORS, SIGNAL_LABELS, portSide } from "../types";
 import { useSchematicStore } from "../store";
 
 type ColumnItem =
@@ -79,15 +79,16 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   }, [data.ports, data.showAllPorts, data.hiddenPorts,
       hiddenSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
 
-  const inputs = visiblePorts.filter((p) => p.direction === "input");
-  const outputs = visiblePorts.filter((p) => p.direction === "output");
+  // Split ports by visual side (respects flip), not semantic direction
+  const leftPorts = visiblePorts.filter((p) => p.direction !== "bidirectional" && portSide(p) === "left");
+  const rightPorts = visiblePorts.filter((p) => p.direction !== "bidirectional" && portSide(p) === "right");
   const bidirectional = visiblePorts.filter((p) => p.direction === "bidirectional");
 
-  const inputItems = useMemo(() => buildColumnItems(inputs), [inputs]);
-  const outputItems = useMemo(() => buildColumnItems(outputs), [outputs]);
+  const leftItems = useMemo(() => buildColumnItems(leftPorts), [leftPorts]);
+  const rightItems = useMemo(() => buildColumnItems(rightPorts), [rightPorts]);
 
-  const hasSections = inputItems.some((i) => i.type === "section") ||
-    outputItems.some((i) => i.type === "section");
+  const hasSections = leftItems.some((i) => i.type === "section") ||
+    rightItems.some((i) => i.type === "section");
 
   // Build bidirectional items with section support
   const bidirItems = useMemo(() => buildColumnItems(bidirectional), [bidirectional]);
@@ -106,11 +107,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               </span>
             );
           }
+          const side = portSide(p);
           return (
             <Handle
               key={p.id}
               type={p.direction === "input" ? "target" : "source"}
-              position={p.direction === "input" ? Position.Left : Position.Right}
+              position={side === "left" ? Position.Left : Position.Right}
               id={p.id}
               style={{ opacity: 0 }}
             />
@@ -148,15 +150,15 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
            9px bottom padding makes total height a multiple of 20 (60 + rows×20). */}
       <div className="pt-[9px] pb-[9px]">
       {/* Input/Output Ports — two independent columns */}
-      {(inputs.length > 0 || outputs.length > 0) && (
+      {(leftPorts.length > 0 || rightPorts.length > 0) && (
         hasSections ? (
           /* Sectioned layout: independent columns */
           <div className="flex">
-            {/* Input column */}
+            {/* Left column */}
             <div className="flex-1 min-w-0">
-              {inputItems.map((item, i) =>
+              {leftItems.map((item, i) =>
                 item.type === "section" ? (
-                  <div key={`isec-${i}`} className="h-5 flex items-end pl-2">
+                  <div key={`lsec-${i}`} className="h-5 flex items-end pl-2">
                     <span className="text-[9px] text-[var(--color-text-muted)] truncate border-b border-[var(--color-border)]/30 w-full pb-0.5 mr-1">
                       {item.name}
                     </span>
@@ -164,7 +166,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                 ) : (
                   <div key={item.port.id} className="flex items-center gap-1 pl-3 h-5 relative">
                     <Handle
-                      type="target"
+                      type={item.port.direction === "input" ? "target" : "source"}
                       position={Position.Left}
                       id={item.port.id}
                       data-connected={connectedHandles.has(item.port.id) || undefined}
@@ -183,11 +185,11 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               )}
             </div>
 
-            {/* Output column */}
+            {/* Right column */}
             <div className="flex-1 min-w-0">
-              {outputItems.map((item, i) =>
+              {rightItems.map((item, i) =>
                 item.type === "section" ? (
-                  <div key={`osec-${i}`} className="h-5 flex items-end pr-2">
+                  <div key={`rsec-${i}`} className="h-5 flex items-end pr-2">
                     <span className="text-[9px] text-[var(--color-text-muted)] truncate text-right border-b border-[var(--color-border)]/30 w-full pb-0.5 ml-1">
                       {item.name}
                     </span>
@@ -202,7 +204,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       {item.port.label}
                     </span>
                     <Handle
-                      type="source"
+                      type={item.port.direction === "output" ? "source" : "target"}
                       position={Position.Right}
                       id={item.port.id}
                       data-connected={connectedHandles.has(item.port.id) || undefined}
@@ -217,49 +219,49 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         ) : (
           /* Non-sectioned layout: paired rows (original behavior) */
           <div>
-            {Array.from({ length: Math.max(inputs.length, outputs.length, 1) }, (_, i) => {
-              const input = inputs[i];
-              const output = outputs[i];
+            {Array.from({ length: Math.max(leftPorts.length, rightPorts.length, 1) }, (_, i) => {
+              const left = leftPorts[i];
+              const right = rightPorts[i];
               return (
                 <div key={i} className="flex justify-between items-center relative h-5">
                   <div className="flex items-center gap-1 pl-3 min-w-0 flex-1">
-                    {input && (
+                    {left && (
                       <>
                         <Handle
-                          type="target"
+                          type={left.direction === "input" ? "target" : "source"}
                           position={Position.Left}
-                          id={input.id}
-                          data-connected={connectedHandles.has(input.id) || undefined}
+                          id={left.id}
+                          data-connected={connectedHandles.has(left.id) || undefined}
                           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
-                          style={{ background: SIGNAL_COLORS[input.signalType], top: "50%" }}
+                          style={{ background: SIGNAL_COLORS[left.signalType], top: "50%" }}
                         />
                         <span
                           className="text-[10px] leading-5 truncate"
-                          style={{ color: SIGNAL_COLORS[input.signalType] }}
-                          title={`${input.label} (${SIGNAL_LABELS[input.signalType]})`}
+                          style={{ color: SIGNAL_COLORS[left.signalType] }}
+                          title={`${left.label} (${SIGNAL_LABELS[left.signalType]})`}
                         >
-                          {input.label}
+                          {left.label}
                         </span>
                       </>
                     )}
                   </div>
                   <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end">
-                    {output && (
+                    {right && (
                       <>
                         <span
                           className="text-[10px] leading-5 truncate"
-                          style={{ color: SIGNAL_COLORS[output.signalType] }}
-                          title={`${output.label} (${SIGNAL_LABELS[output.signalType]})`}
+                          style={{ color: SIGNAL_COLORS[right.signalType] }}
+                          title={`${right.label} (${SIGNAL_LABELS[right.signalType]})`}
                         >
-                          {output.label}
+                          {right.label}
                         </span>
                         <Handle
-                          type="source"
+                          type={right.direction === "output" ? "source" : "target"}
                           position={Position.Right}
-                          id={output.id}
-                          data-connected={connectedHandles.has(output.id) || undefined}
+                          id={right.id}
+                          data-connected={connectedHandles.has(right.id) || undefined}
                           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
-                          style={{ background: SIGNAL_COLORS[output.signalType], top: "50%" }}
+                          style={{ background: SIGNAL_COLORS[right.signalType], top: "50%" }}
                         />
                       </>
                     )}

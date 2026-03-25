@@ -40,6 +40,7 @@ interface PortDraft {
   notes?: string;
   poeDrawW?: number;
   linkSpeed?: string;
+  flipped?: boolean;
 }
 
 function newPortDraft(direction: PortDirection): PortDraft {
@@ -126,6 +127,7 @@ export default function DeviceEditor() {
         notes: p.notes,
         poeDrawW: p.poeDrawW,
         linkSpeed: p.linkSpeed,
+        flipped: p.flipped,
       })),
     );
     setShowAllPorts(node.data.showAllPorts ?? false);
@@ -323,6 +325,7 @@ export default function DeviceEditor() {
       notes: p.notes,
       poeDrawW: p.poeDrawW,
       linkSpeed: p.linkSpeed,
+      flipped: p.flipped,
     })));
     setHiddenPorts([]);
     setColor(tpl.color);
@@ -346,6 +349,7 @@ export default function DeviceEditor() {
       notes: p.notes,
       poeDrawW: p.poeDrawW,
       linkSpeed: p.linkSpeed,
+      flipped: p.flipped,
     })));
     setHiddenPorts(preset.hiddenPorts ?? []);
     setColor(preset.color);
@@ -1477,6 +1481,21 @@ function PortRow({
         >
           {port.notes ? "N" : "N"}
         </button>
+
+        {/* Flip badge */}
+        {port.direction !== "bidirectional" && (
+          <button
+            onClick={() => onUpdate({ flipped: !port.flipped || undefined })}
+            className={`text-[9px] px-1 py-0.5 rounded cursor-pointer transition-colors shrink-0 ${
+              port.flipped
+                ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text)] opacity-0 group-hover:opacity-100"
+            }`}
+            title="Flip port to opposite side"
+          >
+            ⇄
+          </button>
+        )}
 
         <button
           onClick={onRemove}

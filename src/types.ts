@@ -98,6 +98,8 @@ export interface Port {
   channelCount?: number;
   /** When true, this port attaches directly to the connected device (no separate cable needed in pack list) */
   directAttach?: boolean;
+  /** When true, port renders on the opposite side of the device (input on right, output on left) */
+  flipped?: boolean;
   notes?: string;
   /** PoE power draw in watts for this port (consumed when powered by switch) */
   poeDrawW?: number;
@@ -446,6 +448,13 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   none: "None",
   other: "Other",
 };
+
+/** Which visual side of the device a port appears on (respects flip). */
+export function portSide(p: Port): "left" | "right" {
+  if (p.direction === "input") return p.flipped ? "right" : "left";
+  if (p.direction === "output") return p.flipped ? "left" : "right";
+  return "left"; // bidirectional handled separately
+}
 
 export const SIGNAL_LABELS: Record<SignalType, string> = {
   sdi: "SDI",

@@ -31,10 +31,10 @@ interface Rect {
 
 function estimateDeviceHeight(node: SchematicNode): number {
   const ports = (node.data as DeviceData).ports ?? [];
-  const inputs = ports.filter((p) => p.direction === "input").length;
-  const outputs = ports.filter((p) => p.direction === "output").length;
+  const left = ports.filter((p) => p.direction !== "bidirectional" && (p.direction === "input" ? !p.flipped : !!p.flipped)).length;
+  const right = ports.filter((p) => p.direction !== "bidirectional" && (p.direction === "output" ? !p.flipped : !!p.flipped)).length;
   const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
-  const portRows = Math.max(inputs, outputs) + bidirs;
+  const portRows = Math.max(left, right) + bidirs;
   // Device height = 1px border + 40px header + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20
   return 60 + portRows * 20;
 }
@@ -363,18 +363,24 @@ const PAD = 20;
 const ROUTING_GAP = 8; // Buffer so stubs land in the routing channel, not on obstacle boundary
 const STUB_GAP = 6; // Must match OffsetEdge STUB_GAP
 
-/** Count ports on the right side (outputs + bidirectional) */
+/** Count ports on the right side (outputs + flipped inputs + bidirectional) */
 function rightPortCount(node: SchematicNode): number {
   if (node.type === "room") return 0;
   const ports = (node.data as DeviceData).ports ?? [];
-  return ports.filter((p) => p.direction === "output" || p.direction === "bidirectional").length;
+  return ports.filter((p) => {
+    if (p.direction === "bidirectional") return true;
+    return (p.direction === "output") !== (p.flipped ?? false);
+  }).length;
 }
 
-/** Count ports on the left side (inputs + bidirectional) */
+/** Count ports on the left side (inputs + flipped outputs + bidirectional) */
 function leftPortCount(node: SchematicNode): number {
   if (node.type === "room") return 0;
   const ports = (node.data as DeviceData).ports ?? [];
-  return ports.filter((p) => p.direction === "input" || p.direction === "bidirectional").length;
+  return ports.filter((p) => {
+    if (p.direction === "bidirectional") return true;
+    return (p.direction === "input") !== (p.flipped ?? false);
+  }).length;
 }
 
 /** Max stub spread for N ports on a side: (N-1)/2 * STUB_GAP */
