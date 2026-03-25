@@ -248,7 +248,7 @@ const rowClass = (i: number) =>
 
 // ─── Network Report Tab ────────────────────────────────────────
 
-type SortKey = "deviceLabel" | "portLabel" | "room" | "signalType" | "ip" | "subnetMask" | "gateway" | "vlan" | "dhcp" | "dhcpServerLabel";
+type SortKey = "deviceLabel" | "portLabel" | "room" | "signalType" | "hostname" | "ip" | "subnetMask" | "gateway" | "vlan" | "linkSpeed" | "poeDrawW" | "dhcp" | "dhcpServerLabel" | "notes";
 
 const networkColumns: SpreadsheetColumn<NetworkReportRow>[] = [
   { id: "deviceLabel", header: "Device", getValue: (r) => r.deviceLabel },
@@ -604,6 +604,9 @@ function NetworkReportTab() {
               <th className={thClass} onClick={() => toggleSort("signalType")}>
                 Signal{sortArrow("signalType")}
               </th>
+              <th className={thClass} onClick={() => toggleSort("hostname")}>
+                Hostname{sortArrow("hostname")}
+              </th>
               <th className={thClass} onClick={() => toggleSort("ip")}>
                 IP{sortArrow("ip")}
               </th>
@@ -616,11 +619,20 @@ function NetworkReportTab() {
               <th className={thClass} onClick={() => toggleSort("vlan")}>
                 VLAN{sortArrow("vlan")}
               </th>
+              <th className={thClass} onClick={() => toggleSort("linkSpeed")}>
+                Speed{sortArrow("linkSpeed")}
+              </th>
+              <th className={thClass} onClick={() => toggleSort("poeDrawW")}>
+                PoE (W){sortArrow("poeDrawW")}
+              </th>
               <th className={thClass} onClick={() => toggleSort("dhcp")}>
                 DHCP{sortArrow("dhcp")}
               </th>
               <th className={thClass} onClick={() => toggleSort("dhcpServerLabel")}>
                 DHCP Server{sortArrow("dhcpServerLabel")}
+              </th>
+              <th className={thClass} onClick={() => toggleSort("notes")}>
+                Notes{sortArrow("notes")}
               </th>
             </tr>
           </thead>
@@ -692,6 +704,13 @@ const NetworkRow = memo(function NetworkRow({
         </td>
       );
     }
+    if (dhcpWarning?.type === "subnet-conflict") {
+      return (
+        <td className={`${tdClass} bg-red-50`} title={dhcpWarning.message}>
+          <span className="text-red-600 text-[10px]">Subnet mismatch</span>
+        </td>
+      );
+    }
     return (
       <td className={tdClass}>
         <span className="text-[10px]">{row.dhcpServerLabel || "—"}</span>
@@ -706,6 +725,30 @@ const NetworkRow = memo(function NetworkRow({
       <td className={tdClass}>{row.portLabel}</td>
       <td className={tdClass}>{row.room}</td>
       <td className={tdClass}>{row.signalType}</td>
+
+      {/* Editable: Hostname */}
+      <SpreadsheetCell
+        rowIndex={rowIndex}
+        columnId="hostname"
+        spreadsheet={spreadsheet}
+        displayValue={row.hostname}
+        placeholder="—"
+        renderEditor={(value, onChange, onCommit, onCancel) => (
+          <input
+            className="w-full bg-[var(--color-surface)] border border-blue-500 rounded px-1 py-0.5 text-[10px] outline-none"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); onCommit(); }
+              else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+              else if (e.key === "Tab") { e.preventDefault(); onCommit(); }
+              e.stopPropagation();
+            }}
+            placeholder="—"
+            autoFocus
+          />
+        )}
+      />
 
       {/* Editable: IP */}
       <SpreadsheetCell
@@ -797,6 +840,12 @@ const NetworkRow = memo(function NetworkRow({
         )}
       />
 
+      {/* Read-only: Speed */}
+      <td className={tdClass}>{row.linkSpeed || "—"}</td>
+
+      {/* Read-only: PoE Draw */}
+      <td className={tdClass}>{row.poeDrawW || "—"}</td>
+
       {/* DHCP: direct checkbox, not spreadsheet-managed */}
       <td className={`${tdClass} text-center`}>
         <input
@@ -809,6 +858,30 @@ const NetworkRow = memo(function NetworkRow({
 
       {/* DHCP Server: read-only coverage column */}
       {dhcpServerCell}
+
+      {/* Editable: Notes */}
+      <SpreadsheetCell
+        rowIndex={rowIndex}
+        columnId="notes"
+        spreadsheet={spreadsheet}
+        displayValue={row.notes}
+        placeholder="—"
+        renderEditor={(value, onChange, onCommit, onCancel) => (
+          <input
+            className="w-full bg-[var(--color-surface)] border border-blue-500 rounded px-1 py-0.5 text-[10px] outline-none"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); onCommit(); }
+              else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+              else if (e.key === "Tab") { e.preventDefault(); onCommit(); }
+              e.stopPropagation();
+            }}
+            placeholder="—"
+            autoFocus
+          />
+        )}
+      />
     </tr>
   );
 });
