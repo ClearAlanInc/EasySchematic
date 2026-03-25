@@ -87,10 +87,10 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const powerDefaultLayout = useMemo(() => createDefaultPowerReportLayout(), []);
 
   const tabLabels: Record<ReportsTab, string> = {
-    network: "Network",
     devices: "Devices",
-    packList: "Pack List",
     cableSchedule: "Cable Schedule",
+    packList: "Pack List",
+    network: "Network",
     power: "Power",
   };
 
