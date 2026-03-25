@@ -149,6 +149,7 @@ interface SchematicState {
   clearManualWaypoints: (edgeId: string) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
   roomContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
+  portContextMenu: { nodeId: string; portId: string; screenX: number; screenY: number } | null;
 
   // Centralized edge routing
   routedEdges: Record<string, RoutedEdge>;
@@ -524,6 +525,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   routedEdges: {},
   edgeContextMenu: null,
   roomContextMenu: null,
+  portContextMenu: null,
   debugEdges: false,
   resizeGuides: [],
   isDemo: false,

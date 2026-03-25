@@ -29,6 +29,7 @@ import EdgeContextMenu from "./components/EdgeContextMenu";
 import IncompatibleConnectionDialog from "./components/IncompatibleConnectionDialog";
 import MobileGate from "./components/MobileGate";
 import PendingSubmissionBanner from "./components/PendingSubmissionBanner";
+import PortContextMenu from "./components/PortContextMenu";
 import RoomContextMenu from "./components/RoomContextMenu";
 import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
@@ -1123,6 +1124,7 @@ export default function App() {
       <RoomEditor />
       <EdgeContextMenu />
       <RoomContextMenu />
+      <PortContextMenu />
       <IncompatibleConnectionDialog />
       <MobileGate />
     </div>

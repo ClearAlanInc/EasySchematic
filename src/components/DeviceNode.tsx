@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
 import { SIGNAL_COLORS, SIGNAL_LABELS, portSide } from "../types";
@@ -78,6 +78,15 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     });
   }, [data.ports, data.showAllPorts, data.hiddenPorts,
       hiddenSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
+
+  const openPortMenu = useCallback((e: React.MouseEvent, port: Port) => {
+    if (port.direction === "bidirectional") return;
+    e.preventDefault();
+    e.stopPropagation();
+    useSchematicStore.setState({
+      portContextMenu: { nodeId: id, portId: port.id, screenX: e.clientX, screenY: e.clientY },
+    });
+  }, [id]);
 
   // Split ports by visual side (respects flip), not semantic direction
   const leftPorts = visiblePorts.filter((p) => p.direction !== "bidirectional" && portSide(p) === "left");
@@ -164,7 +173,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                     </span>
                   </div>
                 ) : (
-                  <div key={item.port.id} className="flex items-center gap-1 pl-3 h-5 relative">
+                  <div key={item.port.id} className="flex items-center gap-1 pl-3 h-5 relative" onContextMenu={(e) => openPortMenu(e, item.port)}>
                     <Handle
                       type={item.port.direction === "input" ? "target" : "source"}
                       position={Position.Left}
@@ -195,7 +204,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                     </span>
                   </div>
                 ) : (
-                  <div key={item.port.id} className="flex items-center gap-1 pr-3 h-5 relative justify-end">
+                  <div key={item.port.id} className="flex items-center gap-1 pr-3 h-5 relative justify-end" onContextMenu={(e) => openPortMenu(e, item.port)}>
                     <span
                       className="text-[10px] leading-5 truncate"
                       style={{ color: SIGNAL_COLORS[item.port.signalType] }}
@@ -224,7 +233,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               const right = rightPorts[i];
               return (
                 <div key={i} className="flex justify-between items-center relative h-5">
-                  <div className="flex items-center gap-1 pl-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-1 pl-3 min-w-0 flex-1" onContextMenu={left ? (e) => openPortMenu(e, left) : undefined}>
                     {left && (
                       <>
                         <Handle
@@ -245,7 +254,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       </>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end">
+                  <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end" onContextMenu={right ? (e) => openPortMenu(e, right) : undefined}>
                     {right && (
                       <>
                         <span
