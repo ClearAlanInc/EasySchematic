@@ -5,7 +5,7 @@ export default function DeviceLibraryPage() {
 
       <h2>Built-in templates</h2>
       <p>
-        The device library sidebar contains <strong>365+ real-world device templates</strong> organized by category:
+        The device library sidebar contains <strong>500+ real-world device templates</strong> organized by category:
       </p>
       <ul>
         <li><strong>Sources</strong> — cameras, PTZ cameras, graphics, computers, media players</li>
@@ -86,6 +86,18 @@ export default function DeviceLibraryPage() {
         When you place multiple instances of the same device template, EasySchematic automatically numbers them:
         "Camera 1", "Camera 2", etc. Renaming a device manually removes it from auto-numbering.
       </p>
+
+      <h2>Quick-create routers</h2>
+      <p>
+        Need a matrix router with specific I/O counts? Type <strong>"router"</strong> in the device library search
+        to reveal the <strong>Create Custom Router</strong> button. This opens a dialog where you can:
+      </p>
+      <ul>
+        <li>Set a <strong>device name</strong> and device type</li>
+        <li>Define <strong>input and output sections</strong> — each section has a name, port prefix, count, and signal type</li>
+        <li>Add multiple sections per side (e.g., 16 SDI inputs + 4 HDMI inputs + 16 SDI outputs + 4 HDMI outputs)</li>
+        <li>The router is placed on the canvas and saved as a user template</li>
+      </ul>
 
       <h2>Expansion slots</h2>
       <p>

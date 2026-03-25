@@ -51,6 +51,51 @@ export default function PackListPage() {
         The cable schedule supports the same PDF export, CSV export, and print preview layout as the pack list.
       </p>
 
+      <h2>Network report</h2>
+      <p>
+        The <strong>Network Report</strong> is available from the <strong>Reports</strong> menu.
+        It lists all network-addressable ports in your schematic — Ethernet, NDI, Dante, SRT,
+        HDBaseT, AES67, and ST 2110 — with their full network configuration.
+      </p>
+      <p>Columns include:</p>
+      <ul>
+        <li><strong>Device name</strong> and <strong>port label</strong></li>
+        <li><strong>Room</strong> and <strong>signal type</strong></li>
+        <li><strong>Hostname</strong>, <strong>IP address</strong>, <strong>subnet mask</strong>, and <strong>gateway</strong></li>
+        <li><strong>VLAN</strong>, <strong>DHCP status</strong>, and <strong>DHCP server</strong> — shows which DHCP server covers each port</li>
+        <li><strong>Link speed</strong> and <strong>PoE draw</strong></li>
+      </ul>
+      <p>
+        This is useful for generating IP address schedules and verifying network configuration
+        before a show. The network report supports the same PDF export, CSV export, and print
+        preview layout as the pack list.
+      </p>
+
+      <h2>Power report</h2>
+      <p>
+        The <strong>Power Report</strong> is available from the <strong>Reports</strong> menu.
+        It has two sections:
+      </p>
+      <ul>
+        <li>
+          <strong>Devices</strong> — lists every device with power draw specs: model, device type,
+          room, power draw (watts), voltage, and quantity. Identical devices in the same room are
+          merged into a single row with a combined count.
+        </li>
+        <li>
+          <strong>Distribution</strong> — lists power distribution devices with: label, room,
+          capacity (watts), current load, load percentage, and status. Status is calculated from
+          load percentage: <strong>OK</strong> when safely within capacity (under 80%),
+          {" "}<strong>Warning</strong> when approaching limits (80–100%),
+          and <strong>Overloaded</strong> when exceeding capacity.
+        </li>
+      </ul>
+      <p>
+        This is useful for planning power requirements and verifying that your distros have
+        enough capacity. The power report supports the same PDF export, CSV export, and print
+        preview layout as other reports.
+      </p>
+
       <h2>CSV export</h2>
       <p>
         Click <strong>CSV</strong> to download a spreadsheet-friendly file with both device and cable tables.

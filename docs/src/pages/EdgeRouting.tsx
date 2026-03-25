@@ -104,6 +104,25 @@ export default function EdgeRoutingPage() {
         </li>
       </ul>
 
+      <h2>Auto-route toggle</h2>
+      <p>
+        A status chip in the <strong>top-right corner</strong> of the canvas shows the current routing
+        mode. Click the chip to toggle between auto-route on and off.
+      </p>
+      <ul>
+        <li>
+          <strong>On</strong> (default) — connections use A* pathfinding to route around devices
+        </li>
+        <li>
+          <strong>Off</strong> — connections use simple direct paths, useful for{" "}
+          <strong>large schematics</strong> where A* routing causes lag
+        </li>
+      </ul>
+      <p>
+        The toggle state is saved with your schematic. When auto-route is off, you can still add
+        manual waypoints to individual connections.
+      </p>
+
       <h2>Performance</h2>
       <p>
         Routes are recomputed when devices move or connections change, but <strong>frozen during drag</strong> for

@@ -61,6 +61,31 @@ export default function ImportExportPage() {
         (devices, connections, rooms, and all configuration).
       </p>
 
+      <h2>CSV import (cable schedule)</h2>
+      <p>
+        Import a cable schedule spreadsheet to auto-generate a schematic with devices, rooms, and connections.
+        Access it via <strong>File</strong> menu → <strong>Import Cable Schedule...</strong>
+      </p>
+      <p>The import wizard has two steps:</p>
+      <ol>
+        <li>
+          <strong>Upload &amp; map columns</strong> — paste CSV data or upload a file. Map your spreadsheet columns
+          to roles: Source Device, Source Port, Destination Device, Destination Port, Signal Type, Source Room, and
+          Destination Room. The wizard auto-detects common column names, so most spreadsheets work with minimal
+          adjustment. Only Source Device and Destination Device are required.
+        </li>
+        <li>
+          <strong>Review device matches</strong> — each unique device name from your spreadsheet is matched against
+          the device library. Review and adjust matches as needed; unmatched devices create generic placeholders
+          with ports inferred from the cable schedule data.
+        </li>
+      </ol>
+      <p>
+        After import, devices are placed on the canvas organized by room (if room columns are mapped) with all
+        connections drawn. This is useful for converting existing cable schedules from Excel, Google Sheets, or
+        any other tool that can export CSV into a visual schematic.
+      </p>
+
       <h2>PNG / SVG (image export)</h2>
       <ul>
         <li><strong>Export PNG</strong> — raster image at screen resolution, suitable for documents and presentations</li>

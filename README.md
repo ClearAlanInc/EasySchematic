@@ -12,7 +12,7 @@
 
 ### Canvas & Devices
 
-- **365+ built-in device templates** across 21 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Speakers, Amplifiers, Networking, KVM/Extenders, Wireless, LED Video, Media Servers, Lighting, Control, Infrastructure, Cloud Services, Cable Accessories
+- **500+ built-in device templates** across 21 categories — Sources, Peripherals, Switching, Processing, Distribution, Monitoring, Projection, Recording, Audio, Speakers, Amplifiers, Networking, KVM/Extenders, Wireless, LED Video, Media Servers, Lighting, Control, Infrastructure, Cloud Services, Cable Accessories
 - **User templates** — save modified devices as reusable templates
 - **Favorite devices** — star templates in the library for quick access; favorites pin to the top and sort first in search
 - **Template presets** — save a device configuration as the project default for that template; new placements auto-apply the preset
@@ -30,6 +30,7 @@
 - **Click-to-connect** — click a source handle, preview line follows cursor, snaps to nearby valid targets (green = valid, red = incompatible signal type), click target to connect or click device body to auto-connect first compatible port
 - **Drag-to-connect** with the same preview/snap/validity behavior
 - **Smart edge routing** — A\* pathfinding avoids device crossings with automatic parallel edge nesting
+- **Auto-route toggle** — disable A\* routing for lag-free editing on large schematics; click the status chip in the top-right corner
 - **Manual route editing** — right-click a connection to add draggable waypoints; A\* routes each leg between waypoints while other connections yield
 - **Cable length** — editable per-connection field, tracked in cable schedule and pack list
 - **Multicable support** — cable accessory templates (snakes, socapex), trunk ports, break-in/break-out devices
@@ -37,7 +38,7 @@
 - **Line jump arcs** at connection crossings
 - **Stubbed connections** — render as short stubs instead of full routed lines
 - **Connector mismatch override** — force-connect ports with incompatible connectors
-- **30 signal types**, all color-coded (see below)
+- **40 signal types**, all color-coded (see below)
 
 ### Ports
 
@@ -59,7 +60,7 @@
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · Genlock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · Power · MIDI · Tally · S/PDIF · ADAT · Ultranet · AES50 · StageConnect · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · AES67 · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · ST 2110 · Genlock · Word Clock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · RF · Power · L1 · L2 · L3 · Neutral · Ground · MIDI · Tally · S/PDIF · ADAT · YDIF · Ultranet · AES50 · StageConnect · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
@@ -72,6 +73,8 @@ SDI · HDMI · NDI · Dante · Analog Audio · AES · DMX · MADI · USB · Ethe
 - **Print preview** — WYSIWYG report editor with interactive header/footer grid, column visibility, grouping, sorting
 - **Multi-page preview** with accurate page breaks, page navigation, zoom, and "Page X of Y" numbering
 - **Header/footer grid editor** — assign fields (show name, venue, date, etc.), static text, logo, or page numbers to cells; merge, resize, add/delete rows and columns via right-click
+- **Network report** — IP address schedule with hostname, IP, VLAN, DHCP, link speed, and PoE draw for all network ports
+- **Power report** — device power draw tracking and distribution load analysis with capacity/status indicators
 - **CSV export** for spreadsheet use
 - **PDF export** matching the preview layout exactly
 - Layout preferences saved per-schematic
@@ -100,6 +103,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Cloud storage** — create a free account to save up to 10 schematics to the cloud and access them from any browser
 - **Sharing** — generate a shareable link for any cloud-saved schematic
 - **JSON import/export** with schema versioning and automatic migrations
+- **CSV cable schedule import** — import cable schedule spreadsheets to auto-generate schematics with device matching
 - **Print** — configurable paper size (Letter through Arch E), orientation, scale, title block
 - **PNG** — 4x resolution raster export
 - **SVG** — vector export

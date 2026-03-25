@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 30 signal types total)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 40 signal types)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -42,7 +42,7 @@ export default function OverviewPage() {
           <strong>Line jump arcs</strong> — arc markers at connection crossings for visual clarity
         </li>
         <li>
-          <strong>Device library</strong> — 365+ real-world device templates across cameras, switchers, audio, lighting,
+          <strong>Device library</strong> — 500+ real-world device templates across cameras, switchers, audio, lighting,
           LED video, and more
         </li>
         <li>
@@ -81,18 +81,18 @@ export default function OverviewPage() {
         <li>
           <strong>Title block editor</strong> — customizable grid layout with logo upload for professional print output
         </li>
-      </ul>
-
-      <h2>Tech stack</h2>
-      <ul>
-        <li>React 19 + TypeScript</li>
         <li>
-          <a href="https://reactflow.dev/">React Flow</a> (xyflow v12) for the canvas
+          <strong>Network &amp; power reports</strong> — IP address schedules, VLAN assignments, PoE budgets, and power distribution analysis
         </li>
-        <li>Zustand for state management</li>
-        <li>Tailwind CSS v4</li>
-        <li>Cloudflare Workers + D1 + R2 for API and cloud storage</li>
-        <li>Deployed on Cloudflare Workers</li>
+        <li>
+          <strong>CSV import</strong> — import cable schedule spreadsheets to auto-generate schematics
+        </li>
+        <li>
+          <strong>Auto-route toggle</strong> — disable smart routing for lag-free editing on large schematics
+        </li>
+        <li>
+          <strong>Quick-create routers</strong> — generate matrix routers with configurable input/output counts and signal type
+        </li>
       </ul>
     </>
   );

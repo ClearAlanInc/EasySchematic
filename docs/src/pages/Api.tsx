@@ -39,7 +39,10 @@ export default function ApiPage() {
           {" "}<code>analog-audio</code>, <code>aes</code>, <code>dmx</code>, <code>madi</code>, <code>usb</code>, <code>ethernet</code>, <code>fiber</code>,
           {" "}<code>displayport</code>, <code>hdbaset</code>, <code>srt</code>, <code>genlock</code>, <code>gpio</code>,
           {" "}<code>rs422</code>, <code>serial</code>, <code>thunderbolt</code>, <code>composite</code>, <code>vga</code>,
-          {" "}<code>power</code>, <code>midi</code>, <code>tally</code>, <code>spdif</code>, <code>adat</code>, <code>custom</code></li>
+          {" "}<code>power</code>, <code>power-l1</code>, <code>power-l2</code>, <code>power-l3</code>, <code>power-neutral</code>, <code>power-ground</code>,
+          {" "}<code>midi</code>, <code>tally</code>, <code>spdif</code>, <code>adat</code>,
+          {" "}<code>ultranet</code>, <code>aes50</code>, <code>stageconnect</code>, <code>wordclock</code>, <code>aes67</code>,
+          {" "}<code>ydif</code>, <code>rf</code>, <code>st2110</code>, <code>custom</code></li>
         <li><code>direction</code> — <code>input</code>, <code>output</code>, or <code>bidirectional</code></li>
         <li><code>connectorType</code> — physical connector (e.g. <code>bnc</code>, <code>hdmi</code>, <code>xlr-3</code>,
           {" "}<code>rj45</code>, <code>usb-c</code>) (optional)</li>

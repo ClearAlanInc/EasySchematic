@@ -87,6 +87,41 @@ export default function GettingStartedPage() {
         </li>
       </ul>
 
+      <h3>Connection hitbox</h3>
+      <p>
+        Adjusts how close your cursor needs to be to a connection to select it. Increase the hitbox
+        size if you find connections hard to click on. Available in{" "}
+        <strong>Edit → Preferences</strong>.
+      </p>
+
+      <h2>View options</h2>
+      <p>
+        Open the <strong>View Options</strong> panel from the right sidebar (or via the{" "}
+        <strong>View</strong> menu) to control what's visible on the canvas:
+      </p>
+      <ul>
+        <li>
+          <strong>Signal type visibility</strong> — toggle individual signal types on/off to focus on
+          specific signal flows. "Show All" button resets.
+        </li>
+        <li>
+          <strong>Hide unconnected ports</strong> — hides ports with no connections for a cleaner look
+        </li>
+        <li>
+          <strong>Show device types</strong> — toggle device type labels under device names
+        </li>
+        <li>
+          <strong>Show line jumps</strong> — arc markers at connection crossings for visual clarity
+        </li>
+        <li>
+          <strong>Show cable labels</strong> — display cable ID labels on connections
+        </li>
+        <li>
+          <strong>Hide adapters</strong> — collapse adapter devices into single connection lines (see
+          Connections guide for details)
+        </li>
+      </ul>
+
       <h2>Saving your work</h2>
       <ul>
         <li>
