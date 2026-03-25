@@ -88,10 +88,49 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     });
   }, [id]);
 
-  // Split ports by visual side (respects flip), not semantic direction
-  const leftPorts = visiblePorts.filter((p) => p.direction !== "bidirectional" && portSide(p) === "left");
-  const rightPorts = visiblePorts.filter((p) => p.direction !== "bidirectional" && portSide(p) === "right");
-  const bidirectional = visiblePorts.filter((p) => p.direction === "bidirectional");
+  // Split ports by visual side (respects flip), not semantic direction.
+  // When hideUnconnectedPorts is on, bidir ports with only one side connected
+  // collapse into the appropriate column so the device gets smaller.
+  const collapsedBidir = new Set<string>(); // port IDs of collapsed bidir ports
+  const leftPorts: Port[] = [];
+  const rightPorts: Port[] = [];
+  const bidirectional: Port[] = [];
+  for (const p of visiblePorts) {
+    if (p.direction === "bidirectional") {
+      if (hideUnconnectedPorts) {
+        const inConn = connectedHandles.has(`${p.id}-in`);
+        const outConn = connectedHandles.has(`${p.id}-out`);
+        if (inConn && !outConn) {
+          leftPorts.push(p);
+          collapsedBidir.add(p.id);
+          continue;
+        }
+        if (outConn && !inConn) {
+          rightPorts.push(p);
+          collapsedBidir.add(p.id);
+          continue;
+        }
+      }
+      bidirectional.push(p);
+    } else if (portSide(p) === "left") {
+      leftPorts.push(p);
+    } else {
+      rightPorts.push(p);
+    }
+  }
+
+  /** Get handle ID and type for a port in a column, accounting for collapsed bidir ports. */
+  const handleProps = (port: Port, side: "left" | "right") => {
+    if (collapsedBidir.has(port.id)) {
+      return side === "left"
+        ? { handleId: `${port.id}-in`, handleType: "target" as const }
+        : { handleId: `${port.id}-out`, handleType: "source" as const };
+    }
+    return {
+      handleId: port.id,
+      handleType: (port.direction === "input" ? "target" : "source") as "target" | "source",
+    };
+  };
 
   const leftItems = useMemo(() => buildColumnItems(leftPorts), [leftPorts]);
   const rightItems = useMemo(() => buildColumnItems(rightPorts), [rightPorts]);
@@ -101,6 +140,47 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
 
   // Build bidirectional items with section support
   const bidirItems = useMemo(() => buildColumnItems(bidirectional), [bidirectional]);
+
+  /** Render a port row for a column (left or right). */
+  const renderColumnPort = (port: Port, side: "left" | "right") => {
+    const h = handleProps(port, side);
+    const isLeft = side === "left";
+    return (
+      <div
+        key={port.id}
+        className={`flex items-center gap-1 ${isLeft ? "pl-3" : "pr-3 justify-end"} h-5 relative`}
+        onContextMenu={(e) => openPortMenu(e, port)}
+      >
+        {isLeft && (
+          <Handle
+            type={h.handleType}
+            position={Position.Left}
+            id={h.handleId}
+            data-connected={connectedHandles.has(h.handleId) || undefined}
+            className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
+            style={{ background: SIGNAL_COLORS[port.signalType], top: "50%" }}
+          />
+        )}
+        <span
+          className="text-[10px] leading-5 truncate"
+          style={{ color: SIGNAL_COLORS[port.signalType] }}
+          title={`${port.label} (${SIGNAL_LABELS[port.signalType]})`}
+        >
+          {port.label}
+        </span>
+        {!isLeft && (
+          <Handle
+            type={h.handleType}
+            position={Position.Right}
+            id={h.handleId}
+            data-connected={connectedHandles.has(h.handleId) || undefined}
+            className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
+            style={{ background: SIGNAL_COLORS[port.signalType], top: "50%" }}
+          />
+        )}
+      </div>
+    );
+  };
 
   if (isHiddenAdapter) {
     // Render 1x1 invisible placeholder — keeps React Flow handle refs valid but
@@ -172,25 +252,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       {item.name}
                     </span>
                   </div>
-                ) : (
-                  <div key={item.port.id} className="flex items-center gap-1 pl-3 h-5 relative" onContextMenu={(e) => openPortMenu(e, item.port)}>
-                    <Handle
-                      type={item.port.direction === "input" ? "target" : "source"}
-                      position={Position.Left}
-                      id={item.port.id}
-                      data-connected={connectedHandles.has(item.port.id) || undefined}
-                      className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
-                      style={{ background: SIGNAL_COLORS[item.port.signalType], top: "50%" }}
-                    />
-                    <span
-                      className="text-[10px] leading-5 truncate"
-                      style={{ color: SIGNAL_COLORS[item.port.signalType] }}
-                      title={`${item.port.label} (${SIGNAL_LABELS[item.port.signalType]})`}
-                    >
-                      {item.port.label}
-                    </span>
-                  </div>
-                ),
+                ) : renderColumnPort(item.port, "left"),
               )}
             </div>
 
@@ -203,44 +265,28 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       {item.name}
                     </span>
                   </div>
-                ) : (
-                  <div key={item.port.id} className="flex items-center gap-1 pr-3 h-5 relative justify-end" onContextMenu={(e) => openPortMenu(e, item.port)}>
-                    <span
-                      className="text-[10px] leading-5 truncate"
-                      style={{ color: SIGNAL_COLORS[item.port.signalType] }}
-                      title={`${item.port.label} (${SIGNAL_LABELS[item.port.signalType]})`}
-                    >
-                      {item.port.label}
-                    </span>
-                    <Handle
-                      type={item.port.direction === "output" ? "source" : "target"}
-                      position={Position.Right}
-                      id={item.port.id}
-                      data-connected={connectedHandles.has(item.port.id) || undefined}
-                      className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
-                      style={{ background: SIGNAL_COLORS[item.port.signalType], top: "50%" }}
-                    />
-                  </div>
-                ),
+                ) : renderColumnPort(item.port, "right"),
               )}
             </div>
           </div>
         ) : (
-          /* Non-sectioned layout: paired rows (original behavior) */
+          /* Non-sectioned layout: paired rows */
           <div>
             {Array.from({ length: Math.max(leftPorts.length, rightPorts.length, 1) }, (_, i) => {
               const left = leftPorts[i];
               const right = rightPorts[i];
+              const lh = left ? handleProps(left, "left") : null;
+              const rh = right ? handleProps(right, "right") : null;
               return (
                 <div key={i} className="flex justify-between items-center relative h-5">
                   <div className="flex items-center gap-1 pl-3 min-w-0 flex-1" onContextMenu={left ? (e) => openPortMenu(e, left) : undefined}>
-                    {left && (
+                    {left && lh && (
                       <>
                         <Handle
-                          type={left.direction === "input" ? "target" : "source"}
+                          type={lh.handleType}
                           position={Position.Left}
-                          id={left.id}
-                          data-connected={connectedHandles.has(left.id) || undefined}
+                          id={lh.handleId}
+                          data-connected={connectedHandles.has(lh.handleId) || undefined}
                           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
                           style={{ background: SIGNAL_COLORS[left.signalType], top: "50%" }}
                         />
@@ -255,7 +301,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                     )}
                   </div>
                   <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end" onContextMenu={right ? (e) => openPortMenu(e, right) : undefined}>
-                    {right && (
+                    {right && rh && (
                       <>
                         <span
                           className="text-[10px] leading-5 truncate"
@@ -265,10 +311,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                           {right.label}
                         </span>
                         <Handle
-                          type={right.direction === "output" ? "source" : "target"}
+                          type={rh.handleType}
                           position={Position.Right}
-                          id={right.id}
-                          data-connected={connectedHandles.has(right.id) || undefined}
+                          id={rh.handleId}
+                          data-connected={connectedHandles.has(rh.handleId) || undefined}
                           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
                           style={{ background: SIGNAL_COLORS[right.signalType], top: "50%" }}
                         />
