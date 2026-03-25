@@ -47,7 +47,8 @@ export default function DocsApp() {
 
   useEffect(() => {
     document.title = `${route.title} — EasySchematic Docs`;
-  }, [route.title]);
+    document.querySelector("main")?.scrollTo(0, 0);
+  }, [hash]);
 
   return (
     <Layout>
