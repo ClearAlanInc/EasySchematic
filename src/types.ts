@@ -335,6 +335,8 @@ export interface SchematicFile {
   hideAdapters?: boolean;
   /** When false, edges use simple orthogonal L-shapes instead of A* routing */
   autoRoute?: boolean;
+  /** Edge interaction hitbox width in pixels (default 10, React Flow default is 20) */
+  edgeHitboxSize?: number;
 }
 
 export type ScrollAction = "zoom" | "pan-x" | "pan-y";

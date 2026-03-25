@@ -71,6 +71,8 @@ function SensitivityRow({
 export default function PreferencesDialog({ onClose }: { onClose: () => void }) {
   const scrollConfig = useSchematicStore((s) => s.scrollConfig);
   const setScrollConfig = useSchematicStore((s) => s.setScrollConfig);
+  const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
+  const setEdgeHitboxSize = useSchematicStore((s) => s.setEdgeHitboxSize);
 
   const update = (patch: Partial<ScrollConfig>) =>
     setScrollConfig({ ...scrollConfig, ...patch });
@@ -81,7 +83,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
     scrollConfig.ctrlScroll === DEFAULT_SCROLL_CONFIG.ctrlScroll &&
     scrollConfig.zoomSpeed === DEFAULT_SCROLL_CONFIG.zoomSpeed &&
     scrollConfig.panSpeed === DEFAULT_SCROLL_CONFIG.panSpeed &&
-    scrollConfig.trackpadEnabled === DEFAULT_SCROLL_CONFIG.trackpadEnabled;
+    scrollConfig.trackpadEnabled === DEFAULT_SCROLL_CONFIG.trackpadEnabled &&
+    edgeHitboxSize === 10;
 
   return (
     <div
@@ -169,9 +172,36 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
             </p>
           </div>
 
+          {/* Edge Interaction */}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+              Edge Interaction
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-xs text-[var(--color-text)]">Connection hitbox width</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={4}
+                  max={20}
+                  step={2}
+                  value={edgeHitboxSize}
+                  onChange={(e) => setEdgeHitboxSize(Number(e.target.value))}
+                  className="w-[100px] accent-blue-600 cursor-pointer"
+                />
+                <span className="text-xs text-[var(--color-text-muted)] w-[32px] text-right">
+                  {edgeHitboxSize}px
+                </span>
+              </div>
+            </div>
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+              Smaller = easier to create new connections without selecting existing ones
+            </p>
+          </div>
+
           {!isDefault && (
             <button
-              onClick={() => setScrollConfig({ ...DEFAULT_SCROLL_CONFIG })}
+              onClick={() => { setScrollConfig({ ...DEFAULT_SCROLL_CONFIG }); setEdgeHitboxSize(10); }}
               className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
             >
               Reset to defaults

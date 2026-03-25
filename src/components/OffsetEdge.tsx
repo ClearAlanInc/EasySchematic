@@ -1,4 +1,4 @@
-import { memo, useRef, useEffect, useCallback } from "react";
+import { memo, useState, useRef, useEffect, useCallback } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -25,9 +25,44 @@ function OffsetEdgeComponent({
   style,
   markerEnd,
   selected,
+  interactionWidth,
 }: EdgeProps<ConnectionEdge>) {
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const rfInstance = useReactFlow();
+
+  // Hover state for showing visual reconnect indicators in HTML layer
+  const [isHovered, setIsHovered] = useState(false);
+  // Tooltip state — tracks which updater circle the mouse is over
+  const [tooltipType, setTooltipType] = useState<"source" | "target" | null>(null);
+
+  useEffect(() => {
+    const el = document.querySelector(`.react-flow__edge[data-id="${id}"]`);
+    if (!el) return;
+    const onEnter = () => setIsHovered(true);
+    const onLeave = () => { setIsHovered(false); setTooltipType(null); };
+    el.addEventListener("mouseenter", onEnter);
+    el.addEventListener("mouseleave", onLeave);
+
+    // Track hover on individual updater circles for tooltip
+    const srcUpdater = el.querySelector('.react-flow__edgeupdater-source');
+    const tgtUpdater = el.querySelector('.react-flow__edgeupdater-target');
+    const onEnterSrc = () => setTooltipType("source");
+    const onEnterTgt = () => setTooltipType("target");
+    const onLeaveUpdater = () => setTooltipType(null);
+    srcUpdater?.addEventListener('mouseenter', onEnterSrc);
+    tgtUpdater?.addEventListener('mouseenter', onEnterTgt);
+    srcUpdater?.addEventListener('mouseleave', onLeaveUpdater);
+    tgtUpdater?.addEventListener('mouseleave', onLeaveUpdater);
+
+    return () => {
+      el.removeEventListener("mouseenter", onEnter);
+      el.removeEventListener("mouseleave", onLeave);
+      srcUpdater?.removeEventListener('mouseenter', onEnterSrc);
+      tgtUpdater?.removeEventListener('mouseenter', onEnterTgt);
+      srcUpdater?.removeEventListener('mouseleave', onLeaveUpdater);
+      tgtUpdater?.removeEventListener('mouseleave', onLeaveUpdater);
+    };
+  }, [id]);
 
   // Read pre-computed route from store (serialized to string to avoid re-render loops)
   const routeStr = useSchematicStore((s) => {
@@ -526,12 +561,44 @@ function OffsetEdgeComponent({
     </>
   ) : null;
 
-  // All labels rendered via EdgeLabelRenderer (HTML layer above all SVG edges)
-  const hasLabels = connectionLabel || cableIdLabels;
-  const edgeLabelsPortal = hasLabels ? (
+  // Visual-only reconnect circles + tooltip — rendered in HTML layer above cable labels.
+  // Interaction is handled by RF's native SVG updater circles (pointer events pass through
+  // labels since they have pointer-events: none). These HTML elements are purely decorative.
+  const RECONNECT_OFFSET = 15; // matches reconnectRadius prop on <ReactFlow>
+  const showReconnect = (selected || isHovered) && routeStr;
+  const srcVisualX = sourceX + srcDx * RECONNECT_OFFSET;
+  const srcVisualY = sourceY + srcDy * RECONNECT_OFFSET;
+  const tgtVisualX = targetX - tgtDx * RECONNECT_OFFSET;
+  const tgtVisualY = targetY - tgtDy * RECONNECT_OFFSET;
+
+  const reconnectVisuals = showReconnect ? (
+    <>
+      <div className="reconnect-visual"
+        style={{ transform: `translate(-50%, -50%) translate(${srcVisualX}px, ${srcVisualY}px)` }} />
+      <div className="reconnect-visual"
+        style={{ transform: `translate(-50%, -50%) translate(${tgtVisualX}px, ${tgtVisualY}px)` }} />
+      {tooltipType === "source" && (
+        <div className="reconnect-tooltip"
+          style={{ transform: `translate(-50%, -100%) translate(${srcVisualX}px, ${srcVisualY - 10}px)` }}>
+          Drag to reroute
+        </div>
+      )}
+      {tooltipType === "target" && (
+        <div className="reconnect-tooltip"
+          style={{ transform: `translate(-50%, -100%) translate(${tgtVisualX}px, ${tgtVisualY - 10}px)` }}>
+          Drag to reroute
+        </div>
+      )}
+    </>
+  ) : null;
+
+  // All labels + reconnect visuals rendered via EdgeLabelRenderer (HTML layer above all SVG edges)
+  const hasPortalContent = connectionLabel || cableIdLabels || reconnectVisuals;
+  const edgeLabelsPortal = hasPortalContent ? (
     <EdgeLabelRenderer>
       {cableIdLabels}
       {connectionLabel}
+      {reconnectVisuals}
     </EdgeLabelRenderer>
   ) : null;
 
@@ -590,6 +657,7 @@ function OffsetEdgeComponent({
         labelY={ly}
         style={edgeStyle}
         markerEnd={markerEnd}
+        interactionWidth={interactionWidth}
       />
       {edgeLabelsPortal}
       {waypointHandles}

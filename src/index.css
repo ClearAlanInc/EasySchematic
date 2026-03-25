@@ -88,6 +88,12 @@ html, body, #root {
   pointer-events: none;
 }
 
+/* During a connection drag, prevent edges from intercepting the connection.
+   Handles remain interactive because they live on the node layer. */
+.react-flow.connecting .react-flow__edges {
+  pointer-events: none;
+}
+
 /* Edge labels must sit above edges regardless of React Flow's internal z-index
    calculations. RF elevates edges when source/target nodes have a parentId (room),
    which can push edge z-index into the hundreds. 10000 guarantees labels stay on top. */
@@ -103,21 +109,46 @@ html, body, #root {
   filter: drop-shadow(0 0 3px currentColor);
 }
 
-/* Edge updater anchors — enlarged to overlap handle area.
-   Transparent by default, blue glow on hover for reconnect affordance. */
-/* Edge updater anchors — large invisible grab area, no visual indicator. */
+/* Edge updater anchors — SVG circles rendered by React Flow internally.
+   These handle ALL reconnection interaction natively (cursor, click, drag).
+   Visual indicators in HTML layer (OffsetEdge.tsx) show position above labels. */
 .react-flow__edgeupdater {
   fill: transparent;
   stroke: none;
-  cursor: move;
+  pointer-events: none;
+  r: 8;
+}
+
+.react-flow__edge:hover .react-flow__edgeupdater,
+.react-flow__edge.selected .react-flow__edgeupdater {
   pointer-events: all;
-  r: 15;
+  cursor: grab;
 }
-.react-flow__edgeupdater-source {
-  transform: translateX(-10px);
+
+/* Visual-only reconnect circles — rendered in HTML layer above cable labels */
+.reconnect-visual {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1.5px solid rgba(59, 130, 246, 0.6);
+  pointer-events: none;
+  z-index: 1;
 }
-.react-flow__edgeupdater-target {
-  transform: translateX(10px);
+
+/* Tooltip for reconnect circles */
+.reconnect-tooltip {
+  position: absolute;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  background: #1f2937;
+  color: white;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Connected handles: let clicks fall through to

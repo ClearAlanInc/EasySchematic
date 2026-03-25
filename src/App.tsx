@@ -202,17 +202,25 @@ function SchematicCanvas() {
     return edges.filter((e) => !hidden.has(e.data?.signalType ?? ""));
   }, [edges, hiddenSignalTypesStr]);
 
+  const autoRoute = useSchematicStore((s) => s.autoRoute);
+  const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
+
   useEffect(() => {
     if (isDragging) return;
     if (nodeCount === 0 && edgeCount === 0) return;
-    // Small delay to let React Flow measure handles after changes
+    if (!autoRoute) {
+      // Simple orthogonal L-shapes — no A*, instant
+      useSchematicStore.getState().computeSimpleRoutes(rfInstance);
+      return;
+    }
+    // Full A* routing with small delay to let React Flow measure handles
     useSchematicStore.setState({ isRouting: true });
     const timer = setTimeout(() => {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
       useSchematicStore.setState({ isRouting: false });
     }, 50);
     return () => { clearTimeout(timer); useSchematicStore.setState({ isRouting: false }); };
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute]);
 
   // Recompute cable ID map when edges/nodes/naming change
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
@@ -945,8 +953,9 @@ function SchematicCanvas() {
       zoomOnDoubleClick={false}
       connectOnClick
       edgesReconnectable
-      reconnectRadius={25}
-      defaultEdgeOptions={{ type: "smoothstep" }}
+      reconnectRadius={30}
+      connectionRadius={30}
+      defaultEdgeOptions={{ type: "smoothstep", interactionWidth: edgeHitboxSize }}
       connectionLineType={ConnectionLineType.SmoothStep}
       connectionLineStyle={{ opacity: 0 }}
       snapToGrid

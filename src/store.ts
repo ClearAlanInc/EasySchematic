@@ -161,6 +161,10 @@ interface SchematicState {
   autoRoute: boolean;
   toggleAutoRoute: () => void;
 
+  // Edge interaction hitbox width (pixels)
+  edgeHitboxSize: number;
+  setEdgeHitboxSize: (size: number) => void;
+
   // Debug
   debugEdges: boolean;
   toggleDebugEdges: () => void;
@@ -533,6 +537,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   roomContextMenu: null,
   portContextMenu: null,
   autoRoute: true,
+  edgeHitboxSize: 10,
   debugEdges: false,
   resizeGuides: [],
   isDemo: false,
@@ -1718,6 +1723,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setEdgeHitboxSize: (size) => {
+    set({ edgeHitboxSize: size });
+    get().saveToLocalStorage();
+  },
+
   showAllSignalTypes: () => {
     set({ hiddenSignalTypes: "" });
     get().saveToLocalStorage();
@@ -1818,6 +1828,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showConnectionLabels: !state.showConnectionLabels ? false : undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
+      edgeHitboxSize: state.edgeHitboxSize !== 10 ? state.edgeHitboxSize : undefined,
     };
     // Persist cloud identity alongside autosave (not part of SchematicFile export)
     const blob: Record<string, unknown> = { ...data };
@@ -1873,6 +1884,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
             showLineJumps: data.showLineJumps ?? true,
             autoRoute: data.autoRoute ?? true,
+            edgeHitboxSize: data.edgeHitboxSize ?? 10,
             showConnectionLabels: data.showConnectionLabels ?? true,
             hideAdapters: data.hideAdapters ?? false,
           });
@@ -1915,6 +1927,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         showLineJumps: data.showLineJumps ?? true,
         showConnectionLabels: data.showConnectionLabels ?? true,
         hideAdapters: data.hideAdapters ?? false,
+        autoRoute: data.autoRoute ?? true,
+        edgeHitboxSize: data.edgeHitboxSize ?? 10,
         // Restore cloud identity from autosave (not part of SchematicFile)
         cloudSchematicId: parsed.cloudSchematicId ?? null,
         cloudSavedAt: parsed.cloudSavedAt ?? null,
@@ -2012,6 +2026,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showLineJumps: data.showLineJumps ?? true,
       showConnectionLabels: data.showConnectionLabels ?? true,
       hideAdapters: data.hideAdapters ?? false,
+      autoRoute: data.autoRoute ?? true,
+      edgeHitboxSize: data.edgeHitboxSize ?? 10,
       // File imports and shared schematics always start as local-only
       cloudSchematicId: null,
       cloudSavedAt: null,
@@ -2061,6 +2077,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableNamingScheme: "type-prefix",
       showLineJumps: true,
       showConnectionLabels: true,
+      autoRoute: true,
+      edgeHitboxSize: 10,
       undoSize: 0,
       redoSize: 0,
     });
