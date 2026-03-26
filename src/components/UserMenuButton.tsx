@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { checkSession, claimAuthToken, logout } from "../templateApi";
+import { checkSession, logout } from "../templateApi";
 import LoginDialog from "./LoginDialog";
 
 interface User {
@@ -16,29 +16,10 @@ export default function UserMenuButton() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const init = async () => {
-      // Check for auth handoff token from magic link / OAuth redirect
-      const params = new URLSearchParams(window.location.search);
-      const auth = params.get("auth");
-      if (auth) {
-        params.delete("auth");
-        const qs = params.toString();
-        const clean = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-        history.replaceState(null, "", clean);
-        try {
-          const u = await claimAuthToken(auth);
-          setUser(u);
-          setLoaded(true);
-          return;
-        } catch {
-          // Token invalid/expired — fall through to session check
-        }
-      }
-      const u = await checkSession();
+    checkSession().then((u) => {
       setUser(u);
       setLoaded(true);
-    };
-    init();
+    });
   }, []);
 
   // Close dropdown on outside click
