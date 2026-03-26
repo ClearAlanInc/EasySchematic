@@ -77,6 +77,21 @@ function sqliteDatetime(offsetMs: number): string {
     .toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
 
+/** Append `auth=TOKEN` to a URL, handling both regular and hash-based routing. */
+function appendAuthParam(url: string, token: string): string {
+  const hashIdx = url.indexOf("#");
+  if (hashIdx !== -1) {
+    // Hash-based routing (devices site): append to hash query params
+    const base = url.slice(0, hashIdx);
+    const hash = url.slice(hashIdx + 1);
+    const sep = hash.includes("?") ? "&" : "?";
+    return `${base}#${hash}${sep}auth=${token}`;
+  }
+  // Regular URL: append to query params
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}auth=${token}`;
+}
+
 // ==================== AUTH ENDPOINTS ====================
 
 app.post("/auth/login", async (c) => {
@@ -191,18 +206,16 @@ app.get("/auth/verify", async (c) => {
     await db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").bind(user.id).run();
   }
 
-  // Create session (30-day TTL)
-  const sessionId = crypto.randomUUID();
-  const sessionExpires = sqliteDatetime(30 * 24 * 60 * 60 * 1000);
-
+  // Create handoff token (5-min TTL) — frontend claims it to set cookie reliably
+  const handoffId = crypto.randomUUID();
+  const handoffExpires = sqliteDatetime(5 * 60 * 1000);
   await db
-    .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
-    .bind(sessionId, user.id, sessionExpires)
+    .prepare("INSERT INTO auth_handoffs (id, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(handoffId, user.id, handoffExpires)
     .run();
 
-  // Redirect to returnTo or devices site with session cookie
-  c.header("Set-Cookie", sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url));
-  return c.redirect(validReturnTo || "https://devices.easyschematic.live/#/");
+  const redirectUrl = validReturnTo || "https://devices.easyschematic.live/#/";
+  return c.redirect(appendAuthParam(redirectUrl, handoffId));
 });
 
 app.post("/auth/logout", async (c) => {
@@ -366,16 +379,16 @@ app.get("/auth/google/callback", async (c) => {
 
   await db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").bind(user.id).run();
 
-  // Create session (same as magic link verify)
-  const sessionId = crypto.randomUUID();
-  const sessionExpires = sqliteDatetime(30 * 24 * 60 * 60 * 1000);
+  // Create handoff token (5-min TTL) — frontend claims it to set cookie reliably
+  const handoffId = crypto.randomUUID();
+  const handoffExpires = sqliteDatetime(5 * 60 * 1000);
   await db
-    .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
-    .bind(sessionId, user.id, sessionExpires)
+    .prepare("INSERT INTO auth_handoffs (id, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(handoffId, user.id, handoffExpires)
     .run();
 
-  c.header("Set-Cookie", sessionCookie(sessionId, 30 * 24 * 60 * 60, c.req.url));
-  return c.redirect(stateRow.return_to || "https://devices.easyschematic.live/#/");
+  const redirectUrl = stateRow.return_to || "https://devices.easyschematic.live/#/";
+  return c.redirect(appendAuthParam(redirectUrl, handoffId));
 });
 
 app.get("/auth/me", async (c) => {

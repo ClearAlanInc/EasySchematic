@@ -21,20 +21,20 @@ function parseHash(): { page: string; id?: string; draft?: string; auth?: string
   const draft = params.get("draft") || undefined;
   const auth = params.get("auth") || undefined;
 
-  if (path.startsWith("/admin/edit/")) return { page: "admin-edit", id: path.slice(12) };
-  if (path === "/admin/edit") return { page: "admin-edit" };
-  if (path === "/admin/users") return { page: "admin-users" };
-  if (path === "/admin") return { page: "admin-users" };
-  if (path.startsWith("/device/")) return { page: "device", id: path.slice(8) };
-  if (path === "/login") return { page: "login" };
+  if (path.startsWith("/admin/edit/")) return { page: "admin-edit", id: path.slice(12), auth };
+  if (path === "/admin/edit") return { page: "admin-edit", auth };
+  if (path === "/admin/users") return { page: "admin-users", auth };
+  if (path === "/admin") return { page: "admin-users", auth };
+  if (path.startsWith("/device/")) return { page: "device", id: path.slice(8), auth };
+  if (path === "/login") return { page: "login", auth };
   if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, auth };
   if (path === "/submit") return { page: "submit", draft, auth };
-  if (path === "/my-submissions") return { page: "my-submissions" };
-  if (path === "/review") return { page: "review" };
-  if (path.startsWith("/review/")) return { page: "review-detail", id: path.slice(8) };
-  if (path === "/profile") return { page: "profile" };
-  if (path === "/contributors") return { page: "contributors" };
-  return { page: "browse" };
+  if (path === "/my-submissions") return { page: "my-submissions", auth };
+  if (path === "/review") return { page: "review", auth };
+  if (path.startsWith("/review/")) return { page: "review-detail", id: path.slice(8), auth };
+  if (path === "/profile") return { page: "profile", auth };
+  if (path === "/contributors") return { page: "contributors", auth };
+  return { page: "browse", auth };
 }
 
 export default function App() {

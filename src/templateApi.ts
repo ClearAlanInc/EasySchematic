@@ -34,6 +34,17 @@ export async function checkSession(): Promise<{ id: string; email: string; name:
   }
 }
 
+export async function claimAuthToken(token: string): Promise<{ id: string; email: string; name: string | null }> {
+  const res = await fetch(`${API_URL}/auth/claim`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) throw new Error("Failed to claim auth token");
+  return res.json();
+}
+
 export async function requestLogin(email: string, returnTo?: string): Promise<void> {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
