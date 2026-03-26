@@ -10,6 +10,7 @@ export type ConnectorType =
   | "banana" | "binding-post" | "binding-post-banana" | "dvi" | "mini-xlr" | "opticalcon"
   | "l5-20" | "l6-20" | "l6-30" | "l21-30" | "cam-lok"
   | "qsfp" | "mpo"
+  | "mini-hdmi" | "mini-displayport"
   | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -466,6 +467,8 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "binding-post": "Binding Post",
   "binding-post-banana": "Binding Post (Banana)",
   dvi: "DVI",
+  "mini-hdmi": "Mini HDMI",
+  "mini-displayport": "Mini DisplayPort",
   "mini-xlr": "Mini XLR",
   opticalcon: "opticalCON",
   "l5-20": "NEMA L5-20",
