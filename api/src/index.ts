@@ -90,7 +90,7 @@ app.post("/auth/login", async (c) => {
 
   const db = c.env.easyschematic_db;
 
-  // Rate limit: 3 per email per hour, 10 per IP per hour
+  // Rate limit: 20 per email per hour, 50 per IP per hour
   const ip = getClientIP(c);
   const emailLimit = await checkRateLimit(db, `login:email:${email}`, 20);
   if (!emailLimit.allowed) {
