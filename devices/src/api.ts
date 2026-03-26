@@ -100,12 +100,12 @@ export interface User {
   };
 }
 
-export async function requestMagicLink(email: string): Promise<void> {
+export async function requestMagicLink(email: string, returnTo?: string): Promise<void> {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, ...(returnTo ? { returnTo } : {}) }),
   });
   if (res.status === 429) {
     const data = await res.json() as { error: string };

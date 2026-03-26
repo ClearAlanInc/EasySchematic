@@ -34,7 +34,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await requestMagicLink(email.trim());
+      await requestMagicLink(email.trim(), window.location.href);
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send login link");
@@ -75,7 +75,7 @@ export default function LoginPage() {
         <p className="text-sm text-slate-500 mb-4">Sign in to submit devices and manage your account.</p>
         <button
           type="button"
-          onClick={() => { window.location.href = `${API_URL}/auth/google/start`; }}
+          onClick={() => { window.location.href = `${API_URL}/auth/google/start?returnTo=${encodeURIComponent(window.location.href)}`; }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">

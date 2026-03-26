@@ -79,14 +79,15 @@ function sqliteDatetime(offsetMs: number): string {
 }
 
 /** Return a 200 HTML page that sets the cookie and redirects via JS + meta-refresh.
- *  Firefox blocks Set-Cookie on 302 redirects (Bug 1465402); a 200 page avoids this. */
-function cookieRedirect(c: { header: (k: string, v: string) => void; html: (h: string) => Response }, cookie: string, dest: string): Response {
+ *  Firefox blocks Set-Cookie on 302 redirects (Bug 1465402); a 200 page avoids this.
+ *  Small delay (1s meta-refresh, 500ms JS) gives browsers time to commit the cookie. */
+function cookieRedirect(c: { header: (k: string, v: string) => void; html: (h: string) => Response | Promise<Response> }, cookie: string, dest: string): Response | Promise<Response> {
   c.header("Set-Cookie", cookie);
   const safe = dest.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   return c.html(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${safe}">` +
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="1;url=${safe}">` +
     `<title>Redirecting\u2026</title></head><body><p>Redirecting\u2026</p>` +
-    `<script>window.location.href=${JSON.stringify(dest)}</script></body></html>`
+    `<script>setTimeout(function(){window.location.href=${JSON.stringify(dest)}},500)</script></body></html>`
   );
 }
 
@@ -153,16 +154,100 @@ app.post("/auth/login", async (c) => {
   return c.json({ ok: true });
 });
 
+/** Branded HTML page for the magic link landing page and error states. */
+function authPage(title: string, body: string): string {
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title} — EasySchematic</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .card{background:#1e293b;border-radius:12px;padding:2.5rem;max-width:420px;width:100%;text-align:center;
+    box-shadow:0 4px 24px rgba(0,0,0,.4)}
+  .logo{font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;color:#f8fafc}
+  h1{font-size:1.25rem;margin-bottom:.75rem;color:#f1f5f9}
+  p{color:#94a3b8;font-size:.95rem;line-height:1.5;margin-bottom:1.5rem}
+  .btn{display:inline-block;padding:14px 32px;background:#3b82f6;color:#fff;border:none;border-radius:8px;
+    font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s}
+  .btn:hover{background:#2563eb}
+  .link{color:#60a5fa;text-decoration:none;font-size:.9rem}
+  .link:hover{text-decoration:underline}
+</style></head><body><div class="card">
+<div class="logo">EasySchematic</div>
+${body}
+</div></body></html>`;
+}
+
 app.get("/auth/verify", async (c) => {
   const token = c.req.query("token");
   const returnTo = c.req.query("returnTo");
   const validReturnTo = returnTo && isAllowedOrigin(returnTo) ? returnTo : undefined;
 
   if (!token) {
-    return c.json({ error: "Token required" }, 400);
+    return c.html(authPage("Invalid Link", `<h1>Invalid Link</h1><p>This login link is missing a token.</p>
+      <a class="link" href="https://devices.easyschematic.live/#/login">Back to login</a>`));
   }
 
   const db = c.env.easyschematic_db;
+  const ua = c.req.header("User-Agent") ?? "unknown";
+  const ip = getClientIP(c);
+
+  // Check token validity WITHOUT consuming it (scanners do GET requests)
+  const link = await db
+    .prepare("SELECT email, used, expires_at FROM magic_links WHERE token = ?")
+    .bind(token)
+    .first<{ email: string; used: number; expires_at: string }>();
+
+  const isValid = link && !link.used && new Date(link.expires_at + "Z") > new Date();
+
+  console.log(`[auth/verify GET] ip=${ip} ua=${ua} token_found=${!!link} used=${link?.used ?? "N/A"} valid=${isValid}`);
+
+  if (!isValid) {
+    const loginUrl = validReturnTo
+      ? `${new URL(validReturnTo).origin}/#/login`
+      : "https://devices.easyschematic.live/#/login";
+    return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
+      <p>This login link has already been used or has expired. Please request a new one.</p>
+      <a class="btn" href="${loginUrl}">Back to Login</a>`));
+  }
+
+  // Show confirmation page — token is only consumed on POST (defeats email scanners)
+  const formAction = validReturnTo
+    ? `/auth/verify?returnTo=${encodeURIComponent(validReturnTo)}`
+    : "/auth/verify";
+
+  return c.html(authPage("Confirm Login", `<h1>Confirm Login</h1>
+    <p>Click below to complete your login as <strong>${link.email}</strong>.</p>
+    <form method="POST" action="${formAction}">
+      <input type="hidden" name="token" value="${token}">
+      <button type="submit" class="btn">Complete Login</button>
+    </form>`));
+});
+
+app.post("/auth/verify", async (c) => {
+  // Accept token from form body (landing page) or query string
+  const contentType = c.req.header("Content-Type") ?? "";
+  let token: string | undefined;
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const form = await c.req.parseBody();
+    token = form["token"] as string | undefined;
+  } else {
+    const body = await c.req.json<{ token?: string }>().catch(() => ({ token: undefined }));
+    token = body.token;
+  }
+
+  const returnTo = c.req.query("returnTo");
+  const validReturnTo = returnTo && isAllowedOrigin(returnTo) ? returnTo : undefined;
+
+  if (!token) {
+    return c.html(authPage("Invalid Request", `<h1>Invalid Request</h1><p>No token provided.</p>
+      <a class="link" href="https://devices.easyschematic.live/#/login">Back to login</a>`));
+  }
+
+  const db = c.env.easyschematic_db;
+  const ip = getClientIP(c);
+  const ua = c.req.header("User-Agent") ?? "unknown";
 
   // Atomically mark as used — only succeeds if not already used
   const markResult = await db
@@ -171,10 +256,13 @@ app.get("/auth/verify", async (c) => {
     .run();
 
   if (!markResult.meta.changes) {
-    const errorUrl = validReturnTo
-      ? `${new URL(validReturnTo).origin}/?error=expired`
-      : "https://devices.easyschematic.live/#/login?error=expired";
-    return c.redirect(errorUrl);
+    console.log(`[auth/verify POST] ip=${ip} ua=${ua} token_consumed=false (already used or expired)`);
+    const loginUrl = validReturnTo
+      ? `${new URL(validReturnTo).origin}/#/login`
+      : "https://devices.easyschematic.live/#/login";
+    return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
+      <p>This login link has already been used or has expired. Please request a new one.</p>
+      <a class="btn" href="${loginUrl}">Back to Login</a>`));
   }
 
   // Fetch the email (safe — we own the row after the atomic UPDATE)
@@ -184,10 +272,12 @@ app.get("/auth/verify", async (c) => {
     .first<{ email: string }>();
 
   if (!link) {
-    const errorUrl = validReturnTo
-      ? `${new URL(validReturnTo).origin}/?error=expired`
-      : "https://devices.easyschematic.live/#/login?error=expired";
-    return c.redirect(errorUrl);
+    const loginUrl = validReturnTo
+      ? `${new URL(validReturnTo).origin}/#/login`
+      : "https://devices.easyschematic.live/#/login";
+    return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
+      <p>This login link has already been used or has expired. Please request a new one.</p>
+      <a class="btn" href="${loginUrl}">Back to Login</a>`));
   }
 
   // Find or create user
@@ -211,6 +301,8 @@ app.get("/auth/verify", async (c) => {
     .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
     .bind(sessionId, user.id, sessionExpires)
     .run();
+
+  console.log(`[auth/verify POST] ip=${ip} ua=${ua} email=${link.email} session=${sessionId.slice(0, 8)}… created`);
 
   const dest = validReturnTo || "https://devices.easyschematic.live/#/";
   return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
@@ -391,7 +483,11 @@ app.get("/auth/google/callback", async (c) => {
 
 app.get("/auth/me", async (c) => {
   const user = requireSession(c);
-  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  const hasCookie = !!c.req.header("Cookie")?.includes("session=");
+  if (!user) {
+    console.log(`[auth/me] not authenticated — cookie_present=${hasCookie} ip=${getClientIP(c)} origin=${c.req.header("Origin") ?? "none"}`);
+    return c.json({ error: "Not authenticated" }, 401);
+  }
 
   // Fetch submission stats
   const stats = await c.env.easyschematic_db
