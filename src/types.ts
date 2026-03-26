@@ -312,6 +312,8 @@ export interface SchematicFile {
   printPaperId?: string;
   printOrientation?: "landscape" | "portrait";
   printScale?: number;
+  printCustomWidthIn?: number;
+  printCustomHeightIn?: number;
   titleBlock?: TitleBlock;
   titleBlockLayout?: TitleBlockLayout;
   hiddenSignalTypes?: SignalType[];

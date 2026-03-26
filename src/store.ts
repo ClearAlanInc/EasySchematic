@@ -192,10 +192,14 @@ interface SchematicState {
   printPaperId: string;
   printOrientation: Orientation;
   printScale: number;
+  printCustomWidthIn: number;
+  printCustomHeightIn: number;
   setPrintView: (v: boolean) => void;
   setPrintPaperId: (id: string) => void;
   setPrintOrientation: (o: Orientation) => void;
   setPrintScale: (s: number) => void;
+  setPrintCustomWidthIn: (w: number) => void;
+  setPrintCustomHeightIn: (h: number) => void;
 
   // Title block
   titleBlock: TitleBlock;
@@ -561,6 +565,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   printPaperId: "arch-d",
   printOrientation: "landscape" as Orientation,
   printScale: 1.0,
+  printCustomWidthIn: 24,
+  printCustomHeightIn: 36,
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
@@ -1678,6 +1684,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   setPrintPaperId: (id) => { set({ printPaperId: id }); get().saveToLocalStorage(); },
   setPrintOrientation: (o) => { set({ printOrientation: o }); get().saveToLocalStorage(); },
   setPrintScale: (s) => { set({ printScale: Math.max(0.25, Math.min(2, s)) }); get().saveToLocalStorage(); },
+  setPrintCustomWidthIn: (w) => { set({ printCustomWidthIn: Math.max(1, w) }); get().saveToLocalStorage(); },
+  setPrintCustomHeightIn: (h) => { set({ printCustomHeightIn: Math.max(1, h) }); get().saveToLocalStorage(); },
   setTitleBlock: (tb) => { set({ titleBlock: tb }); get().saveToLocalStorage(); },
   setTitleBlockLayout: (layout) => { set({ titleBlockLayout: layout }); get().saveToLocalStorage(); },
 
@@ -1836,6 +1844,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printPaperId: state.printPaperId,
       printOrientation: state.printOrientation,
       printScale: state.printScale,
+      printCustomWidthIn: state.printPaperId === "custom" ? state.printCustomWidthIn : undefined,
+      printCustomHeightIn: state.printPaperId === "custom" ? state.printCustomHeightIn : undefined,
       titleBlock: state.titleBlock,
       titleBlockLayout: state.titleBlockLayout,
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
@@ -1894,6 +1904,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             printPaperId: data.printPaperId ?? "arch-d",
             printOrientation: data.printOrientation ?? "landscape",
             printScale: data.printScale ?? 1.0,
+            printCustomWidthIn: data.printCustomWidthIn ?? 24,
+            printCustomHeightIn: data.printCustomHeightIn ?? 36,
             titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
             hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -1936,6 +1948,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         printPaperId: data.printPaperId ?? "arch-d",
         printOrientation: data.printOrientation ?? "landscape",
         printScale: data.printScale ?? 1.0,
+        printCustomWidthIn: data.printCustomWidthIn ?? 24,
+        printCustomHeightIn: data.printCustomHeightIn ?? 36,
         titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
         hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -1978,6 +1992,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printPaperId: state.printPaperId,
       printOrientation: state.printOrientation,
       printScale: state.printScale,
+      printCustomWidthIn: state.printPaperId === "custom" ? state.printCustomWidthIn : undefined,
+      printCustomHeightIn: state.printPaperId === "custom" ? state.printCustomHeightIn : undefined,
       titleBlock: state.titleBlock,
       titleBlockLayout: state.titleBlockLayout,
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
@@ -2035,6 +2051,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printPaperId: data.printPaperId ?? "arch-d",
       printOrientation: data.printOrientation ?? "landscape",
       printScale: data.printScale ?? 1.0,
+      printCustomWidthIn: data.printCustomWidthIn ?? 24,
+      printCustomHeightIn: data.printCustomHeightIn ?? 36,
       titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
       hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",

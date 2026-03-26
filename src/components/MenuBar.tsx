@@ -5,7 +5,7 @@ import { exportImage } from "../exportUtils";
 import { exportDxf } from "../dxfExport";
 import { exportPdf } from "../pdfExport";
 import { exportTemplatesToFile, readTemplateFile } from "../templateExport";
-import { PAPER_SIZES } from "../printConfig";
+import { getPaperSize } from "../printConfig";
 import type { SchematicFile, SchematicNode, AnnotationData } from "../types";
 import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
@@ -321,7 +321,7 @@ export default function MenuBar() {
   const doExportDxf = () => exportDxf(reactFlowInstance);
   const doExportPdf = () => {
     const state = useSchematicStore.getState();
-    const paper = PAPER_SIZES.find((p) => p.id === state.printPaperId) ?? PAPER_SIZES[2];
+    const paper = getPaperSize(state.printPaperId, state.printCustomWidthIn, state.printCustomHeightIn);
     exportPdf(
       reactFlowInstance,
       paper,

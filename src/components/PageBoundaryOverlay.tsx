@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { useViewport, useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { computePageGrid, type PageRect } from "../printPageGrid";
-import { PAPER_SIZES, PAGE_MARGIN_IN } from "../printConfig";
+import { PAGE_MARGIN_IN, getPaperSize } from "../printConfig";
 import type { TitleBlock, TitleBlockLayout, DeviceData, SignalType } from "../types";
 import type { RoutedEdge } from "../edgeRouter";
 import { computeCellRects, normalizeSizes, getFieldValue, getFieldLabel } from "../titleBlockLayout";
@@ -245,6 +245,8 @@ function PageBoundaryOverlay() {
   const printPaperId = useSchematicStore((s) => s.printPaperId);
   const printOrientation = useSchematicStore((s) => s.printOrientation);
   const printScale = useSchematicStore((s) => s.printScale);
+  const printCustomWidthIn = useSchematicStore((s) => s.printCustomWidthIn);
+  const printCustomHeightIn = useSchematicStore((s) => s.printCustomHeightIn);
   const titleBlock = useSchematicStore((s) => s.titleBlock);
   const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   const routedEdges = useSchematicStore((s) => s.routedEdges);
@@ -256,7 +258,7 @@ function PageBoundaryOverlay() {
     s.nodes.map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${n.measured?.width ?? 0},${n.measured?.height ?? 0}`).join("|"),
   );
 
-  const paperSize = PAPER_SIZES.find((p) => p.id === printPaperId) ?? PAPER_SIZES[2]; // tabloid default
+  const paperSize = getPaperSize(printPaperId, printCustomWidthIn, printCustomHeightIn);
   const nodes = rfInstance.getNodes();
 
   const pages = computePageGrid(paperSize, printOrientation, printScale, nodes, titleBlockLayout.heightIn);

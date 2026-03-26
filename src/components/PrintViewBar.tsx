@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
-import { PAPER_SIZES } from "../printConfig";
+import { PAPER_SIZES, getPaperSize } from "../printConfig";
 import { computePageGrid } from "../printPageGrid";
 import { exportPdf } from "../pdfExport";
 
@@ -11,6 +11,8 @@ function PrintViewBar() {
   const printPaperId = useSchematicStore((s) => s.printPaperId);
   const printOrientation = useSchematicStore((s) => s.printOrientation);
   const printScale = useSchematicStore((s) => s.printScale);
+  const printCustomWidthIn = useSchematicStore((s) => s.printCustomWidthIn);
+  const printCustomHeightIn = useSchematicStore((s) => s.printCustomHeightIn);
   const titleBlock = useSchematicStore((s) => s.titleBlock);
   const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   // Subscribe to node positions so page count updates when nodes move
@@ -20,8 +22,10 @@ function PrintViewBar() {
   const setPrintPaperId = useSchematicStore((s) => s.setPrintPaperId);
   const setPrintOrientation = useSchematicStore((s) => s.setPrintOrientation);
   const setPrintScale = useSchematicStore((s) => s.setPrintScale);
+  const setPrintCustomWidthIn = useSchematicStore((s) => s.setPrintCustomWidthIn);
+  const setPrintCustomHeightIn = useSchematicStore((s) => s.setPrintCustomHeightIn);
 
-  const paperSize = PAPER_SIZES.find((p) => p.id === printPaperId) ?? PAPER_SIZES[2];
+  const paperSize = getPaperSize(printPaperId, printCustomWidthIn, printCustomHeightIn);
   const nodes = rfInstance.getNodes();
   const pages = computePageGrid(paperSize, printOrientation, printScale, nodes, titleBlockLayout.heightIn);
 
@@ -56,8 +60,37 @@ function PrintViewBar() {
               ))}
             </optgroup>
           ))}
+          <optgroup label="Custom">
+            <option value="custom">Custom</option>
+          </optgroup>
         </select>
       </label>
+
+      {/* Custom dimensions */}
+      {printPaperId === "custom" && (
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          <input
+            type="number"
+            min={1}
+            max={200}
+            step={0.01}
+            value={printCustomWidthIn}
+            onChange={(e) => setPrintCustomWidthIn(Number(e.target.value))}
+            className="w-14 text-xs bg-white border border-gray-300 rounded px-1 py-0.5 text-gray-800 text-center"
+          />
+          <span>&times;</span>
+          <input
+            type="number"
+            min={1}
+            max={200}
+            step={0.01}
+            value={printCustomHeightIn}
+            onChange={(e) => setPrintCustomHeightIn(Number(e.target.value))}
+            className="w-14 text-xs bg-white border border-gray-300 rounded px-1 py-0.5 text-gray-800 text-center"
+          />
+          <span>&quot;</span>
+        </div>
+      )}
 
       {/* Orientation */}
       <div className="flex items-center gap-1 text-xs">

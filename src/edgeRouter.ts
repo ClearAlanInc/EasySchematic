@@ -19,7 +19,7 @@ import {
 import { computePageGrid } from "./printPageGrid";
 import {
   type Orientation,
-  PAPER_SIZES,
+  getPaperSize,
   PAGE_MARGIN_IN,
   TITLE_BLOCK_HEIGHT_IN,
 } from "./printConfig";
@@ -91,6 +91,8 @@ export interface PrintConfig {
   paperId: string;
   orientation: Orientation;
   scale: number;
+  customWidthIn?: number;
+  customHeightIn?: number;
 }
 
 // ---------- Constants ----------
@@ -622,8 +624,7 @@ function buildTitleBlockObstacles(
   nodes: SchematicNode[],
   printConfig: PrintConfig,
 ): Rect[] {
-  const paper = PAPER_SIZES.find((p) => p.id === printConfig.paperId);
-  if (!paper) return [];
+  const paper = getPaperSize(printConfig.paperId, printConfig.customWidthIn, printConfig.customHeightIn);
 
   const pages = computePageGrid(
     paper,

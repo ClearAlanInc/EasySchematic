@@ -104,7 +104,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Sharing** — generate a shareable link for any cloud-saved schematic
 - **JSON import/export** with schema versioning and automatic migrations
 - **CSV cable schedule import** — import cable schedule spreadsheets to auto-generate schematics with device matching
-- **Print** — configurable paper size (Letter through Arch E), orientation, scale, title block
+- **Print** — configurable paper size (Standard, ISO A0–A4, ANSI, Architectural, or custom dimensions), orientation, scale, title block
 - **PNG** — 4x resolution raster export
 - **SVG** — vector export
 - **DXF** — CAD export with organized layer hierarchy (`EasySchematic-Devices`, `EasySchematic-Connections-SDI`, etc.) for Vectorworks, AutoCAD

@@ -21,7 +21,7 @@ export default function PrintingPage() {
       <p>The Print View toolbar controls let you configure:</p>
       <ul>
         <li>
-          <strong>Paper size</strong> — 11 options including Letter, Legal, Tabloid, ANSI C/D/E, and Arch A/B/C/D/E
+          <strong>Paper size</strong> — Standard (Letter, Legal, Tabloid), ISO (A0–A4), ANSI (C/D/E), Architectural (A–E), or custom dimensions
         </li>
         <li><strong>Orientation</strong> — Landscape or Portrait</li>
         <li><strong>Scale</strong> — 0.25x to 2.0x, controlling how much of the canvas fits on each page</li>
