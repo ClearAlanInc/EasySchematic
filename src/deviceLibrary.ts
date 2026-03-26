@@ -19,6 +19,7 @@ import { templates as mediaServers } from "./devices/media-servers";
 import { templates as lighting } from "./devices/lighting";
 import { templates as cableAccessories } from "./devices/cable-accessories";
 import { templates as cloudServices } from "./devices/cloud-services";
+import { templates as codecs } from "./devices/codecs";
 import { templates as expansionCards } from "./devices/expansion-cards";
 
 const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
@@ -83,6 +84,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "patch-panel": "Infrastructure",
   "presentation-system": "Switching",
   "cloud-service": "Cloud Services",
+  "codec": "Codecs",
   "expansion-chassis": "Infrastructure",
 };
 
@@ -107,6 +109,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   ...lighting,
   ...cableAccessories,
   ...cloudServices,
+  ...codecs,
 ];
 
 export const CARD_TEMPLATES: DeviceTemplate[] = [...expansionCards];

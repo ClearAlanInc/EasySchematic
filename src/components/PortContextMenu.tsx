@@ -43,6 +43,18 @@ export default function PortContextMenu() {
     useSchematicStore.setState({ portContextMenu: null });
   }, [menu, updateNodeInternals]);
 
+  const flipAllPorts = useCallback(() => {
+    if (!menu) return;
+    const { patchDeviceData, nodes } = useSchematicStore.getState();
+    const node = nodes.find((n) => n.id === menu.nodeId);
+    if (!node || node.type !== "device") return;
+    const data = node.data as DeviceData;
+    const newPorts = data.ports.map((p) => ({ ...p, flipped: !p.flipped || undefined }));
+    patchDeviceData(menu.nodeId, { ports: newPorts });
+    updateNodeInternals(menu.nodeId);
+    useSchematicStore.setState({ portContextMenu: null });
+  }, [menu, updateNodeInternals]);
+
   const editDevice = useCallback(() => {
     if (!menu) return;
     useSchematicStore.getState().setEditingNodeId(menu.nodeId);
@@ -67,6 +79,7 @@ export default function PortContextMenu() {
       onClick={(e) => e.stopPropagation()}
     >
       <MenuItem label={flipLabel} onClick={flipPort} />
+      <MenuItem label="Flip All Ports" onClick={flipAllPorts} />
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Edit Device..." onClick={editDevice} />
     </div>

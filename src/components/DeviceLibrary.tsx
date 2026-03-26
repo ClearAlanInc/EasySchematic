@@ -24,6 +24,7 @@ const CATEGORY_ORDER: string[] = [
   "Speakers",
   "Amplifiers",
   "Networking",
+  "Codecs",
   "KVM / Extenders",
   "Wireless",
   "LED Video",

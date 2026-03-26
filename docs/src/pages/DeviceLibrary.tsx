@@ -18,6 +18,7 @@ export default function DeviceLibraryPage() {
         <li><strong>Speakers</strong> — line arrays, powered speakers, subwoofers (Meyer, L'Acoustics, QSC, JBL)</li>
         <li><strong>Amplifiers</strong> — power amplifiers (Crown, QSC, Behringer, Lab Gruppen)</li>
         <li><strong>Networking</strong> — NDI encoders/decoders, streaming encoders, network switches, AV-over-IP</li>
+        <li><strong>Codecs</strong> — video conferencing codecs (Cisco Room Kit, Codec Pro)</li>
         <li><strong>LED Video</strong> — LED processors (Brompton Tessera, Novastar)</li>
         <li><strong>Media Servers</strong> — Disguise d3, Dataton WATCHPAX</li>
         <li><strong>Lighting</strong> — consoles (ETC, grandMA3, Road Hog), moving lights, LED fixtures, DMX splitters</li>
