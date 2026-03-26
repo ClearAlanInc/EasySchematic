@@ -51,7 +51,7 @@ const NO_CACHE_HEADERS = {
 function sessionCookie(sessionId: string, maxAge: number, requestUrl?: string): string {
   const isLocalhost = requestUrl ? new URL(requestUrl).hostname === "localhost" : false;
   const domain = isLocalhost ? "" : "; Domain=easyschematic.live";
-  return `session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}${domain}`;
+  return `session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=${maxAge}${domain}`;
 }
 
 function getClientIP(c: { req: { header: (name: string) => string | undefined } }): string {
@@ -70,6 +70,11 @@ const ALLOWED_ORIGINS = [
 function isAllowedOrigin(url: string): boolean {
   try { return ALLOWED_ORIGINS.includes(new URL(url).origin); }
   catch { return false; }
+}
+
+function sqliteDatetime(offsetMs: number): string {
+  return new Date(Date.now() + offsetMs)
+    .toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
 
 // ==================== AUTH ENDPOINTS ====================
@@ -99,8 +104,7 @@ app.post("/auth/login", async (c) => {
   // Generate magic link token
   const token = crypto.randomUUID() + "-" + crypto.randomUUID();
   const id = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
-    .toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+  const expiresAt = sqliteDatetime(30 * 60 * 1000);
 
   await db
     .prepare("INSERT INTO magic_links (id, email, token, expires_at) VALUES (?, ?, ?, ?)")
@@ -189,7 +193,7 @@ app.get("/auth/verify", async (c) => {
 
   // Create session (30-day TTL)
   const sessionId = crypto.randomUUID();
-  const sessionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sessionExpires = sqliteDatetime(30 * 24 * 60 * 60 * 1000);
 
   await db
     .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
@@ -273,7 +277,7 @@ app.post("/auth/handoff", async (c) => {
   }
 
   const id = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const expiresAt = sqliteDatetime(5 * 60 * 1000);
 
   await db
     .prepare("INSERT INTO auth_handoffs (id, user_id, expires_at) VALUES (?, ?, ?)")
@@ -311,7 +315,7 @@ app.post("/auth/claim", async (c) => {
 
   // Create session
   const sessionId = crypto.randomUUID();
-  const sessionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sessionExpires = sqliteDatetime(30 * 24 * 60 * 60 * 1000);
 
   await db
     .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
