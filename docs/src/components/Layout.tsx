@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import { navigateTo, getPath, onNavigate } from "../navigate";
 
 const navItems = [
   { hash: "overview", label: "Overview" },
@@ -19,12 +20,16 @@ const navItems = [
 ];
 
 function NavLink({ hash, label, onClick }: { hash: string; label: string; onClick?: () => void }) {
-  const current = window.location.hash.replace(/^#\/?/, "") || "overview";
+  const current = getPath() || "overview";
   const isActive = current === hash;
   return (
     <a
-      href={`#/${hash}`}
-      onClick={onClick}
+      href={`/${hash}`}
+      onClick={(e) => {
+        e.preventDefault();
+        navigateTo(hash);
+        onClick?.();
+      }}
       className={`block px-3 py-1.5 rounded text-sm transition-colors ${
         isActive
           ? "bg-blue-100 text-blue-800 font-medium"
@@ -94,11 +99,9 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
 export default function Layout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Close menu on hash change (navigation)
+  // Close menu on navigation
   useEffect(() => {
-    const onHashChange = () => setMenuOpen(false);
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    return onNavigate(() => setMenuOpen(false));
   }, []);
 
   // Prevent body scroll when mobile menu is open
@@ -115,7 +118,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="flex h-full">
       {/* Desktop sidebar */}
       <nav className="hidden md:flex w-64 shrink-0 border-r border-gray-200 bg-gray-50 overflow-y-auto p-4 flex-col">
-        <a href="#/" className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4 px-3">
+        <a
+          href="/"
+          onClick={(e) => { e.preventDefault(); navigateTo(""); }}
+          className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4 px-3"
+        >
           <img src="/favicon.svg" alt="" className="w-6 h-6" />
           EasySchematic
         </a>
@@ -139,7 +146,11 @@ export default function Layout({ children }: { children: ReactNode }) {
             </svg>
           )}
         </button>
-        <a href="#/" className="flex items-center gap-2 text-base font-bold text-gray-900 ml-2">
+        <a
+          href="/"
+          onClick={(e) => { e.preventDefault(); navigateTo(""); }}
+          className="flex items-center gap-2 text-base font-bold text-gray-900 ml-2"
+        >
           <img src="/favicon.svg" alt="" className="w-5 h-5" />
           EasySchematic
         </a>

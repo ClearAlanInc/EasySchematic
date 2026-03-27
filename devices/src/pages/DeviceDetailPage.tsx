@@ -3,6 +3,7 @@ import type { DeviceTemplate, SlotDefinition } from "../../../src/types";
 import { CONNECTOR_LABELS } from "../../../src/types";
 import { fetchTemplate, fetchTemplates, getAdminToken } from "../api";
 import SignalBadge from "../components/SignalBadge";
+import { linkClick } from "../navigate";
 
 type TemplateWithAttribution = DeviceTemplate & {
   submittedBy?: { name: string };
@@ -68,7 +69,7 @@ export default function DeviceDetailPage({ id }: { id: string }) {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
       <div className="mb-4">
-        <a href="#/" className="text-sm text-blue-600 hover:text-blue-800">&larr; All Devices</a>
+        <a href="/" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">&larr; All Devices</a>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
@@ -89,14 +90,16 @@ export default function DeviceDetailPage({ id }: { id: string }) {
             <span className="w-6 h-6 rounded-full border border-slate-200" style={{ backgroundColor: template.color }} />
           )}
           <a
-            href={`#/submit/${template.id}`}
+            href={`/submit/${template.id}`}
+            onClick={linkClick}
             className="px-3 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm hover:bg-slate-50 transition-colors"
           >
             Suggest Edit
           </a>
           {hasAdmin && (
             <a
-              href={`#/admin/edit/${template.id}`}
+              href={`/admin/edit/${template.id}`}
+              onClick={linkClick}
               className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Edit

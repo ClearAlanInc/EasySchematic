@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { User } from "../api";
 import { updateProfile } from "../api";
+import { linkClick } from "../navigate";
 
 interface Props {
   user: User;
@@ -82,7 +83,7 @@ export default function ProfilePage({ user, onUpdate }: Props) {
           <StatCard label="Rejected" value={stats.rejected} color="text-red-600" />
         </div>
         {stats.total > 0 && (
-          <a href="#/my-submissions" className="block mt-4 text-sm text-blue-600 hover:text-blue-800">
+          <a href="/my-submissions" onClick={linkClick} className="block mt-4 text-sm text-blue-600 hover:text-blue-800">
             View all submissions &rarr;
           </a>
         )}

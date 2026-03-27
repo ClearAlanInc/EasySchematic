@@ -1,12 +1,14 @@
 import type { DeviceTemplate, SignalType } from "../../../src/types";
 import SignalBadge from "./SignalBadge";
+import { linkClick } from "../navigate";
 
 export default function DeviceCard({ template }: { template: DeviceTemplate }) {
   const signals = [...new Set(template.ports.map((p) => p.signalType))];
 
   return (
     <a
-      href={`#/device/${template.id}`}
+      href={`/device/${template.id}`}
+      onClick={linkClick}
       className="block p-4 rounded-lg border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all bg-white"
     >
       <div className="flex items-start justify-between gap-2">

@@ -3,6 +3,7 @@ import { fetchSubmission, fetchTemplate, approveSubmission, rejectSubmission } f
 import type { Submission } from "../api";
 import type { DeviceTemplate, Port, SlotDefinition } from "../../../src/types";
 import { CONNECTOR_LABELS } from "../../../src/types";
+import { linkClick } from "../navigate";
 import StatusBadge from "../components/StatusBadge";
 import SignalBadge from "../components/SignalBadge";
 import PortEditor from "../components/PortEditor";
@@ -134,7 +135,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
           )}
         </div>
         <h2 className="text-xl font-semibold mb-2">Submission {done}</h2>
-        <a href="#/review" className="text-sm text-blue-600 hover:text-blue-800">Back to review queue</a>
+        <a href="/review" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">Back to review queue</a>
       </div>
     );
   }
@@ -144,7 +145,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex items-center gap-3 mb-6">
-        <a href="#/review" className="text-sm text-blue-600 hover:text-blue-800">&larr; Review Queue</a>
+        <a href="/review" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">&larr; Review Queue</a>
         <StatusBadge status={submission.status} />
         <span className="text-xs text-slate-400 capitalize">{submission.action}</span>
       </div>

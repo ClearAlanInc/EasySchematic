@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Layout from "./components/Layout";
+import { getPath, onNavigate } from "./navigate";
 import OverviewPage from "./pages/Overview";
 import GettingStartedPage from "./pages/GettingStarted";
 import DevicesAndPortsPage from "./pages/DevicesAndPorts";
@@ -29,26 +30,48 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   api: { title: "Public API", component: ApiPage },
 };
 
-function getHash() {
-  return window.location.hash.replace(/^#\/?/, "");
+function initPath(): string {
+  // Redirect legacy hash-based URLs to path equivalents
+  const hash = window.location.hash.replace(/^#\/?/, "");
+  if (hash && hash in routes) {
+    window.history.replaceState({}, "", "/" + hash);
+    return hash;
+  }
+  return getPath();
 }
 
 export default function DocsApp() {
-  const [hash, setHash] = useState(getHash);
+  const [path, setPath] = useState(initPath);
 
   useEffect(() => {
-    const onHashChange = () => setHash(getHash());
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    return onNavigate(() => setPath(getPath()));
   }, []);
 
-  const route = routes[hash] ?? routes[""];
+  const route = routes[path] ?? routes[""];
   const Page = route.component;
 
   useEffect(() => {
     document.title = `${route.title} — EasySchematic Docs`;
     document.querySelector("main")?.scrollTo(0, 0);
-  }, [hash]);
+
+    // Update JSON-LD structured data per page
+    const slug = path || "overview";
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": `${route.title} — EasySchematic Docs`,
+      "url": `https://docs.easyschematic.live/${slug}`,
+      "isPartOf": { "@type": "WebSite", "name": "EasySchematic Docs", "url": "https://docs.easyschematic.live" },
+    };
+    let script = document.querySelector<HTMLScriptElement>('script[data-jsonld]');
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.setAttribute("data-jsonld", "");
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(jsonLd);
+  }, [path]);
 
   return (
     <Layout>

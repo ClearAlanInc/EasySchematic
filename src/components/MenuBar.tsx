@@ -454,6 +454,14 @@ export default function MenuBar() {
       { type: "separator" },
       {
         type: "item",
+        label: "Landing Page",
+        onClick: () => {
+          localStorage.removeItem("easyschematic-skip-landing");
+          window.location.href = "/";
+        },
+      },
+      {
+        type: "item",
         label: "About EasySchematic",
         onClick: () => setShowAboutDialog(true),
       },

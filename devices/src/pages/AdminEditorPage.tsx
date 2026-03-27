@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createTemplate, updateTemplate, deleteTemplate, getAdminToken, clearAdminToken } from "../api";
 import AuthGate from "../components/AuthGate";
 import DeviceForm, { type DeviceFormData } from "../components/DeviceForm";
+import { navigateTo } from "../navigate";
 
 function Editor({ id }: { id?: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -14,10 +15,10 @@ function Editor({ id }: { id?: string }) {
     try {
       if (isEdit) {
         await updateTemplate(id, data, token);
-        window.location.hash = `#/device/${id}`;
+        navigateTo(`/device/${id}`);
       } else {
         const created = await createTemplate(data, token);
-        window.location.hash = `#/device/${created.id}`;
+        navigateTo(`/device/${created.id}`);
       }
     } catch (e) {
       if (e instanceof Error && e.message === "Unauthorized") {
@@ -34,7 +35,7 @@ function Editor({ id }: { id?: string }) {
     if (!token) return;
 
     await deleteTemplate(id, token);
-    window.location.hash = "#/";
+    navigateTo("/");
   };
 
   return (
@@ -45,7 +46,7 @@ function Editor({ id }: { id?: string }) {
         id={id}
         onSubmit={handleSubmit}
         submitLabel="Save"
-        cancelHref={isEdit ? `#/device/${id}` : "#/"}
+        cancelHref={isEdit ? `/device/${id}` : "/"}
         footer={isEdit && (
           <>
             {!confirmDelete && (

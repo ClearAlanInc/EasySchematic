@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { User } from "../api";
 import { logout } from "../api";
+import { linkClick } from "../navigate";
 
 interface Props {
   user: User;
@@ -41,10 +42,10 @@ export default function UserMenu({ user, onLogout }: Props) {
             <p className="text-xs text-slate-500 truncate">{user.email}</p>
             <p className="text-xs text-slate-400 capitalize">{user.role}</p>
           </div>
-          <a href="#/profile" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+          <a href="/profile" onClick={(e) => { setOpen(false); linkClick(e); }} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
             Profile
           </a>
-          <a href="#/my-submissions" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+          <a href="/my-submissions" onClick={(e) => { setOpen(false); linkClick(e); }} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
             My Submissions
           </a>
           <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createSubmission } from "../api";
 import DeviceForm, { type DeviceFormData } from "../components/DeviceForm";
+import { linkClick } from "../navigate";
 
 interface Props {
   id?: string; // existing template ID for edit suggestions
@@ -30,9 +31,9 @@ export default function SubmitPage({ id, draftId }: Props) {
           Your {isEdit ? "edit suggestion" : "new device"} has been submitted for review. A moderator will review it shortly.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <a href="#/my-submissions" className="text-sm text-blue-600 hover:text-blue-800">View my submissions</a>
+          <a href="/my-submissions" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">View my submissions</a>
           <span className="text-slate-300">|</span>
-          <a href="#/" className="text-sm text-blue-600 hover:text-blue-800">Browse devices</a>
+          <a href="/" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">Browse devices</a>
         </div>
       </div>
     );
@@ -54,7 +55,7 @@ export default function SubmitPage({ id, draftId }: Props) {
         draftId={draftId}
         onSubmit={handleSubmit}
         submitLabel="Submit for Review"
-        cancelHref={isEdit ? `#/device/${id}` : "#/"}
+        cancelHref={isEdit ? `/device/${id}` : "/"}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchPendingSubmissions } from "../api";
 import type { Submission } from "../api";
 import StatusBadge from "../components/StatusBadge";
+import { linkClick } from "../navigate";
 
 export default function ReviewQueuePage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -31,7 +32,8 @@ export default function ReviewQueuePage() {
           {submissions.map((s) => (
             <a
               key={s.id}
-              href={`#/review/${s.id}`}
+              href={`/review/${s.id}`}
+              onClick={linkClick}
               className="block p-4 rounded-lg border border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all"
             >
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">

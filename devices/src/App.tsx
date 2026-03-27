@@ -13,11 +13,11 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContributorsPage from "./pages/ContributorsPage";
 import UserMenu from "./components/UserMenu";
+import { navigateTo, linkClick } from "./navigate";
 
-function parseHash(): { page: string; id?: string; draft?: string; auth?: string } {
-  const hash = window.location.hash.slice(1) || "/";
-  const [path, query] = hash.split("?");
-  const params = new URLSearchParams(query || "");
+function parseRoute(): { page: string; id?: string; draft?: string; auth?: string } {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
   const draft = params.get("draft") || undefined;
   const auth = params.get("auth") || undefined;
 
@@ -38,33 +38,43 @@ function parseHash(): { page: string; id?: string; draft?: string; auth?: string
 }
 
 export default function App() {
-  const [route, setRoute] = useState(parseHash);
+  const [route, setRoute] = useState(parseRoute);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Redirect legacy hash URLs to path equivalents
   useEffect(() => {
-    const onHash = () => {
-      setRoute(parseHash());
+    const hash = window.location.hash;
+    if (hash && hash.startsWith("#/")) {
+      const newUrl = hash.slice(1); // strip leading #
+      window.history.replaceState({}, "", newUrl);
+      setRoute(parseRoute());
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      setRoute(parseRoute());
       setMenuOpen(false);
     };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   useEffect(() => {
     const init = async () => {
       // Check for auth handoff token in URL
-      const { auth } = parseHash();
+      const { auth } = parseRoute();
       if (auth) {
         try {
           const claimed = await claimAuthToken(auth);
           setUser(claimed);
           // Strip auth param from URL
-          const hash = window.location.hash;
-          const cleaned = hash.replace(/([?&])auth=[^&]+(&|$)/, (_, p, s) => s ? p : "");
-          window.location.hash = cleaned;
+          const url = new URL(window.location.href);
+          url.searchParams.delete("auth");
+          window.history.replaceState({}, "", url.pathname + (url.search || ""));
           setAuthLoading(false);
           return;
         } catch {
@@ -78,12 +88,33 @@ export default function App() {
     init();
   }, []);
 
+  // Update JSON-LD structured data
+  useEffect(() => {
+    const jsonLd = route.page === "browse"
+      ? { "@context": "https://schema.org", "@type": "ItemList", "name": "EasySchematic Device Database", "url": "https://devices.easyschematic.live/" }
+      : route.page === "contributors"
+      ? { "@context": "https://schema.org", "@type": "WebPage", "name": "EasySchematic Contributors", "url": "https://devices.easyschematic.live/contributors" }
+      : null;
+    let script = document.querySelector<HTMLScriptElement>('script[data-jsonld]');
+    if (jsonLd) {
+      if (!script) {
+        script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.setAttribute("data-jsonld", "");
+        document.head.appendChild(script);
+      }
+      script.textContent = JSON.stringify(jsonLd);
+    } else if (script) {
+      script.remove();
+    }
+  }, [route.page]);
+
   const isMod = user?.role === "moderator" || user?.role === "admin";
   const isAdmin = user?.role === "admin" || !!getAdminToken();
 
   const handleLogout = () => {
     setUser(null);
-    window.location.hash = "#/";
+    navigateTo("/");
   };
 
   // Close menu on click outside
@@ -100,7 +131,7 @@ export default function App() {
 
   const navLinks = (
     <>
-      <a href="#/contributors" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+      <a href="/contributors" onClick={linkClick} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
         Contributors
       </a>
       <a href="https://easyschematic.live" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
@@ -111,18 +142,18 @@ export default function App() {
       </a>
       {!authLoading && user && (
         <>
-          <a href="#/submit" className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
+          <a href="/submit" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
             Submit Device
           </a>
           {isMod && (
-            <a href="#/review" className="text-sm text-yellow-600 hover:text-yellow-800 transition-colors">
+            <a href="/review" onClick={linkClick} className="text-sm text-yellow-600 hover:text-yellow-800 transition-colors">
               Review Queue
             </a>
           )}
         </>
       )}
       {isAdmin && (
-        <a href="#/admin" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+        <a href="/admin" onClick={linkClick} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
           Admin
         </a>
       )}
@@ -130,7 +161,7 @@ export default function App() {
         user ? (
           <UserMenu user={user} onLogout={handleLogout} />
         ) : (
-          <a href="#/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          <a href="/login" onClick={linkClick} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
             Log in
           </a>
         )
@@ -142,7 +173,7 @@ export default function App() {
     <div className="min-h-full flex flex-col">
       <nav ref={menuRef} className="bg-gray-50 border-b border-gray-200 text-gray-900 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          <a href="#/" className="flex items-center gap-2 text-lg font-semibold tracking-tight hover:text-gray-600 transition-colors">
+          <a href="/" onClick={linkClick} className="flex items-center gap-2 text-lg font-semibold tracking-tight hover:text-gray-600 transition-colors">
             <img src="/favicon.svg" alt="" className="w-6 h-6" />
             EasySchematic <span className="text-gray-400 font-normal">Devices</span>
           </a>
@@ -202,7 +233,7 @@ export default function App() {
 }
 
 function LoginRedirect() {
-  useEffect(() => { window.location.hash = "#/login"; }, []);
+  useEffect(() => { navigateTo("/login"); }, []);
   return null;
 }
 

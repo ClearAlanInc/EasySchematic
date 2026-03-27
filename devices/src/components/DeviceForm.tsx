@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import type { Port, SlotDefinition, DeviceTemplate } from "../../../src/types";
 import { fetchTemplate, fetchDeviceTypes, fetchSearchTerms, fetchCategories, fetchTemplates, fetchDraft } from "../api";
+import { linkClick } from "../navigate";
 import PortEditor from "./PortEditor";
 import AutocompleteInput from "./AutocompleteInput";
 import TagAutocompleteInput from "./TagAutocompleteInput";
@@ -276,7 +277,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-8 pt-6 border-t border-slate-200">
         <div>{footer}</div>
         <div className="flex items-center gap-3">
-          <a href={cancelHref} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">
+          <a href={cancelHref} onClick={linkClick} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">
             Cancel
           </a>
           <button

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchContributors, fetchContributorTemplates } from "../api";
 import type { Contributor, ContributorTemplate } from "../api";
+import { linkClick } from "../navigate";
 
 export default function ContributorsPage() {
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -49,7 +50,7 @@ export default function ContributorsPage() {
       {contributors.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
           <p className="mb-2">No contributions yet.</p>
-          <a href="#/submit" className="text-sm text-blue-600 hover:text-blue-800">Be the first!</a>
+          <a href="/submit" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">Be the first!</a>
         </div>
       ) : (
         <div className="space-y-2">
@@ -100,7 +101,8 @@ export default function ContributorsPage() {
                         {templates[c.id].map((t) => (
                           <li key={t.id}>
                             <a
-                              href={`#/device/${t.id}`}
+                              href={`/device/${t.id}`}
+                              onClick={linkClick}
                               className="text-sm text-blue-600 hover:text-blue-800"
                             >
                               {t.label}

@@ -226,7 +226,7 @@ export default function DevicesAndPortsPage() {
       </ul>
       <p>
         Network config is entered in the device editor under each port's settings. This data feeds
-        into the <a href="#/pack-list">Network Report</a>.
+        into the <a href="/pack-list">Network Report</a>.
       </p>
     </>
   );

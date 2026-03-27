@@ -19,10 +19,10 @@ export default function LoginPage() {
 
   // Check for error param from failed verify/OAuth redirect
   useEffect(() => {
-    const hash = window.location.hash;
-    const match = hash.match(/[?&]error=([^&]+)/);
-    if (match) {
-      setError(ERROR_MESSAGES[match[1]] || "Login failed. Please try again.");
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get("error");
+    if (errorParam) {
+      setError(ERROR_MESSAGES[errorParam] || "Login failed. Please try again.");
     }
   }, []);
 
