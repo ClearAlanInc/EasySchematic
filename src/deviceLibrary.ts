@@ -65,6 +65,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "wireless-video": "Wireless",
   "intercom": "Intercom",
   "led-processor": "LED Video",
+  "led-cabinet": "LED Video",
   "media-server": "Media Servers",
   "lighting-console": "Lighting",
   "moving-light": "Lighting",
