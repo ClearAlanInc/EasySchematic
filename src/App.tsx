@@ -39,7 +39,8 @@ import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, typ
 import type { DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
 import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
-import { loadSharedSchematic } from "./templateApi";
+import { loadSharedSchematic, checkSession } from "./templateApi";
+import { refreshCloudCache } from "./cloudSync";
 
 /** Darkens the canvas area left of x=0 and above y=0, marking the printable origin. */
 function CanvasOriginOverlay() {
@@ -189,6 +190,46 @@ function SchematicCanvas() {
   useEffect(() => {
     loadFromLocalStorage();
   }, [loadFromLocalStorage]);
+
+  // Online/offline detection + cloud cache sync
+  useEffect(() => {
+    const store = useSchematicStore.getState();
+    const goOnline = () => {
+      store.setIsOnline(true);
+      refreshCloudCache();
+    };
+    const goOffline = () => store.setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    // Refresh cache on tab focus (if online and logged in)
+    const onFocus = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        checkSession().then((u) => { if (u) refreshCloudCache(); });
+      }
+    };
+    document.addEventListener("visibilitychange", onFocus);
+
+    // Poll navigator.onLine every 3s as a fallback — browser events
+    // don't always fire reliably (especially with DevTools offline toggle)
+    const interval = setInterval(() => {
+      const current = navigator.onLine;
+      if (current !== useSchematicStore.getState().isOnline) {
+        useSchematicStore.getState().setIsOnline(current);
+        if (current) refreshCloudCache();
+      }
+    }, 3000);
+
+    // Populate cache on mount if logged in
+    checkSession().then((u) => { if (u) refreshCloudCache(); });
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+      document.removeEventListener("visibilitychange", onFocus);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Recompute edge routes when nodes/edges change (but not during drag)
   const isDragging = useSchematicStore((s) => s.isDragging);

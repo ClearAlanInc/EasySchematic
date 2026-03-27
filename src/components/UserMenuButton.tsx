@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { checkSession, logout } from "../templateApi";
+import { clearCache } from "../cloudCache";
 import LoginDialog from "./LoginDialog";
 
 interface User {
@@ -41,6 +42,7 @@ export default function UserMenuButton() {
 
   const handleLogout = async () => {
     await logout();
+    try { await clearCache(); } catch { /* IndexedDB may be unavailable */ }
     setUser(null);
     setDropdownOpen(false);
   };

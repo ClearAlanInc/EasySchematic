@@ -333,6 +333,10 @@ interface SchematicState {
   setCloudSchematicId: (id: string | null) => void;
   setCloudSavedAt: (ts: string | null) => void;
 
+  // Online / offline state
+  isOnline: boolean;
+  setIsOnline: (online: boolean) => void;
+
   // Toasts
   toasts: Toast[];
   addToast: (message: string, type: Toast["type"], durationMs?: number) => void;
@@ -670,6 +674,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cableIdMap: {},
   cloudSchematicId: null,
   cloudSavedAt: null,
+  isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   pendingIncompatibleConnection: null,
   hideAdapters: false,
   hiddenAdapterNodeIds: new Set(),
@@ -1986,6 +1991,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setCloudSchematicId: (id) => { set({ cloudSchematicId: id }); get().saveToLocalStorage(); },
   setCloudSavedAt: (ts) => { set({ cloudSavedAt: ts }); get().saveToLocalStorage(); },
+
+  setIsOnline: (online) => set({ isOnline: online }),
 
   // Toasts
   toasts: [],

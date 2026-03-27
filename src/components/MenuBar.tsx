@@ -149,6 +149,7 @@ export default function MenuBar() {
 
   const cloudSchematicId = useSchematicStore((s) => s.cloudSchematicId);
   const cloudSavedAt = useSchematicStore((s) => s.cloudSavedAt);
+  const isOnline = useSchematicStore((s) => s.isOnline);
 
   // Keep nameValue in sync when schematicName changes externally
   useEffect(() => {
@@ -262,6 +263,13 @@ export default function MenuBar() {
   );
 
   const handleCloudSave = useCallback(async () => {
+    const store = useSchematicStore.getState();
+
+    if (!navigator.onLine) {
+      store.addToast("You're offline. Use File → Save Schematic to save a copy to your computer.", "info");
+      return;
+    }
+
     const session = await checkSession();
     if (!session) {
       setShowCloudLogin(true);
@@ -270,7 +278,6 @@ export default function MenuBar() {
     setCloudSaving(true);
     try {
       const data = exportToJSON();
-      const store = useSchematicStore.getState();
       if (store.cloudSchematicId) {
         const result = await updateSchematicInCloud(store.cloudSchematicId, data);
         store.setCloudSavedAt(result.updated_at);
@@ -291,9 +298,9 @@ export default function MenuBar() {
   useEffect(() => {
     const onSave = () => {
       handleSave();
-      // Also save to cloud in parallel if cloud-backed
+      // Also save to cloud in parallel if cloud-backed and online
       const store = useSchematicStore.getState();
-      if (store.cloudSchematicId) {
+      if (store.cloudSchematicId && store.isOnline) {
         checkSession().then((session) => {
           if (!session) return;
           const data = store.exportToJSON();
@@ -370,7 +377,7 @@ export default function MenuBar() {
       { type: "item", label: "Save Schematic", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Open Schematic...", shortcut: "Ctrl+O", onClick: handleOpen },
       { type: "separator" },
-      { type: "item", label: cloudSaving ? "Saving..." : "Save to Cloud", disabled: cloudSaving, onClick: handleCloudSave },
+      { type: "item", label: cloudSaving ? "Saving..." : isOnline ? "Save to Cloud" : "Save to Cloud (Offline)", disabled: cloudSaving || !isOnline, onClick: handleCloudSave },
       { type: "item", label: "My Schematics...", disabled: !isLoggedIn, title: isLoggedIn ? undefined : "Must be logged in", onClick: () => setShowSchematicBrowser(true) },
       { type: "separator" },
       { type: "item", label: "Save Device Archive", onClick: handleSaveArchive },
@@ -581,11 +588,22 @@ export default function MenuBar() {
               </span>
               {cloudSchematicId && (
                 <span
-                  title={cloudSavedAt ? `Cloud saved: ${new Date(cloudSavedAt + "Z").toLocaleString()}` : "Cloud-backed schematic"}
+                  title={
+                    !isOnline ? "Offline — cloud sync paused" :
+                    cloudSavedAt ? `Cloud saved: ${new Date(cloudSavedAt + "Z").toLocaleString()}` : "Cloud-backed schematic"
+                  }
                 >
-                  <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className={`w-3.5 h-3.5 ${isOnline ? "text-blue-500" : "text-amber-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                   </svg>
+                </span>
+              )}
+              {!isOnline && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700"
+                  title="No internet connection. Editing works normally — save to your computer via File → Save Schematic."
+                >
+                  Offline
                 </span>
               )}
             </span>
