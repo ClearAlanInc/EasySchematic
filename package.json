@@ -57,10 +57,12 @@
     "globals": "^17.4.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.0",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.0",
     "wrangler": "^4.73.0"
   }

@@ -99,6 +99,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 
 ### Save & Export
 
+- **Install as app** — install EasySchematic as a standalone desktop app from your browser (Chrome: address bar install icon, or Menu → Install; Edge: Menu → Apps → Install; Safari: Share → Add to Home Screen). Works offline after installation
 - **Auto-save** to browser localStorage
 - **Cloud storage** — create a free account to save up to 10 schematics to the cloud and access them from any browser
 - **Sharing** — generate a shareable link for any cloud-saved schematic
