@@ -6,6 +6,7 @@ import {
   MiniMap,
   BackgroundVariant,
   ConnectionLineType,
+  ConnectionMode,
   useReactFlow,
   useStoreApi,
   useViewport,
@@ -587,8 +588,7 @@ function SchematicCanvas() {
       // Get exact handle position from React Flow internals (flow space)
       const internal = rfInstance.getInternalNode(nodeId);
       const bounds = internal?.internals.handleBounds;
-      const handleList = fromSource ? bounds?.source : bounds?.target;
-      const handle = handleList?.find((h) => h.id === handleId);
+      const handle = [...(bounds?.source ?? []), ...(bounds?.target ?? [])].find((h) => h.id === handleId);
       let pos: { x: number; y: number };
       if (internal && handle) {
         pos = {
@@ -632,7 +632,6 @@ function SchematicCanvas() {
 
       const findSnapTarget = (mouseX: number, mouseY: number) => {
         const state = useSchematicStore.getState();
-        const targetType = fromSource ? "target" : "source";
         let best: { x: number; y: number; dist: number; nodeId: string; handleId: string } | null = null;
 
         for (const node of state.nodes) {
@@ -640,8 +639,8 @@ function SchematicCanvas() {
           const intNode = rfInstance.getInternalNode(node.id);
           if (!intNode) continue;
           const hBounds = intNode.internals.handleBounds;
-          const handles = targetType === "target" ? hBounds?.target : hBounds?.source;
-          if (!handles) continue;
+          const handles = [...(hBounds?.source ?? []), ...(hBounds?.target ?? [])];
+          if (!handles.length) continue;
           const absX = intNode.internals.positionAbsolute.x;
           const absY = intNode.internals.positionAbsolute.y;
 
@@ -1013,6 +1012,7 @@ function SchematicCanvas() {
       panOnScroll={false}
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
+      connectionMode={ConnectionMode.Loose}
       connectOnClick
       edgesReconnectable
       reconnectRadius={30}

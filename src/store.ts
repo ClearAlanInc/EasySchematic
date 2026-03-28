@@ -31,7 +31,7 @@ import { computeAlignment, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { routeAllEdges, orthogonalize, type RoutedEdge } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath } from "./pathfinding";
-import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
@@ -731,7 +731,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (srcPort && tgtPort) {
         const canSource = srcPort.direction === "output" || srcPort.direction === "bidirectional";
         const canTarget = tgtPort.direction === "input" || tgtPort.direction === "bidirectional";
-        if (canSource && canTarget && srcPort.signalType !== tgtPort.signalType) {
+        const networkBypass = NETWORK_SIGNAL_TYPES.has(srcPort.signalType) && NETWORK_SIGNAL_TYPES.has(tgtPort.signalType);
+        if ((canSource && canTarget || networkBypass) && srcPort.signalType !== tgtPort.signalType) {
           // Auto-insert if exactly one adapter matches
           const allTemplates = [...DEVICE_TEMPLATES, ...state.customTemplates];
           const adapterMatches = findAdaptersForSignalBridge(srcPort.signalType, tgtPort.signalType, allTemplates);
@@ -1079,10 +1080,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     );
 
     if (!sourcePort || !targetPort) return false;
-    // Source must be output or bidirectional, target must be input or bidirectional
-    const canSource = sourcePort.direction === "output" || sourcePort.direction === "bidirectional";
-    const canTarget = targetPort.direction === "input" || targetPort.direction === "bidirectional";
-    if (!canSource || !canTarget) return false;
+    // Network signal types (ethernet, dante, etc.) can connect in any direction
+    const networkBypass = NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) && NETWORK_SIGNAL_TYPES.has(targetPort.signalType);
+    if (!networkBypass) {
+      const canSource = sourcePort.direction === "output" || sourcePort.direction === "bidirectional";
+      const canTarget = targetPort.direction === "input" || targetPort.direction === "bidirectional";
+      if (!canSource || !canTarget) return false;
+    }
     if (sourcePort.signalType !== targetPort.signalType) return false;
 
     // Multicable ports can only connect to other multicable ports
