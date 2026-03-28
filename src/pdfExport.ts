@@ -549,8 +549,10 @@ export async function exportPdf(
   document.documentElement.setAttribute("data-pdf-capturing", "");
 
   // Content area dimensions in real pixels for capture
+  // Use full page height (minus margins only) so nodes near the title block boundary
+  // don't get clipped — the title block is drawn as vector graphics on top afterward
   const contentWPx = (pageWIn - 2 * PAGE_MARGIN_IN) * DPI;
-  const contentHPx = (pageHIn - 2 * PAGE_MARGIN_IN - layout.heightIn) * DPI;
+  const contentHPx = (pageHIn - 2 * PAGE_MARGIN_IN) * DPI;
 
   // Derive a filename from the title block
   const fileName = (titleBlock.drawingTitle || titleBlock.showName || "Schematic").replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic";
@@ -609,9 +611,9 @@ export async function exportPdf(
         CSSStyleDeclaration.prototype.getPropertyValue = origGetPropertyValue;
       }
 
-      // Add image to PDF page
+      // Add image to PDF page (full height minus margins — title block drawn on top)
       const imgWidthIn = pageWIn - 2 * PAGE_MARGIN_IN;
-      const imgHeightIn = pageHIn - 2 * PAGE_MARGIN_IN - layout.heightIn;
+      const imgHeightIn = pageHIn - 2 * PAGE_MARGIN_IN;
       doc.addImage(dataUrl, "PNG", PAGE_MARGIN_IN, PAGE_MARGIN_IN, imgWidthIn, imgHeightIn, undefined, "FAST");
 
       // Draw content border and title block with vector graphics
