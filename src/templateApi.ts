@@ -90,6 +90,7 @@ export interface CloudSchematic {
   size_bytes: number;
   shared: number;
   share_token: string | null;
+  is_template: number;
   created_at: string;
   updated_at: string;
 }
@@ -184,6 +185,38 @@ export async function renameCloudSchematic(id: string, name: string): Promise<Cl
   if (!res.ok) {
     const err = (await res.json()) as { error: string };
     throw new Error(err.error || "Failed to rename schematic");
+  }
+  return res.json();
+}
+
+export async function setSchematicAsTemplate(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/schematics/${id}/set-template`, {
+    method: "PUT",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to set template");
+  }
+}
+
+export async function clearSchematicTemplate(): Promise<void> {
+  const res = await fetch(`${API_URL}/schematics/template`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to clear template");
+  }
+}
+
+export async function loadSchematicTemplate(): Promise<unknown | null> {
+  const res = await fetch(`${API_URL}/schematics/template`, { credentials: "include" });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const err = (await res.json()) as { error: string };
+    throw new Error(err.error || "Failed to load template");
   }
   return res.json();
 }

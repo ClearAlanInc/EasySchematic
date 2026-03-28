@@ -1458,7 +1458,7 @@ app.post("/schematics", async (c) => {
     .run();
 
   const row = await db
-    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE id = ?")
     .bind(id)
     .first();
 
@@ -1470,11 +1470,27 @@ app.get("/schematics", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
   const { results } = await c.env.easyschematic_db
-    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE user_id = ? ORDER BY updated_at DESC")
+    .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE user_id = ? ORDER BY updated_at DESC")
     .bind(user.id)
     .all();
 
   return c.json(results);
+});
+
+app.get("/schematics/template", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const row = await c.env.easyschematic_db
+    .prepare("SELECT id FROM schematics WHERE user_id = ? AND is_template = 1")
+    .bind(user.id)
+    .first<{ id: string }>();
+  if (!row) return c.json({ error: "No template set" }, 404);
+
+  const obj = await c.env.SCHEMATIC_STORAGE.get(`schematics/${row.id}.json`);
+  if (!obj) return c.json({ error: "Template data not found" }, 404);
+
+  return c.body(obj.body as ReadableStream, 200, { "Content-Type": "application/json" });
 });
 
 app.get("/schematics/:id", async (c) => {
@@ -1545,11 +1561,23 @@ app.put("/schematics/:id", async (c) => {
     .run();
 
   const row = await db
-    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE id = ?")
     .bind(id)
     .first();
 
   return c.json(row);
+});
+
+app.delete("/schematics/template", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  await c.env.easyschematic_db
+    .prepare("UPDATE schematics SET is_template = 0 WHERE user_id = ? AND is_template = 1")
+    .bind(user.id)
+    .run();
+
+  return c.json({ ok: true });
 });
 
 app.delete("/schematics/:id", async (c) => {
@@ -1605,7 +1633,7 @@ app.post("/schematics/:id/share", async (c) => {
   }
 
   const row = await db
-    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE id = ?")
     .bind(id)
     .first();
 
@@ -1662,11 +1690,35 @@ app.put("/schematics/:id/rename", async (c) => {
     .run();
 
   const row = await db
-    .prepare("SELECT id, name, size_bytes, shared, share_token, created_at, updated_at FROM schematics WHERE id = ?")
+    .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE id = ?")
     .bind(id)
     .first();
 
   return c.json(row);
+});
+
+// ==================== TEMPLATE ENDPOINTS ====================
+
+app.put("/schematics/:id/set-template", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const existing = await db
+    .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+  if (!existing) return c.json({ error: "Schematic not found" }, 404);
+
+  // Clear any previous template, then set this one
+  await db.batch([
+    db.prepare("UPDATE schematics SET is_template = 0 WHERE user_id = ? AND is_template = 1").bind(user.id),
+    db.prepare("UPDATE schematics SET is_template = 1 WHERE id = ? AND user_id = ?").bind(id, user.id),
+  ]);
+
+  return c.json({ ok: true });
 });
 
 app.get("/health", async (c) => {

@@ -5,6 +5,7 @@ import { exportImage } from "../exportUtils";
 import { exportDxf } from "../dxfExport";
 import { exportPdf } from "../pdfExport";
 import { exportTemplatesToFile, readTemplateFile } from "../templateExport";
+import { loadSchematicTemplate } from "../templateApi";
 import { getPaperSize } from "../printConfig";
 import type { SchematicFile, SchematicNode, AnnotationData } from "../types";
 import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
@@ -368,11 +369,24 @@ export default function MenuBar() {
     state.saveToLocalStorage();
   }, [reactFlowInstance]);
 
+  const handleNew = useCallback(async () => {
+    if (isLoggedIn && isOnline) {
+      try {
+        const tpl = await loadSchematicTemplate();
+        if (tpl) {
+          newSchematic(tpl as SchematicFile);
+          return;
+        }
+      } catch { /* fall through to blank */ }
+    }
+    newSchematic();
+  }, [isLoggedIn, isOnline, newSchematic]);
+
   const closeMenu = () => setOpenMenu(null);
 
   const menus: Record<string, MenuEntry[]> = {
     File: [
-      { type: "item", label: "New", onClick: newSchematic },
+      { type: "item", label: "New", onClick: handleNew },
       { type: "separator" },
       { type: "item", label: "Save Schematic", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Open Schematic...", shortcut: "Ctrl+O", onClick: handleOpen },

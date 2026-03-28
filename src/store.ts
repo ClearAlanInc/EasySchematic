@@ -350,7 +350,7 @@ interface SchematicState {
   exportToJSON: () => SchematicFile;
   importFromJSON: (data: SchematicFile) => void;
   importCsvData: (newNodes: SchematicNode[], newEdges: ConnectionEdge[]) => void;
-  newSchematic: () => void;
+  newSchematic: (templateData?: SchematicFile) => void;
   setSchematicName: (name: string) => void;
 }
 
@@ -2299,36 +2299,49 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
-  newSchematic: () => {
+  newSchematic: (templateData?: SchematicFile) => {
     undoStack.length = 0;
     redoStack.length = 0;
-    set({
-      nodes: [],
-      edges: [],
-      schematicName: "Untitled Schematic",
-      isDemo: false,
-      cloudSchematicId: null,
-      cloudSavedAt: null,
-      titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
-      titleBlockLayout: createDefaultLayout(),
-      hiddenSignalTypes: "",
-      hideDeviceTypes: false,
-      hideUnconnectedPorts: false,
-      templateHiddenSignals: {},
-      templatePresets: {},
-      favoriteTemplates: [],
-      reportLayouts: {},
-      globalReportHeaderLayout: null,
-      globalReportFooterLayout: null,
-      scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
-      cableNamingScheme: "type-prefix",
-      showLineJumps: true,
-      showConnectionLabels: true,
-      autoRoute: true,
-      edgeHitboxSize: 10,
-      undoSize: 0,
-      redoSize: 0,
-    });
+    if (templateData) {
+      // Load template as a new unsaved file
+      get().importFromJSON(templateData);
+      set({
+        schematicName: "Untitled Schematic",
+        isDemo: false,
+        cloudSchematicId: null,
+        cloudSavedAt: null,
+        undoSize: 0,
+        redoSize: 0,
+      });
+    } else {
+      set({
+        nodes: [],
+        edges: [],
+        schematicName: "Untitled Schematic",
+        isDemo: false,
+        cloudSchematicId: null,
+        cloudSavedAt: null,
+        titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
+        titleBlockLayout: createDefaultLayout(),
+        hiddenSignalTypes: "",
+        hideDeviceTypes: false,
+        hideUnconnectedPorts: false,
+        templateHiddenSignals: {},
+        templatePresets: {},
+        favoriteTemplates: [],
+        reportLayouts: {},
+        globalReportHeaderLayout: null,
+        globalReportFooterLayout: null,
+        scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
+        cableNamingScheme: "type-prefix",
+        showLineJumps: true,
+        showConnectionLabels: true,
+        autoRoute: true,
+        edgeHitboxSize: 10,
+        undoSize: 0,
+        redoSize: 0,
+      });
+    }
     get().saveToLocalStorage();
   },
 
