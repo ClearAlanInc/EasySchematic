@@ -901,11 +901,12 @@ function BulkAddForm({
 }) {
   const [prefix, setPrefix] = useState("Input");
   const [start, setStart] = useState(1);
-  const [count, setCount] = useState(8);
+  const [end, setEnd] = useState(8);
   const [signalType, setSignalType] = useState<SignalType>("sdi");
   const [section, setSection] = useState("");
 
   const handleSubmit = () => {
+    const count = end - start + 1;
     if (count < 1 || !prefix.trim()) return;
     onBulkAdd(direction, prefix.trim(), start, count, signalType, section.trim());
     onClose();
@@ -933,14 +934,14 @@ function BulkAddForm({
           />
         </div>
         <div className="flex items-center gap-0.5">
-          <span className="text-[10px] text-[var(--color-text-muted)]">&times;</span>
+          <span className="text-[10px] text-[var(--color-text-muted)]">to</span>
           <input
             type="number"
             className="w-12 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
-            value={count}
-            onChange={(e) => setCount(parseInt(e.target.value) || 1)}
-            min={1}
-            max={200}
+            value={end}
+            onChange={(e) => setEnd(parseInt(e.target.value) || 1)}
+            min={start}
+            max={999}
             onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
@@ -977,7 +978,7 @@ function BulkAddForm({
         </button>
       </div>
       <div className="text-[10px] text-[var(--color-text-muted)]">
-        Preview: {prefix} {start}, {prefix} {start + 1}, ... {prefix} {start + count - 1}
+        Preview: {prefix} {start}, {prefix} {start + 1}, ... {prefix} {end}
       </div>
     </div>
   );
