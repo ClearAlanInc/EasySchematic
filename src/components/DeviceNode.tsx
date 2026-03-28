@@ -215,9 +215,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     <div
       onDoubleClick={() => setEditingNodeId(id)}
       className={`
-        relative rounded-lg border bg-white min-w-[180px]
+        relative rounded-lg border bg-white
         ${isOverlapping ? "border-red-400 shadow-lg shadow-red-400/30" : selected ? "border-blue-500 shadow-lg shadow-blue-500/20" : "border-[var(--color-border)]"}
       `}
+      style={{ width: 180 }}
     >
       {/* Header */}
       <div

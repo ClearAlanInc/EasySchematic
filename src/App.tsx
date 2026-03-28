@@ -32,6 +32,8 @@ import MobileGate from "./components/MobileGate";
 import ToastContainer from "./components/ToastContainer";
 import PendingSubmissionBanner from "./components/PendingSubmissionBanner";
 import PortContextMenu from "./components/PortContextMenu";
+import RoutingDebugOverlay from "./components/RoutingDebugOverlay";
+import RoutingTuningPanel from "./components/RoutingTuningPanel";
 import RoomContextMenu from "./components/RoomContextMenu";
 import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
@@ -267,6 +269,7 @@ function SchematicCanvas() {
 
   const autoRoute = useSchematicStore((s) => s.autoRoute);
   const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
+  const routingParamVersion = useSchematicStore((s) => s.routingParamVersion);
 
   useEffect(() => {
     if (isDragging) return;
@@ -283,7 +286,7 @@ function SchematicCanvas() {
       useSchematicStore.setState({ isRouting: false });
     }, 50);
     return () => { clearTimeout(timer); useSchematicStore.setState({ isRouting: false }); };
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
 
   // Recompute cable ID map when edges/nodes/naming change
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
@@ -913,6 +916,7 @@ function SchematicCanvas() {
   return (
     <>
     <ReactFlow
+      className={debugEdges ? "debug-active" : undefined}
       nodes={nodes}
       edges={visibleEdges}
       onNodesChange={onNodesChange}
@@ -1091,7 +1095,9 @@ function SchematicCanvas() {
         zoomable
         nodeColor={(node) => node.type === "room" ? "#e5e7eb" : "#3b82f6"}
       />
+      <RoutingDebugOverlay />
     </ReactFlow>
+    <RoutingTuningPanel />
     {quickAddPos && (
       <QuickAddDevice
         position={quickAddPos}

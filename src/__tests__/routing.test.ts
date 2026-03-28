@@ -9,7 +9,7 @@ import {
   buildObstacles,
   simplifyWaypoints,
   waypointsToSvgPath,
-  buildSparseGrid,
+  buildGrid,
   astarOrthogonal,
   computeEdgePath,
 } from "../pathfinding";
@@ -216,25 +216,24 @@ describe("waypointsToSvgPath", () => {
 
 describe("astarOrthogonal", () => {
   it("finds a straight horizontal path with no obstacles", () => {
-    const grid = buildSparseGrid(0, 0, 200, 0, []);
-    const result = astarOrthogonal(grid, 0, 0, 200, 0, []);
+    const grid = buildGrid(0, 0, 10, 0, []);
+    const result = astarOrthogonal(grid, 0, 0, 10, 0);
     expect(result).not.toBeNull();
-    expect(result!.path[0]).toEqual({ x: 0, y: 0 });
-    expect(result!.path[result!.path.length - 1]).toEqual({ x: 200, y: 0 });
+    expect(result!.path[0]).toEqual({ gx: 0, gy: 0 });
+    expect(result!.path[result!.path.length - 1]).toEqual({ gx: 10, gy: 0 });
   });
 
   it("routes around an obstacle", () => {
-    const obstacle = { left: 80, top: -30, right: 120, bottom: 30 };
-    const grid = buildSparseGrid(0, 0, 200, 0, [obstacle]);
-    const result = astarOrthogonal(grid, 0, 0, 200, 0, [obstacle]);
+    const obstacle = { left: 4, top: -2, right: 6, bottom: 2 };
+    const grid = buildGrid(0, 0, 10, 0, [obstacle]);
+    const result = astarOrthogonal(grid, 0, 0, 10, 0);
     expect(result).not.toBeNull();
-    // Path should not pass through the obstacle
     for (const pt of result!.path) {
       const inside =
-        pt.x >= obstacle.left &&
-        pt.x <= obstacle.right &&
-        pt.y >= obstacle.top &&
-        pt.y <= obstacle.bottom;
+        pt.gx >= obstacle.left &&
+        pt.gx <= obstacle.right &&
+        pt.gy >= obstacle.top &&
+        pt.gy <= obstacle.bottom;
       expect(inside).toBe(false);
     }
   });

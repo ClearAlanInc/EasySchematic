@@ -94,6 +94,13 @@ html, body, #root {
   pointer-events: none;
 }
 
+/* Debug mode: dim schematic so debug overlay visuals are prominent */
+.react-flow.debug-active .react-flow__nodes,
+.react-flow.debug-active .react-flow__edges,
+.react-flow.debug-active .react-flow__edgelabel-renderer {
+  opacity: 0.2;
+}
+
 /* Edge labels must sit above edges regardless of React Flow's internal z-index
    calculations. RF elevates edges when source/target nodes have a parentId (room),
    which can push edge z-index into the hundreds. 10000 guarantees labels stay on top. */

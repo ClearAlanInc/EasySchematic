@@ -94,6 +94,7 @@ function OffsetEdgeComponent({
   interactionWidth,
 }: EdgeProps<ConnectionEdge>) {
   const debugEdges = useSchematicStore((s) => s.debugEdges);
+  const debugShowLabels = useSchematicStore((s) => s.debugShowLabels);
   const rfInstance = useReactFlow();
 
   // Hover state for showing visual reconnect indicators in HTML layer
@@ -562,7 +563,7 @@ function OffsetEdgeComponent({
       : null;
 
   // Show label at both source and target ends so it's visible even if the path goes behind a device
-  const debugLabel = debugEdges ? (
+  const debugLabel = (debugEdges && debugShowLabels) ? (
     <>
       <foreignObject
         x={sourceX + 4}

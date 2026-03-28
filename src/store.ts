@@ -206,6 +206,8 @@ interface SchematicState {
 
   // Centralized edge routing
   routedEdges: Record<string, RoutedEdge>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  routingDebugData: any;
   recomputeRoutes: (rfInstance: ReactFlowInstance) => void;
   computeSimpleRoutes: (rfInstance: ReactFlowInstance) => void;
 
@@ -219,7 +221,14 @@ interface SchematicState {
 
   // Debug
   debugEdges: boolean;
+  debugShowLabels: boolean;
+  debugShowObstacles: boolean;
+  debugShowPenalties: boolean;
+  debugShowWaypoints: boolean;
+  debugShowGrid: boolean;
   toggleDebugEdges: () => void;
+  routingParamVersion: number;
+  bumpRoutingParams: () => void;
 
   // Resize snap guides (shown while resizing rooms)
   resizeGuides: import("./snapUtils").GuideLine[];
@@ -638,12 +647,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   customTemplateGroupAssignments: _initCustomMeta.groupAssignments,
   categoryOrder: loadCategoryOrder(),
   routedEdges: {},
+  routingDebugData: null,
   edgeContextMenu: null,
   roomContextMenu: null,
   portContextMenu: null,
   autoRoute: true,
   edgeHitboxSize: 10,
   debugEdges: false,
+  debugShowLabels: true,
+  debugShowObstacles: true,
+  debugShowPenalties: true,
+  debugShowWaypoints: true,
+  debugShowGrid: true,
+  routingParamVersion: 0,
   resizeGuides: [],
   isDemo: false,
   isDragging: false,
@@ -2593,6 +2609,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     set({
       routedEdges: results,
+      routingDebugData: (globalThis as unknown as Record<string, unknown>).__routingDebug ?? null,
       edges: updatedEdges,
       hiddenAdapterNodeIds,
       hiddenVirtualEdgeIds,
@@ -2635,6 +2652,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   toggleDebugEdges: () => {
     set((s) => ({ debugEdges: !s.debugEdges }));
+  },
+  bumpRoutingParams: () => {
+    set((s) => ({ routingParamVersion: s.routingParamVersion + 1 }));
   },
 
   setResizeGuides: (guides) => {

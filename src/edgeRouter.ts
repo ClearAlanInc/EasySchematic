@@ -99,17 +99,26 @@ export interface PrintConfig {
 
 const DPI = 96;
 
-/** Tunable routing orchestration parameters. */
-export const ROUTER_PARAMS = {
+/** Default routing orchestration parameters. */
+export const ROUTER_DEFAULTS = {
   MAX_ITERATIONS: 5,
   SEPARATION_THRESHOLD: 8,
   CX_THRESHOLD: 15,
-  EDGE_GAP: 12,
+  EDGE_GAP: 0,          // no parallel edge offset — start simple
   Y_GAP_THRESHOLD: 50,
-  STUB_GAP: 6,
+  STUB_GAP: 0,          // no stub spread — start simple
   /** Edge sort strategy: 0=default(signal-type→shortest→position), 1=longest-first, 2=most-connected-first */
   SORT_STRATEGY: 0 as number,
 };
+
+/** Live-overridable via window.__routingParams for debug tuning. */
+export const ROUTER_PARAMS: typeof ROUTER_DEFAULTS = new Proxy(ROUTER_DEFAULTS, {
+  get(target, prop) {
+    const overrides = (globalThis as unknown as Record<string, unknown>).__routingParams as Record<string, number> | undefined;
+    if (overrides && prop in overrides) return overrides[prop as string];
+    return target[prop as keyof typeof target];
+  },
+}) as typeof ROUTER_DEFAULTS;
 
 // ---------- Handle resolution ----------
 
@@ -648,6 +657,30 @@ function buildTitleBlockObstacles(
   return rects;
 }
 
+/**
+ * After routing an edge, add its turn points as obstacle rects so
+ * subsequent edges can't use those grid points. Each turn point becomes
+ * a single-pixel obstacle that covers the exact grid cell.
+ */
+function blockTurnPoints(waypoints: Point[], obstacleRects: Rect[]) {
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const prev = waypoints[i - 1];
+    const curr = waypoints[i];
+    const next = waypoints[i + 1];
+    const isTurn = (prev.x !== next.x) && (prev.y !== next.y);
+    if (isTurn) {
+      // Create a rect that exactly covers the grid cell at this pixel position
+      obstacleRects.push({
+        left: curr.x,
+        top: curr.y,
+        right: curr.x,
+        bottom: curr.y,
+        nodeId: `turn-${curr.x}-${curr.y}`,
+      });
+    }
+  }
+}
+
 // ---------- Main routing function ----------
 
 export interface RouteAllResult {
@@ -995,6 +1028,8 @@ export function routeAllEdges(
         status: "good",
         signalType: sigType,
       });
+      // Block turn points for subsequent edges — interior waypoints where direction changes
+      blockTurnPoints(result.waypoints, obs.rects);
     } else {
       // Fallback: orthogonal L-shape (never draw a diagonal)
       // Go right from source, then vertical to target Y, then into target
@@ -1017,9 +1052,10 @@ export function routeAllEdges(
         labelX: midX,
         labelY: (ep.sourceY + ep.targetY) / 2,
         turns: "fallback",
-        status: "good",
+        status: "bad",
         signalType: sigType,
       });
+      blockTurnPoints(wp, obs.rects);
     }
 
     // Time budget check: bail out of Phase 1 early if over budget
@@ -1029,138 +1065,11 @@ export function routeAllEdges(
     }
   }
 
-  // If we bailed early, fill remaining edges with L-shape fallbacks
-  if (overBudget) {
-    const routedIds = new Set(routeStates.map((rs) => rs.edgeId));
-    for (const ep of edgeEndpoints) {
-      if (routedIds.has(ep.edge.id)) continue;
-      const sigType = ep.edge.data?.signalType;
-      const midX = Math.max(ep.sourceX, ep.targetX) + 40;
-      const wp: Point[] = [
-        { x: ep.sourceX, y: ep.sourceY },
-        { x: midX, y: ep.sourceY },
-        { x: midX, y: ep.targetY },
-        { x: ep.targetX, y: ep.targetY },
-      ];
-      const svgPath = wp.map((p, i) =>
-        i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
-      ).join(" ");
-      routeStates.push({
-        edgeId: ep.edge.id,
-        waypoints: wp,
-        segments: extractSegments(wp),
-        svgPath,
-        labelX: midX,
-        labelY: (ep.sourceY + ep.targetY) / 2,
-        turns: "fallback",
-        status: "good",
-        signalType: sigType,
-      });
-    }
-  }
+  // PHASE 2+3 — Violation detection and re-routing disabled for clean-slate tuning.
 
   // Stubbed edges should be excluded from crossing/violation detection —
   // their invisible middle sections shouldn't affect other edges.
   const stubbedIds = new Set(edgeEndpoints.filter((ep) => ep.edge.data?.stubbed).map((ep) => ep.edge.id));
-
-  // PHASE 2 — Violation detection (skip if over budget)
-  if (!overBudget) {
-  const badIds = findViolations(
-    routeStates
-      .filter((rs) => !stubbedIds.has(rs.edgeId))
-      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
-  );
-  for (const rs of routeStates) {
-    if (badIds.has(rs.edgeId) && !rs.turns.startsWith("manual")) {
-      rs.status = "bad";
-    }
-  }
-
-  // PHASE 3 — Iterative re-routing
-  // Helper to attempt re-routing a single bad edge
-  const tryReroute = (bad: RouteState): boolean => {
-    const ep = edgeEndpoints.find((e) => e.edge.id === bad.edgeId);
-    if (!ep) return false;
-
-    const goodEdges = routeStates.filter(
-      (rs) => rs.status === "good" && rs.edgeId !== bad.edgeId,
-    );
-    const penalties = buildPenaltyZones(goodEdges);
-    const sigType = ep.edge.data?.signalType;
-
-    let result = computeEdgePath(
-      ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-      obs.rects, 0, ep.stubSpread, penalties, sigType,
-      undefined, undefined, undefined, undefined, undefined,
-      ep.sourceExitsRight, ep.targetEntersLeft,
-    );
-
-    if (!result) {
-      const excludeSet3 = new Set([ep.edge.source, ep.edge.target]);
-      const relaxedRects3 = obs.rects.filter((r) => !r.nodeId || !excludeSet3.has(r.nodeId));
-      result = computeEdgePath(
-        ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        relaxedRects3, 0, ep.stubSpread, penalties, sigType,
-        undefined, undefined, undefined, undefined, undefined,
-        ep.sourceExitsRight, ep.targetEntersLeft,
-      );
-    }
-
-    if (!result) return false;
-
-    const newSegments = extractSegments(result.waypoints);
-    const goodEdgeSegments = routeStates
-      .filter((rs) => rs.status === "good" && rs.edgeId !== bad.edgeId)
-      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType }));
-
-    const newViolations = findViolations([
-      { edgeId: bad.edgeId, segments: newSegments, signalType: sigType },
-      ...goodEdgeSegments,
-    ]);
-
-    if (!newViolations.has(bad.edgeId)) {
-      bad.waypoints = result.waypoints;
-      bad.segments = newSegments;
-      bad.svgPath = result.path;
-      bad.labelX = result.labelX;
-      bad.labelY = result.labelY;
-      bad.turns = result.turns;
-      bad.status = "good";
-      return true;
-    }
-    return false;
-  };
-
-  for (let iter = 0; iter < ROUTER_PARAMS.MAX_ITERATIONS; iter++) {
-    if (performance.now() - startTime > timeBudgetMs) { overBudget = true; break; }
-    const badEdges = routeStates.filter((rs) => rs.status === "bad");
-    if (badEdges.length === 0) break;
-
-    // Alternate sort order: even iterations shortest-first, odd iterations longest-first.
-    if (iter % 2 === 0) {
-      badEdges.sort((a, b) => a.waypoints.length - b.waypoints.length);
-    } else {
-      badEdges.sort((a, b) => b.waypoints.length - a.waypoints.length);
-    }
-
-    let anyImproved = false;
-    for (const bad of badEdges) {
-      if (tryReroute(bad)) anyImproved = true;
-    }
-
-    if (!anyImproved) {
-      const stillBad = routeStates.filter((rs) => rs.status === "bad");
-      if (stillBad.length < 2) break;
-
-      stillBad.reverse();
-      let unstuck = false;
-      for (const bad of stillBad) {
-        if (tryReroute(bad)) unstuck = true;
-      }
-      if (!unstuck) break;
-    }
-  }
-  } // end if (!overBudget) — skip Phase 2/3
 
   // Detect crossing points between all edge pairs (skip if over budget — cosmetic only).
   // Horizontal edge at a crossing gets an arc (hop over);
@@ -1220,6 +1129,26 @@ export function routeAllEdges(
   if (debug) {
     logRoutingReport(routeStates, edgeEndpoints);
   }
+
+  // Export debug data for overlay and Claude analysis
+  const finalPenalties = buildPenaltyZones(routeStates);
+
+  const w = globalThis as unknown as Record<string, unknown>;
+  w.__routingDebug = {
+    obstacles: obs.rects,
+    penaltyZones: finalPenalties,
+    edges: Object.fromEntries(edgeEndpoints.map((ep) => {
+      const rs = routeStates.find((r) => r.edgeId === ep.edge.id);
+      return [ep.edge.id, {
+        source: { x: ep.sourceX, y: ep.sourceY, exitsRight: ep.sourceExitsRight },
+        target: { x: ep.targetX, y: ep.targetY, entersLeft: ep.targetEntersLeft },
+        signalType: ep.edge.data?.signalType,
+        path: rs?.waypoints ?? [],
+        turns: rs?.turns ?? "",
+        status: rs?.status ?? "unknown",
+      }];
+    })),
+  };
 
   return { routes: results, overBudget };
 }
