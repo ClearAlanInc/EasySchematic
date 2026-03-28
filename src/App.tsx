@@ -1015,7 +1015,7 @@ function SchematicCanvas() {
       connectionMode={ConnectionMode.Loose}
       connectOnClick
       edgesReconnectable
-      reconnectRadius={30}
+      reconnectRadius={12}
       connectionRadius={30}
       defaultEdgeOptions={{ type: "smoothstep", interactionWidth: edgeHitboxSize }}
       connectionLineType={ConnectionLineType.SmoothStep}

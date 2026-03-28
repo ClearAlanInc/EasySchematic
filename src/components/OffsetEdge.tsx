@@ -459,6 +459,78 @@ function OffsetEdgeComponent({
     [id, manualWpStr, sourceX, sourceY, targetX, targetY],
   );
 
+  // Keep applyManualWaypoints accessible from native event listeners via ref
+  const applyManualWaypointsRef = useRef(applyManualWaypoints);
+  applyManualWaypointsRef.current = applyManualWaypoints;
+
+  // Intercept edge updater mousedown in capture phase when a manual waypoint
+  // is nearby, so waypoint drag wins over React Flow's reconnect/disconnect.
+  useEffect(() => {
+    if (!selected || !isManual) return;
+
+    const el = document.querySelector(`.react-flow__edge[data-id="${id}"]`);
+    if (!el) return;
+
+    const updaters = el.querySelectorAll('.react-flow__edgeupdater');
+    if (!updaters.length) return;
+
+    const handler = (e: Event) => {
+      const me = e as MouseEvent;
+      if (me.button !== 0) return;
+      const wps = manualWaypoints;
+      if (!wps.length) return;
+
+      const flowPos = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
+
+      let nearestIdx = -1;
+      let nearestDistSq = Infinity;
+      for (let i = 0; i < wps.length; i++) {
+        const dx = wps[i].x - flowPos.x;
+        const dy = wps[i].y - flowPos.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < nearestDistSq) { nearestDistSq = distSq; nearestIdx = i; }
+      }
+
+      if (nearestIdx < 0 || nearestDistSq >= 30 * 30) return;
+
+      // Block React Flow's reconnection handler
+      e.stopImmediatePropagation();
+      e.preventDefault();
+
+      // Start waypoint drag (mirrors onHandleMouseDown logic)
+      const store = useSchematicStore.getState();
+      store.pushSnapshot();
+      const currentWps = wps.map((p) => ({ ...p }));
+      const startFlowPos = flowPos;
+      const originalPos = { ...currentWps[nearestIdx] };
+      useSchematicStore.setState({ isDragging: true });
+
+      const onMouseMove = (moveEvt: MouseEvent) => {
+        const fp = rfInstance.screenToFlowPosition({ x: moveEvt.clientX, y: moveEvt.clientY });
+        const newWps = currentWps.map((p) => ({ ...p }));
+        newWps[nearestIdx] = {
+          x: snapToGrid(originalPos.x + (fp.x - startFlowPos.x)),
+          y: snapToGrid(originalPos.y + (fp.y - startFlowPos.y)),
+        };
+        applyManualWaypointsRef.current(newWps);
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        useSchematicStore.setState({ isDragging: false });
+        useSchematicStore.getState().saveToLocalStorage();
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    };
+
+    updaters.forEach((u) => u.addEventListener('mousedown', handler, true));
+    return () => { updaters.forEach((u) => u.removeEventListener('mousedown', handler, true)); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, selected, isManual, manualWpStr, sourceX, sourceY, targetX, targetY]);
+
   // --- Render handles ---
   // Only show draggable circles at manually-placed waypoints
   const waypointHandles =
@@ -703,7 +775,7 @@ function OffsetEdgeComponent({
   // Visual-only reconnect circles + tooltip — rendered in HTML layer above cable labels.
   // Interaction is handled by RF's native SVG updater circles (pointer events pass through
   // labels since they have pointer-events: none). These HTML elements are purely decorative.
-  const RECONNECT_OFFSET = 15; // matches reconnectRadius prop on <ReactFlow>
+  const RECONNECT_OFFSET = 12; // matches reconnectRadius prop on <ReactFlow>
   const showReconnect = (selected || isHovered) && routeStr;
   const srcVisualX = sourceX + srcDx * RECONNECT_OFFSET;
   const srcVisualY = sourceY + srcDy * RECONNECT_OFFSET;
