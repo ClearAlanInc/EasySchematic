@@ -128,6 +128,7 @@ export default function DeviceEditor() {
         poeDrawW: p.poeDrawW,
         linkSpeed: p.linkSpeed,
         flipped: p.flipped,
+        addressable: p.addressable,
       })),
     );
     setShowAllPorts(node.data.showAllPorts ?? false);
@@ -326,6 +327,7 @@ export default function DeviceEditor() {
       poeDrawW: p.poeDrawW,
       linkSpeed: p.linkSpeed,
       flipped: p.flipped,
+      addressable: p.addressable,
     })));
     setHiddenPorts([]);
     setColor(tpl.color);
@@ -350,6 +352,7 @@ export default function DeviceEditor() {
       poeDrawW: p.poeDrawW,
       linkSpeed: p.linkSpeed,
       flipped: p.flipped,
+      addressable: p.addressable,
     })));
     setHiddenPorts(preset.hiddenPorts ?? []);
     setColor(preset.color);
