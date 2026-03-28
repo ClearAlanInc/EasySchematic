@@ -21,8 +21,12 @@ import LoginDialog from "./LoginDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
 
-const ALL_SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
-const ALL_CONNECTOR_TYPES = Object.keys(CONNECTOR_LABELS) as ConnectorType[];
+const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
+  (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
+);
+const ALL_CONNECTOR_TYPES = (Object.keys(CONNECTOR_LABELS) as ConnectorType[]).sort(
+  (a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]),
+);
 
 interface PortDraft {
   id: string;

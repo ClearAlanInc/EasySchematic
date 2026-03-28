@@ -3,7 +3,9 @@ import { useReactFlow } from "@xyflow/react";
 import { SIGNAL_LABELS, type SignalType, type Port, type DeviceTemplate } from "../types";
 import { useSchematicStore, GRID_SIZE } from "../store";
 
-const ALL_SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
+const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
+  (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
+);
 
 interface SectionDef {
   id: string;

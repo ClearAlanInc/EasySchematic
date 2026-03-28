@@ -3,7 +3,9 @@ import { SIGNAL_LABELS, SIGNAL_COLORS, LINE_STYLE_DASHARRAY, type SignalType, ty
 import { useSchematicStore } from "../store";
 import { DEFAULT_SIGNAL_COLORS, loadSignalColors } from "../signalColors";
 
-const ALL_SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
+const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
+  (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
+);
 const LINE_STYLES: LineStyle[] = ["solid", "dashed", "dotted", "dash-dot"];
 const LINE_STYLE_TIPS: Record<LineStyle, string> = {
   solid: "Solid",
