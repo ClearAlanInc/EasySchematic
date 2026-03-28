@@ -1059,10 +1059,16 @@ export function routeAllEdges(
     }
   }
 
+  // Stubbed edges should be excluded from crossing/violation detection —
+  // their invisible middle sections shouldn't affect other edges.
+  const stubbedIds = new Set(edgeEndpoints.filter((ep) => ep.edge.data?.stubbed).map((ep) => ep.edge.id));
+
   // PHASE 2 — Violation detection (skip if over budget)
   if (!overBudget) {
   const badIds = findViolations(
-    routeStates.map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
+    routeStates
+      .filter((rs) => !stubbedIds.has(rs.edgeId))
+      .map((rs) => ({ edgeId: rs.edgeId, segments: rs.segments, signalType: rs.signalType })),
   );
   for (const rs of routeStates) {
     if (badIds.has(rs.edgeId) && !rs.turns.startsWith("manual")) {
@@ -1170,6 +1176,7 @@ export function routeAllEdges(
       for (let j = i + 1; j < routeStates.length; j++) {
         const a = routeStates[i];
         const b = routeStates[j];
+        if (stubbedIds.has(a.edgeId) || stubbedIds.has(b.edgeId)) continue;
         for (const sa of a.segments) {
           for (const sb of b.segments) {
             if (segmentsCross(sa, sb)) {

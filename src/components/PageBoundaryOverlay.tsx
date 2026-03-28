@@ -41,7 +41,7 @@ function pageAtPoint(x: number, y: number, pages: PageRect[]): number {
 function computeCrossingLabels(
   pages: PageRect[],
   routedEdges: Record<string, RoutedEdge>,
-  edges: { id: string; source: string; target: string; data?: { signalType?: SignalType } }[],
+  edges: { id: string; source: string; target: string; data?: { signalType?: SignalType; stubbed?: boolean } }[],
   nodes: { id: string; type?: string; data: Record<string, unknown>; parentId?: string }[],
   _pxPerPt: number,
   signalColorOverrides?: Partial<Record<SignalType, string>>,
@@ -90,6 +90,8 @@ function computeCrossingLabels(
   for (const [edgeId, route] of Object.entries(routedEdges)) {
     const edge = edgeMap.get(edgeId);
     if (!edge) continue;
+    // Stubbed edges only render short stubs — their invisible middle section shouldn't generate crossing labels
+    if (edge.data?.stubbed) continue;
     const sourceInfo = nodeInfo.get(edge.source);
     const targetInfo = nodeInfo.get(edge.target);
     if (!sourceInfo || !targetInfo) continue;

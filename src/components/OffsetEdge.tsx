@@ -1,4 +1,4 @@
-import { memo, useState, useRef, useEffect, useCallback } from "react";
+import { memo, useMemo, useState, useRef, useEffect, useCallback } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -10,10 +10,76 @@ import { GRID_SIZE } from "../store";
 import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle } from "../types";
 import { extractSegments, orthogonalize } from "../edgeRouter";
 import { waypointsToSvgPath, simplifyWaypoints } from "../pathfinding";
+import { computePageGrid } from "../printPageGrid";
+import { getPaperSize } from "../printConfig";
 
 /** Snap a value to the nearest grid increment. */
 function snapToGrid(v: number): number {
   return Math.round(v / GRID_SIZE) * GRID_SIZE;
+}
+
+/** Draggable stub end label — shows destination device name and acts as the drag handle.
+ *  The stub line terminates at this label. Drag to reposition. */
+function StubEndLabel({ x, y, dx, dy, text, color, edgeId, field }: {
+  x: number; y: number; dx: number; dy: number; text: string; color: string;
+  edgeId: string; field: "stubSourceEnd" | "stubTargetEnd";
+}) {
+  const rfInstance = useReactFlow();
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const pos = dragPos ?? { x, y };
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const onMove = (me: MouseEvent) => {
+      const fp = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
+      setDragPos({ x: snapToGrid(fp.x), y: snapToGrid(fp.y) });
+    };
+    const onUp = (me: MouseEvent) => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      const fp = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
+      const final = { x: snapToGrid(fp.x), y: snapToGrid(fp.y) };
+      setDragPos(null);
+      useSchematicStore.getState().patchEdgeData(edgeId, { [field]: final });
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [edgeId, field, rfInstance]);
+
+  // Anchor the label so the line flows into its center from the approach direction
+  // Horizontal stubs: anchor left/right edge, always center vertically
+  // Vertical stubs: anchor top/bottom edge, always center horizontally
+  const anchorX = dx > 0 ? "0%" : dx < 0 ? "-100%" : "-50%";
+  const anchorY = dx !== 0 ? "-50%" : (dy > 0 ? "0%" : dy < 0 ? "-100%" : "-50%");
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        transform: `translate(${pos.x}px, ${pos.y}px) translate(${anchorX}, ${anchorY})`,
+        fontSize: 9,
+        lineHeight: 1,
+        fontFamily: "'Inter', system-ui, sans-serif",
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+        pointerEvents: "all",
+        cursor: "grab",
+        padding: "1.5px 4px",
+        borderRadius: 2,
+        border: `1px solid ${color}`,
+        backgroundColor: "white",
+        color: "#374151",
+        display: "flex",
+        alignItems: "center",
+      }}
+      onMouseDown={onMouseDown}
+    >
+      {text}
+    </div>
+  );
 }
 
 function OffsetEdgeComponent({
@@ -120,11 +186,66 @@ function OffsetEdgeComponent({
     return edge?.data?.hideLabel === true;
   });
 
-  // Read stubbed flag (stable primitive selector)
+  // Read stubbed flag and custom endpoints (stable primitive selectors)
   const stubbed = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.stubbed === true;
   });
+  const stubSourceEndStr = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    const p = edge?.data?.stubSourceEnd;
+    return p ? `${p.x},${p.y}` : "";
+  });
+  const stubTargetEndStr = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    const p = edge?.data?.stubTargetEnd;
+    return p ? `${p.x},${p.y}` : "";
+  });
+  // Device info for stub end labels (serialized to string for stable selector)
+  const stubLabelStr = useSchematicStore((s) => {
+    if (!stubbed) return "";
+    const edge = s.edges.find((e) => e.id === id);
+    if (!edge) return "";
+    const srcNode = s.nodes.find((n) => n.id === edge.source);
+    const tgtNode = s.nodes.find((n) => n.id === edge.target);
+    const srcRoom = srcNode?.parentId ? s.nodes.find((n) => n.id === srcNode.parentId) : null;
+    const tgtRoom = tgtNode?.parentId ? s.nodes.find((n) => n.id === tgtNode.parentId) : null;
+    const sl = (srcNode?.data as Record<string, unknown>)?.label as string ?? "";
+    const tl = (tgtNode?.data as Record<string, unknown>)?.label as string ?? "";
+    const sr = (srcRoom?.data as Record<string, unknown>)?.label as string ?? "";
+    const tr = (tgtRoom?.data as Record<string, unknown>)?.label as string ?? "";
+    // Compute page numbers inline if in print view
+    let sp = "", tp = "";
+    if (s.printView && srcNode && tgtNode) {
+      const paperSize = getPaperSize(s.printPaperId, s.printCustomWidthIn, s.printCustomHeightIn);
+      const pages = computePageGrid(paperSize, s.printOrientation, s.printScale, s.nodes, s.titleBlockLayout?.heightIn ?? 1);
+      if (pages.length > 1) {
+        const findPage = (x: number, y: number) => {
+          for (const p of pages) {
+            if (x >= p.x && x < p.x + p.widthPx && y >= p.y && y < p.y + p.heightPx)
+              return p.index + 1;
+          }
+          return 0;
+        };
+        const srcAbs = srcNode.parentId
+          ? { x: srcNode.position.x + (s.nodes.find((n) => n.id === srcNode.parentId)?.position.x ?? 0), y: srcNode.position.y + (s.nodes.find((n) => n.id === srcNode.parentId)?.position.y ?? 0) }
+          : srcNode.position;
+        const tgtAbs = tgtNode.parentId
+          ? { x: tgtNode.position.x + (s.nodes.find((n) => n.id === tgtNode.parentId)?.position.x ?? 0), y: tgtNode.position.y + (s.nodes.find((n) => n.id === tgtNode.parentId)?.position.y ?? 0) }
+          : tgtNode.position;
+        const spi = findPage(srcAbs.x, srcAbs.y);
+        const tpi = findPage(tgtAbs.x, tgtAbs.y);
+        if (spi > 0) sp = String(spi);
+        if (tpi > 0) tp = String(tpi);
+      }
+    }
+    return `${sl}\0${tl}\0${sr}\0${tr}\0${sp}\0${tp}`;
+  });
+  const stubLabelInfo = useMemo(() => {
+    if (!stubLabelStr) return null;
+    const [srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage] = stubLabelStr.split("\0");
+    return { srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage };
+  }, [stubLabelStr]);
 
   // Read effective line style: per-connection override > per-signal-type default > solid
   const lineStyle = useSchematicStore((s) => {
@@ -411,56 +532,75 @@ function OffsetEdgeComponent({
     </>
   ) : null;
 
-  // --- Stubbed connection rendering ---
-  // When stubbed, draw short ~40px stubs from source and target instead of full path
-  let stubPaths: { srcPath: string; tgtPath: string; srcEnd: {x:number;y:number;dx:number;dy:number}; tgtEnd: {x:number;y:number;dx:number;dy:number} } | null = null;
-  if (stubbed && routeWpStr) {
+  // Compute direction vectors at source and target from routed waypoints
+  // (needed early for stub exit direction and label positioning)
+  let srcDx = 0, srcDy = 0, tgtDx = 0, tgtDy = 0;
+  if (routeWpStr) {
     const wps = routeWpStr.split("|").map((s) => {
       const [x, y] = s.split(",");
       return { x: Number(x), y: Number(y) };
     });
+    if (wps.length >= 2) {
+      const sdx = wps[1].x - wps[0].x;
+      const sdy = wps[1].y - wps[0].y;
+      const slen = Math.sqrt(sdx * sdx + sdy * sdy);
+      if (slen > 0) { srcDx = sdx / slen; srcDy = sdy / slen; }
+      const tdx = wps[wps.length - 1].x - wps[wps.length - 2].x;
+      const tdy = wps[wps.length - 1].y - wps[wps.length - 2].y;
+      const tlen = Math.sqrt(tdx * tdx + tdy * tdy);
+      if (tlen > 0) { tgtDx = tdx / tlen; tgtDy = tdy / tlen; }
+    }
+  }
+
+  // --- Stubbed connection rendering ---
+  // Stubs are always horizontal lines exiting the device handle in its natural direction.
+  // Source exits right (or left if flipped), target exits left (or right if flipped).
+  // If a custom endpoint is set, the line goes horizontal to the endpoint X, then vertical
+  // to the endpoint Y, always entering the label horizontally.
+  let stubPaths: { srcPath: string; tgtPath: string; srcEnd: {x:number;y:number;dx:number;dy:number}; tgtEnd: {x:number;y:number;dx:number;dy:number} } | null = null;
+  if (stubbed) {
     const STUB_LEN = 40;
+    // Exit direction: use routed direction if available, else assume right for source, left for target
+    const srcExitDx = srcDx !== 0 ? srcDx : 1;
+    const tgtExitDx = tgtDx !== 0 ? -tgtDx : -1; // tgtDx points INTO the handle, we want OUT
 
-    // Walk from start along waypoints for STUB_LEN px
-    const walkStub = (points: {x:number;y:number}[], maxLen: number) => {
-      let remaining = maxLen;
-      const result: {x:number;y:number}[] = [{ ...points[0] }];
-      let lastDx = 0, lastDy = 0;
-      for (let i = 1; i < points.length && remaining > 0; i++) {
-        const dx = points[i].x - points[i-1].x;
-        const dy = points[i].y - points[i-1].y;
-        const segLen = Math.sqrt(dx*dx + dy*dy);
-        if (segLen === 0) continue;
-        const nx = dx / segLen, ny = dy / segLen;
-        if (segLen <= remaining) {
-          result.push({ ...points[i] });
-          remaining -= segLen;
-          lastDx = nx;
-          lastDy = ny;
+    const buildStub = (hx: number, hy: number, exitDx: number, customEnd: string) => {
+      if (customEnd) {
+        const [ex, ey] = customEnd.split(",").map(Number);
+        // Orthogonal path: horizontal from handle, vertical to target Y, horizontal into label
+        const pts: {x:number;y:number}[] = [{ x: hx, y: hy }];
+        if (hy !== ey) {
+          // L-shaped: horizontal to ex, then vertical to ey
+          pts.push({ x: ex, y: hy });
+          pts.push({ x: ex, y: ey });
         } else {
-          result.push({ x: points[i-1].x + nx * remaining, y: points[i-1].y + ny * remaining });
-          lastDx = nx;
-          lastDy = ny;
-          remaining = 0;
+          // Straight horizontal
+          pts.push({ x: ex, y: ey });
         }
+        return { path: pts, dx: exitDx, dy: 0 };
       }
-      return { path: result, dx: lastDx, dy: lastDy };
+      // Default: straight horizontal line of STUB_LEN
+      const endX = hx + exitDx * STUB_LEN;
+      return {
+        path: [{ x: hx, y: hy }, { x: endX, y: hy }],
+        dx: exitDx, dy: 0,
+      };
     };
-
-    const srcStub = walkStub(wps, STUB_LEN);
-    const tgtStub = walkStub([...wps].reverse(), STUB_LEN);
 
     const toPath = (pts: {x:number;y:number}[]) =>
       pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 
-    const srcEnd = srcStub.path[srcStub.path.length - 1];
-    const tgtEnd = tgtStub.path[tgtStub.path.length - 1];
+    const srcStub = buildStub(sourceX, sourceY, srcExitDx, stubSourceEndStr);
+    const tgtStub = buildStub(targetX, targetY, tgtExitDx, stubTargetEndStr);
+
+    const srcEndPt = srcStub.path[srcStub.path.length - 1];
+    const tgtEndPt = tgtStub.path[tgtStub.path.length - 1];
 
     stubPaths = {
       srcPath: toPath(srcStub.path),
       tgtPath: toPath(tgtStub.path),
-      srcEnd: { ...srcEnd, dx: srcStub.dx, dy: srcStub.dy },
-      tgtEnd: { ...tgtEnd, dx: tgtStub.dx, dy: tgtStub.dy },
+      srcEnd: { ...srcEndPt, dx: srcStub.dx, dy: srcStub.dy },
+      tgtEnd: { ...tgtEndPt, dx: tgtStub.dx, dy: tgtStub.dy },
     };
   }
 
@@ -489,27 +629,6 @@ function OffsetEdgeComponent({
   // Cable ID labels at both ends of the connection, positioned along cable direction
   const signalColor = (style?.stroke as string) ?? "#6b7280";
   const labelText = cableId;
-
-  // Compute direction vectors at source and target from routed waypoints
-  let srcDx = 0, srcDy = 0, tgtDx = 0, tgtDy = 0;
-  if (routeWpStr) {
-    const wps = routeWpStr.split("|").map((s) => {
-      const [x, y] = s.split(",");
-      return { x: Number(x), y: Number(y) };
-    });
-    if (wps.length >= 2) {
-      // Source: direction from first to second waypoint
-      const sdx = wps[1].x - wps[0].x;
-      const sdy = wps[1].y - wps[0].y;
-      const slen = Math.sqrt(sdx * sdx + sdy * sdy);
-      if (slen > 0) { srcDx = sdx / slen; srcDy = sdy / slen; }
-      // Target: direction from last to second-to-last (approach direction, label goes outward)
-      const tdx = wps[wps.length - 1].x - wps[wps.length - 2].x;
-      const tdy = wps[wps.length - 1].y - wps[wps.length - 2].y;
-      const tlen = Math.sqrt(tdx * tdx + tdy * tdy);
-      if (tlen > 0) { tgtDx = tdx / tlen; tgtDy = tdy / tlen; }
-    }
-  }
 
   const LABEL_GAP = 4;
   const cableIdLabelStyle: React.CSSProperties = {
@@ -624,37 +743,44 @@ function OffsetEdgeComponent({
     prevDebugRef.current = debugEdges;
   }, [debugEdges, id, sourceX, sourceY, targetX, targetY, turns]);
 
-  // Render slash mark at stub end perpendicular to the path direction
-  const renderSlash = (end: {x:number;y:number;dx:number;dy:number}, key: string) => {
-    // Perpendicular to direction, 6px half-length
-    const px = -end.dy, py = end.dx;
-    const len = 6;
-    return (
-      <line
-        key={key}
-        x1={end.x - px * len} y1={end.y - py * len}
-        x2={end.x + px * len} y2={end.y + py * len}
-        stroke={edgeStyle.stroke as string ?? "currentColor"}
-        strokeWidth={edgeStyle.strokeWidth ?? 2}
-        style={{ pointerEvents: "none" }}
-      />
-    );
-  };
-
   // Hidden virtual edges (secondary half of adapter pair) — render nothing
   if (isHiddenVirtualEdge) {
     return null;
   }
 
   if (stubbed && stubPaths) {
+    // Build stub end labels — the label IS the endpoint, line terminates at it
+    const stubColor = edgeStyle.stroke as string ?? "#999";
+    const formatStubText = (label: string, room: string, page: string, exitDx: number) => {
+      const arrow = exitDx >= 0 ? "→" : "←";
+      let text = `${arrow} ${label}`;
+      if (room) text += ` (${room})`;
+      if (page) text += ` Pg ${page}`;
+      return text;
+    };
+    const srcLabelText = stubLabelInfo ? formatStubText(stubLabelInfo.tgtLabel, stubLabelInfo.tgtRoom, stubLabelInfo.tgtPage, stubPaths.srcEnd.dx) : "";
+    const tgtLabelText = stubLabelInfo ? formatStubText(stubLabelInfo.srcLabel, stubLabelInfo.srcRoom, stubLabelInfo.srcPage, stubPaths.tgtEnd.dx) : "";
+
+    const stubLabelsPortal = (
+      <EdgeLabelRenderer>
+        {cableIdLabels}
+        {srcLabelText && (
+          <StubEndLabel x={stubPaths.srcEnd.x} y={stubPaths.srcEnd.y} dx={stubPaths.srcEnd.dx} dy={stubPaths.srcEnd.dy}
+            text={srcLabelText} color={stubColor} edgeId={id} field="stubSourceEnd" />
+        )}
+        {tgtLabelText && (
+          <StubEndLabel x={stubPaths.tgtEnd.x} y={stubPaths.tgtEnd.y} dx={stubPaths.tgtEnd.dx} dy={stubPaths.tgtEnd.dy}
+            text={tgtLabelText} color={stubColor} edgeId={id} field="stubTargetEnd" />
+        )}
+      </EdgeLabelRenderer>
+    );
+
     return (
       <>
         {gradientDef}
         <path d={stubPaths.srcPath} fill="none" style={edgeStyle} markerEnd={undefined} />
-        <path d={stubPaths.tgtPath} fill="none" style={edgeStyle} markerEnd={markerEnd} />
-        {renderSlash(stubPaths.srcEnd, "slash-src")}
-        {renderSlash(stubPaths.tgtEnd, "slash-tgt")}
-        {edgeLabelsPortal}
+        <path d={stubPaths.tgtPath} fill="none" style={edgeStyle} markerEnd={undefined} />
+        {stubLabelsPortal}
         {debugLabel}
       </>
     );

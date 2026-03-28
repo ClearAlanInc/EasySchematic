@@ -357,6 +357,7 @@ function computePdfCrossingLabels(
   for (const [edgeId, route] of Object.entries(routedEdges)) {
     const edge = edgeMap.get(edgeId);
     if (!edge) continue;
+    if (edge.data?.stubbed) continue;
     const sourceInfo = nodeInfo.get(edge.source);
     const targetInfo = nodeInfo.get(edge.target);
     if (!sourceInfo || !targetInfo) continue;

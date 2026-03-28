@@ -238,6 +238,10 @@ export interface ConnectionData {
   label?: string;
   /** When true, render as a short stub from each end instead of a full connection (#13) */
   stubbed?: boolean;
+  /** Custom position for source stub endpoint (absolute canvas coords) */
+  stubSourceEnd?: { x: number; y: number };
+  /** Custom position for target stub endpoint (absolute canvas coords) */
+  stubTargetEnd?: { x: number; y: number };
   /** Allow connection between incompatible connector types (#6) */
   allowIncompatible?: boolean;
   /** When true, hide cable ID labels on this specific connection (#5) */
