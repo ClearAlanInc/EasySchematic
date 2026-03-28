@@ -124,13 +124,7 @@ export function computeCableSchedule(
       };
     });
 
-  // Sort deterministically for stable auto-generated cable IDs
-  connections.sort((a, b) =>
-    a.sourceDevice.localeCompare(b.sourceDevice) ||
-    a.sourcePort.localeCompare(b.sourcePort) ||
-    a.targetDevice.localeCompare(b.targetDevice) ||
-    a.targetPort.localeCompare(b.targetPort),
-  );
+  // Preserve edge array order (creation order) for stable cable numbering
 
   if (namingScheme === "type-prefix") {
     // Per-type counters for type-prefix naming (e.g. S001, S002, E001)
