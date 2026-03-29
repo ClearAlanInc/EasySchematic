@@ -1068,7 +1068,7 @@ export function routeAllEdges(
         }
       }
 
-      // Check if already correctly nested within each subgroup
+      // Check if already correctly nested AND tightly packed within each subgroup
       let alreadyNested = true;
       for (const sg of subGroups) {
         if (sg.edges.length < 2) continue;
@@ -1076,8 +1076,11 @@ export function routeAllEdges(
           const prev = sg.edges[i - 1].corridorX;
           const curr = sg.edges[i].corridorX;
           if (prev === null || curr === null) continue;
+          // Check order
           if (sg.dir === "down" && curr >= prev) { alreadyNested = false; break; }
           if (sg.dir === "up" && curr <= prev) { alreadyNested = false; break; }
+          // Check spacing — gaps > 2 cells are too spread out
+          if (Math.abs(curr - prev) > 2) { alreadyNested = false; break; }
         }
         if (!alreadyNested) break;
       }
@@ -1096,45 +1099,83 @@ export function routeAllEdges(
       const assignments = new Map<string, number>();
 
       for (const sg of subGroups) {
+        const n = sg.edges.length;
+        const takenCols = new Set(assignments.values());
+
         if (sg.dir === "down") {
-          // Down-right: assign from target side inward (highest X first)
-          let nextX = corridorFloor !== undefined ? corridorFloor - 1 : maxTgtX - 2;
-          while (nextX > minSrcX + 2 && [...assignments.values()].includes(nextX)) nextX--;
-          for (const fe of sg.edges) {
-            const yMin = Math.min(fe.srcY, fe.tgtY);
-            const yMax = Math.max(fe.srcY, fe.tgtY);
-            let assignedX: number | null = null;
-            for (let gx = nextX; gx > minSrcX + 2; gx--) {
-              if ([...assignments.values()].includes(gx)) continue;
-              if (isColumnClear(gx, yMin, yMax)) {
-                assignedX = gx;
-                break;
-              }
+          // Down-right: find a contiguous block of N clear columns near target
+          let startX = corridorFloor !== undefined ? corridorFloor - 1 : maxTgtX - 2;
+          let blockFound = false;
+          for (let baseX = startX; baseX - (n - 1) > minSrcX + 2; baseX--) {
+            let allClear = true;
+            for (let i = 0; i < n; i++) {
+              const gx = baseX - i;
+              if (takenCols.has(gx)) { allClear = false; break; }
+              const fe = sg.edges[i];
+              if (!isColumnClear(gx, Math.min(fe.srcY, fe.tgtY), Math.max(fe.srcY, fe.tgtY))) { allClear = false; break; }
             }
-            if (assignedX !== null) {
-              assignments.set(fe.id, assignedX);
-              nextX = assignedX - 1;
+            if (allClear) {
+              for (let i = 0; i < n; i++) {
+                assignments.set(sg.edges[i].id, baseX - i);
+              }
+              blockFound = true;
+              break;
+            }
+          }
+          // Fallback: per-edge scan if no contiguous block found
+          if (!blockFound) {
+            let nextX = startX;
+            while (nextX > minSrcX + 2 && takenCols.has(nextX)) nextX--;
+            for (const fe of sg.edges) {
+              const yMin = Math.min(fe.srcY, fe.tgtY);
+              const yMax = Math.max(fe.srcY, fe.tgtY);
+              let assignedX: number | null = null;
+              for (let gx = nextX; gx > minSrcX + 2; gx--) {
+                if (takenCols.has(gx) || [...assignments.values()].includes(gx)) continue;
+                if (isColumnClear(gx, yMin, yMax)) { assignedX = gx; break; }
+              }
+              if (assignedX !== null) {
+                assignments.set(fe.id, assignedX);
+                nextX = assignedX - 1;
+              }
             }
           }
         } else {
-          // Up-right: assign from source side outward (lowest X first)
+          // Up-right: find a contiguous block of N clear columns near source
           const upperBound = corridorFloor !== undefined ? corridorFloor - 1 : maxTgtX - 1;
-          let nextX = minSrcX + 2;
-          while (nextX < upperBound && [...assignments.values()].includes(nextX)) nextX++;
-          for (const fe of sg.edges) {
-            const yMin = Math.min(fe.srcY, fe.tgtY);
-            const yMax = Math.max(fe.srcY, fe.tgtY);
-            let assignedX: number | null = null;
-            for (let gx = nextX; gx < upperBound; gx++) {
-              if ([...assignments.values()].includes(gx)) continue;
-              if (isColumnClear(gx, yMin, yMax)) {
-                assignedX = gx;
-                break;
-              }
+          let blockFound = false;
+          for (let baseX = minSrcX + 2; baseX + (n - 1) < upperBound; baseX++) {
+            let allClear = true;
+            for (let i = 0; i < n; i++) {
+              const gx = baseX + i;
+              if (takenCols.has(gx)) { allClear = false; break; }
+              const fe = sg.edges[i];
+              if (!isColumnClear(gx, Math.min(fe.srcY, fe.tgtY), Math.max(fe.srcY, fe.tgtY))) { allClear = false; break; }
             }
-            if (assignedX !== null) {
-              assignments.set(fe.id, assignedX);
-              nextX = assignedX + 1;
+            if (allClear) {
+              for (let i = 0; i < n; i++) {
+                assignments.set(sg.edges[i].id, baseX + i);
+              }
+              blockFound = true;
+              break;
+            }
+          }
+          // Fallback: per-edge scan
+          if (!blockFound) {
+            let nextX = minSrcX + 2;
+            while (nextX < upperBound && takenCols.has(nextX)) nextX++;
+            for (const fe of sg.edges) {
+              const yMin = Math.min(fe.srcY, fe.tgtY);
+              const yMax = Math.max(fe.srcY, fe.tgtY);
+              let assignedX: number | null = null;
+              for (let gx = nextX; gx < upperBound; gx++) {
+                if (takenCols.has(gx) || [...assignments.values()].includes(gx)) continue;
+                if (isColumnClear(gx, yMin, yMax)) { assignedX = gx; break; }
+              }
+              if (assignedX !== null) {
+                assignments.set(fe.id, assignedX);
+                nextX = assignedX + 1;
+              }
             }
           }
         }
