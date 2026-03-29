@@ -124,7 +124,20 @@ export default function EdgeContextMenu() {
     if (manualWps.length === 0) {
       manualWps.push(newPt);
     } else {
-      const insertIdx = Math.max(0, Math.min(projected.segIdx, manualWps.length));
+      // Find the correct insertion position by comparing the new point's
+      // position along the routed path to each existing manual waypoint's
+      // position. projected.segIdx indexes the routed path (many A* segments),
+      // NOT the manual waypoints array — we need to map between the two.
+      const manualSegIdxes = manualWps.map((wp) =>
+        projectOntoSegments(wp.x, wp.y, route.waypoints).segIdx,
+      );
+      let insertIdx = manualWps.length; // default: after all existing
+      for (let i = 0; i < manualSegIdxes.length; i++) {
+        if (projected.segIdx <= manualSegIdxes[i]) {
+          insertIdx = i;
+          break;
+        }
+      }
       manualWps.splice(insertIdx, 0, newPt);
     }
 
