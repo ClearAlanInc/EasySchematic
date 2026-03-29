@@ -25,6 +25,7 @@ import { templates as expansionCards } from "./devices/expansion-cards";
 const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "camera": "Sources",
   "ptz-camera": "Sources",
+  "camera-ccu": "Sources",
   "graphics": "Sources",
   "computer": "Sources",
   "media-player": "Sources",
