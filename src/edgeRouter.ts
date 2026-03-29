@@ -712,7 +712,7 @@ export function routeAllEdges(
   for (const ep of manualEndpoints) {
     const sigType = ep.edge.data?.signalType;
     const penalties = buildPenaltyZones(routeStates);
-    const manualWps = ep.edge.data?.manualWaypoints!;
+    const manualWps = ep.edge.data!.manualWaypoints!;
 
     const allPoints = [
       { x: ep.sourceX, y: ep.sourceY },
