@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { User } from "../api";
-import { updateProfile } from "../api";
+import { updateProfile, fetchCurrentUser } from "../api";
 import { linkClick } from "../navigate";
 
 interface Props {
@@ -13,6 +13,12 @@ export default function ProfilePage({ user, onUpdate }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetchCurrentUser().then((fresh) => {
+      if (fresh) onUpdate(fresh);
+    });
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
