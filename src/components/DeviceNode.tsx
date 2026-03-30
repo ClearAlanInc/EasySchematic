@@ -118,12 +118,15 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     }
   }
 
-  /** Get handle ID and type for a port in a column, accounting for collapsed bidir ports. */
+  /** Get handle ID and type for a port in a column, accounting for collapsed bidir ports.
+   *  All bidirectional handles use type="source" so React Flow always includes them in
+   *  handleBounds.source — its getEdgePosition only searches source bounds for sourceHandle,
+   *  even in ConnectionMode.Loose. Our isValidConnection handles real direction checks. */
   const handleProps = (port: Port, _side: "left" | "right") => {
     const connSide = collapsedBidir.get(port.id);
     if (connSide) {
       return connSide === "in"
-        ? { handleId: `${port.id}-in`, handleType: "target" as const }
+        ? { handleId: `${port.id}-in`, handleType: "source" as const }
         : { handleId: `${port.id}-out`, handleType: "source" as const };
     }
     return {
@@ -367,7 +370,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
             return (
               <div key={port.id} className="flex justify-center items-center relative h-5">
                 <Handle
-                  type="target"
+                  type="source"
                   position={Position.Left}
                   id={inId}
                   data-connected={connectedHandles.has(inId) || undefined}

@@ -835,9 +835,10 @@ export function computeEdgePath(
 
   // Stub: 1 cell horizontal exit from port
   const srcRight = sourceExitsRight ?? true;
+  const tgtLeft = _targetEntersLeft ?? true;
   const stub = ROUTING_PARAMS.STUB;
   const stubSGX = noSourceStub ? sgx : sgx + (srcRight ? stub : -stub);
-  const stubTGX = noTargetStub ? tgx : tgx - stub; // target always enters from left for now
+  const stubTGX = noTargetStub ? tgx : tgx + (tgtLeft ? -stub : stub);
 
   // Convert obstacles to grid coordinates
   const gridRects = pixelRectsToGrid(obstacles);

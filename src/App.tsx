@@ -1014,11 +1014,13 @@ function SchematicCanvas() {
           return;
         }
 
-        // Find first available compatible handle on the clicked device
+        // Find first available compatible handle on the clicked device.
+        // Search all handles (not just target/source) because bidirectional port
+        // handles are all registered as type="source" for React Flow compatibility.
         const state = useSchematicStore.getState();
         const intNode = rfInstance.getInternalNode(node.id);
         const hBounds = intNode?.internals.handleBounds;
-        const targetHandles = from.fromSource ? hBounds?.target : hBounds?.source;
+        const targetHandles = [...(hBounds?.source ?? []), ...(hBounds?.target ?? [])];
 
         let connected = false;
         for (const h of targetHandles ?? []) {

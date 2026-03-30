@@ -756,11 +756,16 @@ export function routeAllEdges(
       const reserved = reservedExitDir[leg + 1];
       const reservedAtTarget = reserved !== undefined ? (reserved + 2) % 4 : undefined;
 
+      // Pass exit/entry directions for first and last legs
+      const legSrcExitsRight = isFirstLeg ? ep.sourceExitsRight : undefined;
+      const legTgtEntersLeft = isLastLeg ? ep.targetEntersLeft : undefined;
+
       let legResult = computeEdgePath(
         from.x, from.y, to.x, to.y,
         obs.rects, 0, spread,
         penalties.length > 0 ? penalties : undefined,
         sigType, noSourceStub, noTargetStub, excludeDir, reservedAtTarget,
+        undefined, legSrcExitsRight, legTgtEntersLeft,
       );
 
       if (!legResult) {
@@ -771,6 +776,7 @@ export function routeAllEdges(
           relaxedRects, 0, spread,
           penalties.length > 0 ? penalties : undefined,
           sigType, noSourceStub, noTargetStub, excludeDir, reservedAtTarget,
+          undefined, legSrcExitsRight, legTgtEntersLeft,
         );
       }
 
@@ -865,12 +871,15 @@ export function routeAllEdges(
     const srcGY = px2g(ep.sourceY);
     const tgtGX = px2g(ep.targetX);
     const tgtGY = px2g(ep.targetY);
+    // Column routing assumes left-to-right flow (source exits right → corridor → target enters left).
+    // Same-side connections (both handles on right or both on left) and reversed edges bypass this.
+    const needsUnconstrained = tgtGX <= srcGX || !(ep.sourceExitsRight && ep.targetEntersLeft);
     columnEdges.push({
       ep,
       srcGX, srcGY, tgtGX, tgtGY,
       signalType: ep.edge.data?.signalType ?? "",
       assignedCol: null,
-      isBackward: tgtGX <= srcGX,
+      isBackward: needsUnconstrained,
       fanGroupId: -1,
     });
   }
@@ -1054,11 +1063,13 @@ export function routeAllEdges(
     noSrcStub: boolean, noTgtStub: boolean,
     excludeStartDir?: number, excludeEndDir?: number,
     srcNodeId?: string, tgtNodeId?: string,
+    srcExitsRight?: boolean, tgtEntersLeft?: boolean,
   ) => {
     let result = computeEdgePath(
       fromX, fromY, toX, toY, rects, 0, spread,
       penalties, sigType, noSrcStub, noTgtStub,
       excludeStartDir, excludeEndDir,
+      undefined, srcExitsRight, tgtEntersLeft,
     );
     if (!result) {
       const excludeSet = new Set<string>();
@@ -1070,6 +1081,7 @@ export function routeAllEdges(
           fromX, fromY, toX, toY, relaxed, 0, spread,
           penalties, sigType, noSrcStub, noTgtStub,
           excludeStartDir, excludeEndDir,
+          undefined, srcExitsRight, tgtEntersLeft,
         );
       }
     }
@@ -1088,6 +1100,7 @@ export function routeAllEdges(
         obs.rects, ep.stubSpread, penalties.length > 0 ? penalties : undefined,
         sigType, false, false, undefined, undefined,
         ep.edge.source, ep.edge.target,
+        ep.sourceExitsRight, ep.targetEntersLeft,
       );
       if (result) {
         routeStates.push({
@@ -1097,7 +1110,10 @@ export function routeAllEdges(
           turns: result.turns, status: "good", signalType: sigType,
         });
       } else {
-        const midX = Math.max(ep.sourceX, ep.targetX) + 40;
+        // Fallback: route around the outside based on exit/entry directions
+        const midX = ep.sourceExitsRight
+          ? Math.max(ep.sourceX, ep.targetX) + 40
+          : Math.min(ep.sourceX, ep.targetX) - 40;
         const wp: Point[] = [
           { x: ep.sourceX, y: ep.sourceY },
           { x: midX, y: ep.sourceY },
@@ -1120,11 +1136,15 @@ export function routeAllEdges(
 
     // Check if a clean L-shape works (no INTERMEDIATE obstacles on horizontal segments).
     // Exclude the edge's own source/target devices — the horizontal naturally exits/enters them.
+    // Also verify the corridor is in the correct direction relative to exit/entry sides —
+    // if the source exits left but the corridor is right (or vice versa), L-shape goes through device.
     const endpointIds = new Set([ep.edge.source, ep.edge.target]);
+    const srcCorridorOk = ep.sourceExitsRight ? corridorPx >= ep.sourceX : corridorPx <= ep.sourceX;
+    const tgtCorridorOk = ep.targetEntersLeft ? corridorPx <= ep.targetX : corridorPx >= ep.targetX;
     const hSeg1Clear = isHSegmentClear(ce.srcGY, Math.min(ce.srcGX, ce.assignedCol), Math.max(ce.srcGX, ce.assignedCol), endpointIds);
     const hSeg2Clear = isHSegmentClear(ce.tgtGY, Math.min(ce.tgtGX, ce.assignedCol), Math.max(ce.tgtGX, ce.assignedCol), endpointIds);
 
-    if (hSeg1Clear && hSeg2Clear) {
+    if (srcCorridorOk && tgtCorridorOk && hSeg1Clear && hSeg2Clear) {
       // Clean L-shape: source → corridor → target
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
@@ -1162,6 +1182,7 @@ export function routeAllEdges(
       obs.rects, ep.stubSpread, pens, sigType,
       false, true, // has source stub, no target stub (it's a waypoint)
       undefined, undefined, ep.edge.source, undefined,
+      ep.sourceExitsRight, undefined,
     );
 
     // Leg 3: corridor bottom → target (horizontal-ish, navigates around intermediate devices)
@@ -1170,6 +1191,7 @@ export function routeAllEdges(
       obs.rects, 0, pens, sigType,
       true, false, // no source stub (waypoint), has target stub
       undefined, undefined, undefined, ep.edge.target,
+      undefined, ep.targetEntersLeft,
     );
 
     if (leg1 && leg3) {
