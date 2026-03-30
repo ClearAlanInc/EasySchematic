@@ -151,6 +151,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   multipin: "Multi-pin",
   rca: "RCA",
   rj11: "RJ11",
+  rj12: "RJ12",
   toslink: "TOSLINK",
   barrel: "DC Barrel",
   banana: "Speaker Wire",

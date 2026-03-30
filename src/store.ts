@@ -50,7 +50,7 @@ export const CATEGORY_ORDER_DEFAULT: string[] = [
   "Switching",
   "Processing",
   "Distribution",
-  "Monitoring",
+  "Displays",
   "Projection",
   "Recording",
   "Mixing Consoles",

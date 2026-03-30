@@ -12,7 +12,7 @@ export type ConnectorType =
   | "qsfp" | "mpo"
   | "mini-din-4" | "mini-din-7"
   | "mini-hdmi" | "mini-displayport"
-  | "rj11" | "usb-mini" | "trs-2.5mm"
+  | "rj11" | "rj12" | "usb-mini" | "trs-2.5mm"
   | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -533,6 +533,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "cam-lok": "Cam-Lok",
   "powercon-true1": "powerCON TRUE1",
   rj11: "RJ11",
+  rj12: "RJ12",
   qsfp: "QSFP+",
   mpo: "Fiber - MPO/MTP",
   "usb-mini": "Mini USB",
