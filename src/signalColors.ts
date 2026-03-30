@@ -45,6 +45,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   st2110: "#3730a3",
   artnet: "#f59e0b",
   sacn: "#eab308",
+  ir: "#f97316",
+  timecode: "#06b6d4",
   custom: "#64748b",
 };
 

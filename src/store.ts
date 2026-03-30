@@ -54,6 +54,7 @@ export const CATEGORY_ORDER_DEFAULT: string[] = [
   "Projection",
   "Recording",
   "Mixing Consoles",
+  "Powered Mixers",
   "Audio",
   "Speakers",
   "Amplifiers",

@@ -72,6 +72,8 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   st2110: "21",
   artnet: "AN",
   sacn: "SC",
+  ir: "IR",
+  timecode: "TC",
   custom: "X",
 };
 

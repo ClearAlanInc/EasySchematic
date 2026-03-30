@@ -93,6 +93,8 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "cloud-service": "Cloud Services",
   "codec": "Codecs",
   "expansion-chassis": "Infrastructure",
+  "power-mixer": "Powered Mixers",
+  "hdmi-splitter": "Distribution",
 };
 
 export const DEVICE_TEMPLATES: DeviceTemplate[] = [

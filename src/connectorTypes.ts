@@ -45,6 +45,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   st2110: "rj45",
   artnet: "rj45",
   sacn: "rj45",
+  ir: "terminal-block",
+  timecode: "bnc",
   custom: "other",
 };
 

@@ -47,6 +47,8 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   st2110: 174,     // deep indigo
   artnet: 40,      // amber — lighting network
   sacn: 50,        // yellow — streaming ACN
+  ir: 30,          // orange — infrared
+  timecode: 174,   // dark cyan — timecode
   custom: 9,       // cool gray
 };
 

@@ -89,6 +89,8 @@ export type SignalType =
   | "st2110"
   | "artnet"
   | "sacn"
+  | "ir"
+  | "timecode"
   | "custom";
 
 export type LineStyle = "solid" | "dashed" | "dotted" | "dash-dot";
@@ -470,6 +472,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   st2110: "var(--color-st2110)",
   artnet: "var(--color-artnet)",
   sacn: "var(--color-sacn)",
+  ir: "var(--color-ir)",
+  timecode: "var(--color-timecode)",
   custom: "var(--color-custom)",
 };
 
@@ -588,5 +592,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   st2110: "ST 2110",
   artnet: "Art-Net",
   sacn: "sACN",
+  ir: "IR",
+  timecode: "Timecode",
   custom: "Custom",
 };

@@ -44,5 +44,7 @@
   --color-adat: #0e7490;      /* dark cyan — multi-ch optical audio */
   --color-artnet: #f59e0b;    /* amber — lighting network protocol */
   --color-sacn: #eab308;      /* yellow — streaming ACN lighting */
+  --color-ir: #f97316;        /* orange — infrared control */
+  --color-timecode: #06b6d4;  /* cyan — timecode */
   --color-custom: #64748b;    /* cool gray */
 }
