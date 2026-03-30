@@ -5,7 +5,7 @@ export type ConnectorType =
   | "xlr-3" | "xlr-4" | "xlr-5" | "trs-quarter" | "trs-eighth" | "combo-xlr-trs"
   | "rj45" | "ethercon" | "sfp" | "lc" | "sc"
   | "usb-a" | "usb-b" | "usb-c"
-  | "db7w2" | "db9" | "db15" | "db25" | "din-5" | "phoenix" | "terminal-block" | "powercon" | "edison" | "iec"
+  | "db7w2" | "db9" | "db15" | "db25" | "din-5" | "phoenix" | "terminal-block" | "powercon" | "edison" | "iec" | "iec-c5" | "iec-c7" | "iec-c15" | "iec-c20"
   | "speakon" | "socapex" | "multipin" | "rca" | "toslink" | "barrel"
   | "banana" | "binding-post" | "binding-post-banana" | "dvi" | "mini-xlr" | "opticalcon"
   | "l5-20" | "l6-20" | "l6-30" | "l21-30" | "cam-lok" | "powercon-true1"
@@ -502,6 +502,10 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   powercon: "powerCON",
   edison: "Edison",
   iec: "IEC C13",
+  "iec-c5": "IEC C5",
+  "iec-c7": "IEC C7",
+  "iec-c15": "IEC C15",
+  "iec-c20": "IEC C20",
   speakon: "speakON",
   socapex: "Socapex",
   multipin: "Multi-pin",
