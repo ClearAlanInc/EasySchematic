@@ -7,6 +7,7 @@ import {
   BackgroundVariant,
   ConnectionLineType,
   ConnectionMode,
+  SelectionMode,
   useReactFlow,
   useStoreApi,
   useViewport,
@@ -144,6 +145,33 @@ function SchematicCanvas() {
 
   // Space-held state for pan-on-drag (Vectorworks-style)
   const [spaceHeld, setSpaceHeld] = useState(false);
+
+  // AutoCAD-style directional selection: drag direction determines selection mode
+  const [selectionDirection, setSelectionDirection] = useState<'window' | 'crossing' | null>(null);
+  const selectionMode = selectionDirection === 'crossing'
+    ? SelectionMode.Partial
+    : SelectionMode.Full;
+
+  useEffect(() => {
+    let currentDir: 'window' | 'crossing' | null = null;
+    const unsubscribe = rfStore.subscribe((state) => {
+      const rect = state.userSelectionRect;
+      if (!rect) {
+        if (currentDir !== null) {
+          currentDir = null;
+          setSelectionDirection(null);
+        }
+        return;
+      }
+      if (rect.width === 0 && rect.height === 0) return;
+      const nextDir = rect.x < rect.startX ? 'crossing' : 'window';
+      if (nextDir !== currentDir) {
+        currentDir = nextDir;
+        setSelectionDirection(nextDir);
+      }
+    });
+    return unsubscribe;
+  }, [rfStore]);
 
   // Mobile detection for touch-friendly interaction
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -934,7 +962,10 @@ function SchematicCanvas() {
   return (
     <>
     <ReactFlow
-      className={debugEdges ? "debug-active" : undefined}
+      className={[
+        debugEdges ? "debug-active" : "",
+        selectionDirection ? `selection-${selectionDirection}` : "",
+      ].filter(Boolean).join(" ") || undefined}
       nodes={nodes}
       edges={visibleEdges}
       onNodesChange={onNodesChange}
@@ -1022,6 +1053,7 @@ function SchematicCanvas() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       selectionOnDrag={isMobile ? false : !spaceHeld}
+      selectionMode={selectionMode}
       panOnDrag={isMobile ? [0] : (spaceHeld ? [0] : [1])}
       fitView
       minZoom={minZoom}

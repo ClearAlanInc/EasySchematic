@@ -749,7 +749,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Keep room zIndex pinned low (React Flow may reset it)
     set({
       nodes: updated.map((n) =>
-        n.type === "room" ? { ...n, zIndex: -1 } : n,
+        n.type === "room" ? { ...n, zIndex: -1, selectable: false } : n,
       ),
     });
     get().saveToLocalStorage();
@@ -1409,6 +1409,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position,
       data: { label },
       style: { width: 400, height: 300 },
+      selectable: false,
       zIndex: -1,
     };
     // Rooms must appear before their potential children in the array
@@ -1591,7 +1592,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   selectAll: () => {
     const state = get();
     set({
-      nodes: state.nodes.map((n) => ({ ...n, selected: true })),
+      nodes: state.nodes.map((n) => ({ ...n, selected: n.type !== "room" })),
       edges: state.edges.map((e) => ({ ...e, selected: true })),
     });
   },
