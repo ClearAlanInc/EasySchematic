@@ -731,9 +731,51 @@ export default function DeviceLibrary() {
   const [showRouterCreator, setShowRouterCreator] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [templates, setTemplates] = useState(getBundledTemplates);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [filterPanel, setFilterPanel] = useState<"category" | "brand" | null>(null);
 
   const presetIds = useMemo(() => new Set(Object.keys(templatePresets)), [templatePresets]);
   const favoriteSet = useMemo(() => new Set(favoriteTemplates), [favoriteTemplates]);
+
+  // Non-expansion templates for filter option derivation
+  const libraryTemplates = useMemo(
+    () => templates.filter((t) => t.category !== "Expansion Cards"),
+    [templates],
+  );
+
+  // Cross-filtered dropdown options
+  const categoryOptions = useMemo(() => {
+    const source = selectedBrands.size > 0
+      ? libraryTemplates.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer))
+      : libraryTemplates;
+    return [...new Set(source.map((t) => t.category).filter(Boolean))].sort() as string[];
+  }, [libraryTemplates, selectedBrands]);
+
+  const brandOptions = useMemo(() => {
+    const source = selectedCategories.size > 0
+      ? libraryTemplates.filter((t) => t.category && selectedCategories.has(t.category))
+      : libraryTemplates;
+    return [...new Set(source.map((t) => t.manufacturer).filter(Boolean))].sort() as string[];
+  }, [libraryTemplates, selectedCategories]);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  const toggleBrand = useCallback((brand: string) => {
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      if (next.has(brand)) next.delete(brand); else next.add(brand);
+      return next;
+    });
+  }, []);
+
+  const hasFilter = selectedCategories.size > 0 || selectedBrands.size > 0;
 
   useEffect(() => {
     fetchTemplates().then(setTemplates).catch(() => console.warn("Using bundled device library (API unavailable)"));
@@ -741,18 +783,20 @@ export default function DeviceLibrary() {
 
   const query = search.trim();
 
-  const filteredCustom = useMemo(
-    () =>
-      query
-        ? customTemplates.filter((t) => scoreTemplate(t, query) > 0)
-        : customTemplates,
-    [customTemplates, query],
-  );
+  const filteredCustom = useMemo(() => {
+    let result = customTemplates;
+    if (selectedCategories.size > 0) result = result.filter((t) => t.category && selectedCategories.has(t.category));
+    if (selectedBrands.size > 0) result = result.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    if (query) result = result.filter((t) => scoreTemplate(t, query) > 0);
+    return result;
+  }, [customTemplates, query, selectedCategories, selectedBrands]);
 
   // When searching, produce a flat ranked list; when browsing, keep categories
   const rankedResults = useMemo(() => {
     if (!query) return null;
-    const all = [...templates, ...customTemplates].filter((t) => t.category !== "Expansion Cards");
+    let all = [...templates, ...customTemplates].filter((t) => t.category !== "Expansion Cards");
+    if (selectedCategories.size > 0) all = all.filter((t) => t.category && selectedCategories.has(t.category));
+    if (selectedBrands.size > 0) all = all.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
     const scored = all
       .map((t) => {
         let score = scoreTemplate(t, query);
@@ -763,7 +807,7 @@ export default function DeviceLibrary() {
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score || a.template.label.localeCompare(b.template.label));
     return scored.map((r) => r.template);
-  }, [templates, customTemplates, query, favoriteSet]);
+  }, [templates, customTemplates, query, favoriteSet, selectedCategories, selectedBrands]);
 
   // Favorites section: resolve template keys to actual template objects
   const favoritesList = useMemo(() => {
@@ -771,14 +815,20 @@ export default function DeviceLibrary() {
     const all = [...templates, ...customTemplates];
     const byKey = new Map<string, DeviceTemplate>();
     for (const t of all) byKey.set(t.id ?? t.deviceType, t);
-    return favoriteTemplates.map((k) => byKey.get(k)).filter((t): t is DeviceTemplate => !!t);
-  }, [templates, customTemplates, favoriteTemplates]);
+    let favs = favoriteTemplates.map((k) => byKey.get(k)).filter((t): t is DeviceTemplate => !!t);
+    if (selectedCategories.size > 0) favs = favs.filter((t) => t.category && selectedCategories.has(t.category));
+    if (selectedBrands.size > 0) favs = favs.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    return favs;
+  }, [templates, customTemplates, favoriteTemplates, selectedCategories, selectedBrands]);
 
   const filteredCategories = useMemo(() => {
     const groups = new Map<string, DeviceTemplate[]>();
     for (const t of templates) {
       // Expansion cards are only selectable via the slot picker, not the library
       if (t.category === "Expansion Cards") continue;
+      // Apply active filters
+      if (selectedCategories.size > 0 && (!t.category || !selectedCategories.has(t.category))) continue;
+      if (selectedBrands.size > 0 && (!t.manufacturer || !selectedBrands.has(t.manufacturer))) continue;
       const cat = t.category ?? "Other";
       const arr = groups.get(cat);
       if (arr) arr.push(t);
@@ -797,7 +847,7 @@ export default function DeviceLibrary() {
         return a.localeCompare(b);
       })
       .map(([label, tmpls]) => ({ label, templates: tmpls }));
-  }, [templates, categoryOrder]);
+  }, [templates, categoryOrder, selectedCategories, selectedBrands]);
 
   const totalResults = rankedResults?.length ??
     (filteredCustom.length + filteredCategories.reduce((sum, c) => sum + c.templates.length, 0));
@@ -842,7 +892,7 @@ export default function DeviceLibrary() {
       </div>
 
       {/* Search */}
-      <div className="px-2 py-2 border-b border-[var(--color-border)]">
+      <div className="px-2 pt-2 pb-1.5">
         <div className="relative">
           <svg
             className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]"
@@ -877,12 +927,96 @@ export default function DeviceLibrary() {
         )}
       </div>
 
+      {/* Filters */}
+      <div className="px-2 pb-2 border-b border-[var(--color-border)]">
+        <div className="flex gap-1.5">
+          <div className={`flex-1 min-w-0 flex items-center rounded border transition-colors ${
+              filterPanel === "category"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : selectedCategories.size > 0
+                  ? "border-blue-400 bg-blue-50 text-blue-700"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-text)]"
+            }`}>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); setFilterPanel((p) => p === "category" ? null : "category"); }}
+              className="flex-1 min-w-0 px-1.5 py-1 text-[10px] text-left truncate"
+            >
+              {selectedCategories.size > 0 ? `Categories (${selectedCategories.size})` : "Categories"}
+            </button>
+            {selectedCategories.size > 0 && (
+              <button
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedCategories(new Set()); }}
+                className="px-1 text-blue-400 hover:text-blue-600 text-xs shrink-0"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+          <div className={`flex-1 min-w-0 flex items-center rounded border transition-colors ${
+              filterPanel === "brand"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : selectedBrands.size > 0
+                  ? "border-blue-400 bg-blue-50 text-blue-700"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-text)]"
+            }`}>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); setFilterPanel((p) => p === "brand" ? null : "brand"); }}
+              className="flex-1 min-w-0 px-1.5 py-1 text-[10px] text-left truncate"
+            >
+              {selectedBrands.size > 0 ? `Brands (${selectedBrands.size})` : "Brands"}
+            </button>
+            {selectedBrands.size > 0 && (
+              <button
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBrands(new Set()); }}
+                className="px-1 text-blue-400 hover:text-blue-600 text-xs shrink-0"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+        </div>
+        {filterPanel === "category" && (
+          <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
+            {categoryOptions.map((c) => (
+              <button
+                key={c}
+                onMouseDown={(e) => { e.preventDefault(); toggleCategory(c); }}
+                className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                  selectedCategories.has(c)
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        {filterPanel === "brand" && (
+          <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
+            {brandOptions.map((m) => (
+              <button
+                key={m}
+                onMouseDown={(e) => { e.preventDefault(); toggleBrand(m); }}
+                className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                  selectedBrands.has(m)
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {showRouterCreator && <RouterCreator onClose={() => setShowRouterCreator(false)} />}
 
       {/* Device list */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {/* Note draggable */}
-        {(!query || "note".includes(query.toLowerCase())) && (
+        {!hasFilter && (!query || "note".includes(query.toLowerCase())) && (
           <div
             draggable
             onDragStart={(e) => {
@@ -902,7 +1036,7 @@ export default function DeviceLibrary() {
         )}
 
         {/* Room draggable */}
-        {(!query || "room".includes(query.toLowerCase())) && (
+        {!hasFilter && (!query || "room".includes(query.toLowerCase())) && (
           <div
             draggable
             onDragStart={(e) => {
@@ -922,7 +1056,7 @@ export default function DeviceLibrary() {
         )}
 
         {/* Quick Create Router */}
-        {(!query || "router".includes(query.toLowerCase())) && (
+        {!hasFilter && (!query || "router".includes(query.toLowerCase())) && (
           <button
             onClick={() => setShowRouterCreator(true)}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-dashed border-blue-400/50 bg-blue-50/50 hover:bg-blue-50 text-xs text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"

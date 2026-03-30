@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { rowToTemplate, templateToRow } from "./db";
+import { rowToTemplate, rowToSummary, templateToRow } from "./db";
 import { authMiddleware, sessionMiddleware, requireSession, requireModeratorOrToken, requireAdmin } from "./auth";
 import type { Env } from "./auth";
 import { validateTemplate } from "./validate";
@@ -1038,6 +1038,15 @@ app.get("/templates/search-terms", async (c) => {
   }
   const sorted = [...allTerms].sort();
   return c.json(sorted, 200, CACHE_HEADERS);
+});
+
+app.get("/templates/summary", async (c) => {
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT id, label, device_type, category, manufacturer, model_number, color, search_terms, ports, slots FROM templates ORDER BY sort_order, label")
+    .all();
+
+  const summaries = results.map((row) => rowToSummary(row as never));
+  return c.json(summaries, 200, CACHE_HEADERS);
 });
 
 app.get("/templates", async (c) => {

@@ -94,6 +94,38 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
   };
 }
 
+export interface TemplateSummaryOutput {
+  id: string;
+  label: string;
+  deviceType: string;
+  category: string;
+  manufacturer?: string;
+  modelNumber?: string;
+  color?: string;
+  searchTerms?: string[];
+  portCount: number;
+  signalTypes: string[];
+  slotCount: number;
+}
+
+export function rowToSummary(row: TemplateRow): TemplateSummaryOutput {
+  const ports = JSON.parse(row.ports) as { signalType: string }[];
+  const slots = row.slots ? JSON.parse(row.slots) as unknown[] : [];
+  return {
+    id: row.id,
+    label: row.label,
+    deviceType: row.device_type,
+    category: row.category,
+    ...(row.manufacturer && { manufacturer: row.manufacturer }),
+    ...(row.model_number && { modelNumber: row.model_number }),
+    ...(row.color && { color: row.color }),
+    ...(row.search_terms && { searchTerms: JSON.parse(row.search_terms) as string[] }),
+    portCount: ports.length,
+    signalTypes: [...new Set(ports.map((p) => p.signalType))],
+    slotCount: slots.length,
+  };
+}
+
 export function rowToTemplate(row: TemplateRow): TemplateOutput {
   return {
     id: row.id,

@@ -1,10 +1,9 @@
-import type { DeviceTemplate, SignalType } from "../../../src/types";
+import type { SignalType } from "../../../src/types";
+import type { TemplateSummary } from "../api";
 import SignalBadge from "./SignalBadge";
 import { linkClick } from "../navigate";
 
-export default function DeviceCard({ template }: { template: DeviceTemplate }) {
-  const signals = [...new Set(template.ports.map((p) => p.signalType))];
-
+export default function DeviceCard({ template }: { template: TemplateSummary }) {
   return (
     <a
       href={`/device/${template.id}`}
@@ -26,14 +25,14 @@ export default function DeviceCard({ template }: { template: DeviceTemplate }) {
         )}
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
-        {signals.map((s) => (
+        {template.signalTypes.map((s) => (
           <SignalBadge key={s} signalType={s as SignalType} />
         ))}
       </div>
       <p className="mt-2 text-xs text-slate-400">
-        {template.ports.length} port{template.ports.length !== 1 ? "s" : ""}
-        {template.slots && template.slots.length > 0 && (
-          <> &middot; {template.slots.length} slot{template.slots.length !== 1 ? "s" : ""}</>
+        {template.portCount} port{template.portCount !== 1 ? "s" : ""}
+        {template.slotCount > 0 && (
+          <> &middot; {template.slotCount} slot{template.slotCount !== 1 ? "s" : ""}</>
         )}
       </p>
     </a>

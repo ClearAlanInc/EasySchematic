@@ -37,6 +37,9 @@ export default function QuickAddDevice({
 }) {
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [openPanel, setOpenPanel] = useState<"category" | "brand" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -49,20 +52,63 @@ export default function QuickAddDevice({
 
   const templates = useMemo(() => getBundledTemplates(), []);
   const favoriteSet = useMemo(() => new Set(favoriteTemplates), [favoriteTemplates]);
+  const allTemplates = useMemo(() => [...templates, ...customTemplates], [templates, customTemplates]);
+
+  // Cross-filtered dropdown options
+  const categories = useMemo(() => {
+    const source = selectedBrands.size > 0
+      ? allTemplates.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer))
+      : allTemplates;
+    return [...new Set(source.map((t) => t.category).filter(Boolean))].sort() as string[];
+  }, [allTemplates, selectedBrands]);
+
+  const brands = useMemo(() => {
+    const source = selectedCategories.size > 0
+      ? allTemplates.filter((t) => t.category && selectedCategories.has(t.category))
+      : allTemplates;
+    return [...new Set(source.map((t) => t.manufacturer).filter(Boolean))].sort() as string[];
+  }, [allTemplates, selectedCategories]);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  const toggleBrand = useCallback((brand: string) => {
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      if (next.has(brand)) next.delete(brand); else next.add(brand);
+      return next;
+    });
+  }, []);
 
   const query = search.trim();
+  const hasFilter = selectedCategories.size > 0 || selectedBrands.size > 0;
 
   const results: ResultItem[] = useMemo(() => {
-    const deviceItems: { item: ResultItem; score: number }[] = [...templates, ...customTemplates].map((t) => {
+    // Pre-filter templates by active filters
+    const filtered = allTemplates.filter((t) => {
+      if (selectedCategories.size > 0 && (!t.category || !selectedCategories.has(t.category))) return false;
+      if (selectedBrands.size > 0 && (!t.manufacturer || !selectedBrands.has(t.manufacturer))) return false;
+      return true;
+    });
+
+    const deviceItems: { item: ResultItem; score: number }[] = filtered.map((t) => {
       let score = query ? scoreTemplate(t, query) : 0;
       if (score > 0 && favoriteSet.has(t.id ?? t.deviceType)) score += 200;
       return { item: { type: "device" as const, template: t }, score };
     });
 
-    const specialItems: { item: ResultItem; score: number }[] = SPECIAL_ITEMS.map((s) => ({
-      item: { type: "special" as const, item: s.item, label: s.label, subtitle: s.subtitle },
-      score: query ? scoreSpecial(s.keywords, query) : 0,
-    }));
+    // Hide special items when filters are active (they aren't devices)
+    const specialItems: { item: ResultItem; score: number }[] = hasFilter
+      ? []
+      : SPECIAL_ITEMS.map((s) => ({
+          item: { type: "special" as const, item: s.item, label: s.label, subtitle: s.subtitle },
+          score: query ? scoreSpecial(s.keywords, query) : 0,
+        }));
 
     const all = [...specialItems, ...deviceItems];
 
@@ -88,7 +134,7 @@ export default function QuickAddDevice({
       .sort((a, b) => b.score - a.score)
       .map((r) => r.item)
       .slice(0, MAX_RESULTS);
-  }, [templates, customTemplates, query, favoriteSet]);
+  }, [allTemplates, selectedCategories, selectedBrands, query, favoriteSet, hasFilter]);
 
   // Reset selection when results change
   /* eslint-disable react-hooks/set-state-in-effect -- resetting derived state */
@@ -188,7 +234,7 @@ export default function QuickAddDevice({
         className="absolute bg-white border border-[var(--color-border)] rounded-lg shadow-2xl w-72 flex flex-col overflow-hidden"
         style={{ left: "50%", top: "30%", transform: "translateX(-50%)" }}
       >
-        <div className="p-2 border-b border-[var(--color-border)]">
+        <div className="px-2 pt-2 pb-1.5">
           <input
             ref={inputRef}
             type="text"
@@ -199,10 +245,92 @@ export default function QuickAddDevice({
             className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2.5 py-1.5 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500 placeholder:text-[var(--color-text-muted)]"
           />
         </div>
+        <div className="px-2 pb-2 border-b border-[var(--color-border)]">
+          <div className="flex gap-1.5">
+            <div className={`flex-1 min-w-0 flex items-center rounded border transition-colors ${
+                openPanel === "category"
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : selectedCategories.size > 0
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+              }`}>
+              <button
+                onMouseDown={(e) => { e.preventDefault(); setOpenPanel((p) => p === "category" ? null : "category"); }}
+                className="flex-1 min-w-0 px-1.5 py-1 text-[10px] text-left truncate"
+              >
+                {selectedCategories.size > 0 ? `Categories (${selectedCategories.size})` : "Categories"}
+              </button>
+              {selectedCategories.size > 0 && (
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedCategories(new Set()); }}
+                  className="px-1 text-blue-400 hover:text-blue-600 text-xs shrink-0"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+            <div className={`flex-1 min-w-0 flex items-center rounded border transition-colors ${
+                openPanel === "brand"
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : selectedBrands.size > 0
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+              }`}>
+              <button
+                onMouseDown={(e) => { e.preventDefault(); setOpenPanel((p) => p === "brand" ? null : "brand"); }}
+                className="flex-1 min-w-0 px-1.5 py-1 text-[10px] text-left truncate"
+              >
+                {selectedBrands.size > 0 ? `Brands (${selectedBrands.size})` : "Brands"}
+              </button>
+              {selectedBrands.size > 0 && (
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBrands(new Set()); }}
+                  className="px-1 text-blue-400 hover:text-blue-600 text-xs shrink-0"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          </div>
+          {openPanel === "category" && (
+            <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  onMouseDown={(e) => { e.preventDefault(); toggleCategory(c); }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                    selectedCategories.has(c)
+                      ? "bg-blue-500 text-white"
+                      : "bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          {openPanel === "brand" && (
+            <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
+              {brands.map((m) => (
+                <button
+                  key={m}
+                  onMouseDown={(e) => { e.preventDefault(); toggleBrand(m); }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                    selectedBrands.has(m)
+                      ? "bg-blue-500 text-white"
+                      : "bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div ref={listRef} className="max-h-64 overflow-y-auto">
-          {results.length === 0 && query && (
+          {results.length === 0 && (query || hasFilter) && (
             <div className="text-xs text-[var(--color-text-muted)] text-center py-4">
-              No results for &ldquo;{query}&rdquo;
+              No matching devices
             </div>
           )}
           {results.map((result, i) => {

@@ -1,8 +1,28 @@
-import type { DeviceTemplate } from "../../src/types";
+import type { DeviceTemplate, SignalType } from "../../src/types";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.easyschematic.live";
 
 // ==================== TEMPLATES (public) ====================
+
+export interface TemplateSummary {
+  id: string;
+  label: string;
+  deviceType: string;
+  category: string;
+  manufacturer?: string;
+  modelNumber?: string;
+  color?: string;
+  searchTerms?: string[];
+  portCount: number;
+  signalTypes: SignalType[];
+  slotCount: number;
+}
+
+export async function fetchTemplateSummaries(): Promise<TemplateSummary[]> {
+  const res = await fetch(`${API_URL}/templates/summary`);
+  if (!res.ok) throw new Error(`Failed to fetch templates: ${res.status}`);
+  return res.json();
+}
 
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {
   const res = await fetch(`${API_URL}/templates`);
