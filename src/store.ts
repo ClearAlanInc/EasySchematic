@@ -102,7 +102,9 @@ function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   return nodes;
 }
 
-/** Apply interaction flags on rooms based on lock state. Mutates in place. */
+/** Apply interaction flags on rooms based on lock state. Mutates in place.
+ *  Ensures flags are always consistent, even for old save files that may
+ *  be missing className/selectable/draggable. */
 function applyRoomLockState(nodes: SchematicNode[]): void {
   for (const n of nodes) {
     if (n.type === "room") {
@@ -111,6 +113,10 @@ function applyRoomLockState(nodes: SchematicNode[]): void {
         n.draggable = false;
         n.selectable = false;
         n.className = "locked";
+      } else {
+        n.draggable = undefined;
+        n.selectable = true;
+        n.className = undefined;
       }
     }
   }
@@ -144,6 +150,8 @@ interface SchematicState {
   // Actions
   addDevice: (template: DeviceTemplate, position: { x: number; y: number }) => void;
   removeSelected: () => void;
+  deleteNode: (nodeId: string) => void;
+  deleteNodeAndChildren: (nodeId: string) => void;
   copySelected: () => void;
   pasteClipboard: () => void;
   alignSelectedNodes: (op: AlignOperation) => void;
@@ -208,6 +216,7 @@ interface SchematicState {
   clearManualWaypoints: (edgeId: string) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
   roomContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
+  deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   portContextMenu: { nodeId: string; portId: string; screenX: number; screenY: number } | null;
 
   // Centralized edge routing
@@ -674,6 +683,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   routingDebugData: null,
   edgeContextMenu: null,
   roomContextMenu: null,
+  deviceContextMenu: null,
   portContextMenu: null,
   autoRoute: true,
   edgeHitboxSize: 10,
@@ -1007,6 +1017,27 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       edges: newEdges,
     });
     get().saveToLocalStorage();
+  },
+
+  deleteNode: (nodeId: string) => {
+    // Select only this node, deselect everything else, then removeSelected
+    set({
+      nodes: get().nodes.map((n) => ({ ...n, selected: n.id === nodeId })),
+      edges: get().edges.map((e) => ({ ...e, selected: false })),
+    });
+    get().removeSelected();
+  },
+
+  deleteNodeAndChildren: (nodeId: string) => {
+    // Select this node and all its children, then removeSelected
+    set({
+      nodes: get().nodes.map((n) => ({
+        ...n,
+        selected: n.id === nodeId || n.parentId === nodeId,
+      })),
+      edges: get().edges.map((e) => ({ ...e, selected: false })),
+    });
+    get().removeSelected();
   },
 
   copySelected: () => {

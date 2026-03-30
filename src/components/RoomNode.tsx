@@ -91,6 +91,14 @@ function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
         <div
           className="absolute top-0 left-0 px-2 py-1"
           style={{ pointerEvents: "auto" }}
+          onContextMenu={(e) => {
+            if (!locked) return; // unlocked rooms use React Flow's onNodeContextMenu
+            e.preventDefault();
+            e.stopPropagation();
+            useSchematicStore.setState({
+              roomContextMenu: { nodeId: id, screenX: e.clientX, screenY: e.clientY },
+            });
+          }}
         >
           {editing ? (
             <input
@@ -123,6 +131,14 @@ function RoomNodeComponent({ id, data, selected }: NodeProps<RoomNodeType>) {
           style={{
             pointerEvents: "auto",
             opacity: locked ? 1 : selected ? 0.6 : 0,
+          }}
+          onContextMenu={(e) => {
+            if (!locked) return;
+            e.preventDefault();
+            e.stopPropagation();
+            useSchematicStore.setState({
+              roomContextMenu: { nodeId: id, screenX: e.clientX, screenY: e.clientY },
+            });
           }}
         >
           <button

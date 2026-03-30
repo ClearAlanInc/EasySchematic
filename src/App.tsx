@@ -36,6 +36,7 @@ import PortContextMenu from "./components/PortContextMenu";
 import RoutingDebugOverlay from "./components/RoutingDebugOverlay";
 import RoutingTuningPanel from "./components/RoutingTuningPanel";
 import RoomContextMenu from "./components/RoomContextMenu";
+import DeviceContextMenu from "./components/DeviceContextMenu";
 import RoomEditor from "./components/RoomEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import RouterCreator from "./components/RouterCreator";
@@ -142,6 +143,46 @@ function SchematicCanvas() {
   const rfInstance = useReactFlow();
   const rfStore = useStoreApi();
   const { screenToFlowPosition } = rfInstance;
+  const rfContainerRef = useRef<HTMLDivElement>(null);
+
+  // Locked rooms have pointer-events: none (CSS) so right-clicks fall through.
+  // React Flow's pane handler uses wrapHandler() which only fires when
+  // event.target === paneDiv, so onPaneContextMenu never triggers for these.
+  // React Flow also calls stopPropagation() in the pane handler, blocking bubbling.
+  // Solution: native capture-phase listener fires BEFORE React Flow's handlers.
+  useEffect(() => {
+    const el = rfContainerRef.current;
+    if (!el) return;
+    const handler = (e: MouseEvent) => {
+      // Skip if another handler already claimed this event
+      if (e.defaultPrevented) return;
+      // Skip if target is an interactive element (device, edge, port, button, etc.)
+      const target = e.target as HTMLElement;
+      if (target.closest('.react-flow__node:not(.locked), .react-flow__edge, .react-flow__handle, button, input, a')) {
+        return;
+      }
+      const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      const state = useSchematicStore.getState();
+      const room = state.nodes.find(
+        (n) => {
+          if (n.type !== "room" || !(n.data as import("./types").RoomData).locked) return false;
+          const w = n.measured?.width ?? (n.style?.width as number) ?? (n.width as number) ?? 0;
+          const h = n.measured?.height ?? (n.style?.height as number) ?? (n.height as number) ?? 0;
+          return pos.x >= n.position.x && pos.x <= n.position.x + w &&
+                 pos.y >= n.position.y && pos.y <= n.position.y + h;
+        },
+      );
+      if (room) {
+        e.preventDefault();
+        e.stopPropagation();
+        useSchematicStore.setState({
+          roomContextMenu: { nodeId: room.id, screenX: e.clientX, screenY: e.clientY },
+        });
+      }
+    };
+    el.addEventListener("contextmenu", handler, true); // capture phase
+    return () => el.removeEventListener("contextmenu", handler, true);
+  }, [screenToFlowPosition]);
 
   // Space-held state for pan-on-drag (Vectorworks-style)
   const [spaceHeld, setSpaceHeld] = useState(false);
@@ -962,6 +1003,7 @@ function SchematicCanvas() {
   return (
     <>
     <ReactFlow
+      ref={rfContainerRef}
       className={[
         debugEdges ? "debug-active" : "",
         selectionDirection ? `selection-${selectionDirection}` : "",
@@ -982,26 +1024,8 @@ function SchematicCanvas() {
       onClickConnectStart={onClickConnectStart}
       onClickConnectEnd={onClickConnectEnd}
       onPaneClick={onPaneClick}
-      onPaneContextMenu={(event) => {
-        // Locked rooms have pointer-events: none, so right-click falls through to pane.
-        // Detect if the click is within a room's bounds and show context menu.
-        const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-        const state = useSchematicStore.getState();
-        const room = state.nodes.find(
-          (n) =>
-            n.type === "room" &&
-            pos.x >= n.position.x &&
-            pos.x <= n.position.x + (parseFloat(String(n.style?.width)) || 0) &&
-            pos.y >= n.position.y &&
-            pos.y <= n.position.y + (parseFloat(String(n.style?.height)) || 0),
-        );
-        if (room) {
-          event.preventDefault();
-          useSchematicStore.setState({
-            roomContextMenu: { nodeId: room.id, screenX: event.clientX, screenY: event.clientY },
-          });
-        }
-      }}
+      // Locked room context menu is handled by capture-phase listener on rfContainerRef
+
       onNodeClick={(event, node) => {
         if (!isClickConnectMode.current) return;
         // If clicking a handle, let the normal click-connect flow handle it
@@ -1060,11 +1084,17 @@ function SchematicCanvas() {
         setQuickAddPos(pos);
       }}
       onNodeContextMenu={(event, node) => {
-        if (node.type !== "room") return;
-        event.preventDefault();
-        useSchematicStore.setState({
-          roomContextMenu: { nodeId: node.id, screenX: event.clientX, screenY: event.clientY },
-        });
+        if (node.type === "room") {
+          event.preventDefault();
+          useSchematicStore.setState({
+            roomContextMenu: { nodeId: node.id, screenX: event.clientX, screenY: event.clientY },
+          });
+        } else if (node.type === "device") {
+          event.preventDefault();
+          useSchematicStore.setState({
+            deviceContextMenu: { nodeId: node.id, screenX: event.clientX, screenY: event.clientY },
+          });
+        }
       }}
       onReconnectStart={onReconnectStart}
       onReconnect={onReconnect}
@@ -1281,6 +1311,7 @@ export default function App() {
       <RoomEditor />
       <EdgeContextMenu />
       <RoomContextMenu />
+      <DeviceContextMenu />
       <PortContextMenu />
       <IncompatibleConnectionDialog />
       <MobileGate />

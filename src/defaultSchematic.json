@@ -23,6 +23,8 @@
         "height": 674
       },
       "selected": false,
+      "selectable": false,
+      "className": "locked",
       "dragging": false,
       "width": 1314,
       "height": 674,
@@ -50,6 +52,8 @@
         "height": 1992
       },
       "selected": false,
+      "selectable": false,
+      "className": "locked",
       "dragging": false,
       "width": 738,
       "height": 1992,
@@ -68,8 +72,8 @@
         "locked": true
       },
       "style": {
-        "width": 400,
-        "height": 300
+        "width": 1545,
+        "height": 1247
       },
       "zIndex": -1,
       "measured": {
@@ -77,6 +81,8 @@
         "height": 1247
       },
       "selected": false,
+      "selectable": false,
+      "className": "locked",
       "dragging": false,
       "width": 1545,
       "height": 1247,
