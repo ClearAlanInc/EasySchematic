@@ -8,6 +8,7 @@ Thanks for your interest in contributing! EasySchematic is an open-source AV sig
 
 - Node.js 20+
 - npm 10+
+- Docker (optional — for running the built app in a container)
 
 ### Local Development
 

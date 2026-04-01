@@ -2,7 +2,7 @@ services:
   easyschematic:
     build:
       context: .
-      dockerfile: docker/dockerfile
+      dockerfile: Dockerfile
     ports:
       - "8080:80"
     restart: unless-stopped

@@ -139,6 +139,42 @@ npm run build
 
 Output goes to `dist/` — deploy as a static site anywhere.
 
+## Self-Hosting with Docker
+
+Run EasySchematic locally with Docker:
+
+```bash
+docker compose up -d
+```
+
+Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+This builds the frontend from source and serves it with nginx. Cloud features (save to cloud, device submissions, sharing) still communicate with the hosted API at `api.easyschematic.live` — no account or API key required for read access.
+
+### Docker commands
+
+| Command | Description |
+|---------|-------------|
+| `make build` | Build the Docker image |
+| `make up` | Start the container (port 8080) |
+| `make down` | Stop the container |
+| `make restart` | Restart the container |
+| `make logs` | Tail container logs |
+| `make build-clean` | Rebuild with no cache |
+
+Or use `docker compose` directly — the `makefile` is just a convenience wrapper.
+
+### Changing the port
+
+Edit `compose.yml` and change the first number in the port mapping:
+
+```yaml
+ports:
+  - "3000:80"  # now available at localhost:3000
+```
+
+See the [Self-Hosting docs](https://docs.easyschematic.live/self-hosting) for reverse proxy setup and more details.
+
 ## Install as Desktop App
 
 EasySchematic can be installed as a standalone app that works offline — no download page, no account, no app store. Just visit [easyschematic.live](https://easyschematic.live) and install from your browser:

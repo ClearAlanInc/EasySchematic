@@ -13,6 +13,7 @@ import NotesPage from "./pages/Notes";
 import PrintingPage from "./pages/Printing";
 import PackListPage from "./pages/PackList";
 import ApiPage from "./pages/Api";
+import SelfHostingPage from "./pages/SelfHosting";
 
 const routes: Record<string, { title: string; component: React.FC }> = {
   "": { title: "Overview", component: OverviewPage },
@@ -27,6 +28,7 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   "pack-list": { title: "Pack List & Reports", component: PackListPage },
   printing: { title: "Printing & Title Block", component: PrintingPage },
   "import-export": { title: "Import / Export", component: ImportExportPage },
+  "self-hosting": { title: "Self-Hosting", component: SelfHostingPage },
   api: { title: "Public API", component: ApiPage },
 };
 
