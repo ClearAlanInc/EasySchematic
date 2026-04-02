@@ -119,6 +119,72 @@ function AutoRouteChip() {
   );
 }
 
+function AutoRouteConfirmDialog() {
+  const pending = useSchematicStore((s) => s.autoRouteConfirmPending);
+  const confirm = useSchematicStore((s) => s.confirmAutoRouteOff);
+  const cancel = useSchematicStore((s) => s.cancelAutoRouteOff);
+  const [remember, setRemember] = useState(false);
+
+  if (!pending) return null;
+
+  const handleChoice = (preserve: boolean) => {
+    if (remember) {
+      localStorage.setItem("easyschematic-autoroute-pref", preserve ? "keep" : "revert");
+    }
+    confirm(preserve);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={() => cancel()}
+    >
+      <div
+        className="bg-white border border-[var(--color-border)] rounded-lg shadow-2xl w-[340px] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)]">
+          <span className="text-sm font-semibold text-[var(--color-text-heading)]">
+            Keep current routing?
+          </span>
+          <button
+            onClick={() => cancel()}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-lg leading-none cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+        <div className="px-5 py-4 text-xs text-[var(--color-text)] space-y-3">
+          <p>Auto-routing is being turned off. What should happen to the current routes?</p>
+          <div className="flex gap-2">
+            <button
+              className="flex-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer text-xs"
+              onClick={() => handleChoice(true)}
+            >
+              Keep Routes
+            </button>
+            <button
+              className="flex-1 px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text)] rounded hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] transition-colors cursor-pointer text-xs"
+              onClick={() => handleChoice(false)}
+            >
+              Restore Previous
+            </button>
+          </div>
+          <label className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="accent-blue-600 cursor-pointer"
+            />
+            Remember my choice
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SchematicCanvas() {
   const {
     nodes,
@@ -1194,6 +1260,7 @@ function SchematicCanvas() {
       <Background variant={BackgroundVariant.Dots} gap={GRID_SIZE} size={1} color="#d4d4d4" />
       <Controls position="bottom-right" />
       <AutoRouteChip />
+      <AutoRouteConfirmDialog />
       <MiniMap
         position="bottom-left"
         pannable
