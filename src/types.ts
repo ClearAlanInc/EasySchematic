@@ -298,8 +298,8 @@ export interface CustomTemplateGroup {
 
 export interface CustomTemplateMeta {
   groups: CustomTemplateGroup[];
-  order: string[];                          // deviceType[] in display order
-  groupAssignments: Record<string, string>; // deviceType -> groupId
+  order: string[];                          // template key (id ?? deviceType) in display order
+  groupAssignments: Record<string, string>; // template key -> groupId
 }
 
 export interface TemplatePreset {

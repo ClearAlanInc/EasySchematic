@@ -105,7 +105,7 @@ export default function RouterCreator({ onClose, position }: { onClose: () => vo
 
   const handleSaveAsTemplate = () => {
     const template = buildTemplate();
-    template.deviceType = `custom-${Date.now()}`;
+    template.id = `custom-${Date.now()}`;
     addCustomTemplate(template);
   };
 

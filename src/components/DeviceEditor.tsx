@@ -229,15 +229,18 @@ export default function DeviceEditor() {
 
     const existing = node?.data;
     addCustomTemplate({
-      deviceType: `custom-${Date.now()}`,
+      id: `custom-${Date.now()}`,
+      deviceType: deviceType.trim() || "custom",
       label: label.trim() || "Custom Device",
       ports: finalPorts,
+      ...(color ? { color } : {}),
+      ...(existing?.category ? { category: String(existing.category) } : {}),
       ...(existing?.manufacturer ? { manufacturer: existing.manufacturer } : {}),
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
     });
-  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW]);
+  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW, deviceType, color]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports

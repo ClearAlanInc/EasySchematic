@@ -265,7 +265,7 @@ function DraggableTemplateItem({
         draggable
         onDragStart={(e) => {
           // Set both MIME types: reorder for the panel, device for canvas drops
-          e.dataTransfer.setData("application/easyschematic-template-reorder", template.deviceType);
+          e.dataTransfer.setData("application/easyschematic-template-reorder", template.id ?? template.deviceType);
           e.dataTransfer.setData("application/easyschematic-device", JSON.stringify(template));
           e.dataTransfer.effectAllowed = "move";
         }}
@@ -518,19 +518,19 @@ function CustomTemplatesSection({
 
   // Build ordered view: for each group, collect assigned templates in order; then ungrouped
   const groupedView = useMemo(() => {
-    const byType = new Map<string, DeviceTemplate>();
-    for (const t of customTemplates) byType.set(t.deviceType, t);
+    const byKey = new Map<string, DeviceTemplate>();
+    for (const t of customTemplates) byKey.set(t.id ?? t.deviceType, t);
 
-    // Build ordered list of deviceTypes, appending any not in order array
+    // Build ordered list of template keys, appending any not in order array
     const orderedSet = new Set(order);
-    const fullOrder = [...order, ...customTemplates.filter((t) => !orderedSet.has(t.deviceType)).map((t) => t.deviceType)];
+    const fullOrder = [...order, ...customTemplates.filter((t) => !orderedSet.has(t.id ?? t.deviceType)).map((t) => t.id ?? t.deviceType)];
 
     const sections: { group: CustomTemplateGroup | null; templates: DeviceTemplate[] }[] = [];
 
     for (const g of groups) {
       const templates = fullOrder
         .filter((dt) => assignments[dt] === g.id)
-        .map((dt) => byType.get(dt))
+        .map((dt) => byKey.get(dt))
         .filter((t): t is DeviceTemplate => !!t);
       sections.push({ group: g, templates });
     }
@@ -539,7 +539,7 @@ function CustomTemplatesSection({
     const assignedSet = new Set(Object.keys(assignments));
     const ungrouped = fullOrder
       .filter((dt) => !assignedSet.has(dt))
-      .map((dt) => byType.get(dt))
+      .map((dt) => byKey.get(dt))
       .filter((t): t is DeviceTemplate => !!t);
     sections.push({ group: null, templates: ungrouped });
 
@@ -634,7 +634,7 @@ function CustomTemplatesSection({
                         key={key}
                         template={t}
                         query={query}
-                        onDelete={() => removeCustomTemplate(t.deviceType)}
+                        onDelete={() => removeCustomTemplate(t.id ?? t.deviceType)}
                         isFavorite={favoriteSet.has(key)}
                         onToggleFavorite={() => toggleFavoriteTemplate(key)}
                         index={i}
@@ -664,7 +664,7 @@ function CustomTemplatesSection({
                             key={key}
                             template={t}
                             query={query}
-                            onDelete={() => removeCustomTemplate(t.deviceType)}
+                            onDelete={() => removeCustomTemplate(t.id ?? t.deviceType)}
                             isFavorite={favoriteSet.has(key)}
                             onToggleFavorite={() => toggleFavoriteTemplate(key)}
                             index={i}
@@ -700,7 +700,7 @@ function CustomTemplatesSection({
                           key={key}
                           template={t}
                           query={query}
-                          onDelete={() => removeCustomTemplate(t.deviceType)}
+                          onDelete={() => removeCustomTemplate(t.id ?? t.deviceType)}
                           isFavorite={favoriteSet.has(key)}
                           onToggleFavorite={() => toggleFavoriteTemplate(key)}
                           index={i}
@@ -1081,7 +1081,7 @@ export default function DeviceLibrary() {
                       key={key}
                       template={template}
                       query={query}
-                      onDelete={customTemplates.includes(template) ? () => removeCustomTemplate(template.deviceType) : undefined}
+                      onDelete={customTemplates.includes(template) ? () => removeCustomTemplate(template.id ?? template.deviceType) : undefined}
                       hasPreset={!!(template.id && presetIds.has(template.id))}
                       isFavorite={favoriteSet.has(key)}
                       onToggleFavorite={() => toggleFavoriteTemplate(key)}

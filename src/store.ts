@@ -620,10 +620,23 @@ function removeOrphanedEdges(nodes: SchematicNode[], edges: ConnectionEdge[]): C
   });
 }
 
+/** Unique key for custom template management (order, groups, deletion). */
+function templateKey(t: DeviceTemplate): string {
+  return t.id ?? t.deviceType;
+}
+
 function loadCustomTemplates(): DeviceTemplate[] {
   try {
     const raw = localStorage.getItem(TEMPLATES_KEY);
-    return raw ? (JSON.parse(raw) as DeviceTemplate[]) : [];
+    if (!raw) return [];
+    const templates = JSON.parse(raw) as DeviceTemplate[];
+    // Migrate legacy custom templates: move unique key from deviceType to id
+    for (const t of templates) {
+      if (!t.id && t.deviceType.startsWith("custom-")) {
+        t.id = t.deviceType;
+      }
+    }
+    return templates;
   } catch {
     return [];
   }
@@ -643,7 +656,7 @@ function loadCustomTemplateMeta(templates: DeviceTemplate[]): CustomTemplateMeta
     if (raw) return JSON.parse(raw) as CustomTemplateMeta;
   } catch { /* fall through */ }
   // First load: initialize from current template order
-  return { groups: [], order: templates.map((t) => t.deviceType), groupAssignments: {} };
+  return { groups: [], order: templates.map((t) => templateKey(t)), groupAssignments: {} };
 }
 
 function saveCustomTemplateMeta(meta: CustomTemplateMeta) {
@@ -1650,35 +1663,35 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   addCustomTemplate: (template) => {
     const updated = [...get().customTemplates, template];
-    const order = [...get().customTemplateOrder, template.deviceType];
+    const order = [...get().customTemplateOrder, templateKey(template)];
     set({ customTemplates: updated, customTemplateOrder: order });
     saveCustomTemplates(updated);
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
   },
 
-  removeCustomTemplate: (deviceType) => {
-    const updated = get().customTemplates.filter((t) => t.deviceType !== deviceType);
-    const order = get().customTemplateOrder.filter((dt) => dt !== deviceType);
-    const { [deviceType]: _, ...groupAssignments } = get().customTemplateGroupAssignments;
+  removeCustomTemplate: (key) => {
+    const updated = get().customTemplates.filter((t) => templateKey(t) !== key);
+    const order = get().customTemplateOrder.filter((k) => k !== key);
+    const { [key]: _, ...groupAssignments } = get().customTemplateGroupAssignments;
     set({ customTemplates: updated, customTemplateOrder: order, customTemplateGroupAssignments: groupAssignments });
     saveCustomTemplates(updated);
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments });
   },
 
   // Custom template organization (#62)
-  reorderCustomTemplate: (deviceType, targetIndex) => {
-    const order = get().customTemplateOrder.filter((dt) => dt !== deviceType);
-    order.splice(targetIndex, 0, deviceType);
+  reorderCustomTemplate: (key, targetIndex) => {
+    const order = get().customTemplateOrder.filter((k) => k !== key);
+    order.splice(targetIndex, 0, key);
     set({ customTemplateOrder: order });
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
   },
 
-  moveCustomTemplateToGroup: (deviceType, groupId) => {
+  moveCustomTemplateToGroup: (key, groupId) => {
     const groupAssignments = { ...get().customTemplateGroupAssignments };
     if (groupId) {
-      groupAssignments[deviceType] = groupId;
+      groupAssignments[key] = groupId;
     } else {
-      delete groupAssignments[deviceType];
+      delete groupAssignments[key];
     }
     set({ customTemplateGroupAssignments: groupAssignments });
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order: get().customTemplateOrder, groupAssignments });
@@ -2101,11 +2114,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   importCustomTemplates: (templates) => {
     const existing = get().customTemplates;
-    const existingTypes = new Set(existing.map((t) => t.deviceType));
-    const newTemplates = templates.filter((t) => !existingTypes.has(t.deviceType));
+    const existingKeys = new Set(existing.map((t) => templateKey(t)));
+    const newTemplates = templates.filter((t) => !existingKeys.has(templateKey(t)));
     if (newTemplates.length > 0) {
       const merged = [...existing, ...newTemplates];
-      const order = [...get().customTemplateOrder, ...newTemplates.map((t) => t.deviceType)];
+      const order = [...get().customTemplateOrder, ...newTemplates.map((t) => templateKey(t))];
       set({ customTemplates: merged, customTemplateOrder: order });
       saveCustomTemplates(merged);
       saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
@@ -2367,11 +2380,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     applyRoomLockState(nodes);
     syncCounters(nodes, edges);
     edges = removeOrphanedEdges(nodes, edges);
-    // Merge imported custom templates with existing ones (avoid duplicates by deviceType)
+    // Merge imported custom templates with existing ones (avoid duplicates by template key)
     if (data.customTemplates?.length) {
       const existing = get().customTemplates;
-      const existingTypes = new Set(existing.map((t) => t.deviceType));
-      const newTemplates = data.customTemplates.filter((t) => !existingTypes.has(t.deviceType));
+      const existingKeys = new Set(existing.map((t) => templateKey(t)));
+      const newTemplates = data.customTemplates.filter((t) => !existingKeys.has(templateKey(t)));
       if (newTemplates.length > 0) {
         const merged = [...existing, ...newTemplates];
         set({ customTemplates: merged });
