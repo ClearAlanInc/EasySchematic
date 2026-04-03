@@ -13,6 +13,7 @@ export type ConnectorType =
   | "mini-din-4" | "mini-din-7"
   | "mini-hdmi" | "mini-displayport"
   | "rj11" | "rj12" | "usb-mini" | "trs-2.5mm"
+  | "wireless"
   | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -96,6 +97,7 @@ export type SignalType =
   | "slink"
   | "soundgrid"
   | "fibreace"
+  | "dxlink"
   | "custom";
 
 export type LineStyle = "solid" | "dashed" | "dotted" | "dash-dot";
@@ -490,6 +492,7 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   slink: "var(--color-slink)",
   soundgrid: "var(--color-soundgrid)",
   fibreace: "var(--color-fibreace)",
+  dxlink: "var(--color-dxlink)",
   custom: "var(--color-custom)",
 };
 
@@ -554,6 +557,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   mpo: "Fiber - MPO/MTP",
   "usb-mini": "Mini USB",
   "trs-2.5mm": "2.5mm TRS",
+  wireless: "Wireless",
   none: "None",
   other: "Other",
 };
@@ -616,5 +620,6 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   slink: "SLink",
   soundgrid: "SoundGrid",
   fibreace: "fibreACE",
+  dxlink: "DX Link",
   custom: "Custom",
 };
