@@ -20,10 +20,10 @@ export function collectColorKeyEntries(
   signalLineStyles: Partial<Record<SignalType, LineStyle>> | undefined,
   overrides: Partial<Record<SignalType, boolean>> | undefined,
 ): ColorKeyEntry[] {
-  // Collect signal types from actual connections (not stubbed)
+  // Collect signal types from actual connections (including stubbed)
   const used = new Set<SignalType>();
   for (const edge of edges) {
-    if (edge.data?.signalType && !edge.data.stubbed) {
+    if (edge.data?.signalType) {
       used.add(edge.data.signalType);
     }
   }
