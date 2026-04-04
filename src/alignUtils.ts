@@ -1,4 +1,4 @@
-import type { SchematicNode } from "./types";
+import type { SchematicNode, DeviceData } from "./types";
 
 export type AlignOperation =
   | "left"
@@ -12,6 +12,35 @@ export type AlignOperation =
 
 const DEFAULT_W = 180;
 const DEFAULT_H = 60;
+const GRID_SIZE = 20;
+
+// Spacing constants (mirrored from snapUtils/pathfinding to avoid circular dep)
+const STUB = 30;
+const PAD = 20;
+const ROUTING_GAP = 8;
+const STUB_GAP = 6;
+
+function rightPortCount(node: SchematicNode): number {
+  if (node.type === "room") return 0;
+  const ports = (node.data as DeviceData).ports ?? [];
+  return ports.filter((p) => {
+    if (p.direction === "bidirectional") return true;
+    return (p.direction === "output") !== (p.flipped ?? false);
+  }).length;
+}
+
+function leftPortCount(node: SchematicNode): number {
+  if (node.type === "room") return 0;
+  const ports = (node.data as DeviceData).ports ?? [];
+  return ports.filter((p) => {
+    if (p.direction === "bidirectional") return true;
+    return (p.direction === "input") !== (p.flipped ?? false);
+  }).length;
+}
+
+function maxSpread(portCount: number): number {
+  return portCount <= 1 ? 0 : ((portCount - 1) / 2) * STUB_GAP;
+}
 
 function w(n: SchematicNode) {
   return n.measured?.width ?? DEFAULT_W;
@@ -119,4 +148,144 @@ export function computeAlignment(
   }
 
   return updates;
+}
+
+function snapToGrid(v: number): number {
+  return Math.round(v / GRID_SIZE) * GRID_SIZE;
+}
+
+/** Minimum horizontal gap between two adjacent nodes (port-aware). */
+function minHGap(left: SchematicNode, right: SchematicNode): number {
+  return (
+    STUB +
+    PAD +
+    ROUTING_GAP +
+    Math.max(maxSpread(rightPortCount(left)), maxSpread(leftPortCount(right)))
+  );
+}
+
+/**
+ * After alignment, resolve overlaps among the selected nodes by spreading
+ * them apart on the non-aligned (free) axis. The aligned axis is preserved
+ * exactly. Positions are grid-snapped.
+ */
+export function resolveAlignmentOverlaps(
+  nodes: SchematicNode[],
+  positions: Map<string, { x: number; y: number }>,
+  op: AlignOperation,
+): Map<string, { x: number; y: number }> {
+  if (nodes.length < 2) return positions;
+
+  // Build effective post-alignment positions for every selected node
+  type Entry = { node: SchematicNode; x: number; y: number };
+  const entries: Entry[] = nodes.map((n) => {
+    const pos = positions.get(n.id) ?? n.position;
+    return { node: n, x: pos.x, y: pos.y };
+  });
+
+  // Determine which axis is free (can be adjusted to prevent overlap)
+  const freeAxisX =
+    op === "top" || op === "middle-v" || op === "bottom" || op === "distribute-v";
+  const freeAxisY = !freeAxisX;
+
+  // Handle distribute operations: enforce minimum gap on the distribution axis
+  if (op === "distribute-h") {
+    enforceDistributeMin(entries, "x", (a, b) => minHGap(a, b));
+  } else if (op === "distribute-v") {
+    enforceDistributeMin(entries, "y", () => GRID_SIZE);
+  }
+
+  // Sort by free axis position
+  if (freeAxisY) {
+    entries.sort((a, b) => a.y - b.y);
+  } else {
+    entries.sort((a, b) => a.x - b.x);
+  }
+
+  // Compute centroid on free axis before sweep
+  const centroidBefore = freeAxisY
+    ? entries.reduce((s, e) => s + e.y + h(e.node) / 2, 0) / entries.length
+    : entries.reduce((s, e) => s + e.x + w(e.node) / 2, 0) / entries.length;
+
+  // Sweep: push apart consecutive nodes that are too close
+  for (let i = 1; i < entries.length; i++) {
+    const prev = entries[i - 1];
+    const curr = entries[i];
+
+    if (freeAxisY) {
+      const minGap = GRID_SIZE;
+      const requiredY = prev.y + h(prev.node) + minGap;
+      if (curr.y < requiredY) {
+        curr.y = requiredY;
+      }
+    } else {
+      const gap = minHGap(prev.node, curr.node);
+      const requiredX = prev.x + w(prev.node) + gap;
+      if (curr.x < requiredX) {
+        curr.x = requiredX;
+      }
+    }
+  }
+
+  // Re-center the group on the free axis to minimize total displacement
+  const centroidAfter = freeAxisY
+    ? entries.reduce((s, e) => s + e.y + h(e.node) / 2, 0) / entries.length
+    : entries.reduce((s, e) => s + e.x + w(e.node) / 2, 0) / entries.length;
+
+  const shift = centroidBefore - centroidAfter;
+  if (shift !== 0) {
+    for (const e of entries) {
+      if (freeAxisY) e.y += shift;
+      else e.x += shift;
+    }
+  }
+
+  // Grid-snap all positions
+  for (const e of entries) {
+    e.x = snapToGrid(e.x);
+    e.y = snapToGrid(e.y);
+  }
+
+  // Return only nodes whose position actually changed from their original
+  const result = new Map<string, { x: number; y: number }>();
+  for (const e of entries) {
+    if (e.x !== e.node.position.x || e.y !== e.node.position.y) {
+      result.set(e.node.id, { x: e.x, y: e.y });
+    }
+  }
+  return result;
+}
+
+/**
+ * For distribute operations, if the computed gap between consecutive nodes
+ * is below the minimum, re-lay out from the first node using minimum gaps.
+ */
+function enforceDistributeMin(
+  entries: { node: SchematicNode; x: number; y: number }[],
+  axis: "x" | "y",
+  minGapFn: (a: SchematicNode, b: SchematicNode) => number,
+): void {
+  const size = axis === "x" ? w : h;
+  const sorted = [...entries].sort((a, b) => a[axis] - b[axis]);
+
+  // Check if any consecutive gap is below minimum
+  let needsFix = false;
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = sorted[i][axis] - (sorted[i - 1][axis] + size(sorted[i - 1].node));
+    const min = minGapFn(sorted[i - 1].node, sorted[i].node);
+    if (gap < min) {
+      needsFix = true;
+      break;
+    }
+  }
+  if (!needsFix) return;
+
+  // Re-lay out from the first node with minimum gaps
+  let pos = sorted[0][axis];
+  for (let i = 0; i < sorted.length; i++) {
+    sorted[i][axis] = pos;
+    if (i < sorted.length - 1) {
+      pos += size(sorted[i].node) + minGapFn(sorted[i].node, sorted[i + 1].node);
+    }
+  }
 }

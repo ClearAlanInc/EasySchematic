@@ -27,7 +27,7 @@ import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle } from "./types";
 import { DEFAULT_SCROLL_CONFIG } from "./types";
 import type { Orientation } from "./printConfig";
-import { computeAlignment, type AlignOperation } from "./alignUtils";
+import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { routeAllEdges, orthogonalize, extractSegments, type RoutedEdge } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath } from "./pathfinding";
@@ -1193,8 +1193,33 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   alignSelectedNodes: (op) => {
     const state = get();
     const selected = state.nodes.filter((n) => n.selected);
-    const updates = computeAlignment(selected, op);
-    if (updates.size === 0) return;
+
+    // Convert to absolute coordinates so alignment works across rooms
+    const parentOffsets = new Map<string, { dx: number; dy: number }>();
+    const absSelected = selected.map((n) => {
+      if (!n.parentId) {
+        parentOffsets.set(n.id, { dx: 0, dy: 0 });
+        return n;
+      }
+      const parent = state.nodes.find((p) => p.id === n.parentId);
+      const dx = parent?.position.x ?? 0;
+      const dy = parent?.position.y ?? 0;
+      parentOffsets.set(n.id, { dx, dy });
+      return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } };
+    });
+
+    const raw = computeAlignment(absSelected, op);
+    if (raw.size === 0) return;
+    const resolved = resolveAlignmentOverlaps(absSelected, raw, op);
+    if (resolved.size === 0) return;
+
+    // Convert back to parent-relative coordinates
+    const updates = new Map<string, { x: number; y: number }>();
+    for (const [id, pos] of resolved) {
+      const off = parentOffsets.get(id)!;
+      updates.set(id, { x: pos.x - off.dx, y: pos.y - off.dy });
+    }
+
     pushUndo({ nodes: state.nodes, edges: state.edges });
     set({
       nodes: state.nodes.map((n) => {
