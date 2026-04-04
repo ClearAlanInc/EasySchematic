@@ -629,6 +629,7 @@ function SchematicCanvas() {
     clickConnectFromRef.current = null;
     clickConnectCleanupRef.current?.();
     clickConnectCleanupRef.current = null;
+    // eslint-disable-next-line react-hooks/immutability -- intentional mutable ref flag
     isClickConnectMode.current = false;
     setConnectPreview(null);
   }, []);
@@ -963,6 +964,7 @@ function SchematicCanvas() {
   const onClickConnectStart = useCallback(
     (event: MouseEvent | TouchEvent, params: { nodeId: string | null; handleId: string | null; handleType: string | null }) => {
       if (!params.nodeId || !params.handleType) return;
+      // eslint-disable-next-line react-hooks/immutability -- intentional mutable ref flag
       isClickConnectMode.current = true;
       startPreviewTracking(event, params.nodeId, params.handleId, params.handleType);
     },
@@ -1370,7 +1372,6 @@ function SchematicCanvas() {
         onOpenRouterCreator={() => { routerCreatorPosRef.current = quickAddPos ?? undefined; setShowRouterCreator(true); }}
       />
     )}
-    {/* eslint-disable-next-line react-hooks/refs -- ref read is intentional; value is set before render */}
     {showRouterCreator && <RouterCreator position={routerCreatorPosRef.current} onClose={() => { setShowRouterCreator(false); routerCreatorPosRef.current = undefined; }} />}
     </>
   );

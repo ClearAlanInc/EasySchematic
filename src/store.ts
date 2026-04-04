@@ -2912,7 +2912,6 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           const saved = stash[e.id];
           if (saved === null) {
             if (!e.data) return e;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { manualWaypoints: _, autoRouteWaypoints: _a, ...restData } = e.data;
             return { ...e, data: restData as typeof e.data };
           }
