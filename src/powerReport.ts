@@ -2,11 +2,10 @@ import type {
   SchematicNode,
   ConnectionEdge,
   DeviceData,
-  RoomData,
 } from "./types";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
-import { csvRow, groupBy } from "./packList";
+import { csvRow, groupBy, getRoomLabel } from "./packList";
 
 // ─── Types ───
 
@@ -39,15 +38,7 @@ export interface PowerReportData {
 
 // ─── Helpers ───
 
-function getRoomLabel(
-  nodes: SchematicNode[],
-  parentId: string | undefined,
-): string {
-  if (!parentId) return "Unassigned";
-  const room = nodes.find((n) => n.id === parentId);
-  if (!room || room.type !== "room") return "Unassigned";
-  return (room.data as RoomData).label || "Unassigned";
-}
+
 
 function getDistroStatus(loadPercent: number): "OK" | "Warning" | "Overloaded" {
   if (loadPercent > 100) return "Overloaded";

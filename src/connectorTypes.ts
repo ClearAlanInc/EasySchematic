@@ -53,6 +53,11 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   soundgrid: "ethercon",
   fibreace: "opticalcon",
   dxlink: "ethercon",
+  gps: "db9",
+  dars: "bnc",
+  rtmp: "rj45",
+  rtsp: "rj45",
+  "mpeg-ts": "rj45",
   custom: "other",
 };
 
@@ -177,6 +182,9 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   qsfp: "QSFP Fiber",
   mpo: "MPO Fiber",
   wireless: "Wireless",
+  "usb-micro": "Micro USB",
+  "reverse-tnc": "Reverse TNC",
+  db37: "DB37",
   none: "",
   other: "Other",
 };

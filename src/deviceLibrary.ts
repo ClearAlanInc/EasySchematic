@@ -106,6 +106,7 @@ const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "controller": "Control",
   "dock": "Peripherals",
   "studio-monitor": "Speakers",
+  "video-scope": "Monitoring",
 };
 
 export const DEVICE_TEMPLATES: DeviceTemplate[] = [

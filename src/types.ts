@@ -12,7 +12,8 @@ export type ConnectorType =
   | "qsfp" | "mpo"
   | "mini-din-4" | "mini-din-7"
   | "mini-hdmi" | "mini-displayport"
-  | "rj11" | "rj12" | "usb-mini" | "trs-2.5mm"
+  | "rj11" | "rj12" | "usb-mini" | "usb-micro" | "trs-2.5mm"
+  | "reverse-tnc" | "db37"
   | "wireless"
   | "none" | "other";
 
@@ -98,6 +99,11 @@ export type SignalType =
   | "soundgrid"
   | "fibreace"
   | "dxlink"
+  | "gps"
+  | "dars"
+  | "rtmp"
+  | "rtsp"
+  | "mpeg-ts"
   | "custom";
 
 export type LineStyle = "solid" | "dashed" | "dotted" | "dash-dot";
@@ -494,6 +500,11 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   soundgrid: "var(--color-soundgrid)",
   fibreace: "var(--color-fibreace)",
   dxlink: "var(--color-dxlink)",
+  gps: "var(--color-gps)",
+  dars: "var(--color-dars)",
+  rtmp: "var(--color-rtmp)",
+  rtsp: "var(--color-rtsp)",
+  "mpeg-ts": "var(--color-mpeg-ts)",
   custom: "var(--color-custom)",
 };
 
@@ -525,7 +536,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "terminal-block": "Terminal Block",
   powercon: "powerCON",
   edison: "Edison",
-  iec: "IEC C13",
+  iec: "IEC C14",
   "iec-c5": "IEC C5",
   "iec-c7": "IEC C7",
   "iec-c15": "IEC C15",
@@ -557,7 +568,10 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   qsfp: "QSFP+",
   mpo: "Fiber - MPO/MTP",
   "usb-mini": "Mini USB",
+  "usb-micro": "Micro USB",
   "trs-2.5mm": "2.5mm TRS",
+  "reverse-tnc": "Reverse TNC",
+  db37: "DB37",
   wireless: "Wireless",
   none: "None",
   other: "Other",
@@ -622,5 +636,10 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   soundgrid: "SoundGrid",
   fibreace: "fibreACE",
   dxlink: "DX Link",
+  gps: "GPS",
+  dars: "DARS",
+  rtmp: "RTMP",
+  rtsp: "RTSP",
+  "mpeg-ts": "MPEG-TS",
   custom: "Custom",
 };

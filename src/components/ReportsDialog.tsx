@@ -8,6 +8,7 @@ import {
   mergeCablesByType,
   exportPackListCsv,
   getPackListTableData,
+  getRoomLabel,
   type PackListDevice,
   type PackListSummaryRow,
   groupCablesByCategory,
@@ -24,7 +25,7 @@ import { getNetworkReportTableData } from "../networkReport";
 import { computePowerReport, exportPowerReportCsv, getPowerReportTableData } from "../powerReport";
 import ReportPreviewDialog from "./ReportPreviewDialog";
 import IpInput from "./IpInput";
-import type { DeviceData, SchematicNode, RoomData, ConnectionData } from "../types";
+import type { DeviceData, SchematicNode, ConnectionData } from "../types";
 import { useSpreadsheetSelection } from "../spreadsheet/useSpreadsheetSelection";
 import type { SpreadsheetColumn } from "../spreadsheet/types";
 import FillSeriesDialog from "../spreadsheet/FillSeriesDialog";
@@ -966,11 +967,7 @@ function computeDeviceReport(nodes: SchematicNode[]): DeviceReportRow[] {
     if (node.type !== "device") continue;
     const data = node.data as DeviceData;
     if (data.isCableAccessory) continue;
-    const parentRoom = nodes.find((n) => n.id === node.parentId);
-    const room =
-      parentRoom?.type === "room"
-        ? (parentRoom.data as RoomData).label || "Unassigned"
-        : "Unassigned";
+    const room = getRoomLabel(nodes, node.parentId);
 
     rows.push({
       nodeId: node.id,

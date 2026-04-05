@@ -183,9 +183,15 @@ export function getRoomLabel(
   parentId: string | undefined,
 ): string {
   if (!parentId) return "Unassigned";
-  const room = nodes.find((n) => n.id === parentId);
-  if (!room || room.type !== "room") return "Unassigned";
-  return (room.data as RoomData).label || "Unassigned";
+  const parts: string[] = [];
+  let currentId: string | undefined = parentId;
+  while (currentId) {
+    const node = nodes.find((n) => n.id === currentId);
+    if (!node || node.type !== "room") break;
+    parts.unshift((node.data as RoomData).label || "Unnamed");
+    currentId = node.parentId as string | undefined;
+  }
+  return parts.length > 0 ? parts.join(" - ") : "Unassigned";
 }
 
 export function resolvePortLabel(

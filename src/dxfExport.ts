@@ -55,6 +55,11 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   soundgrid: 125,  // deep violet — Waves SoundGrid
   fibreace: 133,   // purple — Allen & Heath fibreACE
   dxlink: 135,     // violet — AMX DXLink
+  gps: 8,          // slate — timing/sync
+  dars: 174,       // dark cyan — timing/sync
+  rtmp: 3,         // green — streaming protocol
+  rtsp: 3,         // green — streaming protocol
+  "mpeg-ts": 4,    // teal — streaming protocol
   custom: 9,       // cool gray
 };
 

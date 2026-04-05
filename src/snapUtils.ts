@@ -579,6 +579,8 @@ export function speculativeReparent(
   const centerX = node.position.x + nodeW / 2;
   const centerY = node.position.y + nodeH / 2;
 
+  let bestRoom: SchematicNode | undefined;
+  let bestArea = Infinity;
   for (const room of allNodes) {
     if (room.type !== "room") continue;
     const rw = room.measured?.width ?? (room.style?.width as number) ?? (room.width as number) ?? 400;
@@ -587,15 +589,22 @@ export function speculativeReparent(
       centerX >= room.position.x && centerX <= room.position.x + rw &&
       centerY >= room.position.y && centerY <= room.position.y + rh
     ) {
-      return {
-        ...node,
-        parentId: room.id,
-        position: {
-          x: node.position.x - room.position.x,
-          y: node.position.y - room.position.y,
-        },
-      };
+      const area = rw * rh;
+      if (area < bestArea) {
+        bestRoom = room;
+        bestArea = area;
+      }
     }
+  }
+  if (bestRoom) {
+    return {
+      ...node,
+      parentId: bestRoom.id,
+      position: {
+        x: node.position.x - bestRoom.position.x,
+        y: node.position.y - bestRoom.position.y,
+      },
+    };
   }
   return node;
 }

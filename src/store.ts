@@ -1693,6 +1693,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const centerY = absolutePosition.y + nodeH / 2;
 
     let targetRoom: SchematicNode | undefined;
+    let targetArea = Infinity;
     for (const n of state.nodes) {
       if (n.type !== "room") continue;
       if (n.id === nodeId) continue; // can't parent to itself
@@ -1704,8 +1705,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         centerX >= absPos.x && centerX <= absPos.x + rw &&
         centerY >= absPos.y && centerY <= absPos.y + rh
       ) {
-        targetRoom = n;
-        break;
+        // Prefer the smallest enclosing room (deepest nesting level)
+        const area = rw * rh;
+        if (area < targetArea) {
+          targetRoom = n;
+          targetArea = area;
+        }
       }
     }
 

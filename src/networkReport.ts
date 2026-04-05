@@ -1,7 +1,8 @@
-import type { SchematicNode, DeviceData, RoomData, ConnectionEdge } from "./types";
+import type { SchematicNode, DeviceData, ConnectionEdge } from "./types";
 import { SIGNAL_LABELS } from "./types";
 import { NETWORK_SIGNAL_TYPES } from "./connectorTypes";
 import { findReachableDhcpServers } from "./networkValidation";
+import { getRoomLabel } from "./packList";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
@@ -25,15 +26,7 @@ export interface NetworkReportRow {
   poeDrawW: string;
 }
 
-function getRoomLabel(
-  nodes: SchematicNode[],
-  parentId: string | undefined,
-): string {
-  if (!parentId) return "Unassigned";
-  const room = nodes.find((n) => n.id === parentId);
-  if (!room || room.type !== "room") return "Unassigned";
-  return (room.data as RoomData).label || "Unassigned";
-}
+
 
 /**
  * Build a flat list of all addressable ports with their network config.
