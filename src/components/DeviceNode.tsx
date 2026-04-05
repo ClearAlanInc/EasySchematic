@@ -405,19 +405,28 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           })}
         </div>
       )}
-      {data.auxiliaryData?.length ? (
-        <div className="auxiliaryData px-3 py-2 border-t border-[var(--color-border)]">
-          {data.auxiliaryData.map((line, i) => (
-            <div
-              key={i}
-              className="text-[9px] text-[var(--color-text-muted)] leading-4 truncate whitespace-nowrap text-center"
-              title={line}
-            >
-              {line}
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {/* Auxiliary data — grid-aligned with compact 12px line height.
+           Raw height = 1(border-t) + N×12. Pad to next multiple of 20. */}
+      {data.auxiliaryData?.length ? (() => {
+        const n = data.auxiliaryData!.length;
+        const raw = 1 + n * 12;
+        const totalPad = Math.ceil(raw / 20) * 20 - raw;
+        const pt = Math.floor(totalPad / 2);
+        const pb = totalPad - pt;
+        return (
+          <div className="auxiliaryData px-3 border-t border-[var(--color-border)]" style={{ paddingTop: pt, paddingBottom: pb }}>
+            {data.auxiliaryData!.map((line, i) => (
+              <div
+                key={i}
+                className="text-[9px] text-[var(--color-text-muted)] leading-3 truncate whitespace-nowrap text-center"
+                title={line}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        );
+      })() : null}
       </div>
     </div>
   );
