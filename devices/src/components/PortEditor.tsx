@@ -1,12 +1,11 @@
 import { useState, useCallback, useMemo } from "react";
 import type { Port, SignalType, PortDirection, ConnectorType } from "../../../src/types";
-import { SIGNAL_LABELS, CONNECTOR_LABELS } from "../../../src/types";
+import { SIGNAL_LABELS, CONNECTOR_LABELS, SIGNAL_GROUPS, CONNECTOR_GROUPS } from "../../../src/types";
+import { DEFAULT_CONNECTOR } from "../../../src/connectorTypes";
 
 const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
 import PortRow from "./PortRow";
-
-const SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
-const CONNECTOR_TYPES = Object.keys(CONNECTOR_LABELS) as ConnectorType[];
+import SearchableSelect from "./SearchableSelect";
 
 interface PortEditorProps {
   ports: Port[];
@@ -125,6 +124,7 @@ export default function PortEditor({ ports, onChange }: PortEditorProps) {
       id,
       label: `${dirLabel} ${count}`,
       signalType: "sdi",
+      connectorType: DEFAULT_CONNECTOR["sdi"],
       direction,
     }]);
   };
@@ -209,15 +209,25 @@ export default function PortEditor({ ports, onChange }: PortEditorProps) {
           </label>
           <label className="text-xs">
             <span className="block text-slate-500 mb-1">Signal</span>
-            <select value={bulkSignal} onChange={(e) => setBulkSignal(e.target.value as SignalType)} className="w-full sm:w-auto px-2 py-1 rounded border border-slate-300 text-sm">
-              {SIGNAL_TYPES.map((s) => <option key={s} value={s}>{SIGNAL_LABELS[s]}</option>)}
-            </select>
+            <SearchableSelect<SignalType>
+              value={bulkSignal}
+              onChange={(v) => { setBulkSignal(v); setBulkConnector(DEFAULT_CONNECTOR[v]); }}
+              groups={SIGNAL_GROUPS}
+              labels={SIGNAL_LABELS}
+              className="px-2 py-1 rounded border border-slate-300 text-sm min-w-[120px]"
+            />
           </label>
           <label className="text-xs">
             <span className="block text-slate-500 mb-1">Connector</span>
-            <select value={bulkConnector} onChange={(e) => setBulkConnector(e.target.value as ConnectorType)} className="w-full sm:w-auto px-2 py-1 rounded border border-slate-300 text-sm">
-              {CONNECTOR_TYPES.map((c) => <option key={c} value={c}>{CONNECTOR_LABELS[c]}</option>)}
-            </select>
+            <SearchableSelect<ConnectorType>
+              value={bulkConnector}
+              onChange={setBulkConnector}
+              groups={CONNECTOR_GROUPS}
+              labels={CONNECTOR_LABELS}
+              recommended={DEFAULT_CONNECTOR[bulkSignal]}
+              recommendedLabel={`Default for ${SIGNAL_LABELS[bulkSignal]}`}
+              className="px-2 py-1 rounded border border-slate-300 text-sm min-w-[120px]"
+            />
           </label>
           <button onClick={() => addBulk(direction)} className="w-full sm:w-auto px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">Add</button>
         </div>
@@ -273,17 +283,25 @@ export default function PortEditor({ ports, onChange }: PortEditorProps) {
           <div className="flex flex-wrap items-end gap-2">
             <label className="text-xs">
               <span className="block text-indigo-600 mb-1">Signal</span>
-              <select defaultValue="" onChange={(e) => { if (e.target.value) { const st = e.target.value as SignalType; const updates: Partial<Port> = { signalType: st }; if (!NETWORK_SIGNAL_TYPES.has(st)) updates.addressable = undefined; applyToSelected(updates); e.target.value = ""; } }} className="px-2 py-1 rounded border border-indigo-200 text-sm">
-                <option value="" disabled>Change...</option>
-                {SIGNAL_TYPES.map((s) => <option key={s} value={s}>{SIGNAL_LABELS[s]}</option>)}
-              </select>
+              <SearchableSelect<SignalType>
+                value={"" as SignalType}
+                onChange={(st) => { const updates: Partial<Port> = { signalType: st, connectorType: DEFAULT_CONNECTOR[st] }; if (!NETWORK_SIGNAL_TYPES.has(st)) updates.addressable = undefined; applyToSelected(updates); }}
+                groups={SIGNAL_GROUPS}
+                labels={SIGNAL_LABELS}
+                placeholder="Change..."
+                className="px-2 py-1 rounded border border-indigo-200 text-sm min-w-[100px]"
+              />
             </label>
             <label className="text-xs">
               <span className="block text-indigo-600 mb-1">Connector</span>
-              <select defaultValue="" onChange={(e) => { if (e.target.value) { applyToSelected({ connectorType: e.target.value as ConnectorType }); e.target.value = ""; } }} className="px-2 py-1 rounded border border-indigo-200 text-sm">
-                <option value="" disabled>Change...</option>
-                {CONNECTOR_TYPES.map((c) => <option key={c} value={c}>{CONNECTOR_LABELS[c]}</option>)}
-              </select>
+              <SearchableSelect<ConnectorType>
+                value={"" as ConnectorType}
+                onChange={(ct) => applyToSelected({ connectorType: ct })}
+                groups={CONNECTOR_GROUPS}
+                labels={CONNECTOR_LABELS}
+                placeholder="Change..."
+                className="px-2 py-1 rounded border border-indigo-200 text-sm min-w-[100px]"
+              />
             </label>
             <label className="text-xs">
               <span className="block text-indigo-600 mb-1">Direction</span>

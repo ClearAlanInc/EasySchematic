@@ -80,17 +80,17 @@ export function validateTemplate(body: unknown): ValidationResult {
     if (mnErr) return { ok: false, error: mnErr };
   }
 
-  // Reference URL — required unless manufacturer is "Generic", must be HTTPS
+  // Reference URL — required unless manufacturer is "Generic", must be http(s)
   if (!isGeneric) {
     const ruErr = checkString(obj.referenceUrl, "referenceUrl", 2000);
     if (ruErr) return { ok: false, error: ruErr };
-    if (!(obj.referenceUrl as string).startsWith("https://")) {
-      return { ok: false, error: "referenceUrl must start with https://" };
+    if (!/^https?:\/\//i.test(obj.referenceUrl as string)) {
+      return { ok: false, error: "referenceUrl must start with http:// or https://" };
     }
   } else if (obj.referenceUrl != null && typeof obj.referenceUrl === "string" && obj.referenceUrl.trim() !== "") {
     if (obj.referenceUrl.length > 2000) return { ok: false, error: "referenceUrl must be 2000 characters or fewer" };
-    if (!obj.referenceUrl.startsWith("https://")) {
-      return { ok: false, error: "referenceUrl must start with https://" };
+    if (!/^https?:\/\//i.test(obj.referenceUrl)) {
+      return { ok: false, error: "referenceUrl must start with http:// or https://" };
     }
   }
 

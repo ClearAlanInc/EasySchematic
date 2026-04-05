@@ -646,3 +646,30 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   "mpeg-ts": "MPEG-TS",
   custom: "Custom",
 };
+
+/** Signal types organized by functional group (for searchable dropdowns) */
+export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
+  "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "s-video", "vga"],
+  "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
+  "Audio": ["analog-audio", "aes", "dante", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "slink", "fibreace"],
+  "Network": ["ethernet", "fiber"],
+  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink"],
+  "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],
+  "Power": ["power", "power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"],
+  "Streaming": ["rtmp", "rtsp", "mpeg-ts", "rf"],
+  "Other": ["custom"],
+};
+
+/** Connector types organized by functional group (for searchable dropdowns) */
+export const CONNECTOR_GROUPS: Record<string, ConnectorType[]> = {
+  "Video": ["bnc", "hdmi", "mini-hdmi", "displayport", "mini-displayport", "dvi", "vga"],
+  "Audio": ["xlr-3", "xlr-4", "xlr-5", "mini-xlr", "combo-xlr-trs", "trs-quarter", "trs-eighth", "trs-2.5mm", "rca", "din-5", "mini-din-4", "mini-din-7", "toslink"],
+  "Network / Data": ["rj45", "ethercon", "sfp", "lc", "sc", "opticalcon", "qsfp", "mpo", "rj11", "rj12"],
+  "USB": ["usb-a", "usb-b", "usb-c", "usb-mini", "usb-micro"],
+  "D-Sub / Serial": ["db9", "db15", "db25", "db37", "db7w2"],
+  "Power": ["iec", "iec-c5", "iec-c7", "iec-c15", "iec-c20", "powercon", "powercon-true1", "edison", "barrel", "l5-20", "l6-20", "l6-30", "l21-30", "cam-lok", "socapex"],
+  "Speaker": ["speakon", "banana", "binding-post", "binding-post-banana"],
+  "Terminal": ["phoenix", "terminal-block", "multipin"],
+  "RF": ["reverse-tnc", "sma"],
+  "Other": ["wireless", "none", "other"],
+};

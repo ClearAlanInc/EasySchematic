@@ -1,10 +1,9 @@
 import type { Port, SignalType, ConnectorType } from "../../../src/types";
-import { SIGNAL_LABELS, CONNECTOR_LABELS } from "../../../src/types";
+import { SIGNAL_LABELS, CONNECTOR_LABELS, SIGNAL_GROUPS, CONNECTOR_GROUPS } from "../../../src/types";
+import { DEFAULT_CONNECTOR } from "../../../src/connectorTypes";
+import SearchableSelect from "./SearchableSelect";
 
 const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
-
-const SIGNAL_TYPES = Object.keys(SIGNAL_LABELS) as SignalType[];
-const CONNECTOR_TYPES = Object.keys(CONNECTOR_LABELS) as ConnectorType[];
 
 interface PortRowProps {
   port: Port;
@@ -17,6 +16,20 @@ interface PortRowProps {
 }
 
 export default function PortRow({ port, selected, onSelect, onChange, onRemove, onMoveUp, onMoveDown }: PortRowProps) {
+  const handleSignalChange = (newSignal: SignalType) => {
+    const updates: Partial<Port> = { signalType: newSignal };
+    // Auto-update connector if current connector is the default for old signal or unset
+    const currentDefault = DEFAULT_CONNECTOR[port.signalType];
+    const isConnectorDefault = !port.connectorType || port.connectorType === "none" || port.connectorType === currentDefault;
+    if (isConnectorDefault) {
+      updates.connectorType = DEFAULT_CONNECTOR[newSignal];
+    }
+    if (!NETWORK_SIGNAL_TYPES.has(newSignal)) {
+      updates.addressable = undefined;
+    }
+    onChange(updates);
+  };
+
   return (
     <div
       onClick={onSelect}
@@ -38,20 +51,22 @@ export default function PortRow({ port, selected, onSelect, onChange, onRemove, 
           className="w-full sm:flex-1 sm:w-auto min-w-0 px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="Label"
         />
-        <select
+        <SearchableSelect<SignalType>
           value={port.signalType}
-          onChange={(e) => onChange({ signalType: e.target.value as SignalType })}
-          className="px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {SIGNAL_TYPES.map((s) => <option key={s} value={s}>{SIGNAL_LABELS[s]}</option>)}
-        </select>
-        <select
-          value={port.connectorType ?? "none"}
-          onChange={(e) => onChange({ connectorType: e.target.value as ConnectorType })}
-          className="px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {CONNECTOR_TYPES.map((c) => <option key={c} value={c}>{CONNECTOR_LABELS[c]}</option>)}
-        </select>
+          onChange={handleSignalChange}
+          groups={SIGNAL_GROUPS}
+          labels={SIGNAL_LABELS}
+          className="px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[100px]"
+        />
+        <SearchableSelect<ConnectorType>
+          value={(port.connectorType ?? "none") as ConnectorType}
+          onChange={(v) => onChange({ connectorType: v })}
+          groups={CONNECTOR_GROUPS}
+          labels={CONNECTOR_LABELS}
+          recommended={DEFAULT_CONNECTOR[port.signalType]}
+          recommendedLabel={`Default for ${SIGNAL_LABELS[port.signalType]}`}
+          className="px-2 py-1 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[100px]"
+        />
         <input
           type="text"
           value={port.section ?? ""}

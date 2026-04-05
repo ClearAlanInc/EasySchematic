@@ -1,14 +1,16 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import type { Port, SlotDefinition, DeviceTemplate } from "../../../src/types";
-import { fetchTemplate, fetchDeviceTypes, fetchSearchTerms, fetchCategories, fetchTemplates, fetchDraft } from "../api";
+import { fetchTemplate, fetchSearchTerms, fetchTemplates, fetchDraft } from "../api";
 import { linkClick } from "../navigate";
 import PortEditor from "./PortEditor";
-import AutocompleteInput from "./AutocompleteInput";
-import TagAutocompleteInput from "./TagAutocompleteInput";
+import SearchableSelect from "./SearchableSelect";
+import TagInput from "./TagInput";
+import { DEVICE_TYPE_TO_CATEGORY, DEVICE_TYPE_LABELS, ALL_CATEGORIES, DEVICE_TYPES_BY_CATEGORY } from "../../../src/deviceTypeCategories";
+
+const toKebab = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 export interface DeviceFormData {
   label: string;
-  hostname?: string;
   deviceType: string;
   category: string;
   ports: Port[];
@@ -46,13 +48,12 @@ interface DeviceFormProps {
 
 export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
   const [label, setLabel] = useState("");
-  const [hostname, setHostname] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [category, setCategory] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [modelNumber, setModelNumber] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
-  const [searchTerms, setSearchTerms] = useState("");
+  const [searchTerms, setSearchTerms] = useState<string[]>([]);
   const [color, setColor] = useState("");
   const [ports, setPorts] = useState<Port[]>([]);
   const [slots, setSlots] = useState<SlotDefinition[]>([]);
@@ -66,30 +67,39 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
-  const [knownCategories, setKnownCategories] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [showWarnings, setShowWarnings] = useState(false);
+  const [customDeviceType, setCustomDeviceType] = useState(false);
+  const [customDeviceTypeText, setCustomDeviceTypeText] = useState("");
   const [knownSearchTerms, setKnownSearchTerms] = useState<string[]>([]);
   const [allTemplates, setAllTemplates] = useState<DeviceTemplate[]>([]);
+  const categoryAutoRef = useRef(true);
 
   useEffect(() => {
-    fetchDeviceTypes().then(setDeviceTypes);
-    fetchCategories().then(setKnownCategories);
     fetchSearchTerms().then(setKnownSearchTerms);
     fetchTemplates().then(setAllTemplates).catch(() => {});
   }, []);
 
+  // Auto-populate category from device type
+  useEffect(() => {
+    if (!categoryAutoRef.current) return;
+    const mapped = DEVICE_TYPE_TO_CATEGORY[deviceType];
+    if (mapped) setCategory(mapped);
+  }, [deviceType]);
+
   useEffect(() => {
     if (!id) return;
+    categoryAutoRef.current = false; // don't overwrite saved category when editing
     fetchTemplate(id)
       .then((t) => {
         setLabel(t.label);
-        setHostname((t as unknown as Record<string, unknown>).hostname as string ?? "");
         setDeviceType(t.deviceType);
         setCategory(t.category ?? "");
         setManufacturer(t.manufacturer ?? "");
-        setModelNumber(t.modelNumber ?? "");
+        const m = t.modelNumber;
+        setModelNumber(m && m !== "undefined" ? m : "");
         setReferenceUrl(t.referenceUrl ?? "");
-        setSearchTerms(t.searchTerms?.join(", ") ?? "");
+        setSearchTerms(t.searchTerms ?? []);
         setColor(t.color ?? "");
         setPorts(t.ports);
         setSlots(t.slots ?? []);
@@ -110,11 +120,11 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
     fetchDraft(draftId)
       .then((t: Record<string, unknown>) => {
         setLabel((t.label as string) ?? "");
-        setHostname((t.hostname as string) ?? "");
         setDeviceType((t.deviceType as string) ?? "");
         setCategory((t.category as string) ?? "");
         setManufacturer((t.manufacturer as string) ?? "");
-        setModelNumber((t.modelNumber as string) ?? "");
+        const m = t.modelNumber as string | undefined;
+        setModelNumber(m && m !== "undefined" ? m : "");
         setReferenceUrl((t.referenceUrl as string) ?? "");
         setColor((t.color as string) ?? "");
         setPorts((t.ports as Port[]) ?? []);
@@ -129,31 +139,39 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
       .finally(() => setLoading(false));
   }, [draftId, id]);
 
-  const handleSubmit = async () => {
-    if (!label.trim()) { setError("Label is required"); return; }
-    if (!deviceType.trim()) { setError("Device type is required"); return; }
-    if (!category.trim()) { setError("Category is required"); return; }
-    if (!manufacturer.trim()) { setError("Manufacturer is required (use \"Generic\" if not a specific brand)"); return; }
-    const isGeneric = manufacturer.trim().toLowerCase() === "generic";
-    if (!isGeneric && !modelNumber.trim()) { setError("Model number is required (unless manufacturer is Generic)"); return; }
-    if (!isGeneric && !referenceUrl.trim()) { setError("Reference URL is required (unless manufacturer is Generic)"); return; }
-    if (referenceUrl.trim() && !referenceUrl.trim().startsWith("https://")) { setError("Reference URL must start with https://"); return; }
+  const getWarningsList = (): string[] => {
+    const w: string[] = [];
+    const otherConnectors = ports.filter((p) => p.connectorType === "other").length;
+    if (otherConnectors > 0) w.push(`${otherConnectors} port${otherConnectors > 1 ? "s" : ""} use "Other" connector. If a specific type exists, please select it.`);
+    const customSignals = ports.filter((p) => p.signalType === "custom").length;
+    if (customSignals > 0) w.push(`${customSignals} port${customSignals > 1 ? "s" : ""} use "Custom" signal type. Is there a standard type that fits?`);
+    if (customDeviceType) w.push("You're suggesting a new device type. A moderator will need to review and add it.");
+    if (ports.length === 0) w.push("This device has no ports defined.");
+    return w;
+  };
+
+  const doSubmit = async () => {
+    const effectiveDeviceType = customDeviceType
+      ? toKebab(customDeviceTypeText)
+      : deviceType.trim();
 
     setSaving(true);
     setError("");
+    setShowWarnings(false);
+
+    const cleanModel = modelNumber.trim();
 
     try {
       await onSubmit({
         label: label.trim(),
-        ...(hostname.trim() && { hostname: hostname.trim() }),
-        deviceType: deviceType.trim(),
+        deviceType: effectiveDeviceType,
         category: category.trim(),
         ports,
         manufacturer: manufacturer.trim(),
-        ...(modelNumber.trim() && { modelNumber: modelNumber.trim() }),
+        ...(cleanModel && cleanModel !== "undefined" && { modelNumber: cleanModel }),
         ...(referenceUrl.trim() && { referenceUrl: referenceUrl.trim() }),
         ...(color.trim() && { color: color.trim() }),
-        ...(searchTerms.trim() && { searchTerms: searchTerms.split(",").map((s) => s.trim()).filter(Boolean) }),
+        ...(searchTerms.length > 0 && { searchTerms }),
         ...(slots.length > 0 && { slots }),
         ...(slotFamily.trim() && { slotFamily: slotFamily.trim() }),
         ...(powerDrawW.trim() && { powerDrawW: Number(powerDrawW) }),
@@ -161,13 +179,40 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         ...(voltage.trim() && { voltage: voltage.trim() }),
         ...(poeBudgetW.trim() && { poeBudgetW: Number(poeBudgetW) }),
         ...(isVenueProvided && { isVenueProvided: true }),
-        ...(submitterNote.trim() && { submitterNote: submitterNote.trim() }),
+        ...(() => {
+          const parts: string[] = [];
+          if (customDeviceType && customDeviceTypeText.trim()) parts.push(`Suggested device type: "${customDeviceTypeText.trim()}" (${toKebab(customDeviceTypeText)})`);
+          if (submitterNote.trim()) parts.push(submitterNote.trim());
+          return parts.length > 0 ? { submitterNote: parts.join("\n") } : {};
+        })(),
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    if (!label.trim()) { setError("Label is required"); return; }
+    const effectiveDeviceType = customDeviceType ? toKebab(customDeviceTypeText) : deviceType.trim();
+    if (!effectiveDeviceType) { setError("Device type is required"); return; }
+    if (!category.trim()) { setError("Category is required"); return; }
+    if (!manufacturer.trim()) { setError("Manufacturer is required (use \"Generic\" if not a specific brand)"); return; }
+    const isGeneric = manufacturer.trim().toLowerCase() === "generic";
+    if (!isGeneric && !modelNumber.trim()) { setError("Model number is required (unless manufacturer is Generic)"); return; }
+    if (!isGeneric && !referenceUrl.trim()) { setError("Reference URL is required (unless manufacturer is Generic)"); return; }
+    if (referenceUrl.trim() && !/^https?:\/\//i.test(referenceUrl.trim())) { setError("Reference URL must start with http:// or https://"); return; }
+
+    setError("");
+    const w = getWarningsList();
+    if (w.length > 0) {
+      setWarnings(w);
+      setShowWarnings(true);
+      return;
+    }
+
+    await doSubmit();
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
@@ -185,18 +230,56 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
           <span className="block text-sm font-medium text-slate-700 mb-1">Label *</span>
           <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
-        <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Hostname</span>
-          <input value={hostname} onChange={(e) => setHostname(e.target.value)} placeholder="e.g. nvx-room101" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </label>
-        <label>
+        <div>
           <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
-          <AutocompleteInput value={deviceType} onChange={setDeviceType} suggestions={deviceTypes} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </label>
-        <label>
+          {customDeviceType ? (
+            <div>
+              <div className="flex gap-2 items-center">
+                <input
+                  value={customDeviceTypeText}
+                  onChange={(e) => setCustomDeviceTypeText(e.target.value)}
+                  placeholder="e.g. Commentary Box"
+                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button type="button" onClick={() => { setCustomDeviceType(false); setCustomDeviceTypeText(""); }} className="text-xs text-slate-500 hover:text-slate-700 whitespace-nowrap">Back to list</button>
+              </div>
+              {customDeviceTypeText.trim() && (
+                <span className="text-xs text-slate-500 mt-1 block">
+                  Will be saved as: <code className="px-1 py-0.5 bg-slate-100 rounded text-slate-700">{toKebab(customDeviceTypeText)}</code>
+                </span>
+              )}
+              <span className="text-xs text-amber-600 mt-1 block">A moderator will review and add this new device type.</span>
+            </div>
+          ) : (
+            <SearchableSelect
+              value={deviceType}
+              onChange={(v) => { setDeviceType(v); categoryAutoRef.current = true; }}
+              groups={DEVICE_TYPES_BY_CATEGORY}
+              labels={DEVICE_TYPE_LABELS}
+              placeholder="Search device types..."
+              allowOther={{ label: "Other \u2014 suggest new type", onSelect: (q) => { setCustomDeviceType(true); setCustomDeviceTypeText(q); } }}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
+        </div>
+        <div>
           <span className="block text-sm font-medium text-slate-700 mb-1">Category *</span>
-          <AutocompleteInput value={category} onChange={setCategory} suggestions={knownCategories} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </label>
+          {!customDeviceType && DEVICE_TYPE_TO_CATEGORY[deviceType] ? (
+            <div className="flex items-center gap-2">
+              <input value={category} readOnly className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-600 cursor-default" />
+              <span className="text-xs text-slate-400 whitespace-nowrap">Auto-filled</span>
+            </div>
+          ) : (
+            <SearchableSelect
+              value={category}
+              onChange={(v) => { setCategory(v); categoryAutoRef.current = false; }}
+              options={ALL_CATEGORIES}
+              labels={Object.fromEntries(ALL_CATEGORIES.map((c) => [c, c]))}
+              placeholder="Select category..."
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
+        </div>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer *</span>
           <input value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} placeholder="e.g. Blackmagic Design, or Generic" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -207,12 +290,26 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         </label>
         <label className="sm:col-span-2">
           <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL {!isGenericMfr ? "*" : ""}</span>
-          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product-page" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">{isGenericMfr ? "Optional for generic devices" : "Link to the manufacturer's product page for verification"}</span>
+          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product/specs" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">{isGenericMfr ? "Optional for generic devices" : "Link to the manufacturer's specifications page (not marketing overview) for verification"}</span>
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
-          <TagAutocompleteInput value={searchTerms} onChange={setSearchTerms} suggestions={knownSearchTerms} placeholder="comma, separated, terms" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <TagInput
+            tags={searchTerms}
+            onChange={setSearchTerms}
+            suggestions={knownSearchTerms}
+            autoSuggestions={(() => {
+              const auto: string[] = [];
+              if (manufacturer.trim() && manufacturer.trim().toLowerCase() !== "generic") auto.push(manufacturer.trim().toLowerCase());
+              if (modelNumber.trim()) auto.push(modelNumber.trim().toLowerCase());
+              // Add words from device type label
+              const dtLabel = DEVICE_TYPE_LABELS[deviceType];
+              if (dtLabel) dtLabel.split(" ").forEach((w) => { if (w.length > 2) auto.push(w.toLowerCase()); });
+              return [...new Set(auto)];
+            })()}
+            placeholder="Type a tag and press Enter..."
+          />
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Power Draw (W)</span>
@@ -244,12 +341,15 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         {category === "Expansion Cards" && (
           <label>
             <span className="block text-sm font-medium text-slate-700 mb-1">Slot Family</span>
-            <AutocompleteInput
+            <input
               value={slotFamily}
-              onChange={setSlotFamily}
-              suggestions={[...new Set(allTemplates.filter((t) => t.slotFamily).map((t) => t.slotFamily!))]}
+              onChange={(e) => setSlotFamily(e.target.value)}
+              list="slot-families"
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <datalist id="slot-families">
+              {[...new Set(allTemplates.filter((t) => t.slotFamily).map((t) => t.slotFamily!))].map((f) => <option key={f} value={f} />)}
+            </datalist>
             <span className="text-xs text-slate-400 mt-1 block">Family this card belongs to (e.g. disguise-vfc)</span>
           </label>
         )}
@@ -273,6 +373,22 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         />
         <span className="text-xs text-slate-400 mt-1 block">Optional — anything the reviewer should know about this submission</span>
       </label>
+
+      {/* Warnings confirmation dialog */}
+      {showWarnings && (
+        <div className="mt-6 p-4 rounded-lg border border-amber-200 bg-amber-50">
+          <h3 className="text-sm font-semibold text-amber-800 mb-2">Review before submitting</h3>
+          <ul className="text-sm text-amber-700 space-y-1 mb-4">
+            {warnings.map((w, i) => <li key={i} className="flex gap-2"><span className="shrink-0">&#9888;</span> {w}</li>)}
+          </ul>
+          <div className="flex gap-3">
+            <button onClick={() => setShowWarnings(false)} className="px-4 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors">Go Back</button>
+            <button onClick={doSubmit} disabled={saving} className="px-4 py-1.5 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors">
+              {saving ? "Submitting..." : "Submit Anyway"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-8 pt-6 border-t border-slate-200">
         <div>{footer}</div>
@@ -367,12 +483,15 @@ function SlotEditor({
             {/* Slot Family */}
             <div className="mb-2">
               <label className="block text-xs text-slate-500 mb-1">Slot Family</label>
-              <AutocompleteInput
+              <input
                 value={slot.slotFamily}
-                onChange={(v) => updateSlot(i, { slotFamily: v })}
-                suggestions={knownFamilies}
+                onChange={(e) => updateSlot(i, { slotFamily: e.target.value })}
+                list="slot-families-inner"
                 className="w-full px-2 py-1 rounded border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <datalist id="slot-families-inner">
+                {knownFamilies.map((f) => <option key={f} value={f} />)}
+              </datalist>
             </div>
 
             {/* Default Card */}
