@@ -952,27 +952,40 @@ export function routeAllEdges(
   }
 
   // ---------- Fan group detection ----------
-  // Group forward edges by source/target device proximity.
+  // Group forward edges by source/target device proximity (X AND Y).
   // Edges in the same fan group get allocated as a contiguous block.
+  // Y proximity prevents independent device groups (e.g., stacked copies of a
+  // schematic) from competing for the same column block.
   type FanGroup = {
     id: number;
     srcXMin: number; srcXMax: number;
     tgtXMin: number; tgtXMax: number;
+    yMin: number; yMax: number;
     edges: ColumnEdge[];
   };
   const fanGroups: FanGroup[] = [];
   let nextFanId = 0;
+  const FAN_Y_MARGIN = 5; // grid cells (~100px) of slack for Y-range overlap
 
   for (const ce of columnEdges) {
     if (ce.isBackward) continue;
+    const ceYMin = Math.min(ce.srcGY, ce.tgtGY);
+    const ceYMax = Math.max(ce.srcGY, ce.tgtGY);
     let placed = false;
     for (const fg of fanGroups) {
-      if (Math.abs(ce.tgtGX - fg.tgtXMin) <= 5 && Math.abs(ce.srcGX - fg.srcXMin) <= 15) {
+      // Y-range overlap: the edge's Y extent must overlap the group's Y extent
+      // (with a small margin). This prevents stacked copies from merging.
+      const overlapsY = ceYMax >= fg.yMin - FAN_Y_MARGIN && ceYMin <= fg.yMax + FAN_Y_MARGIN;
+      if (Math.abs(ce.tgtGX - fg.tgtXMin) <= 5
+        && Math.abs(ce.srcGX - fg.srcXMin) <= 15
+        && overlapsY) {
         fg.edges.push(ce);
         fg.srcXMin = Math.min(fg.srcXMin, ce.srcGX);
         fg.srcXMax = Math.max(fg.srcXMax, ce.srcGX);
         fg.tgtXMin = Math.min(fg.tgtXMin, ce.tgtGX);
         fg.tgtXMax = Math.max(fg.tgtXMax, ce.tgtGX);
+        fg.yMin = Math.min(fg.yMin, ceYMin);
+        fg.yMax = Math.max(fg.yMax, ceYMax);
         ce.fanGroupId = fg.id;
         placed = true;
         break;
@@ -985,6 +998,7 @@ export function routeAllEdges(
         id,
         srcXMin: ce.srcGX, srcXMax: ce.srcGX,
         tgtXMin: ce.tgtGX, tgtXMax: ce.tgtGX,
+        yMin: ceYMin, yMax: ceYMax,
         edges: [ce],
       });
     }
@@ -1001,7 +1015,27 @@ export function routeAllEdges(
   //     → Sort by srcY descending → highest corridor. Zero first-horizontal crossings.
   //   These are OPPOSITE orderings. No single sort works for both.
 
-  const takenColumns = new Set<number>();
+  // Y-range-aware column tracking — a column is only "taken" for the Y span of the
+  // edge that claimed it. Edges at different Y positions can share the same X column.
+  const takenColumns = new Map<number, { yMin: number; yMax: number }[]>();
+  const COL_GAP = 2; // grid cells of vertical gap tolerance between claimed ranges
+
+  /** Check if a column X is available for a given Y range. */
+  const isColumnAvailable = (gx: number, yMin: number, yMax: number): boolean => {
+    const ranges = takenColumns.get(gx);
+    if (!ranges) return true;
+    for (const r of ranges) {
+      if (yMax + COL_GAP >= r.yMin && yMin - COL_GAP <= r.yMax) return false;
+    }
+    return true;
+  };
+
+  /** Claim a column X for a given Y range. */
+  const claimColumn = (gx: number, yMin: number, yMax: number): void => {
+    let ranges = takenColumns.get(gx);
+    if (!ranges) { ranges = []; takenColumns.set(gx, ranges); }
+    ranges.push({ yMin, yMax });
+  };
 
   // Process fan groups largest first (more edges = more constrained = allocate first)
   const sortedFanGroups = [...fanGroups].sort((a, b) => b.edges.length - a.edges.length);
@@ -1024,10 +1058,10 @@ export function routeAllEdges(
       let allClear = true;
       for (let i = 0; i < n; i++) {
         const candidateX = baseX - i;
-        if (takenColumns.has(candidateX)) { allClear = false; break; }
         const ce = edges[i];
         const yMin = Math.min(ce.srcGY, ce.tgtGY);
         const yMax = Math.max(ce.srcGY, ce.tgtGY);
+        if (!isColumnAvailable(candidateX, yMin, yMax)) { allClear = false; break; }
         if (!isColumnClear(candidateX, yMin, yMax, excludeNodeIds)) { allClear = false; break; }
       }
       if (allClear) {
@@ -1039,8 +1073,9 @@ export function routeAllEdges(
     if (blockStart >= 0) {
       for (let i = 0; i < n; i++) {
         const colX = blockStart - i;
-        edges[i].assignedCol = colX;
-        takenColumns.add(colX);
+        const ce = edges[i];
+        ce.assignedCol = colX;
+        claimColumn(colX, Math.min(ce.srcGY, ce.tgtGY), Math.max(ce.srcGY, ce.tgtGY));
       }
     } else {
       // Fallback: per-edge scan (non-contiguous but still unique columns)
@@ -1050,10 +1085,10 @@ export function routeAllEdges(
         const yMax = Math.max(ce.srcGY, ce.tgtGY);
         let found = false;
         for (let gx = nextX; gx >= searchEnd; gx--) {
-          if (takenColumns.has(gx)) continue;
+          if (!isColumnAvailable(gx, yMin, yMax)) continue;
           if (isColumnClear(gx, yMin, yMax, excludeNodeIds)) {
             ce.assignedCol = gx;
-            takenColumns.add(gx);
+            claimColumn(gx, yMin, yMax);
             nextX = gx - 1;
             found = true;
             break;
@@ -1061,10 +1096,10 @@ export function routeAllEdges(
         }
         if (!found) {
           for (let gx = searchStart + 1; gx <= searchStart + 20; gx++) {
-            if (takenColumns.has(gx)) continue;
+            if (!isColumnAvailable(gx, yMin, yMax)) continue;
             if (isColumnClear(gx, yMin, yMax, excludeNodeIds)) {
               ce.assignedCol = gx;
-              takenColumns.add(gx);
+              claimColumn(gx, yMin, yMax);
               found = true;
               break;
             }
@@ -1090,15 +1125,9 @@ export function routeAllEdges(
     }
 
     // DOWN: sort by tgtY ascending → highest corridor to lowest tgtY.
-    // The edge with the lowest tgtY gets the highest corridor. Its second horizontal
-    // is above all other verticals' endpoints → zero second-horizontal crossings.
-    // Its first horizontal is at the topmost srcY → above all other verticals' starts
-    // → zero first-horizontal crossings.
     downEdges.sort((a, b) => a.tgtGY - b.tgtGY);
 
     // UP: sort by srcY descending → highest corridor to highest srcY.
-    // The edge with the highest srcY gets the highest corridor. Its first horizontal
-    // is below all other verticals' endpoints → zero first-horizontal crossings.
     upEdges.sort((a, b) => b.srcGY - a.srcGY);
 
     // Collect all endpoint device IDs for this fan group — corridors may overlap
@@ -1109,8 +1138,7 @@ export function routeAllEdges(
       fanEndpointIds.add(ce.ep.edge.target);
     }
 
-    // Allocate DOWN subgroup first (gets higher corridors, closer to target),
-    // then UP subgroup (gets lower corridors). The two subgroups occupy different
+    // Allocate DOWN subgroup first, then UP subgroup. The two subgroups occupy different
     // Y bands so cross-direction crossings are geometrically impossible.
     allocateBlock(downEdges, searchStart, searchEnd, fanEndpointIds);
     allocateBlock(upEdges, searchStart, searchEnd, fanEndpointIds);
