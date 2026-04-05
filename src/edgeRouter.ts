@@ -10,7 +10,9 @@ import type { SchematicNode, ConnectionEdge } from "./types";
 import {
   buildObstacles,
   computeEdgePath,
+  createPenaltySpatialIndex,
   g2px,
+  growPenaltyIndex,
   pixelRectsToGrid,
   px2g,
   simplifyWaypoints,
@@ -160,11 +162,11 @@ function getHandlePositions(
   return result;
 }
 
-function getAbsPos(node: SchematicNode, nodes: SchematicNode[]) {
+function getAbsPos(node: SchematicNode, nodeMap: Map<string, SchematicNode>) {
   let x = node.position.x;
   let y = node.position.y;
   if (node.parentId) {
-    const parent = nodes.find((n) => n.id === node.parentId);
+    const parent = nodeMap.get(node.parentId);
     if (parent) {
       x += parent.position.x;
       y += parent.position.y;
@@ -179,14 +181,14 @@ function computeStubSpread(
   edgeId: string,
   sourceNodeId: string,
   edges: ConnectionEdge[],
-  nodes: SchematicNode[],
+  nodeMap: Map<string, SchematicNode>,
 ): number {
   const allFromSource: { edgeId: string; handleY: number }[] = [];
   for (const e of edges) {
     if (e.source !== sourceNodeId) continue;
-    const tgt = nodes.find((n) => n.id === e.target);
+    const tgt = nodeMap.get(e.target);
     if (!tgt) continue;
-    const tgtPos = getAbsPos(tgt, nodes);
+    const tgtPos = getAbsPos(tgt, nodeMap);
     const tgtH = tgt.measured?.height ?? 80;
     allFromSource.push({ edgeId: e.id, handleY: tgtPos.y + tgtH / 2 });
   }
@@ -575,7 +577,15 @@ export function routeAllEdges(
   printConfig?: PrintConfig,
   _timeBudgetMs: number = DEFAULT_TIME_BUDGET_MS,
 ): RouteAllResult {
-  const overBudget = false;
+  let overBudget = false;
+  const routingStart = Date.now();
+
+  // Build node map for O(1) lookups
+  const nodeMap = new Map<string, SchematicNode>();
+  for (const n of nodes) {
+    nodeMap.set(n.id, n);
+  }
+
   // Build handle position map
   const handleMap = new Map<string, HandlePos>();
   for (const node of nodes) {
@@ -586,8 +596,10 @@ export function routeAllEdges(
 
   // Build obstacles once (all devices)
   const getAbsPosAdapter = (n: { id: string; position: { x: number; y: number }; parentId?: string }) =>
-    getAbsPos(n as SchematicNode, nodes);
+    getAbsPos(n as SchematicNode, nodeMap);
   const obs = buildObstacles(nodes, [], getAbsPosAdapter);
+  // Pre-convert obstacles to grid rects once — avoids per-edge re-conversion
+  const precomputedGridRects = pixelRectsToGrid(obs.rects);
 
   // Add title block obstacles in print view
   if (printConfig) {
@@ -607,14 +619,14 @@ export function routeAllEdges(
 
     if (!srcHandle || !tgtHandle) continue; // node not measured yet
 
-    const stubSpread = computeStubSpread(edge.id, edge.source, edges, nodes);
+    const stubSpread = computeStubSpread(edge.id, edge.source, edges, nodeMap);
 
     // Determine handle exit directions by comparing handle X to node center X.
     // Handles on the right half of their device exit rightward, left half exit leftward.
-    const srcNode = nodes.find((n) => n.id === edge.source);
-    const tgtNode = nodes.find((n) => n.id === edge.target);
-    const srcPos = srcNode ? getAbsPos(srcNode, nodes) : { x: 0, y: 0 };
-    const tgtPos = tgtNode ? getAbsPos(tgtNode, nodes) : { x: 0, y: 0 };
+    const srcNode = nodeMap.get(edge.source);
+    const tgtNode = nodeMap.get(edge.target);
+    const srcPos = srcNode ? getAbsPos(srcNode, nodeMap) : { x: 0, y: 0 };
+    const tgtPos = tgtNode ? getAbsPos(tgtNode, nodeMap) : { x: 0, y: 0 };
     const srcCenterX = srcPos.x + (srcNode?.measured?.width ?? 180) / 2;
     const tgtCenterX = tgtPos.x + (tgtNode?.measured?.width ?? 180) / 2;
 
@@ -699,6 +711,42 @@ export function routeAllEdges(
   const results: Record<string, RoutedEdge> = {};
   const routeStates: RouteState[] = [];
 
+  // Incremental penalty zones — append after each edge instead of rebuilding from scratch
+  const runningPenalties: PenaltyZone[] = [];
+  const penaltySpatialIdx = createPenaltySpatialIndex();
+
+  /** Append penalty zones for a newly routed edge and grow the spatial index. */
+  const appendPenalties = (rs: RouteState) => {
+    for (const seg of rs.segments) {
+      if (seg.axis === "v") {
+        runningPenalties.push({
+          axis: "v",
+          coordinate: px2g(seg.x1),
+          rangeMin: px2g(Math.min(seg.y1, seg.y2)),
+          rangeMax: px2g(Math.max(seg.y1, seg.y2)),
+          signalType: rs.signalType,
+        });
+      } else {
+        runningPenalties.push({
+          axis: "h",
+          coordinate: px2g(seg.y1),
+          rangeMin: px2g(Math.min(seg.x1, seg.x2)),
+          rangeMax: px2g(Math.max(seg.x1, seg.x2)),
+          signalType: rs.signalType,
+        });
+      }
+    }
+    growPenaltyIndex(penaltySpatialIdx, runningPenalties);
+  };
+
+  /** Check time budget and set overBudget flag. */
+  const checkBudget = () => {
+    if (!overBudget && Date.now() - routingStart > _timeBudgetMs) {
+      overBudget = true;
+    }
+    return overBudget;
+  };
+
   // Stubbed edges should be excluded from crossing detection —
   // their invisible middle sections shouldn't affect other edges.
   const stubbedIds = new Set(edgeEndpoints.filter((ep) => ep.edge.data?.stubbed).map((ep) => ep.edge.id));
@@ -716,7 +764,7 @@ export function routeAllEdges(
 
   for (const ep of manualEndpoints) {
     const sigType = ep.edge.data?.signalType;
-    const penalties = buildPenaltyZones(routeStates);
+    const penalties = runningPenalties;
     const manualWps = ep.edge.data!.manualWaypoints!;
 
     const allPoints = [
@@ -766,6 +814,7 @@ export function routeAllEdges(
         penalties.length > 0 ? penalties : undefined,
         sigType, noSourceStub, noTargetStub, excludeDir, reservedAtTarget,
         undefined, legSrcExitsRight, legTgtEntersLeft,
+        precomputedGridRects, penaltySpatialIdx,
       );
 
       if (!legResult) {
@@ -777,6 +826,7 @@ export function routeAllEdges(
           penalties.length > 0 ? penalties : undefined,
           sigType, noSourceStub, noTargetStub, excludeDir, reservedAtTarget,
           undefined, legSrcExitsRight, legTgtEntersLeft,
+          undefined, penaltySpatialIdx,
         );
       }
 
@@ -797,12 +847,14 @@ export function routeAllEdges(
       const svgPath = waypointsToSvgPath(allWaypoints);
       const segments = extractSegments(allWaypoints);
       const midIdx = Math.floor(allWaypoints.length / 2);
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: allWaypoints, segments, svgPath,
         labelX: allWaypoints[midIdx]?.x ?? ep.sourceX,
         labelY: allWaypoints[midIdx]?.y ?? ep.sourceY,
         turns: "manual", status: "good", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
       continue;
     }
 
@@ -810,12 +862,14 @@ export function routeAllEdges(
     const fbSvg = waypointsToSvgPath(fallbackWp);
     const fbSegs = extractSegments(fallbackWp);
     const fbMid = Math.floor(fallbackWp.length / 2);
-    routeStates.push({
+    const rs: RouteState = {
       edgeId: ep.edge.id, waypoints: fallbackWp, segments: fbSegs, svgPath: fbSvg,
       labelX: fallbackWp[fbMid]?.x ?? ep.sourceX,
       labelY: fallbackWp[fbMid]?.y ?? ep.sourceY,
       turns: "manual-fallback", status: "good", signalType: sigType,
-    });
+    };
+    routeStates.push(rs);
+    appendPenalties(rs);
   }
 
   // ---------- PHASE 0: Column-First Allocation ----------
@@ -1070,6 +1124,7 @@ export function routeAllEdges(
       penalties, sigType, noSrcStub, noTgtStub,
       excludeStartDir, excludeEndDir,
       undefined, srcExitsRight, tgtEntersLeft,
+      precomputedGridRects, penaltySpatialIdx,
     );
     if (!result) {
       const excludeSet = new Set<string>();
@@ -1082,6 +1137,7 @@ export function routeAllEdges(
           penalties, sigType, noSrcStub, noTgtStub,
           excludeStartDir, excludeEndDir,
           undefined, srcExitsRight, tgtEntersLeft,
+          undefined, penaltySpatialIdx,
         );
       }
     }
@@ -1094,21 +1150,24 @@ export function routeAllEdges(
 
     // Backward edges or edges without column assignment → unconstrained A* fallback
     if (ce.isBackward || ce.assignedCol === null) {
-      const penalties = buildPenaltyZones(routeStates);
-      const result = routeLeg(
+      const pens = runningPenalties.length > 0 ? runningPenalties : undefined;
+      // If over time budget, skip A* and use fallback directly
+      const result = checkBudget() ? null : routeLeg(
         ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        obs.rects, ep.stubSpread, penalties.length > 0 ? penalties : undefined,
+        obs.rects, ep.stubSpread, pens,
         sigType, false, false, undefined, undefined,
         ep.edge.source, ep.edge.target,
         ep.sourceExitsRight, ep.targetEntersLeft,
       );
       if (result) {
-        routeStates.push({
+        const rs: RouteState = {
           edgeId: ep.edge.id, waypoints: result.waypoints,
           segments: extractSegments(result.waypoints), svgPath: result.path,
           labelX: result.labelX, labelY: result.labelY,
           turns: result.turns, status: "good", signalType: sigType,
-        });
+        };
+        routeStates.push(rs);
+        appendPenalties(rs);
       } else {
         // Fallback: route around the outside based on exit/entry directions
         const midX = ep.sourceExitsRight
@@ -1120,13 +1179,15 @@ export function routeAllEdges(
           { x: midX, y: ep.targetY },
           { x: ep.targetX, y: ep.targetY },
         ];
-        routeStates.push({
+        const rs: RouteState = {
           edgeId: ep.edge.id, waypoints: wp,
           segments: extractSegments(wp),
           svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
           labelX: midX, labelY: (ep.sourceY + ep.targetY) / 2,
           turns: "fallback", status: "bad", signalType: sigType,
-        });
+        };
+        routeStates.push(rs);
+        appendPenalties(rs);
       }
       continue;
     }
@@ -1154,7 +1215,7 @@ export function routeAllEdges(
       ];
       const cleaned = simplifyWaypoints(wp);
       const svgPath = waypointsToSvgPath(cleaned);
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: cleaned,
         segments: extractSegments(cleaned), svgPath,
         labelX: corridorPx, labelY: (ep.sourceY + ep.targetY) / 2,
@@ -1162,22 +1223,23 @@ export function routeAllEdges(
           ? cleaned.slice(1, -1).map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(" → ")
           : "straight",
         status: "good", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
       continue;
     }
 
     // L-shape obstructed by intermediate devices → route via corridor as mandatory waypoint.
     // Split into legs: source → (corridor, srcY) → (corridor, tgtY) → target.
     // Each leg uses A* to navigate around obstacles while respecting the corridor.
-    const penalties = buildPenaltyZones(routeStates);
-    const pens = penalties.length > 0 ? penalties : undefined;
+    const pens = runningPenalties.length > 0 ? runningPenalties : undefined;
 
     // Corridor waypoints (the vertical segment endpoints)
     const cwp1 = { x: corridorPx, y: ep.sourceY }; // top of vertical
     const cwp2 = { x: corridorPx, y: ep.targetY }; // bottom of vertical
 
-    // Leg 1: source → corridor top (horizontal-ish, navigates around intermediate devices)
-    const leg1 = routeLeg(
+    // If over budget, skip A* legs
+    const leg1 = checkBudget() ? null : routeLeg(
       ep.sourceX, ep.sourceY, cwp1.x, cwp1.y,
       obs.rects, ep.stubSpread, pens, sigType,
       false, true, // has source stub, no target stub (it's a waypoint)
@@ -1186,13 +1248,13 @@ export function routeAllEdges(
     );
 
     // Leg 3: corridor bottom → target (horizontal-ish, navigates around intermediate devices)
-    const leg3 = routeLeg(
+    const leg3 = (leg1 && !checkBudget()) ? routeLeg(
       cwp2.x, cwp2.y, ep.targetX, ep.targetY,
       obs.rects, 0, pens, sigType,
       true, false, // no source stub (waypoint), has target stub
       undefined, undefined, undefined, ep.edge.target,
       undefined, ep.targetEntersLeft,
-    );
+    ) : null;
 
     if (leg1 && leg3) {
       // Assemble: leg1 waypoints + vertical segment + leg3 waypoints
@@ -1203,7 +1265,7 @@ export function routeAllEdges(
       ];
       const cleaned = simplifyWaypoints(allWaypoints);
       const svgPath = waypointsToSvgPath(cleaned);
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: cleaned,
         segments: extractSegments(cleaned), svgPath,
         labelX: corridorPx, labelY: (ep.sourceY + ep.targetY) / 2,
@@ -1211,7 +1273,9 @@ export function routeAllEdges(
           ? cleaned.slice(1, -1).map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(" → ")
           : "straight",
         status: "good", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
     } else {
       // Multi-leg failed → force L-shape at corridor (may cross obstacles visually,
       // but at least uses the assigned corridor for consistent nesting)
@@ -1222,12 +1286,14 @@ export function routeAllEdges(
         { x: ep.targetX, y: ep.targetY },
       ];
       const cleaned = simplifyWaypoints(wp);
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: cleaned,
         segments: extractSegments(cleaned), svgPath: waypointsToSvgPath(cleaned),
         labelX: corridorPx, labelY: (ep.sourceY + ep.targetY) / 2,
         turns: "corridor-forced", status: "bad", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
     }
   }
 
@@ -1235,32 +1301,36 @@ export function routeAllEdges(
   for (const ep of autoEndpoints) {
     if (!stubbedIds.has(ep.edge.id)) continue;
     const sigType = ep.edge.data?.signalType;
-    const penalties = buildPenaltyZones(routeStates);
-    let result = computeEdgePath(
+    const pens = runningPenalties.length > 0 ? runningPenalties : undefined;
+    let result = checkBudget() ? null : computeEdgePath(
       ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
       obs.rects, 0, ep.stubSpread,
-      penalties.length > 0 ? penalties : undefined,
+      pens,
       sigType, undefined, undefined, undefined, undefined, undefined,
       ep.sourceExitsRight, ep.targetEntersLeft,
+      precomputedGridRects, penaltySpatialIdx,
     );
-    if (!result) {
+    if (!result && !overBudget) {
       const excludeSet = new Set([ep.edge.source, ep.edge.target]);
       const relaxedRects = obs.rects.filter((r) => !r.nodeId || !excludeSet.has(r.nodeId));
       result = computeEdgePath(
         ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
         relaxedRects, 0, ep.stubSpread,
-        penalties.length > 0 ? penalties : undefined,
+        pens,
         sigType, undefined, undefined, undefined, undefined, undefined,
         ep.sourceExitsRight, ep.targetEntersLeft,
+        undefined, penaltySpatialIdx,
       );
     }
     if (result) {
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: result.waypoints,
         segments: extractSegments(result.waypoints), svgPath: result.path,
         labelX: result.labelX, labelY: result.labelY,
         turns: result.turns, status: "good", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
     } else {
       const midX = Math.max(ep.sourceX, ep.targetX) + 40;
       const wp: Point[] = [
@@ -1269,13 +1339,15 @@ export function routeAllEdges(
         { x: midX, y: ep.targetY },
         { x: ep.targetX, y: ep.targetY },
       ];
-      routeStates.push({
+      const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: wp,
         segments: extractSegments(wp),
         svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
         labelX: midX, labelY: (ep.sourceY + ep.targetY) / 2,
         turns: "fallback", status: "bad", signalType: sigType,
-      });
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
     }
   }
 
@@ -1339,7 +1411,7 @@ export function routeAllEdges(
   }
 
   // Export debug data for overlay and Claude analysis
-  const finalPenalties = buildPenaltyZones(routeStates);
+  const finalPenalties = runningPenalties;
 
   const w = globalThis as unknown as Record<string, unknown>;
   w.__routingDebug = {

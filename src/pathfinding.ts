@@ -138,7 +138,7 @@ export interface IntGrid {
   rows: number;
   originX: number; // grid X of column 0 (so pixel X = (originX + col) * CELL_SIZE)
   originY: number; // grid Y of row 0
-  blocked: boolean[][]; // blocked[col][row]
+  blocked: Uint8Array; // flat: blocked[col * rows + row], 1=blocked 0=free
 }
 
 export function buildGrid(
@@ -168,10 +168,8 @@ export function buildGrid(
   const cols = maxGX - minGX + 1;
   const rows = maxGY - minGY + 1;
 
-  // Build blocked grid
-  const blocked: boolean[][] = Array.from({ length: cols }, () =>
-    Array.from({ length: rows }, () => false),
-  );
+  // Build blocked grid — flat Uint8Array for single allocation + cache locality
+  const blocked = new Uint8Array(cols * rows);
 
   for (const r of gridRects) {
     const cl = Math.max(0, r.left - minGX);
@@ -179,8 +177,9 @@ export function buildGrid(
     const rt = Math.max(0, r.top - minGY);
     const rb = Math.min(rows - 1, r.bottom - minGY);
     for (let c = cl; c <= cr; c++) {
+      const base = c * rows;
       for (let row = rt; row <= rb; row++) {
-        blocked[c][row] = true;
+        blocked[base + row] = 1;
       }
     }
   }
@@ -191,7 +190,7 @@ export function buildGrid(
       const c = pt.gx - minGX;
       const r = pt.gy - minGY;
       if (c >= 0 && c < cols && r >= 0 && r < rows) {
-        blocked[c][r] = false;
+        blocked[c * rows + r] = 0;
       }
     }
   }
@@ -262,8 +261,16 @@ export function astarOrthogonal(
   excludeStartDir?: number,
   excludeEndDir?: number,
   sourceExitsRight?: boolean,
+  penaltySpatialIndex?: PenaltySpatialIndex,
 ): { path: { gx: number; gy: number }[]; arrivalDir: number } | null {
   const { cols, rows, originX, originY, blocked } = grid;
+
+  // Cache routing params into locals — avoids Proxy trap overhead in hot loop
+  const TURN_PENALTY = ROUTING_PARAMS.TURN_PENALTY;
+  const SEPARATION_PX = ROUTING_PARAMS.SEPARATION_PX;
+  const OVERLAP_PENALTY = ROUTING_PARAMS.OVERLAP_PENALTY;
+  const CROSSING_PENALTY = ROUTING_PARAMS.CROSSING_PENALTY;
+  const NESTING_BIAS = ROUTING_PARAMS.NESTING_BIAS;
 
   // Convert grid-absolute coords to grid-local indices
   const sci = startCol - originX;
@@ -273,21 +280,22 @@ export function astarOrthogonal(
 
   if (sci < 0 || sci >= cols || sri < 0 || sri >= rows) return null;
   if (eci < 0 || eci >= cols || eri < 0 || eri >= rows) return null;
-  if (blocked[sci][sri] || blocked[eci][eri]) return null;
+  if (blocked[sci * rows + sri] || blocked[eci * rows + eri]) return null;
 
-  // Penalty zone spatial index (grid coordinates)
+  // Penalty zone spatial index (grid coordinates) — reuse pre-built index or build locally
   let penaltyGrid: Map<number, PenaltyZone[]> | null = null;
-  if (penalties && penalties.length > 0) {
+  if (penaltySpatialIndex) {
+    penaltyGrid = penaltySpatialIndex.grid.size > 0 ? penaltySpatialIndex.grid : null;
+  } else if (penalties && penalties.length > 0) {
     penaltyGrid = new Map();
     for (const pz of penalties) {
-      const sep = ROUTING_PARAMS.SEPARATION_PX;
       let minC: number, maxC: number, minR: number, maxR: number;
       if (pz.axis === "v") {
-        minC = pz.coordinate - sep; maxC = pz.coordinate + sep;
+        minC = pz.coordinate - SEPARATION_PX; maxC = pz.coordinate + SEPARATION_PX;
         minR = pz.rangeMin; maxR = pz.rangeMax;
       } else {
         minC = pz.rangeMin; maxC = pz.rangeMax;
-        minR = pz.coordinate - sep; maxR = pz.coordinate + sep;
+        minR = pz.coordinate - SEPARATION_PX; maxR = pz.coordinate + SEPARATION_PX;
       }
       const bcMin = Math.floor(minC / PENALTY_BUCKET);
       const bcMax = Math.floor(maxC / PENALTY_BUCKET);
@@ -305,41 +313,44 @@ export function astarOrthogonal(
   }
 
   const NUM_DIRS = 4;
-  const stateKey = (c: number, r: number, d: number) => (c * rows + r) * NUM_DIRS + d;
+  const stateCount = cols * rows * NUM_DIRS;
+
+  // Typed arrays for closed set and best-g — flat array beats hash table for dense integer keys
+  const closedArr = new Uint8Array(stateCount);
+  const bestGArr = new Float64Array(stateCount);
+  bestGArr.fill(Infinity);
 
   const heuristic = (ci: number, ri: number, dir: number) => {
     const dc = Math.abs(ci - eci);
     const dr = Math.abs(ri - eri);
     let h = dc + dr;
-    if (dc > 0 && dr > 0) h += ROUTING_PARAMS.TURN_PENALTY;
-    if (dc > 0 && dr === 0 && dir !== 0 && dir !== 2 && dir >= 0) h += ROUTING_PARAMS.TURN_PENALTY;
-    if (dr > 0 && dc === 0 && dir !== 1 && dir !== 3 && dir >= 0) h += ROUTING_PARAMS.TURN_PENALTY;
-    if (!freeEndDir && dc === 0 && dr === 0 && (dir === 1 || dir === 3)) h += ROUTING_PARAMS.TURN_PENALTY;
+    if (dc > 0 && dr > 0) h += TURN_PENALTY;
+    if (dc > 0 && dr === 0 && dir !== 0 && dir !== 2 && dir >= 0) h += TURN_PENALTY;
+    if (dr > 0 && dc === 0 && dir !== 1 && dir !== 3 && dir >= 0) h += TURN_PENALTY;
+    if (!freeEndDir && dc === 0 && dr === 0 && (dir === 1 || dir === 3)) h += TURN_PENALTY;
     return h;
   };
 
-  const closed = new Set<number>();
-  const bestG = new Map<number, number>();
   const open = new MinHeap();
 
   if (freeStartDir) {
-    const UTURN_PENALTY = ROUTING_PARAMS.TURN_PENALTY * 10;
+    const UTURN_COST = TURN_PENALTY * 10;
     for (let d = 0; d < NUM_DIRS; d++) {
-      const g = d === excludeStartDir ? UTURN_PENALTY : 0;
-      const sk = stateKey(sci, sri, d);
-      bestG.set(sk, g);
+      const g = d === excludeStartDir ? UTURN_COST : 0;
+      const sk = (sci * rows + sri) * NUM_DIRS + d;
+      bestGArr[sk] = g;
       open.push({ xi: sci, yi: sri, g, f: g + heuristic(sci, sri, d), dir: d, parent: null });
     }
   } else {
     const startDir = (sourceExitsRight ?? true) ? 0 : 2;
-    const sk = stateKey(sci, sri, startDir);
-    bestG.set(sk, 0);
+    const sk = (sci * rows + sri) * NUM_DIRS + startDir;
+    bestGArr[sk] = 0;
     open.push({ xi: sci, yi: sri, g: 0, f: heuristic(sci, sri, startDir), dir: startDir, parent: null });
   }
 
   while (open.length > 0) {
     const current = open.pop()!;
-    const ck = stateKey(current.xi, current.yi, current.dir);
+    const ck = (current.xi * rows + current.yi) * NUM_DIRS + current.dir;
 
     if (current.xi === eci && current.yi === eri) {
       const dirOk = (freeEndDir || current.dir === 0 || current.dir === 2)
@@ -356,17 +367,17 @@ export function astarOrthogonal(
       }
     }
 
-    if (closed.has(ck)) continue;
-    closed.add(ck);
+    if (closedArr[ck]) continue;
+    closedArr[ck] = 1;
 
     for (let d = 0; d < 4; d++) {
       const nci = current.xi + DX[d];
       const nri = current.yi + DY[d];
       if (nci < 0 || nci >= cols || nri < 0 || nri >= rows) continue;
-      if (blocked[nci][nri]) continue;
+      if (blocked[nci * rows + nri]) continue;
 
-      const nk = stateKey(nci, nri, d);
-      if (closed.has(nk)) continue;
+      const nk = (nci * rows + nri) * NUM_DIRS + d;
+      if (closedArr[nk]) continue;
 
       // Distance is always 1 (one grid cell step)
       let g = current.g + 1;
@@ -376,15 +387,15 @@ export function astarOrthogonal(
       // where outer edges claim outer corridors.
       if (d !== current.dir && current.dir >= 0) {
         const isUturn = d === ((current.dir + 2) % 4);
-        let turnCost = isUturn ? ROUTING_PARAMS.TURN_PENALTY * 5 : ROUTING_PARAMS.TURN_PENALTY;
+        let turnCost = isUturn ? TURN_PENALTY * 5 : TURN_PENALTY;
         // Nesting discount: larger vertical span → bigger discount for turning
         // later (further from source). Uses absolute grid coords (startRow/endRow)
         // so the discount is consistent across edges regardless of per-edge grid size.
         const hSpan = Math.abs(eci - sci);
-        if (hSpan > 0 && ROUTING_PARAMS.NESTING_BIAS > 0) {
+        if (hSpan > 0 && NESTING_BIAS > 0) {
           const progress = Math.abs(nci - sci) / hSpan; // 0 at source, 1 at target
           const vSpan = Math.abs(endRow - startRow);
-          turnCost -= ROUTING_PARAMS.NESTING_BIAS * vSpan * progress;
+          turnCost -= NESTING_BIAS * vSpan * progress;
         }
         g += turnCost;
       }
@@ -402,28 +413,28 @@ export function astarOrthogonal(
           for (const pz of bucket) {
             if (pz.axis === "v" && (d === 1 || d === 3)) {
               const dist = Math.abs(ngx - pz.coordinate);
-              if (dist < ROUTING_PARAMS.SEPARATION_PX) {
+              if (dist < SEPARATION_PX) {
                 const segMin = Math.min(cgy, ngy);
                 const segMax = Math.max(cgy, ngy);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
-                  const closeness = 1 - dist / ROUTING_PARAMS.SEPARATION_PX;
-                  g += ROUTING_PARAMS.OVERLAP_PENALTY * closeness * closeness;
+                  const closeness = 1 - dist / SEPARATION_PX;
+                  g += OVERLAP_PENALTY * closeness * closeness;
                 }
               }
             } else if (pz.axis === "h" && (d === 0 || d === 2)) {
               const dist = Math.abs(ngy - pz.coordinate);
-              if (dist < ROUTING_PARAMS.SEPARATION_PX) {
+              if (dist < SEPARATION_PX) {
                 const segMin = Math.min(cgx, ngx);
                 const segMax = Math.max(cgx, ngx);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
-                  const closeness = 1 - dist / ROUTING_PARAMS.SEPARATION_PX;
-                  g += ROUTING_PARAMS.OVERLAP_PENALTY * closeness * closeness;
+                  const closeness = 1 - dist / SEPARATION_PX;
+                  g += OVERLAP_PENALTY * closeness * closeness;
                 }
               }
             }
 
             // Crossing penalty — perpendicular movement across an existing edge segment
-            if (ROUTING_PARAMS.CROSSING_PENALTY > 0) {
+            if (CROSSING_PENALTY > 0) {
               if (pz.axis === "v" && (d === 0 || d === 2)) {
                 // Moving horizontally, check if we step across a vertical segment
                 const minX = Math.min(cgx, ngx);
@@ -431,7 +442,7 @@ export function astarOrthogonal(
                 if (pz.coordinate >= minX && pz.coordinate <= maxX) {
                   // Our Y must be within the segment's Y range
                   if (ngy >= pz.rangeMin && ngy <= pz.rangeMax) {
-                    g += ROUTING_PARAMS.CROSSING_PENALTY;
+                    g += CROSSING_PENALTY;
                   }
                 }
               } else if (pz.axis === "h" && (d === 1 || d === 3)) {
@@ -441,7 +452,7 @@ export function astarOrthogonal(
                 if (pz.coordinate >= minY && pz.coordinate <= maxY) {
                   // Our X must be within the segment's X range
                   if (ngx >= pz.rangeMin && ngx <= pz.rangeMax) {
-                    g += ROUTING_PARAMS.CROSSING_PENALTY;
+                    g += CROSSING_PENALTY;
                   }
                 }
               }
@@ -450,9 +461,8 @@ export function astarOrthogonal(
         }
       }
 
-      const prev = bestG.get(nk);
-      if (prev !== undefined && g >= prev) continue;
-      bestG.set(nk, g);
+      if (g >= bestGArr[nk]) continue;
+      bestGArr[nk] = g;
 
       open.push({
         xi: nci, yi: nri, g, f: g + heuristic(nci, nri, d), dir: d, parent: current,
@@ -461,6 +471,51 @@ export function astarOrthogonal(
   }
 
   return null;
+}
+
+// ---------- Penalty spatial index ----------
+
+/** Reusable spatial index for penalty zones, grown incrementally as edges are routed. */
+export interface PenaltySpatialIndex {
+  grid: Map<number, PenaltyZone[]>;
+  indexedCount: number;
+}
+
+/** Create a new empty penalty spatial index. */
+export function createPenaltySpatialIndex(): PenaltySpatialIndex {
+  return { grid: new Map(), indexedCount: 0 };
+}
+
+/** Grow the spatial index to cover any newly appended penalty zones. */
+export function growPenaltyIndex(
+  index: PenaltySpatialIndex,
+  allZones: PenaltyZone[],
+): void {
+  const sep = ROUTING_PARAMS.SEPARATION_PX;
+  for (let i = index.indexedCount; i < allZones.length; i++) {
+    const pz = allZones[i];
+    let minC: number, maxC: number, minR: number, maxR: number;
+    if (pz.axis === "v") {
+      minC = pz.coordinate - sep; maxC = pz.coordinate + sep;
+      minR = pz.rangeMin; maxR = pz.rangeMax;
+    } else {
+      minC = pz.rangeMin; maxC = pz.rangeMax;
+      minR = pz.coordinate - sep; maxR = pz.coordinate + sep;
+    }
+    const bcMin = Math.floor(minC / PENALTY_BUCKET);
+    const bcMax = Math.floor(maxC / PENALTY_BUCKET);
+    const brMin = Math.floor(minR / PENALTY_BUCKET);
+    const brMax = Math.floor(maxR / PENALTY_BUCKET);
+    for (let bc = bcMin; bc <= bcMax; bc++) {
+      for (let br = brMin; br <= brMax; br++) {
+        const key = bc * 100003 + br;
+        let bucket = index.grid.get(key);
+        if (!bucket) { bucket = []; index.grid.set(key, bucket); }
+        bucket.push(pz);
+      }
+    }
+  }
+  index.indexedCount = allZones.length;
 }
 
 // ---------- Path simplification ----------
@@ -826,6 +881,8 @@ export function computeEdgePath(
   _congestion?: Map<string, number>,
   sourceExitsRight?: boolean,
   _targetEntersLeft?: boolean,
+  precomputedGridRects?: GridRect[],
+  penaltySpatialIndex?: PenaltySpatialIndex,
 ): { path: string; labelX: number; labelY: number; turns: string; waypoints: Point[]; arrivalDir: number } | null {
   // Convert pixel coordinates to grid coordinates
   const sgx = px2g(sourceX);
@@ -840,8 +897,8 @@ export function computeEdgePath(
   const stubSGX = noSourceStub ? sgx : sgx + (srcRight ? stub : -stub);
   const stubTGX = noTargetStub ? tgx : tgx + (tgtLeft ? -stub : stub);
 
-  // Convert obstacles to grid coordinates
-  const gridRects = pixelRectsToGrid(obstacles);
+  // Convert obstacles to grid coordinates — reuse pre-computed rects when available
+  const gridRects = precomputedGridRects ?? pixelRectsToGrid(obstacles);
 
   // Build integer grid
   const forceOpen = [
@@ -855,6 +912,7 @@ export function computeEdgePath(
     grid, stubSGX, sgy, stubTGX, tgy,
     penalties,
     noSourceStub, false, excludeStartDir, excludeEndDir, sourceExitsRight,
+    penaltySpatialIndex,
   );
   if (!astarResult) return null;
 
@@ -916,7 +974,7 @@ export function asciiGrid(
       if (gx === srcGX && gy === srcGY) ch = "S";
       else if (gx === tgtGX && gy === tgtGY) ch = "T";
       else if (pathSet.has(key)) ch = "*";
-      else if (blocked[c][r]) ch = "#";
+      else if (blocked[c * rows + r]) ch = "#";
       else ch = ".";
       row += ch.padStart(colW);
     }

@@ -130,7 +130,7 @@ describe("buildPenaltyZones", () => {
     const zones = buildPenaltyZones(goodEdges);
     expect(zones).toHaveLength(1);
     expect(zones[0].axis).toBe("v");
-    expect(zones[0].coordinate).toBe(50);
+    expect(zones[0].coordinate).toBe(3); // px2g(50) = Math.round(50/20) = 3
     expect(zones[0].signalType).toBe("sdi");
   });
 });
