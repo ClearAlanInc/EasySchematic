@@ -26,6 +26,10 @@ export interface DeviceFormData {
   powerCapacityW?: number;
   voltage?: string;
   poeBudgetW?: number;
+  heightMm?: number;
+  widthMm?: number;
+  depthMm?: number;
+  weightKg?: number;
   isVenueProvided?: boolean;
   submitterNote?: string;
 }
@@ -63,6 +67,10 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
   const [powerCapacityW, setPowerCapacityW] = useState<string>("");
   const [voltage, setVoltage] = useState("");
   const [poeBudgetW, setPoeBudgetW] = useState<string>("");
+  const [heightMm, setHeightMm] = useState<string>("");
+  const [widthMm, setWidthMm] = useState<string>("");
+  const [depthMm, setDepthMm] = useState<string>("");
+  const [weightKg, setWeightKg] = useState<string>("");
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [submitterNote, setSubmitterNote] = useState("");
   const [loading, setLoading] = useState(!!id);
@@ -111,6 +119,10 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
+        setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
+        setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
+        setWeightKg(t.weightKg != null ? String(t.weightKg) : "");
         setIsVenueProvided((t as DeviceTemplate & { isVenueProvided?: boolean }).isVenueProvided ?? false);
       })
       .catch((e) => setError(e.message))
@@ -137,6 +149,10 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage((t.voltage as string) ?? "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
+        setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
+        setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
+        setWeightKg(t.weightKg != null ? String(t.weightKg) : "");
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -181,6 +197,10 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         ...(powerCapacityW.trim() && { powerCapacityW: Number(powerCapacityW) }),
         ...(voltage.trim() && { voltage: voltage.trim() }),
         ...(poeBudgetW.trim() && { poeBudgetW: Number(poeBudgetW) }),
+        ...(heightMm.trim() && { heightMm: Number(heightMm) }),
+        ...(widthMm.trim() && { widthMm: Number(widthMm) }),
+        ...(depthMm.trim() && { depthMm: Number(depthMm) }),
+        ...(weightKg.trim() && { weightKg: Number(weightKg) }),
         ...(isVenueProvided && { isVenueProvided: true }),
         ...(() => {
           const parts: string[] = [];
@@ -322,6 +342,26 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
         <label>
           <span className="block text-sm font-medium text-slate-700 mb-1">Voltage</span>
           <input value={voltage} onChange={(e) => setVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Height (mm)</span>
+          <input type="number" min="1" step="1" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} placeholder="e.g. 44" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">Chassis height from spec sheet (1U = 44mm)</span>
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Width (mm)</span>
+          <input type="number" min="1" step="1" value={widthMm} onChange={(e) => setWidthMm(e.target.value)} placeholder="e.g. 482" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">Chassis width from spec sheet (19" rack = 482mm)</span>
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Depth (mm)</span>
+          <input type="number" min="1" step="1" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">Chassis depth from spec sheet</span>
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</span>
+          <input type="number" min="0" step="0.1" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} placeholder="e.g. 2.5" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 mt-1 block">Device weight from spec sheet</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={isVenueProvided} onChange={(e) => setIsVenueProvided(e.target.checked)} className="cursor-pointer" />

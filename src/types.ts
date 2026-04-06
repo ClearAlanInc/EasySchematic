@@ -201,6 +201,14 @@ export interface DeviceData {
   /** Unit cost in dollars (optional, for BOM/quoting) */
   unitCost?: number;
   isVenueProvided?: boolean;
+  /** Physical height in millimeters — reserved for future rack management */
+  heightMm?: number;
+  /** Physical width in millimeters — reserved for future rack management */
+  widthMm?: number;
+  /** Physical depth in millimeters — reserved for future rack management */
+  depthMm?: number;
+  /** Device weight in kilograms — reserved for future rack management */
+  weightKg?: number;
   /** Adapter visibility override — only meaningful for deviceType "adapter" */
   adapterVisibility?: "default" | "force-show" | "force-hide";
   /** User-customizable auxiliary data lines (up to 5) displayed at bottom of device node */
@@ -302,6 +310,10 @@ export interface DeviceTemplate {
   isVenueProvided?: boolean;     // Venue-owned gear — excluded from pack list
   poeBudgetW?: number;           // PoE budget in watts (switches only)
   unitCost?: number;             // MSRP / default unit cost in dollars
+  heightMm?: number;             // Physical height in millimeters — reserved for future rack management
+  widthMm?: number;              // Physical width in millimeters — reserved for future rack management
+  depthMm?: number;              // Physical depth in millimeters — reserved for future rack management
+  weightKg?: number;             // Device weight in kilograms — reserved for future rack management
 }
 
 export interface CustomTemplateGroup {

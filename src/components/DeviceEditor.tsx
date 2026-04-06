@@ -97,6 +97,12 @@ export default function DeviceEditor() {
   // Cost
   const [unitCost, setUnitCost] = useState<number | undefined>(undefined);
 
+  // Physical dimensions
+  const [heightMm, setHeightMm] = useState<number | undefined>(undefined);
+  const [widthMm, setWidthMm] = useState<number | undefined>(undefined);
+  const [depthMm, setDepthMm] = useState<number | undefined>(undefined);
+  const [weightKg, setWeightKg] = useState<number | undefined>(undefined);
+
   // Cable accessory flags
   const [isCableAccessory, setIsCableAccessory] = useState(false);
   const [integratedWithCable, setIntegratedWithCable] = useState(false);
@@ -150,6 +156,10 @@ export default function DeviceEditor() {
     setVoltage(node.data.voltage);
     setPoeBudgetW(node.data.poeBudgetW);
     setUnitCost(node.data.unitCost);
+    setHeightMm(node.data.heightMm);
+    setWidthMm(node.data.widthMm);
+    setDepthMm(node.data.depthMm);
+    setWeightKg(node.data.weightKg);
     setIsCableAccessory(node.data.isCableAccessory ?? false);
     setIntegratedWithCable(node.data.integratedWithCable ?? false);
     setIsVenueProvided(node.data.isVenueProvided ?? false);
@@ -202,6 +212,10 @@ export default function DeviceEditor() {
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(voltage ? { voltage } : {}),
       ...(unitCost != null ? { unitCost } : {}),
+      ...(heightMm != null ? { heightMm } : {}),
+      ...(widthMm != null ? { widthMm } : {}),
+      ...(depthMm != null ? { depthMm } : {}),
+      ...(weightKg != null ? { weightKg } : {}),
       ...(isCableAccessory ? { isCableAccessory: true } : {}),
       ...(integratedWithCable ? { integratedWithCable: true } : {}),
       ...(isVenueProvided ? { isVenueProvided: true } : {}),
@@ -212,7 +226,7 @@ export default function DeviceEditor() {
     };
     updateDevice(editingNodeId, data);
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, unitCost, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
+  }, [editingNodeId, ports, label, hostname, deviceType, color, headerColor, node, updateDevice, close, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -666,7 +680,7 @@ export default function DeviceEditor() {
 
           {/* Hostname */}
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-[var(--color-text-muted)]">Hostname:</span>
+            <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Hostname:</span>
             <input
               className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
               value={hostname}
@@ -675,6 +689,75 @@ export default function DeviceEditor() {
               onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
+
+          {/* Physical Dimensions */}
+          <details className="text-xs">
+            <summary className="cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text)] select-none py-1">
+              Physical Dimensions
+            </summary>
+            <div className="pt-1 pl-2 grid grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Height (mm)
+                </label>
+                <input
+                  type="number"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+                  value={heightMm ?? ""}
+                  onChange={(e) => setHeightMm(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="e.g. 44"
+                  min={1}
+                  step={1}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Width (mm)
+                </label>
+                <input
+                  type="number"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+                  value={widthMm ?? ""}
+                  onChange={(e) => setWidthMm(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="e.g. 482"
+                  min={1}
+                  step={1}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Depth (mm)
+                </label>
+                <input
+                  type="number"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+                  value={depthMm ?? ""}
+                  onChange={(e) => setDepthMm(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="e.g. 350"
+                  min={1}
+                  step={1}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+                  value={weightKg ?? ""}
+                  onChange={(e) => setWeightKg(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="e.g. 2.5"
+                  min={0}
+                  step={0.1}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          </details>
 
           {ports.some((p) => p.connectorType === "rj45" || p.connectorType === "ethercon") && (
             <>
