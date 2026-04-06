@@ -18,7 +18,7 @@ export default function ProfilePage({ user, onUpdate }: Props) {
     fetchCurrentUser().then((fresh) => {
       if (fresh) onUpdate(fresh);
     });
-  }, []);
+  }, [onUpdate]);
 
   const handleSave = async () => {
     setSaving(true);

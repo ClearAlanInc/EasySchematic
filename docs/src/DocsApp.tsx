@@ -73,7 +73,7 @@ export default function DocsApp() {
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(jsonLd);
-  }, [path]);
+  }, [path, route.title]);
 
   return (
     <Layout>

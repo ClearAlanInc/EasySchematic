@@ -90,33 +90,36 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   // Split ports by visual side (respects flip), not semantic direction.
   // When hideUnconnectedPorts is on, bidir ports with only one side connected
   // collapse into the appropriate column so the device gets smaller.
-  const collapsedBidir = new Map<string, "in" | "out">(); // port ID → which side is connected
-  const leftPorts: Port[] = [];
-  const rightPorts: Port[] = [];
-  const bidirectional: Port[] = [];
-  for (const p of visiblePorts) {
-    if (p.direction === "bidirectional") {
-      if (hideUnconnectedPorts) {
-        const inConn = connectedHandles.has(`${p.id}-in`);
-        const outConn = connectedHandles.has(`${p.id}-out`);
-        if (inConn && !outConn) {
-          (p.flipped ? rightPorts : leftPorts).push(p);
-          collapsedBidir.set(p.id, "in");
-          continue;
+  const { leftPorts, rightPorts, bidirectional, collapsedBidir } = useMemo(() => {
+    const collapsedBidir = new Map<string, "in" | "out">();
+    const leftPorts: Port[] = [];
+    const rightPorts: Port[] = [];
+    const bidirectional: Port[] = [];
+    for (const p of visiblePorts) {
+      if (p.direction === "bidirectional") {
+        if (hideUnconnectedPorts) {
+          const inConn = connectedHandles.has(`${p.id}-in`);
+          const outConn = connectedHandles.has(`${p.id}-out`);
+          if (inConn && !outConn) {
+            (p.flipped ? rightPorts : leftPorts).push(p);
+            collapsedBidir.set(p.id, "in");
+            continue;
+          }
+          if (outConn && !inConn) {
+            (p.flipped ? leftPorts : rightPorts).push(p);
+            collapsedBidir.set(p.id, "out");
+            continue;
+          }
         }
-        if (outConn && !inConn) {
-          (p.flipped ? leftPorts : rightPorts).push(p);
-          collapsedBidir.set(p.id, "out");
-          continue;
-        }
+        bidirectional.push(p);
+      } else if (portSide(p) === "left") {
+        leftPorts.push(p);
+      } else {
+        rightPorts.push(p);
       }
-      bidirectional.push(p);
-    } else if (portSide(p) === "left") {
-      leftPorts.push(p);
-    } else {
-      rightPorts.push(p);
     }
-  }
+    return { leftPorts, rightPorts, bidirectional, collapsedBidir };
+  }, [visiblePorts, hideUnconnectedPorts, connectedHandles]);
 
   /** Get handle ID and type for a port in a column, accounting for collapsed bidir ports.
    *  All bidirectional handles use type="source" so React Flow always includes them in
