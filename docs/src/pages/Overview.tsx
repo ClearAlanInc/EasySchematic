@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 40 signal types)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 57 signal types)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -95,6 +95,52 @@ export default function OverviewPage() {
         </li>
         <li>
           <strong>Quick-create routers</strong> — generate matrix routers with configurable input/output counts and signal type
+        </li>
+        <li>
+          <strong>Adapters</strong> — automatic adapter insertion between incompatible ports, with direct-attach,
+          barrels, gender labels, and per-adapter show/hide controls
+        </li>
+        <li>
+          <strong>Connection line styles</strong> — solid, dashed, dotted, or dash-dot per connection or per signal type
+        </li>
+        <li>
+          <strong>Subrooms</strong> — nested room containers for locations within locations
+        </li>
+        <li>
+          <strong>Equipment racks</strong> — mark rooms as equipment racks for rack-style rendering
+        </li>
+        <li>
+          <strong>BOM cost tracking</strong> — unit cost fields on devices and cables for budgeting
+        </li>
+        <li>
+          <strong>Mobile support</strong> — mobile detection with hamburger menu and touch-friendly controls
+        </li>
+        <li>
+          <strong>Google OAuth</strong> — sign in with Google or magic-link email
+        </li>
+        <li>
+          <strong>Offline cloud cache</strong> — cloud schematics cached to IndexedDB for offline access
+        </li>
+        <li>
+          <strong>Physical dimensions</strong> — device height, width, depth (mm) and weight (kg)
+        </li>
+        <li>
+          <strong>Hostname</strong> — per-device hostname field feeding into the network report
+        </li>
+        <li>
+          <strong>Auxiliary data</strong> — customizable text lines at the bottom of device nodes
+        </li>
+        <li>
+          <strong>Venue-provided gear</strong> — flag devices as venue-provided for pack list distinction
+        </li>
+        <li>
+          <strong>Nested slots</strong> — expansion cards with sub-slots (e.g., SFP transceivers in network cards)
+        </li>
+        <li>
+          <strong>Port flipping</strong> — move any port to the opposite side of the device
+        </li>
+        <li>
+          <strong>Port notes</strong> — per-port notes field for documentation
         </li>
       </ul>
     </>

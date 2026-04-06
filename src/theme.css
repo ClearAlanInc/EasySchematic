@@ -53,6 +53,12 @@
   --color-slink: #a78bfa;     /* light violet — Allen & Heath SLink */
   --color-soundgrid: #6d28d9; /* deep violet — Waves SoundGrid */
   --color-fibreace: #9333ea;  /* purple — Allen & Heath fibreACE */
+  --color-dxlink: #2563eb;    /* blue — AMX/Harman DX Link */
+  --color-gps: #059669;       /* emerald — GPS timing */
+  --color-dars: #64748b;      /* slate — DARS reference */
+  --color-rtmp: #dc2626;      /* red — RTMP streaming */
+  --color-rtsp: #ea580c;      /* orange — RTSP streaming */
+  --color-mpeg-ts: #ca8a04;   /* gold — MPEG-TS */
   --color-custom: #64748b;    /* cool gray */
 }
 

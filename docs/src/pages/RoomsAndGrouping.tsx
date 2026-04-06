@@ -63,6 +63,7 @@ export default function RoomsAndGroupingPage() {
       <ul>
         <li><strong>Edit Properties...</strong> — opens the Room Properties editor (see below)</li>
         <li><strong>Lock Room / Unlock Room</strong> — toggles whether the room can be dragged</li>
+        <li><strong>Mark as Equipment Rack / Remove Equipment Rack</strong> — toggles rack-style rendering</li>
       </ul>
 
       <h2>Locking rooms</h2>
@@ -83,6 +84,13 @@ export default function RoomsAndGroupingPage() {
         <li><strong>Border style</strong> — solid, dashed, or dotted</li>
         <li><strong>Border color</strong> — outline color for the room boundary</li>
       </ul>
+
+      <h2>Equipment racks</h2>
+      <p>
+        Mark a room as an <strong>equipment rack</strong> via the right-click context menu
+        or the Room Properties editor. Rack-flagged rooms render with rack-style visuals
+        and are treated as equipment containers in reports.
+      </p>
 
       <h2>Snap guides</h2>
       <p>

@@ -58,6 +58,13 @@ export default function ConnectionsPage() {
         The pack list groups cables by length when summarizing.
       </p>
 
+      <h2>Line styles</h2>
+      <p>
+        Each connection can have a custom <strong>line style</strong> — solid (default),
+        dashed, dotted, or dash-dot. Set it per-connection via the right-click context menu,
+        or set a default line style per signal type in the <strong>Signal Colors</strong> panel.
+      </p>
+
       <h2>Multicable connections</h2>
       <p>
         EasySchematic supports <strong>multicable accessories</strong> — cable snakes, socapex, and similar bundled

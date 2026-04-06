@@ -30,6 +30,15 @@ export default function PackListPage() {
         adapter plugs directly into a device) are excluded from cable counts since no separate cable is needed.
       </p>
 
+      <h2>Cost tracking</h2>
+      <p>
+        Devices and cables can have an optional <strong>unit cost</strong> field. Set unit
+        cost in the device editor or cable schedule. Costs appear in the pack list and
+        can be exported to CSV for budgeting and quoting. Devices flagged
+        as <strong>venue-provided</strong> are distinguished in the pack list so you can
+        separate house gear from rental gear.
+      </p>
+
       <h2>Cable schedule</h2>
       <p>
         The <strong>Cable Schedule</strong> is a per-connection wiring report available from the same

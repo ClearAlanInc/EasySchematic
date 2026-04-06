@@ -140,7 +140,7 @@ export default function GettingStartedPage() {
           <strong>Auto-save</strong> — saves to localStorage after every change (always on, no account needed)
         </li>
         <li>
-          <strong>Cloud save</strong> — create a free account (magic-link email login, no password) to save up to
+          <strong>Cloud save</strong> — create a free account (magic-link email or Google sign-in, no password needed) to save up to
           10 schematics to the cloud. Access them from any browser via <strong>File → My Schematics</strong>
         </li>
         <li>

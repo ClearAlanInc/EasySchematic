@@ -20,7 +20,7 @@ export default function DevicesAndPortsPage() {
       <h2>Signal types</h2>
       <p>
         Every port has a <strong>signal type</strong> that determines its color and connection compatibility. You can
-        only connect ports of the <strong>same signal type</strong>. EasySchematic includes 40 built-in signal types
+        only connect ports of the <strong>same signal type</strong>. EasySchematic includes 57 built-in signal types
         covering video, audio, data, power, and control:
       </p>
       <table>
@@ -35,12 +35,16 @@ export default function DevicesAndPortsPage() {
           <tr><td colSpan={3}><strong>Video</strong></td></tr>
           <tr><td><strong>SDI</strong></td><td>Blue</td><td>Broadcast video (BNC)</td></tr>
           <tr><td><strong>HDMI</strong></td><td>Red</td><td>Consumer/prosumer video</td></tr>
-          <tr><td><strong>NDI</strong></td><td>Green</td><td>Network video (NewTek)</td></tr>
           <tr><td><strong>DisplayPort</strong></td><td>Dark Teal</td><td>Display connections</td></tr>
-          <tr><td><strong>HDBaseT</strong></td><td>Violet</td><td>HDMI over Cat cable</td></tr>
-          <tr><td><strong>SRT</strong></td><td>Forest Green</td><td>Streaming protocol</td></tr>
           <tr><td><strong>Composite</strong></td><td>Yellow</td><td>Legacy analog video (BNC/RCA)</td></tr>
           <tr><td><strong>VGA</strong></td><td>Dark Blue</td><td>Analog video (DB15)</td></tr>
+          <tr><td><strong>S-Video</strong></td><td>Amber</td><td>Legacy Y/C video (Mini-DIN-4)</td></tr>
+          <tr><td><strong>DVI</strong></td><td>Deep Blue</td><td>Digital Visual Interface</td></tr>
+
+          <tr><td colSpan={3}><strong>Video over IP</strong></td></tr>
+          <tr><td><strong>NDI</strong></td><td>Green</td><td>Network video (NewTek)</td></tr>
+          <tr><td><strong>HDBaseT</strong></td><td>Violet</td><td>HDMI over Cat cable</td></tr>
+          <tr><td><strong>SRT</strong></td><td>Forest Green</td><td>Streaming protocol</td></tr>
           <tr><td><strong>ST 2110</strong></td><td>Deep Indigo</td><td>SMPTE 2110 IP media transport</td></tr>
 
           <tr><td colSpan={3}><strong>Audio</strong></td></tr>
@@ -53,25 +57,44 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Ultranet</strong></td><td>Emerald</td><td>Behringer personal monitoring</td></tr>
           <tr><td><strong>AES50</strong></td><td>Purple</td><td>Klark Teknik/Behringer digital audio</td></tr>
           <tr><td><strong>StageConnect</strong></td><td>Orange</td><td>Yamaha digital audio</td></tr>
-          <tr><td><strong>Word Clock</strong></td><td>Slate</td><td>Clock sync reference</td></tr>
           <tr><td><strong>AES67</strong></td><td>Deep Indigo</td><td>AoIP interoperability standard</td></tr>
           <tr><td><strong>YDIF</strong></td><td>Dark Cyan</td><td>Yamaha digital interface</td></tr>
-          <tr><td><strong>MIDI</strong></td><td>Fuchsia</td><td>Musical instrument digital interface</td></tr>
+          <tr><td><strong>GigaACE</strong></td><td>Violet</td><td>Allen &amp; Heath proprietary audio network</td></tr>
+          <tr><td><strong>DX5</strong></td><td>Lighter Violet</td><td>Allen &amp; Heath DX5 audio network</td></tr>
+          <tr><td><strong>SLink</strong></td><td>Light Violet</td><td>Allen &amp; Heath SLink audio network</td></tr>
+          <tr><td><strong>SoundGrid</strong></td><td>Deep Violet</td><td>Waves SoundGrid audio network</td></tr>
+          <tr><td><strong>fibreACE</strong></td><td>Purple</td><td>Allen &amp; Heath fiber audio network</td></tr>
 
-          <tr><td colSpan={3}><strong>Data &amp; Control</strong></td></tr>
-          <tr><td><strong>USB</strong></td><td>Pink</td><td>USB connections</td></tr>
+          <tr><td colSpan={3}><strong>Network</strong></td></tr>
           <tr><td><strong>Ethernet</strong></td><td>Teal</td><td>Network data</td></tr>
           <tr><td><strong>Fiber</strong></td><td>Amber</td><td>Fiber optic</td></tr>
+
+          <tr><td colSpan={3}><strong>Control / Data</strong></td></tr>
+          <tr><td><strong>USB</strong></td><td>Pink</td><td>USB connections</td></tr>
           <tr><td><strong>Thunderbolt</strong></td><td>Indigo</td><td>High-speed I/O</td></tr>
           <tr><td><strong>DMX</strong></td><td>Dark Red</td><td>Lighting control (XLR-5)</td></tr>
-          <tr><td><strong>Genlock</strong></td><td>Slate</td><td>Sync/timing reference</td></tr>
           <tr><td><strong>GPIO</strong></td><td>Warm Gray</td><td>General purpose I/O</td></tr>
           <tr><td><strong>RS-422</strong></td><td>Deep Violet</td><td>Machine control</td></tr>
           <tr><td><strong>Serial</strong></td><td>Gray</td><td>Generic serial</td></tr>
           <tr><td><strong>Tally</strong></td><td>Rose</td><td>Tally/status indicators</td></tr>
+          <tr><td><strong>Art-Net</strong></td><td>Amber</td><td>Lighting network protocol (Ethernet)</td></tr>
+          <tr><td><strong>sACN</strong></td><td>Yellow</td><td>Streaming ACN lighting protocol</td></tr>
+          <tr><td><strong>IR</strong></td><td>Orange</td><td>Infrared control</td></tr>
+          <tr><td><strong>DX Link</strong></td><td>Blue</td><td>AMX/Harman control network</td></tr>
+          <tr><td><strong>MIDI</strong></td><td>Fuchsia</td><td>Musical instrument digital interface</td></tr>
 
-          <tr><td colSpan={3}><strong>Broadcast</strong></td></tr>
+          <tr><td colSpan={3}><strong>Sync / Clock</strong></td></tr>
+          <tr><td><strong>Genlock</strong></td><td>Slate</td><td>Sync/timing reference</td></tr>
+          <tr><td><strong>Word Clock</strong></td><td>Slate</td><td>Clock sync reference</td></tr>
+          <tr><td><strong>Timecode</strong></td><td>Cyan</td><td>Timecode synchronization</td></tr>
+          <tr><td><strong>DARS</strong></td><td>Slate</td><td>Digital Audio Reference Signal</td></tr>
+          <tr><td><strong>GPS</strong></td><td>Emerald</td><td>GPS timing reference</td></tr>
+
+          <tr><td colSpan={3}><strong>Streaming</strong></td></tr>
           <tr><td><strong>RF</strong></td><td>Magenta</td><td>Radio frequency (wireless, antenna)</td></tr>
+          <tr><td><strong>RTMP</strong></td><td>Red</td><td>Real-Time Messaging Protocol</td></tr>
+          <tr><td><strong>RTSP</strong></td><td>Orange</td><td>Real-Time Streaming Protocol</td></tr>
+          <tr><td><strong>MPEG-TS</strong></td><td>Gold</td><td>MPEG Transport Stream</td></tr>
 
           <tr><td colSpan={3}><strong>Power</strong></td></tr>
           <tr><td><strong>Power</strong></td><td>Dark Amber</td><td>Power connections</td></tr>
@@ -104,6 +127,12 @@ export default function DevicesAndPortsPage() {
         <li>Slots show the currently installed card name (or "Empty" if unoccupied)</li>
         <li>Swapping a card removes the old card's ports and adds the new card's ports</li>
       </ul>
+      <p>
+        Some expansion cards have their own <strong>sub-slots</strong> — for example, a network
+        I/O card with SFP or QSFP bays for swappable transceivers. These nested slots work the
+        same way: right-click to swap modules in or out. The sub-slot{"'"}s ports are added to the
+        parent device alongside the card{"'"}s own ports.
+      </p>
 
       <h2>Connector types</h2>
       <p>
@@ -125,6 +154,8 @@ export default function DevicesAndPortsPage() {
           <tr><td>HDMI</td><td>HDMI</td></tr>
           <tr><td>DisplayPort</td><td>DisplayPort</td></tr>
           <tr><td>DVI</td><td>DVI</td></tr>
+          <tr><td>Mini HDMI</td><td>Mini HDMI</td></tr>
+          <tr><td>Mini DisplayPort</td><td>Mini DisplayPort</td></tr>
           <tr><td>VGA (DB15)</td><td>VGA</td></tr>
 
           <tr><td colSpan={2}><strong>Audio</strong></td></tr>
@@ -138,6 +169,10 @@ export default function DevicesAndPortsPage() {
           <tr><td>TOSLINK</td><td>TOSLINK</td></tr>
           <tr><td>DIN-5</td><td>DIN-5</td></tr>
           <tr><td>speakON</td><td>speakON</td></tr>
+          <tr><td>XLR-4</td><td>XLR-4</td></tr>
+          <tr><td>Mini-DIN 4-pin</td><td>S-Video cable</td></tr>
+          <tr><td>Mini-DIN 7-pin</td><td>Mini-DIN-7</td></tr>
+          <tr><td>2.5mm TRS</td><td>2.5mm TRS</td></tr>
 
           <tr><td colSpan={2}><strong>Network / Data</strong></td></tr>
           <tr><td>RJ45</td><td>Cat6</td></tr>
@@ -148,24 +183,34 @@ export default function DevicesAndPortsPage() {
           <tr><td>opticalCON</td><td>opticalCON Fiber</td></tr>
           <tr><td>QSFP</td><td>QSFP Fiber</td></tr>
           <tr><td>MPO/MTP</td><td>MPO Fiber</td></tr>
+          <tr><td>RJ11</td><td>RJ11</td></tr>
+          <tr><td>RJ12</td><td>RJ12</td></tr>
 
-          <tr><td colSpan={2}><strong>USB / Thunderbolt</strong></td></tr>
+          <tr><td colSpan={2}><strong>USB</strong></td></tr>
           <tr><td>USB-A</td><td>USB</td></tr>
           <tr><td>USB-B</td><td>USB</td></tr>
           <tr><td>USB-C</td><td>USB-C</td></tr>
+          <tr><td>USB Mini-B</td><td>USB</td></tr>
+          <tr><td>USB Micro-B</td><td>USB</td></tr>
 
-          <tr><td colSpan={2}><strong>Control / Serial</strong></td></tr>
+          <tr><td colSpan={2}><strong>D-Sub / Serial</strong></td></tr>
           <tr><td>DB9</td><td>DB9</td></tr>
           <tr><td>DB15</td><td>DB15</td></tr>
           <tr><td>DB25</td><td>DB25</td></tr>
+          <tr><td>DB37</td><td>DB37</td></tr>
           <tr><td>D-Sub 7W2</td><td>D-Sub 7W2</td></tr>
           <tr><td>Phoenix</td><td>Phoenix</td></tr>
           <tr><td>Terminal Block</td><td>Terminal Block</td></tr>
 
           <tr><td colSpan={2}><strong>Power</strong></td></tr>
           <tr><td>powerCON</td><td>powerCON</td></tr>
+          <tr><td>powerCON TRUE1</td><td>powerCON TRUE1</td></tr>
           <tr><td>Edison</td><td>Edison</td></tr>
-          <tr><td>IEC</td><td>IEC</td></tr>
+          <tr><td>IEC C14</td><td>IEC C14</td></tr>
+          <tr><td>IEC C5</td><td>IEC C5</td></tr>
+          <tr><td>IEC C7</td><td>IEC C7</td></tr>
+          <tr><td>IEC C15</td><td>IEC C15</td></tr>
+          <tr><td>IEC C20</td><td>IEC C20</td></tr>
           <tr><td>L5-20</td><td>L5-20</td></tr>
           <tr><td>L6-20</td><td>L6-20</td></tr>
           <tr><td>L6-30</td><td>L6-30</td></tr>
@@ -179,8 +224,13 @@ export default function DevicesAndPortsPage() {
           <tr><td>Binding Post</td><td>Speaker Wire</td></tr>
           <tr><td>Binding Post/Banana</td><td>Speaker Wire</td></tr>
 
+          <tr><td colSpan={2}><strong>RF</strong></td></tr>
+          <tr><td>Reverse TNC</td><td>Reverse TNC</td></tr>
+          <tr><td>SMA</td><td>SMA</td></tr>
+
           <tr><td colSpan={2}><strong>Other</strong></td></tr>
           <tr><td>Multi-pin</td><td>Multi-pin</td></tr>
+          <tr><td>Wireless</td><td>—</td></tr>
           <tr><td>None</td><td>—</td></tr>
           <tr><td>Other</td><td>Other</td></tr>
         </tbody>
@@ -198,6 +248,8 @@ export default function DevicesAndPortsPage() {
         <li>Save as a reusable user template, or set it as a project preset</li>
         <li>Revert to the original template defaults or the active preset</li>
         <li>Press <strong>Ctrl+Enter</strong> (or <strong>Cmd+Enter</strong> on Mac) from any field to apply changes and close the editor</li>
+        <li>Set a <strong>hostname</strong> for network-addressable devices</li>
+        <li>Toggle the <strong>venue-provided</strong> flag to mark devices supplied by the venue</li>
       </ul>
 
       <h2>Port flipping</h2>
@@ -211,6 +263,28 @@ export default function DevicesAndPortsPage() {
         <li>Useful for creating left-to-right signal flow or matching physical rack layouts</li>
         <li>Bidirectional ports can also be flipped to swap which side they default to</li>
       </ul>
+
+      <h2>Physical dimensions</h2>
+      <p>
+        Devices can store physical size data — <strong>height</strong>, <strong>width</strong>,
+        and <strong>depth</strong> in millimeters, plus <strong>weight</strong> in kilograms.
+        Set these in the device editor under the dimensions fields. This data is stored per
+        device and included in device templates.
+      </p>
+
+      <h2>Auxiliary data</h2>
+      <p>
+        Each device can display up to 5 lines of <strong>auxiliary text</strong> at the bottom
+        of the device node on the canvas. Use these for notes like serial numbers, IP addresses,
+        firmware versions, or any other per-device metadata. Set auxiliary lines in the device editor.
+      </p>
+
+      <h2>Port notes</h2>
+      <p>
+        Each port has an optional <strong>notes</strong> field for documenting specific usage —
+        patch panel destinations, signal descriptions, or configuration details. Set notes per
+        port in the device editor. Port notes appear in applicable reports.
+      </p>
 
       <h2>Network configuration</h2>
       <p>

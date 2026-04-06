@@ -32,6 +32,13 @@
 - **Auto-numbering** — dropped devices auto-increment (Camera → Camera 1, Camera 2, …)
 - **Demo schematic** loaded for first-time visitors
 - **Collapsible device library sidebar**
+- **Dark mode** — toggle light/dark themes from the menu bar; saved automatically, respects OS setting on first visit
+- **Mobile support** — mobile detection with hamburger menu and touch-friendly pan controls
+- **Physical dimensions** — height, width, depth (mm) and weight (kg) fields on devices
+- **Auxiliary data block** — customizable text lines displayed at the bottom of device nodes
+- **Hostname** — per-device hostname field, feeding into the network report
+- **Venue-provided gear flag** — mark devices as provided by venue; distinguished in the pack list
+- **Nested slots** — expansion cards with their own sub-slots (e.g., SFP/QSFP transceivers in network cards)
 
 ### Connections
 
@@ -48,7 +55,9 @@
 - **Stubbed connections** — render as short stubs with destination labels (device name, room, page) instead of full routed lines; drag labels to reposition, add intermediate waypoints via right-click
 - **Connector mismatch override** — force-connect ports with incompatible connectors
 - **Bare wire compatibility** — Phoenix and Terminal Block connectors connect to any connector type without adapter warnings
-- **42 signal types**, all color-coded (see below)
+- **57 signal types**, all color-coded (see below)
+- **Connection line styles** — solid, dashed, dotted, or dash-dot per connection or per signal type
+- **Adapters** — automatic adapter insertion between incompatible ports, with direct-attach support, barrels, gender labels, and per-adapter visibility controls
 
 ### Ports
 
@@ -56,6 +65,8 @@
 - **Port sections** — group related ports under headers
 - **Drag-and-drop reordering** in the device editor
 - Add, remove, and rename ports per device
+- **Port notes** — optional notes field per port for documenting specific usage
+- **Flip ports** — move any port to the opposite side of the device for flexible signal flow layouts
 
 ### Organization
 
@@ -67,10 +78,13 @@
 - **Room snap guides** — rooms and resize handles snap to other rooms' edges/centers with visible alignment guides
 - **Room styling** — right-click a room to set background color, border color, border style, and label size
 - **Space + drag** to pan (Vectorworks-style)
+- **Subrooms** — nested room containers for representing locations within locations (e.g., rack bays inside a control room)
+- **Equipment racks** — mark a room as an equipment rack via right-click for rack-style rendering
+- **Shift+click toggle selection** — add/remove items from selection; Shift+drag for AutoCAD-style directional selection
 
 ### Signal Types
 
-SDI · HDMI · NDI · Dante · Analog Audio · AES · AES67 · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · ST 2110 · Genlock · Word Clock · GPIO · RS-422 · Serial · Thunderbolt · Composite · VGA · RF · Power · L1 · L2 · L3 · Neutral · Ground · MIDI · Tally · S/PDIF · ADAT · YDIF · Ultranet · AES50 · StageConnect · Art-Net · sACN · Custom
+SDI · HDMI · NDI · Dante · Analog Audio · AES · AES67 · DMX · MADI · USB · Ethernet · Fiber · DisplayPort · HDBaseT · SRT · ST 2110 · Genlock · Word Clock · GPIO · RS-422 · Serial · Thunderbolt · Composite · S-Video · VGA · DVI · RF · Power · L1 · L2 · L3 · Neutral · Ground · MIDI · Tally · S/PDIF · ADAT · YDIF · Ultranet · AES50 · StageConnect · Art-Net · sACN · IR · Timecode · GigaACE · DX5 · SLink · SoundGrid · fibreACE · DX Link · GPS · DARS · RTMP · RTSP · MPEG-TS · Custom
 
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
@@ -88,6 +102,7 @@ SDI · HDMI · NDI · Dante · Analog Audio · AES · AES67 · DMX · MADI · US
 - **CSV export** for spreadsheet use
 - **PDF export** matching the preview layout exactly
 - Layout preferences saved per-schematic
+- **BOM cost tracking** — unit cost field on devices and cables for budgeting
 
 ### Community Device Database
 
@@ -120,6 +135,8 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **SVG** — vector export
 - **DXF** — CAD export with organized layer hierarchy (`EasySchematic-Devices`, `EasySchematic-Connections-SDI`, etc.) for Vectorworks, AutoCAD
 - **Template import/export** — export and import user device templates as JSON
+- **Google OAuth** — sign in with Google as an alternative to magic-link email
+- **Offline cloud cache** — cloud schematics cached to IndexedDB for offline access
 
 ### Editing
 
@@ -235,6 +252,9 @@ The installed app opens in its own window without browser chrome, works fully of
 | Double-click room background | Quick-add device inside room |
 | Right-click room | Room context menu (edit properties, lock/unlock) |
 | Right-click connection | Connection context menu (waypoints, stub, override connector mismatch, hide label, reset route) |
+| `Ctrl+Shift+S` | Save As |
+| `Shift+click` | Toggle item in selection |
+| `Shift+drag` | Directional toggle selection |
 
 ## Contributing
 
