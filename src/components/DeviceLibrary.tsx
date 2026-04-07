@@ -733,7 +733,8 @@ export default function DeviceLibrary() {
   const [templates, setTemplates] = useState(getBundledTemplates);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
-  const [filterPanel, setFilterPanel] = useState<"category" | "brand" | null>(null);
+  const [selectedSignalTypes, setSelectedSignalTypes] = useState<Set<string>>(new Set());
+  const [filterPanel, setFilterPanel] = useState<"category" | "brand" | "signal" | null>(null);
 
   const presetIds = useMemo(() => new Set(Object.keys(templatePresets)), [templatePresets]);
   const favoriteSet = useMemo(() => new Set(favoriteTemplates), [favoriteTemplates]);
@@ -744,20 +745,34 @@ export default function DeviceLibrary() {
     [templates],
   );
 
+  const matchesSignalFilter = useCallback((t: DeviceTemplate) => {
+    if (selectedSignalTypes.size === 0) return true;
+    return t.ports.some((p) => selectedSignalTypes.has(p.signalType));
+  }, [selectedSignalTypes]);
+
   // Cross-filtered dropdown options
   const categoryOptions = useMemo(() => {
-    const source = selectedBrands.size > 0
-      ? libraryTemplates.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer))
-      : libraryTemplates;
+    let source = libraryTemplates;
+    if (selectedBrands.size > 0) source = source.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    if (selectedSignalTypes.size > 0) source = source.filter(matchesSignalFilter);
     return [...new Set(source.map((t) => t.category).filter(Boolean))].sort() as string[];
-  }, [libraryTemplates, selectedBrands]);
+  }, [libraryTemplates, selectedBrands, selectedSignalTypes, matchesSignalFilter]);
 
   const brandOptions = useMemo(() => {
-    const source = selectedCategories.size > 0
-      ? libraryTemplates.filter((t) => t.category && selectedCategories.has(t.category))
-      : libraryTemplates;
+    let source = libraryTemplates;
+    if (selectedCategories.size > 0) source = source.filter((t) => t.category && selectedCategories.has(t.category));
+    if (selectedSignalTypes.size > 0) source = source.filter(matchesSignalFilter);
     return [...new Set(source.map((t) => t.manufacturer).filter(Boolean))].sort() as string[];
-  }, [libraryTemplates, selectedCategories]);
+  }, [libraryTemplates, selectedCategories, selectedSignalTypes, matchesSignalFilter]);
+
+  const signalTypeOptions = useMemo(() => {
+    let source = libraryTemplates;
+    if (selectedCategories.size > 0) source = source.filter((t) => t.category && selectedCategories.has(t.category));
+    if (selectedBrands.size > 0) source = source.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    const types = new Set<string>();
+    for (const t of source) for (const p of t.ports) types.add(p.signalType);
+    return [...types].sort((a, b) => (SIGNAL_LABELS[a as keyof typeof SIGNAL_LABELS] ?? a).localeCompare(SIGNAL_LABELS[b as keyof typeof SIGNAL_LABELS] ?? b));
+  }, [libraryTemplates, selectedCategories, selectedBrands]);
 
   const toggleCategory = useCallback((cat: string) => {
     setSelectedCategories((prev) => {
@@ -775,7 +790,15 @@ export default function DeviceLibrary() {
     });
   }, []);
 
-  const hasFilter = selectedCategories.size > 0 || selectedBrands.size > 0;
+  const toggleSignalType = useCallback((st: string) => {
+    setSelectedSignalTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(st)) next.delete(st); else next.add(st);
+      return next;
+    });
+  }, []);
+
+  const hasFilter = selectedCategories.size > 0 || selectedBrands.size > 0 || selectedSignalTypes.size > 0;
 
   useEffect(() => {
     fetchTemplates().then(setTemplates).catch(() => console.warn("Using bundled device library (API unavailable)"));
@@ -787,9 +810,10 @@ export default function DeviceLibrary() {
     let result = customTemplates;
     if (selectedCategories.size > 0) result = result.filter((t) => t.category && selectedCategories.has(t.category));
     if (selectedBrands.size > 0) result = result.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    if (selectedSignalTypes.size > 0) result = result.filter(matchesSignalFilter);
     if (query) result = result.filter((t) => scoreTemplate(t, query) > 0);
     return result;
-  }, [customTemplates, query, selectedCategories, selectedBrands]);
+  }, [customTemplates, query, selectedCategories, selectedBrands, selectedSignalTypes, matchesSignalFilter]);
 
   // When searching, produce a flat ranked list; when browsing, keep categories
   const rankedResults = useMemo(() => {
@@ -797,6 +821,7 @@ export default function DeviceLibrary() {
     let all = [...templates, ...customTemplates].filter((t) => t.category !== "Expansion Cards");
     if (selectedCategories.size > 0) all = all.filter((t) => t.category && selectedCategories.has(t.category));
     if (selectedBrands.size > 0) all = all.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    if (selectedSignalTypes.size > 0) all = all.filter(matchesSignalFilter);
     const scored = all
       .map((t) => {
         let score = scoreTemplate(t, query);
@@ -807,7 +832,7 @@ export default function DeviceLibrary() {
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score || a.template.label.localeCompare(b.template.label));
     return scored.map((r) => r.template);
-  }, [templates, customTemplates, query, favoriteSet, selectedCategories, selectedBrands]);
+  }, [templates, customTemplates, query, favoriteSet, selectedCategories, selectedBrands, selectedSignalTypes, matchesSignalFilter]);
 
   // Favorites section: resolve template keys to actual template objects
   const favoritesList = useMemo(() => {
@@ -818,8 +843,9 @@ export default function DeviceLibrary() {
     let favs = favoriteTemplates.map((k) => byKey.get(k)).filter((t): t is DeviceTemplate => !!t);
     if (selectedCategories.size > 0) favs = favs.filter((t) => t.category && selectedCategories.has(t.category));
     if (selectedBrands.size > 0) favs = favs.filter((t) => t.manufacturer && selectedBrands.has(t.manufacturer));
+    if (selectedSignalTypes.size > 0) favs = favs.filter(matchesSignalFilter);
     return favs;
-  }, [templates, customTemplates, favoriteTemplates, selectedCategories, selectedBrands]);
+  }, [templates, customTemplates, favoriteTemplates, selectedCategories, selectedBrands, selectedSignalTypes, matchesSignalFilter]);
 
   const filteredCategories = useMemo(() => {
     const groups = new Map<string, DeviceTemplate[]>();
@@ -829,6 +855,7 @@ export default function DeviceLibrary() {
       // Apply active filters
       if (selectedCategories.size > 0 && (!t.category || !selectedCategories.has(t.category))) continue;
       if (selectedBrands.size > 0 && (!t.manufacturer || !selectedBrands.has(t.manufacturer))) continue;
+      if (selectedSignalTypes.size > 0 && !matchesSignalFilter(t)) continue;
       const cat = t.category ?? "Other";
       const arr = groups.get(cat);
       if (arr) arr.push(t);
@@ -847,7 +874,7 @@ export default function DeviceLibrary() {
         return a.localeCompare(b);
       })
       .map(([label, tmpls]) => ({ label, templates: tmpls }));
-  }, [templates, categoryOrder, selectedCategories, selectedBrands]);
+  }, [templates, categoryOrder, selectedCategories, selectedBrands, selectedSignalTypes, matchesSignalFilter]);
 
   const totalResults = rankedResults?.length ??
     (filteredCustom.length + filteredCategories.reduce((sum, c) => sum + c.templates.length, 0));
@@ -974,6 +1001,28 @@ export default function DeviceLibrary() {
               </button>
             )}
           </div>
+          <div className={`flex-1 min-w-0 flex items-center rounded border transition-colors ${
+              filterPanel === "signal"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : selectedSignalTypes.size > 0
+                  ? "border-blue-400 bg-blue-50 text-blue-700"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-text)]"
+            }`}>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); setFilterPanel((p) => p === "signal" ? null : "signal"); }}
+              className="flex-1 min-w-0 px-1.5 py-1 text-[10px] text-left truncate"
+            >
+              {selectedSignalTypes.size > 0 ? `Signals (${selectedSignalTypes.size})` : "Signals"}
+            </button>
+            {selectedSignalTypes.size > 0 && (
+              <button
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedSignalTypes(new Set()); }}
+                className="px-1 text-blue-400 hover:text-blue-600 text-xs shrink-0"
+              >
+                &times;
+              </button>
+            )}
+          </div>
         </div>
         {filterPanel === "category" && (
           <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
@@ -1005,6 +1054,23 @@ export default function DeviceLibrary() {
                 }`}
               >
                 {m}
+              </button>
+            ))}
+          </div>
+        )}
+        {filterPanel === "signal" && (
+          <div className="mt-1.5 max-h-28 overflow-y-auto flex flex-wrap gap-1">
+            {signalTypeOptions.map((st) => (
+              <button
+                key={st}
+                onMouseDown={(e) => { e.preventDefault(); toggleSignalType(st); }}
+                className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                  selectedSignalTypes.has(st)
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+                }`}
+              >
+                {SIGNAL_LABELS[st as keyof typeof SIGNAL_LABELS] ?? st}
               </button>
             ))}
           </div>
