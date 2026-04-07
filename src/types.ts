@@ -420,6 +420,7 @@ export interface SchematicFile {
   hiddenPinSignalTypes?: SignalType[];
   hideDeviceTypes?: boolean;
   hideUnconnectedPorts?: boolean;
+  showPortCounts?: boolean;
   templateHiddenSignals?: Record<string, SignalType[]>;
   templatePresets?: Record<string, TemplatePreset>;
   favoriteTemplates?: string[];

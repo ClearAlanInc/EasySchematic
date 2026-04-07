@@ -35,6 +35,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   );
 
   const hideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
+  const showPortCounts = useSchematicStore((s) => s.showPortCounts);
   const templateHiddenStr = useSchematicStore((s) => {
     if (!data.templateId) return "";
     const arr = s.templateHiddenSignals[data.templateId];
@@ -78,6 +79,21 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     });
   }, [data.ports, data.showAllPorts, data.hiddenPorts,
       hiddenPinSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
+
+  const portCountInfo = useMemo(() => {
+    if (!showPortCounts) return null;
+    const total = data.ports.length;
+    if (total === 0) return null;
+    let connected = 0;
+    for (const p of data.ports) {
+      if (p.direction === "bidirectional") {
+        if (connectedHandles.has(`${p.id}-in`) || connectedHandles.has(`${p.id}-out`)) connected++;
+      } else {
+        if (connectedHandles.has(p.id)) connected++;
+      }
+    }
+    return { connected, total };
+  }, [showPortCounts, data.ports, connectedHandles]);
 
   const openPortMenu = useCallback((e: React.MouseEvent, port: Port) => {
     e.preventDefault();
@@ -406,6 +422,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               </div>
             );
           })}
+        </div>
+      )}
+      {portCountInfo && (
+        <div className="text-center h-5 flex items-center justify-center">
+          <span className="text-[9px] text-[var(--color-text-muted)]">
+            {portCountInfo.connected} / {portCountInfo.total} IOs connected
+          </span>
         </div>
       )}
       {/* Auxiliary data — grid-aligned with compact 12px line height.

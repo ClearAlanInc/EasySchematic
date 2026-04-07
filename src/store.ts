@@ -359,6 +359,8 @@ interface SchematicState {
   togglePinSignalTypeVisibility: (type: SignalType) => void;
   setHideDeviceTypes: (hide: boolean) => void;
   setHideUnconnectedPorts: (hide: boolean) => void;
+  showPortCounts: boolean;
+  setShowPortCounts: (show: boolean) => void;
   setTemplateHiddenSignals: (templateId: string, hidden: SignalType[]) => void;
   showAllSignalTypes: () => void;
 
@@ -816,6 +818,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   hiddenPinSignalTypes: "",
   hideDeviceTypes: false,
   hideUnconnectedPorts: false,
+  showPortCounts: false,
   templateHiddenSignals: {},
   templatePresets: {},
   favoriteTemplates: [],
@@ -2231,6 +2234,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setShowPortCounts: (show) => {
+    set({ showPortCounts: show });
+    get().saveToLocalStorage();
+  },
+
   setTemplateHiddenSignals: (templateId, hidden) => {
     const current = get().templateHiddenSignals;
     if (hidden.length === 0) {
@@ -2414,6 +2422,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenPinSignalTypes: state.hiddenPinSignalTypes ? state.hiddenPinSignalTypes.split(",") as SignalType[] : undefined,
       hideDeviceTypes: state.hideDeviceTypes || undefined,
       hideUnconnectedPorts: state.hideUnconnectedPorts || undefined,
+      showPortCounts: state.showPortCounts || undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
@@ -2492,6 +2501,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
             hideDeviceTypes: data.hideDeviceTypes ?? false,
             hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
+            showPortCounts: data.showPortCounts ?? false,
             templateHiddenSignals: data.templateHiddenSignals ?? {},
             templatePresets: data.templatePresets ?? {},
             favoriteTemplates: data.favoriteTemplates ?? [],
@@ -2555,6 +2565,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
         hideDeviceTypes: data.hideDeviceTypes ?? false,
         hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
+        showPortCounts: data.showPortCounts ?? false,
         templateHiddenSignals: data.templateHiddenSignals ?? {},
         templatePresets: data.templatePresets ?? {},
         favoriteTemplates: data.favoriteTemplates ?? [],
@@ -2618,6 +2629,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenPinSignalTypes: state.hiddenPinSignalTypes ? state.hiddenPinSignalTypes.split(",") as SignalType[] : undefined,
       hideDeviceTypes: state.hideDeviceTypes || undefined,
       hideUnconnectedPorts: state.hideUnconnectedPorts || undefined,
+      showPortCounts: state.showPortCounts || undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
@@ -2698,6 +2710,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
       hideDeviceTypes: data.hideDeviceTypes ?? false,
       hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
+      showPortCounts: data.showPortCounts ?? false,
       templateHiddenSignals: data.templateHiddenSignals ?? {},
       templatePresets: data.templatePresets ?? {},
       favoriteTemplates: data.favoriteTemplates ?? [],
@@ -2782,6 +2795,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         hiddenPinSignalTypes: "",
         hideDeviceTypes: false,
         hideUnconnectedPorts: false,
+        showPortCounts: false,
         templateHiddenSignals: {},
         templatePresets: {},
         favoriteTemplates: [],
