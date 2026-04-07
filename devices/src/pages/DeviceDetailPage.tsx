@@ -92,6 +92,13 @@ export default function DeviceDetailPage({ id }: { id: string }) {
             <span className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-600" style={{ backgroundColor: template.color }} />
           )}
           <a
+            href={`/submit?clone=${template.id}`}
+            onClick={linkClick}
+            className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            Clone as New
+          </a>
+          <a
             href={`/submit/${template.id}`}
             onClick={linkClick}
             className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"

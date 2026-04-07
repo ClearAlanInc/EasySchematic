@@ -16,10 +16,11 @@ import UserMenu from "./components/UserMenu";
 import { navigateTo, linkClick } from "./navigate";
 import { useTheme } from "./hooks/useTheme";
 
-function parseRoute(): { page: string; id?: string; draft?: string; auth?: string } {
+function parseRoute(): { page: string; id?: string; draft?: string; clone?: string; auth?: string } {
   const path = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const draft = params.get("draft") || undefined;
+  const clone = params.get("clone") || undefined;
   const auth = params.get("auth") || undefined;
 
   if (path.startsWith("/admin/edit/")) return { page: "admin-edit", id: path.slice(12), auth };
@@ -28,8 +29,8 @@ function parseRoute(): { page: string; id?: string; draft?: string; auth?: strin
   if (path === "/admin") return { page: "admin-users", auth };
   if (path.startsWith("/device/")) return { page: "device", id: path.slice(8), auth };
   if (path === "/login") return { page: "login", auth };
-  if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, auth };
-  if (path === "/submit") return { page: "submit", draft, auth };
+  if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, clone, auth };
+  if (path === "/submit") return { page: "submit", draft, clone, auth };
   if (path === "/my-submissions") return { page: "my-submissions", auth };
   if (path === "/review") return { page: "review", auth };
   if (path.startsWith("/review/")) return { page: "review-detail", id: path.slice(8), auth };
@@ -232,7 +233,7 @@ export default function App() {
         {route.page === "device" && route.id && <DeviceDetailPage id={route.id} />}
         {route.page === "login" && <LoginPage />}
         {route.page === "submit" && (
-          authLoading ? null : user ? <SubmitPage id={route.id} draftId={route.draft} /> : <LoginRedirect />
+          authLoading ? null : user ? <SubmitPage id={route.id} draftId={route.draft} cloneId={route.clone} /> : <LoginRedirect />
         )}
         {route.page === "my-submissions" && (
           authLoading ? null : user ? <MySubmissionsPage /> : <LoginRedirect />

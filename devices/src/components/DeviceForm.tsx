@@ -39,6 +39,8 @@ interface DeviceFormProps {
   id?: string;
   /** Draft ID from main app cross-submission */
   draftId?: string;
+  /** Template ID to clone as a new device */
+  cloneId?: string;
   /** Called with validated data on submit */
   onSubmit: (data: DeviceFormData) => Promise<void>;
   /** Text for the submit button */
@@ -51,7 +53,7 @@ interface DeviceFormProps {
   footer?: ReactNode;
 }
 
-export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
+export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
   const [label, setLabel] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [category, setCategory] = useState("");
@@ -73,7 +75,7 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
   const [weightKg, setWeightKg] = useState<string>("");
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [submitterNote, setSubmitterNote] = useState("");
-  const [loading, setLoading] = useState(!!id);
+  const [loading, setLoading] = useState(!!(id || cloneId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -128,6 +130,37 @@ export default function DeviceForm({ id, draftId, onSubmit, submitLabel = "Save"
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!cloneId || id) return; // don't clone if editing an existing template
+    categoryAutoRef.current = false;
+    fetchTemplate(cloneId)
+      .then((t) => {
+        setLabel(""); // clear label to encourage a new name
+        setDeviceType(t.deviceType);
+        setCategory(t.category ?? "");
+        setManufacturer(t.manufacturer ?? "");
+        const m = t.modelNumber;
+        setModelNumber(m && m !== "undefined" ? m : "");
+        setReferenceUrl(t.referenceUrl ?? "");
+        setSearchTerms(t.searchTerms ?? []);
+        setColor(t.color ?? "");
+        setPorts(t.ports);
+        setSlots(t.slots ?? []);
+        setSlotFamily(t.slotFamily ?? "");
+        setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
+        setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
+        setVoltage(t.voltage ?? "");
+        setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
+        setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
+        setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
+        setWeightKg(t.weightKg != null ? String(t.weightKg) : "");
+        setIsVenueProvided((t as DeviceTemplate & { isVenueProvided?: boolean }).isVenueProvided ?? false);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [cloneId, id]);
 
   useEffect(() => {
     if (!draftId || id) return; // don't load draft if editing an existing template
