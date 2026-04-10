@@ -79,6 +79,7 @@ export default function DeviceEditor() {
   const [label, setLabel] = useState("");
   const [hostname, setHostname] = useState("");
   const [deviceType, setDeviceType] = useState("");
+  const [manufacturer, setManufacturer] = useState("");
   const [color, setColor] = useState<string | undefined>(undefined);
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined);
   const [ports, setPorts] = useState<PortDraft[]>([]);
@@ -128,6 +129,7 @@ export default function DeviceEditor() {
     setLabel(node.data.label);
     setHostname(node.data.hostname ?? "");
     setDeviceType(node.data.deviceType);
+    setManufacturer(node.data.manufacturer ?? "");
     setColor(node.data.color);
     setHeaderColor(node.data.headerColor);
     setPorts(
@@ -206,7 +208,7 @@ export default function DeviceEditor() {
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       deviceType: deviceType.trim() || "custom",
       ports: finalPorts,
-      ...(existing?.manufacturer ? { manufacturer: existing.manufacturer } : {}),
+      ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
       ...(existing?.templateId ? { templateId: existing.templateId } : {}),
       ...(existing?.templateVersion ? { templateVersion: existing.templateVersion } : {}),
@@ -237,7 +239,7 @@ export default function DeviceEditor() {
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
+  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -265,12 +267,12 @@ export default function DeviceEditor() {
       ports: finalPorts,
       ...(color ? { color } : {}),
       ...(existing?.category ? { category: String(existing.category) } : {}),
-      ...(existing?.manufacturer ? { manufacturer: existing.manufacturer } : {}),
+      ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
     });
-  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW, deviceType, color]);
+  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW, deviceType, color, manufacturer]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -292,8 +294,7 @@ export default function DeviceEditor() {
       deviceType: dt,
       ports: finalPorts,
       ...(color ? { color } : {}),
-      // Carry over metadata from library devices
-      ...(existing?.manufacturer ? { manufacturer: existing.manufacturer } : {}),
+      ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
       ...(existing?.referenceUrl ? { referenceUrl: existing.referenceUrl } : {}),
       ...(existing?.category ? { category: existing.category } : {}),
@@ -558,6 +559,14 @@ export default function DeviceEditor() {
                 placeholder="e.g. camera"
               />
             </Field>
+            <Field label="Manufacturer">
+              <input
+                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1.5 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500"
+                value={manufacturer}
+                onChange={(e) => setManufacturer(e.target.value)}
+                placeholder="e.g. Sony"
+              />
+            </Field>
           </div>
 
           {/* Header color picker */}
@@ -579,32 +588,30 @@ export default function DeviceEditor() {
             )}
           </div>
 
-          {(node.data.manufacturer || node.data.modelNumber) && (() => {
+          {(() => {
             const tpl = node.data.templateId
               ? getBundledTemplates().find((t) => t.id === node.data.templateId)
               : undefined;
             const url = tpl?.referenceUrl;
-            return (
+            return url ? (
               <div className="text-[10px] text-[var(--color-text-muted)] -mt-2 flex items-center gap-1">
-                <span>{[node.data.manufacturer, node.data.modelNumber].filter(Boolean).join(" ")}</span>
-                {url && (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600 transition-colors"
-                    title="View manufacturer spec page"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                      <path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10" />
-                      <path d="M9 2h5v5" />
-                      <path d="M14 2L7 9" />
-                    </svg>
-                  </a>
-                )}
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-1"
+                  title="View manufacturer spec page"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                    <path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10" />
+                    <path d="M9 2h5v5" />
+                    <path d="M14 2L7 9" />
+                  </svg>
+                  <span>Spec sheet</span>
+                </a>
               </div>
-            );
+            ) : null;
           })()}
 
           {/* Preset indicator */}
