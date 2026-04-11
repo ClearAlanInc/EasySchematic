@@ -95,6 +95,8 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "battery": "Infrastructure",
   "commentary-box": "Intercom",
   "phone-hybrid": "Intercom",
+  "table-box": "Cable Accessories",
+  "antenna": "Wireless",
 };
 
 /** Human-readable labels for device types (kebab-case → Title Case with known acronyms) */
