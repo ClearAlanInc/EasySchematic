@@ -10,16 +10,16 @@ export function getBundledTemplates(): DeviceTemplate[] {
   return fallbackData as DeviceTemplate[];
 }
 
-/** Look up a card template by ID from cached API data or bundled fallback. */
-export function getTemplateById(id: string): DeviceTemplate | undefined {
+/** Look up a card template by ID from cached API data, bundled fallback, or caller-supplied extras (user's custom templates). */
+export function getTemplateById(id: string, extra: DeviceTemplate[] = []): DeviceTemplate | undefined {
   const source = cached ?? fallbackData as DeviceTemplate[];
-  return source.find((t) => t.id === id);
+  return source.find((t) => t.id === id) ?? extra.find((t) => t.id === id);
 }
 
-/** Return all card templates that belong to a given slot family. */
-export function getCardsByFamily(family: string): DeviceTemplate[] {
+/** Return all card templates that belong to a given slot family, merging bundled and caller-supplied extras. */
+export function getCardsByFamily(family: string, extra: DeviceTemplate[] = []): DeviceTemplate[] {
   const source = cached ?? (fallbackData as DeviceTemplate[]);
-  return source.filter((t) => t.slotFamily === family);
+  return [...source.filter((t) => t.slotFamily === family), ...extra.filter((t) => t.slotFamily === family)];
 }
 
 // ==================== AUTH & DRAFTS ====================

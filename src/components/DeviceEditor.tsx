@@ -18,6 +18,7 @@ import {
 import { DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES } from "../connectorTypes";
 import { getBundledTemplates, getCardsByFamily, checkSession, createDraft, createHandoff } from "../templateApi";
 import LoginDialog from "./LoginDialog";
+import CardCreatorDialog from "./CardCreatorDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
 
@@ -806,15 +807,15 @@ export default function DeviceEditor() {
           )}
 
           {/* Expansion Slots */}
-          {node.data.slots && node.data.slots.length > 0 && (() => {
+          {(() => {
             const templateDef = node.data.templateId
               ? getBundledTemplates().find((t) => t.id === node.data.templateId)
               : undefined;
             const slotDefs = templateDef?.slots ?? [];
             return (
-              <SlotSwapSection
+              <SlotEditSection
                 nodeId={node.id}
-                installedSlots={node.data.slots}
+                installedSlots={node.data.slots ?? []}
                 slotDefs={slotDefs}
               />
             );
@@ -1987,25 +1988,62 @@ function DhcpServerSection({
   );
 }
 
-function SlotSwapSection({
+function SlotEditSection({
   nodeId,
   installedSlots,
   slotDefs,
 }: {
   nodeId: string;
-  installedSlots: DeviceData["slots"] & object;
+  installedSlots: NonNullable<DeviceData["slots"]>;
   slotDefs: SlotDefinition[];
 }) {
   const swapCard = useSchematicStore((s) => s.swapCard);
+  const addSlot = useSchematicStore((s) => s.addSlot);
+  const updateSlot = useSchematicStore((s) => s.updateSlot);
+  const removeSlot = useSchematicStore((s) => s.removeSlot);
   const edges = useSchematicStore((s) => s.edges);
+  const customTemplates = useSchematicStore((s) => s.customTemplates);
+
+  const [creatingCardForSlot, setCreatingCardForSlot] = useState<string | null>(null);
+
+  const knownFamilies = useMemo(
+    () => [
+      ...new Set([
+        ...getBundledTemplates().map((t) => t.slotFamily),
+        ...customTemplates.map((t) => t.slotFamily),
+      ].filter((f): f is string => !!f)),
+    ],
+    [customTemplates],
+  );
+
+  const creatingSlot = creatingCardForSlot ? installedSlots.find((s) => s.slotId === creatingCardForSlot) : undefined;
 
   return (
     <div className="space-y-2">
-      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium">Expansion Slots</div>
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium">
+          Expansion Slots{installedSlots.length > 0 ? ` (${installedSlots.filter((s) => !s.parentSlotId).length})` : ""}
+        </div>
+        <button
+          type="button"
+          onClick={() => addSlot(nodeId, { label: `Slot ${installedSlots.filter((s) => !s.parentSlotId).length + 1}`, slotFamily: "" })}
+          className="text-[10px] text-blue-600 hover:text-blue-700 cursor-pointer"
+        >
+          + Add Slot
+        </button>
+      </div>
+      {installedSlots.length === 0 && (
+        <div className="text-[10px] text-[var(--color-text-muted)] italic">
+          No expansion slots. Add a slot for devices with modular card bays.
+        </div>
+      )}
+      <datalist id={`slot-families-${nodeId}`}>
+        {knownFamilies.map((f) => <option key={f} value={f} />)}
+      </datalist>
       {installedSlots.map((slot) => {
         // Use slotFamily from the slot itself (works for both top-level and nested)
         const family = slot.slotFamily ?? slotDefs.find((d) => d.id === slot.slotId)?.slotFamily;
-        const familyCards = family ? getCardsByFamily(family) : [];
+        const familyCards = family ? getCardsByFamily(family, customTemplates) : [];
         const isNested = !!slot.parentSlotId;
 
         // Count connections to this slot's ports (including descendant ports for parent slots)
@@ -2026,7 +2064,40 @@ function SlotSwapSection({
             key={slot.slotId}
             className={`bg-[var(--color-surface)] rounded px-2 py-1.5 border border-[var(--color-border)] ${isNested ? "ml-3 border-dashed" : ""}`}
           >
-            <div className="text-[10px] text-[var(--color-text-muted)] mb-1">{slot.label}</div>
+            {isNested ? (
+              <div className="text-[10px] text-[var(--color-text-muted)] mb-1">{slot.label}</div>
+            ) : (
+              <div className="flex items-center gap-1 mb-1">
+                <input
+                  value={slot.label}
+                  onChange={(e) => updateSlot(nodeId, slot.slotId, { label: e.target.value })}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  placeholder="Slot label"
+                  className="flex-1 min-w-0 bg-white border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[11px] outline-none focus:border-blue-500"
+                />
+                <input
+                  value={slot.slotFamily ?? ""}
+                  onChange={(e) => updateSlot(nodeId, slot.slotId, { slotFamily: e.target.value })}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  list={`slot-families-${nodeId}`}
+                  placeholder="family"
+                  className="w-24 bg-white border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const warnConn = connCount > 0 ? `This slot has ${connCount} connection(s) that will be disconnected. ` : "";
+                    const warnCard = slot.cardTemplateId ? "The installed card and its ports will be removed. " : "";
+                    if ((warnConn || warnCard) && !confirm(`${warnConn}${warnCard}Remove slot "${slot.label}"?`)) return;
+                    removeSlot(nodeId, slot.slotId);
+                  }}
+                  className="text-red-400 hover:text-red-500 text-xs cursor-pointer px-1 leading-none"
+                  title="Remove slot"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
             <select
               value={slot.cardTemplateId ?? ""}
               onChange={(e) => {
@@ -2037,9 +2108,10 @@ function SlotSwapSection({
                 }
                 swapCard(nodeId, slot.slotId, newCardId);
               }}
-              className="w-full bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+              disabled={!isNested && !slot.slotFamily}
+              className="w-full bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-50"
             >
-              <option value="">(empty)</option>
+              <option value="">{!isNested && !slot.slotFamily ? "(set slot family to enable)" : "(empty)"}</option>
               {familyCards.map((card) => (
                 <option key={card.id} value={card.id!}>
                   {card.label}
@@ -2051,9 +2123,34 @@ function SlotSwapSection({
                 {[slot.cardManufacturer, slot.cardModelNumber].filter(Boolean).join(" ")}
               </div>
             )}
+            {!isNested && (
+              <button
+                type="button"
+                onClick={() => setCreatingCardForSlot(slot.slotId)}
+                className="text-[10px] text-blue-500 hover:text-blue-600 cursor-pointer mt-1"
+              >
+                + Create custom card...
+              </button>
+            )}
           </div>
         );
       })}
+      {creatingSlot && (
+        <CardCreatorDialog
+          open
+          initialFamily={creatingSlot.slotFamily ?? ""}
+          familySuggestions={knownFamilies}
+          onClose={() => setCreatingCardForSlot(null)}
+          onCreated={(cardId, finalFamily) => {
+            // If the slot's family was empty or differs, update it so swapCard resolves the card correctly.
+            if ((creatingSlot.slotFamily ?? "") !== finalFamily) {
+              updateSlot(nodeId, creatingSlot.slotId, { slotFamily: finalFamily });
+            }
+            swapCard(nodeId, creatingSlot.slotId, cardId);
+            setCreatingCardForSlot(null);
+          }}
+        />
+      )}
     </div>
   );
 }

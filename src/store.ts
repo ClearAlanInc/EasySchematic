@@ -195,6 +195,12 @@ interface SchematicState {
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
   /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
   swapCard: (nodeId: string, slotId: string, cardTemplateId: string | null) => void;
+  /** Add a new empty expansion slot to a device. */
+  addSlot: (nodeId: string, slot: { label: string; slotFamily: string }) => void;
+  /** Update label / slotFamily on an existing installed slot. */
+  updateSlot: (nodeId: string, slotId: string, patch: { label?: string; slotFamily?: string }) => void;
+  /** Remove a slot, its ports, descendant slots, and any edges connected to their ports. */
+  removeSlot: (nodeId: string, slotId: string) => void;
   setEditingNodeId: (id: string | null) => void;
   setCreatingNodeId: (id: string | null) => void;
   createAndEditDevice: (template: DeviceTemplate, position: { x: number; y: number }) => void;
@@ -1542,7 +1548,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     let newSlot: InstalledSlot;
     let childSlots: InstalledSlot[] = [];
     if (cardTemplateId) {
-      const cardTpl = getTemplateById(cardTemplateId);
+      const cardTpl = getTemplateById(cardTemplateId, state.customTemplates);
       if (!cardTpl) return;
 
       // Determine display label for port sections
@@ -1595,6 +1601,102 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     const newNodes = state.nodes.map((n, i) => (i === nodeIdx ? newNode : n));
     set({ nodes: newNodes, edges: newEdges });
+    get().saveToLocalStorage();
+  },
+
+  addSlot: (nodeId, { label, slotFamily }) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const nodeIdx = state.nodes.findIndex((n) => n.id === nodeId && n.type === "device");
+    if (nodeIdx === -1) return;
+    const node = state.nodes[nodeIdx] as DeviceNode;
+    const data = node.data;
+    const slots = data.slots ?? [];
+
+    const newSlot: InstalledSlot = {
+      slotId: `slot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      label,
+      slotFamily,
+      portIds: [],
+    };
+
+    const newNode = {
+      ...node,
+      data: { ...data, slots: [...slots, newSlot] },
+    } as DeviceNode;
+
+    set({ nodes: state.nodes.map((n, i) => (i === nodeIdx ? newNode : n)) });
+    get().saveToLocalStorage();
+  },
+
+  updateSlot: (nodeId, slotId, patch) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const nodeIdx = state.nodes.findIndex((n) => n.id === nodeId && n.type === "device");
+    if (nodeIdx === -1) return;
+    const node = state.nodes[nodeIdx] as DeviceNode;
+    const data = node.data;
+    const slots = data.slots ?? [];
+    if (!slots.some((s) => s.slotId === slotId)) return;
+
+    const newSlots = slots.map((s) =>
+      s.slotId === slotId
+        ? {
+            ...s,
+            ...(patch.label !== undefined ? { label: patch.label } : {}),
+            ...(patch.slotFamily !== undefined ? { slotFamily: patch.slotFamily } : {}),
+          }
+        : s,
+    );
+
+    const newNode = { ...node, data: { ...data, slots: newSlots } } as DeviceNode;
+    set({ nodes: state.nodes.map((n, i) => (i === nodeIdx ? newNode : n)) });
+    get().saveToLocalStorage();
+  },
+
+  removeSlot: (nodeId, slotId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const nodeIdx = state.nodes.findIndex((n) => n.id === nodeId && n.type === "device");
+    if (nodeIdx === -1) return;
+    const node = state.nodes[nodeIdx] as DeviceNode;
+    const data = node.data;
+    const slots = data.slots ?? [];
+    const target = slots.find((s) => s.slotId === slotId);
+    if (!target) return;
+
+    // Slot and all descendants (nested cards)
+    const descendants = slots.filter((s) => s.parentSlotId && s.parentSlotId.startsWith(slotId));
+    const removedSlotIds = new Set<string>([slotId, ...descendants.map((s) => s.slotId)]);
+    const removedPortIds = new Set<string>([
+      ...target.portIds,
+      ...descendants.flatMap((s) => s.portIds),
+    ]);
+
+    const newPorts = data.ports.filter((p) => !removedPortIds.has(p.id));
+    const newSlots = slots.filter((s) => !removedSlotIds.has(s.slotId));
+
+    const newEdges = removedPortIds.size > 0
+      ? state.edges.filter((e) => {
+          const srcHandle = e.sourceHandle ?? "";
+          const tgtHandle = e.targetHandle ?? "";
+          if (e.source === nodeId && removedPortIds.has(srcHandle)) return false;
+          if (e.target === nodeId && removedPortIds.has(tgtHandle)) return false;
+          if (e.source === nodeId && removedPortIds.has(srcHandle.replace(/-(in|out)$/, ""))) return false;
+          if (e.target === nodeId && removedPortIds.has(tgtHandle.replace(/-(in|out)$/, ""))) return false;
+          return true;
+        })
+      : state.edges;
+
+    const newNode = {
+      ...node,
+      data: { ...data, ports: newPorts, slots: newSlots },
+    } as DeviceNode;
+
+    set({ nodes: state.nodes.map((n, i) => (i === nodeIdx ? newNode : n)), edges: newEdges });
     get().saveToLocalStorage();
   },
 
