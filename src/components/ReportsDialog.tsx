@@ -25,7 +25,8 @@ import { getNetworkReportTableData } from "../networkReport";
 import { computePowerReport, exportPowerReportCsv, getPowerReportTableData } from "../powerReport";
 import ReportPreviewDialog from "./ReportPreviewDialog";
 import IpInput from "./IpInput";
-import type { DeviceData, SchematicNode, ConnectionData, OwnedGearItem, DeviceTemplate } from "../types";
+import type { DeviceData, SchematicNode, ConnectionData, OwnedGearItem } from "../types";
+import { inventoryKeyFromDeviceData, inventoryKeyFromTemplate } from "../inventoryKey";
 import { useSpreadsheetSelection } from "../spreadsheet/useSpreadsheetSelection";
 import type { SpreadsheetColumn } from "../spreadsheet/types";
 import FillSeriesDialog from "../spreadsheet/FillSeriesDialog";
@@ -964,23 +965,19 @@ interface DeviceReportRow {
   neededCount: number;
 }
 
-function getInventoryReportKey(item: Pick<DeviceTemplate, "label" | "manufacturer" | "modelNumber">): string {
-  return `${item.manufacturer ?? ""}|${item.modelNumber ?? ""}|${item.label}`;
-}
-
 function getDeviceInventoryCounts(nodes: SchematicNode[], ownedGear: OwnedGearItem[]) {
   const usedCounts = new Map<string, number>();
   for (const node of nodes) {
     if (node.type !== "device") continue;
     const data = node.data as DeviceData;
     if (data.isCableAccessory) continue;
-    const key = `${data.manufacturer ?? ""}|${data.modelNumber ?? ""}|${data.model ?? data.label}`;
+    const key = inventoryKeyFromDeviceData(data);
     usedCounts.set(key, (usedCounts.get(key) ?? 0) + 1);
   }
 
   const ownedCounts = new Map<string, number>();
   for (const item of ownedGear) {
-    const key = getInventoryReportKey(item.template);
+    const key = inventoryKeyFromTemplate(item.template);
     ownedCounts.set(key, (ownedCounts.get(key) ?? 0) + item.quantity);
   }
 
@@ -995,7 +992,7 @@ function computeDeviceReport(nodes: SchematicNode[], ownedGear: OwnedGearItem[])
     const data = node.data as DeviceData;
     if (data.isCableAccessory) continue;
     const room = getRoomLabel(nodes, node.parentId);
-    const inventoryKey = `${data.manufacturer ?? ""}|${data.modelNumber ?? ""}|${data.model ?? data.label}`;
+    const inventoryKey = inventoryKeyFromDeviceData(data);
     const ownedCount = ownedCounts.get(inventoryKey) ?? 0;
     const neededCount = Math.max((usedCounts.get(inventoryKey) ?? 0) - ownedCount, 0);
 

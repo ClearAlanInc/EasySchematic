@@ -4,6 +4,7 @@ import { SIGNAL_LABELS } from "../types";
 import type { DeviceTemplate, CustomTemplateGroup, OwnedGearFile, OwnedGearItem, SchematicNode, DeviceData } from "../types";
 import { useSchematicStore, CATEGORY_ORDER_DEFAULT } from "../store";
 import { scoreTemplate } from "../templateSearch";
+import { inventoryKeyFromDeviceData, inventoryKeyFromTemplate } from "../inventoryKey";
 import DeviceCreatorPicker from "./DeviceCreatorPicker";
 
 const APP_VERSION = __APP_VERSION__;
@@ -24,10 +25,6 @@ function getUniqueSignalTypes(template: DeviceTemplate): string[] {
 
 function getTemplateKey(template: DeviceTemplate): string {
   return template.id ?? template.deviceType;
-}
-
-function getInventoryMatchKey(template: Pick<DeviceTemplate, "label" | "manufacturer" | "modelNumber">): string {
-  return `${template.manufacturer ?? ""}|${template.modelNumber ?? ""}|${template.label}`;
 }
 
 function matchesOwnedGearQuery(item: OwnedGearItem, query: string): boolean {
@@ -795,7 +792,7 @@ function getUsedInventoryCounts(nodes: SchematicNode[]): Map<string, number> {
   for (const node of nodes) {
     if (node.type !== "device") continue;
     const data = node.data as DeviceData;
-    const key = `${data.manufacturer ?? ""}|${data.modelNumber ?? ""}|${data.model ?? data.baseLabel ?? data.label}`;
+    const key = inventoryKeyFromDeviceData(data);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return counts;
@@ -816,15 +813,15 @@ function OwnedGearTab({ query }: { query: string }) {
   const filteredOwnedGear = useMemo(() => {
     const items = ownedGear.filter((item) => matchesOwnedGearQuery(item, query));
     return [...items].sort((a, b) => {
-      const aMissing = Math.max((usedCounts.get(getInventoryMatchKey(a.template)) ?? 0) - a.quantity, 0);
-      const bMissing = Math.max((usedCounts.get(getInventoryMatchKey(b.template)) ?? 0) - b.quantity, 0);
+      const aMissing = Math.max((usedCounts.get(inventoryKeyFromTemplate(a.template)) ?? 0) - a.quantity, 0);
+      const bMissing = Math.max((usedCounts.get(inventoryKeyFromTemplate(b.template)) ?? 0) - b.quantity, 0);
       return bMissing - aMissing || a.template.label.localeCompare(b.template.label);
     });
   }, [ownedGear, query, usedCounts]);
 
   const totals = useMemo(() => {
     return ownedGear.reduce((acc, item) => {
-      const used = usedCounts.get(getInventoryMatchKey(item.template)) ?? 0;
+      const used = usedCounts.get(inventoryKeyFromTemplate(item.template)) ?? 0;
       acc.owned += item.quantity;
       acc.used += used;
       acc.missing += Math.max(used - item.quantity, 0);
@@ -914,7 +911,7 @@ function OwnedGearTab({ query }: { query: string }) {
       ) : (
         filteredOwnedGear.map((item) => {
           const key = getTemplateKey(item.template);
-          const used = usedCounts.get(getInventoryMatchKey(item.template)) ?? 0;
+          const used = usedCounts.get(inventoryKeyFromTemplate(item.template)) ?? 0;
           const missing = Math.max(used - item.quantity, 0);
           const spare = Math.max(item.quantity - used, 0);
           return (
