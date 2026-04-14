@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
 import { SIGNAL_COLORS, SIGNAL_LABELS, portSide } from "../types";
 import { useSchematicStore } from "../store";
+import { resolveAuxiliaryLine } from "../auxiliaryData";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -441,15 +442,18 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         const pb = totalPad - pt;
         return (
           <div className="auxiliaryData px-3 border-t border-[var(--color-border)]" style={{ paddingTop: pt, paddingBottom: pb }}>
-            {data.auxiliaryData!.map((line, i) => (
-              <div
-                key={i}
-                className="text-[9px] text-[var(--color-text-muted)] leading-3 truncate whitespace-nowrap text-center"
-                title={line}
-              >
-                {line}
-              </div>
-            ))}
+            {data.auxiliaryData!.map((line, i) => {
+              const resolved = resolveAuxiliaryLine(line, data, { connectedCount: portCountInfo?.connected });
+              return (
+                <div
+                  key={i}
+                  className="text-[9px] text-[var(--color-text-muted)] leading-3 truncate whitespace-nowrap text-center"
+                  title={resolved}
+                >
+                  {resolved}
+                </div>
+              );
+            })}
           </div>
         );
       })() : null}

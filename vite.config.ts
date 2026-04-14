@@ -17,6 +17,10 @@ try {
 } catch { /* not a git repo or git not available */ }
 
 export default defineConfig({
+  // Resolve TypeScript sources before .js so stale emitted .js shadows can't silently win.
+  resolve: {
+    extensions: ['.mjs', '.mts', '.ts', '.tsx', '.js', '.jsx', '.json'],
+  },
   plugins: [
     react(),
     VitePWA({

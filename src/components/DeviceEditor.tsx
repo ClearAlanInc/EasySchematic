@@ -21,6 +21,7 @@ import LoginDialog from "./LoginDialog";
 import CardCreatorDialog from "./CardCreatorDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
+import { AUX_FIELD_GROUPS, resolveAuxiliaryLine } from "../auxiliaryData";
 
 const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
   (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
@@ -116,6 +117,18 @@ export default function DeviceEditor() {
 
   // Auxiliary data lines
   const [auxiliaryData, setAuxiliaryData] = useState<string[]>([]);
+  const [auxFieldMenuIdx, setAuxFieldMenuIdx] = useState<number | null>(null);
+  const auxInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const auxMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (auxFieldMenuIdx === null) return;
+    const onDown = (e: MouseEvent) => {
+      if (!auxMenuRef.current) return;
+      if (!auxMenuRef.current.contains(e.target as Node)) setAuxFieldMenuIdx(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [auxFieldMenuIdx]);
 
   // Login dialog for community submission
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -901,22 +914,109 @@ export default function DeviceEditor() {
               Auxiliary Data
             </summary>
             <div className="flex flex-col gap-1.5 pt-1 pl-2">
-              <p className="text-[10px] text-[var(--color-text-muted)] -mb-0.5">Up to 5 custom lines (displayed at bottom of device)</p>
-              {[0, 1, 2, 3, 4].map((i) => (
-                <input
-                  key={i}
-                  type="text"
-                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
-                  value={auxiliaryData[i] ?? ""}
-                  onChange={(e) => {
-                    const newData = [...auxiliaryData];
-                    newData[i] = e.target.value;
-                    setAuxiliaryData(newData);
-                  }}
-                  placeholder={`Auxiliary Data`}
-                  onKeyDown={(e) => e.stopPropagation()}
-                />
-              ))}
+              <p className="text-[10px] text-[var(--color-text-muted)] -mb-0.5">
+                Up to 5 custom lines (displayed at bottom of device). Use the <span className="font-mono">+</span> button to insert a device field.
+              </p>
+              {(() => {
+                const previewDevice = {
+                  label,
+                  hostname,
+                  manufacturer,
+                  modelNumber: node?.data.modelNumber,
+                  deviceType,
+                  powerDrawW,
+                  powerCapacityW,
+                  poeBudgetW,
+                  voltage,
+                  weightKg,
+                  widthMm,
+                  heightMm,
+                  depthMm,
+                  unitCost,
+                  ports,
+                } as unknown as DeviceData;
+                return [0, 1, 2, 3, 4].map((i) => {
+                  const line = auxiliaryData[i] ?? "";
+                  const hasToken = line.indexOf("{{") !== -1;
+                  const preview = hasToken ? resolveAuxiliaryLine(line, previewDevice) : "";
+                  return (
+                    <div key={i} className="relative">
+                      <div className="flex gap-1">
+                        <input
+                          ref={(el) => { auxInputRefs.current[i] = el; }}
+                          type="text"
+                          className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                          value={line}
+                          onChange={(e) => {
+                            const newData = [...auxiliaryData];
+                            newData[i] = e.target.value;
+                            setAuxiliaryData(newData);
+                          }}
+                          placeholder="Auxiliary Data"
+                          onKeyDown={(e) => e.stopPropagation()}
+                        />
+                        <button
+                          type="button"
+                          title="Insert device field"
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] cursor-pointer shrink-0"
+                          onClick={() => setAuxFieldMenuIdx(auxFieldMenuIdx === i ? null : i)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      {hasToken && (
+                        <div className="text-[10px] text-[var(--color-text-muted)] pl-1 truncate" title={preview}>
+                          → {preview || <span className="italic">(empty)</span>}
+                        </div>
+                      )}
+                      {auxFieldMenuIdx === i && (
+                        <div
+                          ref={auxMenuRef}
+                          className="absolute right-0 z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded shadow-lg"
+                        >
+                          {AUX_FIELD_GROUPS.map(({ group, fields }) => (
+                            <div key={group} className="py-1">
+                              <div className="px-2 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                                {group}
+                              </div>
+                              {fields.map((f) => (
+                                <button
+                                  key={f.token}
+                                  type="button"
+                                  className="block w-full text-left px-2 py-1 text-xs text-[var(--color-text)] hover:bg-[var(--color-bg)] cursor-pointer"
+                                  onClick={() => {
+                                    const input = auxInputRefs.current[i];
+                                    const token = `{{${f.token}}}`;
+                                    const current = auxiliaryData[i] ?? "";
+                                    const start = input?.selectionStart ?? current.length;
+                                    const end = input?.selectionEnd ?? current.length;
+                                    const next = current.slice(0, start) + token + current.slice(end);
+                                    const newData = [...auxiliaryData];
+                                    newData[i] = next;
+                                    setAuxiliaryData(newData);
+                                    setAuxFieldMenuIdx(null);
+                                    // Restore focus + caret after the inserted token
+                                    requestAnimationFrame(() => {
+                                      const el = auxInputRefs.current[i];
+                                      if (el) {
+                                        el.focus();
+                                        const pos = start + token.length;
+                                        el.setSelectionRange(pos, pos);
+                                      }
+                                    });
+                                  }}
+                                >
+                                  {f.label}
+                                </button>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </details>
 

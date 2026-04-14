@@ -12,6 +12,10 @@ const cacheDir = path.join(os.tmpdir(), "vite-easyschematic-docs");
 export default defineConfig({
   cacheDir,
   plugins: [react()],
+  // Resolve TypeScript sources before .js so stale emitted .js shadows can't silently win.
+  resolve: {
+    extensions: [".mjs", ".mts", ".ts", ".tsx", ".js", ".jsx", ".json"],
+  },
   define: {
     __APP_VERSION__: JSON.stringify("docs"),
     __BUILD_HASH__: JSON.stringify("docs"),

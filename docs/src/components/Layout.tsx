@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { navigateTo, getPath, onNavigate } from "../navigate";
+import SearchBar from "./SearchBar";
 
 const navItems = [
   { hash: "overview", label: "Overview" },
@@ -129,6 +130,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <img src="/favicon.svg" alt="" className="w-6 h-6" />
           EasySchematic
         </a>
+        <SearchBar />
         <NavContent />
       </nav>
 
@@ -164,6 +166,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <>
           <div className="md:hidden fixed inset-0 z-40 bg-black/30" onClick={() => setMenuOpen(false)} />
           <nav className="md:hidden fixed top-12 left-0 bottom-0 z-50 w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto p-4">
+            <SearchBar />
             <NavContent onNavigate={() => setMenuOpen(false)} />
           </nav>
         </>

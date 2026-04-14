@@ -275,8 +275,51 @@ export default function DevicesAndPortsPage() {
       <h2>Auxiliary data</h2>
       <p>
         Each device can display up to 5 lines of <strong>auxiliary text</strong> at the bottom
-        of the device node on the canvas. Use these for notes like serial numbers, IP addresses,
-        firmware versions, or any other per-device metadata. Set auxiliary lines in the device editor.
+        of the device node on the canvas. Use these for notes like serial numbers, firmware
+        versions, or any other per-device metadata. Set auxiliary lines in the device editor
+        under <strong>Auxiliary Data</strong>.
+      </p>
+      <p>Each line can be either free text, a bound device property, or a mix of both:</p>
+      <ul>
+        <li>
+          <strong>Custom text</strong> — just type whatever you want in the row.
+        </li>
+        <li>
+          <strong>Bind to a device property</strong> — click the <strong>+</strong> button next to
+          a row and pick a field. A token like <code>{"{{hostname}}"}</code> gets inserted at the
+          cursor. The device node shows the current value of that field and updates automatically
+          whenever the field changes.
+        </li>
+        <li>
+          <strong>Mix text and tokens</strong> — tokens can sit inside free text. For example,
+          typing <code>IP: </code> and then inserting the Hostname field gives{" "}
+          <code>IP: {"{{hostname}}"}</code>, which renders on the device as <code>IP: studio-mixer-3</code>.
+        </li>
+        <li>
+          <strong>Live preview</strong> — rows containing a token show a muted{" "}
+          <code>→ preview</code> line below the input while you edit, so you can see what the
+          device will actually display.
+        </li>
+      </ul>
+      <h3>Available fields</h3>
+      <ul>
+        <li><strong>Identity</strong> — Device Name, Hostname, Manufacturer, Model Number, Device Type</li>
+        <li><strong>Power</strong> — Power Draw, Power Capacity, PoE Budget, Voltage</li>
+        <li><strong>Physical</strong> — Weight, Width, Height, Depth</li>
+        <li><strong>Cost</strong> — Unit Cost</li>
+        <li><strong>Ports</strong> — Total, Input, Output, Bidirectional, Connected</li>
+      </ul>
+      <p>
+        Units are added automatically — Power fields render as <code>450 W</code>, physical
+        dimensions as <code>482 mm</code>, weight as <code>12.3 kg</code>, and cost as <code>$1,299.00</code>.
+        If a bound field is empty on that device, the token resolves to nothing, so{" "}
+        <code>Weight: {"{{weightKg}}"}</code> becomes <code>Weight: </code>. Unknown token names
+        (typos) are left as literal text so mistakes are visible.
+      </p>
+      <p>
+        <em>Not yet supported:</em> per-port fields like a specific port's IP address, VLAN, or
+        MAC. Those live on individual ports rather than the device itself and aren't bindable in
+        this version.
       </p>
 
       <h2>Port notes</h2>

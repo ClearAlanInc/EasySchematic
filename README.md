@@ -37,7 +37,7 @@
 - **Dark mode** — toggle light/dark themes from the menu bar; saved automatically, respects OS setting on first visit
 - **Mobile support** — mobile detection with hamburger menu and touch-friendly pan controls
 - **Physical dimensions** — height, width, depth (mm) and weight (kg) fields on devices
-- **Auxiliary data block** — customizable text lines displayed at the bottom of device nodes
+- **Auxiliary data block** — up to 5 custom lines at the bottom of a device, either free text or bound to device properties (hostname, power, weight, port counts, etc.) via a `{{field}}` picker that keeps values in sync automatically
 - **Hostname** — per-device hostname field, feeding into the network report
 - **Venue-provided gear flag** — mark devices as provided by venue; distinguished in the pack list
 - **Nested slots** — expansion cards with their own sub-slots (e.g., SFP/QSFP transceivers in network cards)
