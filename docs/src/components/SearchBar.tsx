@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type MiniSearchModule from "minisearch";
 import { navigateTo, getPath } from "../navigate";
 
@@ -106,39 +106,36 @@ function snippet(content: string, terms: string[]): string {
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
-  const [hits, setHits] = useState<ResultHit[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [index, setIndex] = useState<Awaited<ReturnType<typeof loadIndex>> | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const stateRef = useRef<Awaited<ReturnType<typeof loadIndex>> | null>(null);
+  const loadingRef = useRef(false);
+  const loaded = index !== null;
 
   // Warm the index the first time the user focuses the input.
   const warm = async () => {
-    if (!stateRef.current) {
-      stateRef.current = await loadIndex();
-      setLoaded(true);
-    }
+    if (index || loadingRef.current) return;
+    loadingRef.current = true;
+    const loadedIndex = await loadIndex();
+    setIndex(loadedIndex);
   };
 
-  // Re-run search whenever the query or the loaded state changes.
-  useEffect(() => {
+  // Derive hits during render; clamp `active` below so it stays valid as hits shrink.
+  const hits = useMemo<ResultHit[]>(() => {
     const q = query.trim();
-    if (!q || !stateRef.current) {
-      setHits([]);
-      return;
-    }
-    const { ms, byId } = stateRef.current;
+    if (!q || !index) return [];
+    const { ms, byId } = index;
     const raw = ms.search(q).slice(0, 8);
     const out: ResultHit[] = [];
     for (const r of raw) {
       const e = byId.get(r.id as number);
       if (e) out.push({ ...e, matchedTerms: (r.terms as string[]) ?? [] });
     }
-    setHits(out);
-    setActive(0);
-  }, [query, loaded]);
+    return out;
+  }, [query, index]);
+  const activeIdx = hits.length === 0 ? 0 : Math.min(active, hits.length - 1);
 
   // Click-outside to close dropdown.
   useEffect(() => {
@@ -174,7 +171,7 @@ export default function SearchBar() {
       setActive((a) => (a - 1 + hits.length) % hits.length);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      choose(hits[active]);
+      choose(hits[activeIdx]);
     } else if (e.key === "Escape") {
       setOpen(false);
       inputRef.current?.blur();
@@ -209,7 +206,7 @@ export default function SearchBar() {
                     onMouseEnter={() => setActive(i)}
                     onMouseDown={(e) => { e.preventDefault(); choose(h); }}
                     className={`block w-full text-left px-3 py-2 text-sm ${
-                      i === active ? "bg-blue-50" : "hover:bg-gray-50"
+                      i === activeIdx ? "bg-blue-50" : "hover:bg-gray-50"
                     }`}
                   >
                     <div className="text-xs text-gray-500 truncate">
