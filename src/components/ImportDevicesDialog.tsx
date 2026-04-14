@@ -149,10 +149,14 @@ export default function ImportDevicesDialog({ open, onClose }: Props) {
           </div>
           <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
             Bulk-add device templates to your library. See the{" "}
+            <a href="https://docs.easyschematic.live/import-devices" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+              import guide
+            </a>{" "}
+            for sample files and walkthroughs, or the{" "}
             <a href="https://docs.easyschematic.live/device-template-schema" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
               schema reference
             </a>{" "}
-            for valid signal/connector/device types.
+            for the full field list.
           </p>
         </div>
 

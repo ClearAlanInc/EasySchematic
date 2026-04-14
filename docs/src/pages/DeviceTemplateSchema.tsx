@@ -52,12 +52,15 @@ export default function DeviceTemplateSchemaPage() {
         spreadsheets, scraped catalog data) into a format that can be bulk-imported
         through <strong>Device Library → Import</strong>.
       </p>
+      <p>
+        <strong>Looking for usage instructions?</strong> The{" "}
+        <a href="/import-devices">Import Devices</a> guide walks through the workflow,
+        with sample files and troubleshooting tips. This page is the technical reference.
+      </p>
 
       <h2>Sample template (JSON)</h2>
       <p>The minimum fields required to import a device:</p>
-      <pre style={{ overflowX: "auto", padding: "12px", background: "#f5f5f5", borderRadius: "6px" }}>
-        <code>{SAMPLE_JSON}</code>
-      </pre>
+      <pre><code>{SAMPLE_JSON}</code></pre>
       <p>
         You can submit a single object or an array of objects. Unknown fields are silently
         ignored — safe to include extra metadata your tooling tracks. <code>id</code> fields
@@ -113,9 +116,7 @@ export default function DeviceTemplateSchemaPage() {
       </p>
       <p><strong>Required columns:</strong> <code>model_number</code>, <code>label</code>, <code>device_type</code>, <code>port_label</code>, <code>port_signal_type</code>, <code>port_direction</code></p>
       <p><strong>Optional columns:</strong> <code>manufacturer</code>, <code>category</code>, <code>reference_url</code>, <code>height_mm</code>, <code>width_mm</code>, <code>depth_mm</code>, <code>weight_kg</code>, <code>power_draw_w</code>, <code>voltage</code>, <code>port_connector_type</code>, <code>port_section</code></p>
-      <pre style={{ overflowX: "auto", padding: "12px", background: "#f5f5f5", borderRadius: "6px", fontSize: "11px" }}>
-        <code>{SAMPLE_CSV}</code>
-      </pre>
+      <pre style={{ fontSize: "11px" }}><code>{SAMPLE_CSV}</code></pre>
 
       <hr />
 

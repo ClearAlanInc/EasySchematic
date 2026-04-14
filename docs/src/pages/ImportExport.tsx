@@ -1,7 +1,7 @@
 export default function ImportExportPage() {
   return (
     <>
-      <h1>Import / Export</h1>
+      <h1>Files & Exports</h1>
 
       <h2>Cloud storage</h2>
       <p>
@@ -74,6 +74,10 @@ export default function ImportExportPage() {
       <p>
         This is separate from schematic <strong>Save / Open</strong>, which handles full schematics
         (devices, connections, rooms, and all configuration).
+      </p>
+      <p>
+        Looking to bulk-import devices from a vendor catalog, spreadsheet, or other external source?
+        See <a href="/import-devices">Import Devices</a> for the JSON / CSV import workflow.
       </p>
 
       <h2>CSV import (cable schedule)</h2>
