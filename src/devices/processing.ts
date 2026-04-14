@@ -1083,8 +1083,8 @@ export const templates: DeviceTemplate[] = [
     searchTerms: ["speakon", "barrel", "coupler", "adapter", "female", "gender", "speaker"],
     powerDrawW: 0,
     ports: [
-      port("speakON In", "analog-audio", "input", "speakon"),
-      port("speakON Out", "analog-audio", "output", "speakon"),
+      port("speakON In", "speaker-level", "input", "speakon"),
+      port("speakON Out", "speaker-level", "output", "speakon"),
     ],
   },
   {

@@ -9,6 +9,9 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   ndi: 3,          // green
   dante: 30,       // orange
   "analog-audio": 46, // brown
+  "speaker-level": 14, // rose — speaker-level audio
+  bluetooth: 150,  // blue — Bluetooth wireless
+  digilink: 24,    // dark orange — Avid Mini-DigiLink
   aes: 178,        // purple
   usb: 6,          // magenta
   ethernet: 4,     // teal/cyan

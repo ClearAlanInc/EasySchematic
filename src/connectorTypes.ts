@@ -7,6 +7,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   ndi: "rj45",
   dante: "rj45",
   "analog-audio": "xlr-3",
+  "speaker-level": "speakon",
+  bluetooth: "wireless",
   aes: "xlr-3",
   dmx: "xlr-5",
   madi: "bnc",
@@ -192,6 +194,8 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "reverse-tnc": "Reverse TNC",
   sma: "SMA",
   db37: "DB37",
+  digilink: "DigiLink",
+  "pcie-6pin": "PCIe 6-pin Aux",
   none: "",
   other: "Other",
 };

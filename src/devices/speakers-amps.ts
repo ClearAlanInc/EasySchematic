@@ -37,8 +37,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 357,
     weightKg: 14,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -55,8 +55,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 270,
     weightKg: 12.7,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -151,8 +151,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 520,
     weightKg: 36,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -191,7 +191,7 @@ export const templates: DeviceTemplate[] = [
       ...ports("Analog In", "analog-audio", "input", 4),
       port("Dante Primary", "dante", "bidirectional"),
       port("Dante Secondary", "dante", "bidirectional"),
-      ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
+      ...ports("Speaker Out", "speaker-level", "output", 4, "speakon"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("AC Power", "power", "input", "powercon"),
     ],
@@ -211,7 +211,7 @@ export const templates: DeviceTemplate[] = [
     weightKg: 11.3,
     ports: [
       ...ports("Analog In", "analog-audio", "input", 4),
-      ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
+      ...ports("Speaker Out", "speaker-level", "output", 4, "speakon"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("AC Power", "power", "input", "powercon"),
 
@@ -234,8 +234,8 @@ export const templates: DeviceTemplate[] = [
     searchTerms: ["l-acoustics", "a15", "wide", "line array", "passive", "a series"],
     powerDrawW: 0,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -252,8 +252,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 402,
     weightKg: 43,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -270,8 +270,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 208,
     weightKg: 21,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -288,8 +288,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 471,
     weightKg: 21,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -306,8 +306,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 305,
     weightKg: 12,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -324,8 +324,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 471,
     weightKg: 20,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -342,7 +342,7 @@ export const templates: DeviceTemplate[] = [
     depthMm: 565,
     weightKg: 79,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
     ],
   },
   {
@@ -359,8 +359,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 520,
     weightKg: 56,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -377,8 +377,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 383,
     weightKg: 26,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -395,8 +395,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 165,
     weightKg: 3.5,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -413,8 +413,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 540,
     weightKg: 52,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
 
@@ -455,7 +455,7 @@ export const templates: DeviceTemplate[] = [
       port("AES In 1-2", "aes", "input"),
       port("AES In 3-4", "aes", "input"),
       port("AES In 5-6", "aes", "input"),
-      ...ports("Speaker Out", "analog-audio", "output", 12, "speakon"),
+      ...ports("Speaker Out", "speaker-level", "output", 12, "speakon"),
       port("AVB Primary", "dante", "bidirectional", "ethercon"),
       port("AVB Secondary", "dante", "bidirectional", "ethercon"),
       port("Ethernet", "ethernet", "bidirectional", "ethercon"),
@@ -632,8 +632,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 341,
     weightKg: 18,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -650,8 +650,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 460,
     weightKg: 34,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -668,8 +668,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 728,
     weightKg: 64,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -686,8 +686,8 @@ export const templates: DeviceTemplate[] = [
     depthMm: 223,
     weightKg: 7.3,
     ports: [
-      port("Input", "analog-audio", "input", "speakon"),
-      port("Link", "analog-audio", "output", "speakon"),
+      port("Input", "speaker-level", "input", "speakon"),
+      port("Link", "speaker-level", "output", "speakon"),
     ],
   },
   {
@@ -708,7 +708,7 @@ export const templates: DeviceTemplate[] = [
       port("AES In 1-2", "aes", "input"),
       port("AES In 3-4", "aes", "input"),
       port("AES Link", "aes", "output"),
-      ...ports("Speaker Out", "analog-audio", "output", 4, "speakon"),
+      ...ports("Speaker Out", "speaker-level", "output", 4, "speakon"),
       port("Ethernet", "ethernet", "bidirectional", "ethercon"),
       port("AC Power", "power", "input", "powercon"),
     ],

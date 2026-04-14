@@ -22,6 +22,8 @@ const SIGNAL_CATEGORY: Record<string, CableCategory> = {
   Composite: "Video",
   VGA: "Video",
   Analog: "Audio",
+  Speaker: "Audio",
+  Bluetooth: "Audio",
   AES: "Audio",
   Dante: "Audio",
   MADI: "Audio",

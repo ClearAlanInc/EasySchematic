@@ -15,6 +15,8 @@
   --color-ndi: #16a34a;       /* green — network video */
   --color-dante: #ea580c;     /* orange — network audio */
   --color-analog-audio: #854d0e; /* brown — old-school warmth */
+  --color-speaker-level: #9f1239; /* rose — speaker-level, distinct from line-level analog */
+  --color-bluetooth: #0082fc; /* Bluetooth brand blue */
   --color-aes: #7c3aed;       /* purple — digital audio */
   --color-dmx: #b91c1c;       /* dark red — lighting control */
   --color-madi: #059669;      /* emerald — multi-channel digital audio */
