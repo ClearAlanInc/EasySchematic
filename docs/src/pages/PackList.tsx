@@ -63,7 +63,7 @@ export default function PackListPage() {
       <h2>Network report</h2>
       <p>
         The <strong>Network Report</strong> is available from the <strong>Reports</strong> menu.
-        It lists all network-addressable ports in your schematic — Ethernet, NDI, Dante, SRT,
+        It lists all network-addressable ports in your schematic — Ethernet, NDI, Dante, AVB, SRT,
         HDBaseT, AES67, and ST 2110 — with their full network configuration.
       </p>
       <p>Columns include:</p>

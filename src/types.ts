@@ -53,6 +53,7 @@ export type SignalType =
   | "hdmi"
   | "ndi"
   | "dante"
+  | "avb"
   | "analog-audio"
   | "speaker-level"
   | "bluetooth"
@@ -522,6 +523,7 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   hdmi: "var(--color-hdmi)",
   ndi: "var(--color-ndi)",
   dante: "var(--color-dante)",
+  avb: "var(--color-avb)",
   "analog-audio": "var(--color-analog-audio)",
   "speaker-level": "var(--color-speaker-level)",
   bluetooth: "var(--color-bluetooth)",
@@ -669,6 +671,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   hdmi: "HDMI",
   ndi: "NDI",
   dante: "Dante",
+  avb: "AVB",
   "analog-audio": "Analog",
   "speaker-level": "Speaker",
   bluetooth: "Bluetooth",
@@ -733,7 +736,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
 export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
   "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "s-video", "vga"],
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
-  "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink"],
+  "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink"],
   "Network": ["ethernet", "fiber"],
   "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink"],
   "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],

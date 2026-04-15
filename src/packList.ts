@@ -26,6 +26,7 @@ const SIGNAL_CATEGORY: Record<string, CableCategory> = {
   Bluetooth: "Audio",
   AES: "Audio",
   Dante: "Audio",
+  AVB: "Audio",
   MADI: "Audio",
   MIDI: "Audio",
   "S/PDIF": "Audio",

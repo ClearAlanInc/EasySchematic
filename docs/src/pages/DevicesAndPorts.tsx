@@ -48,7 +48,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>ST 2110</strong></td><td>Deep Indigo</td><td>SMPTE 2110 IP media transport</td></tr>
 
           <tr><td colSpan={3}><strong>Audio</strong></td></tr>
-          <tr><td><strong>Dante</strong></td><td>Orange</td><td>Network audio</td></tr>
+          <tr><td><strong>Dante</strong></td><td>Orange</td><td>Network audio (Audinate)</td></tr>
+          <tr><td><strong>AVB</strong></td><td>Lime</td><td>Network audio (IEEE 802.1 / TSN, Avnu — Biamp, Meyer, MOTU, PreSonus)</td></tr>
           <tr><td><strong>Analog Audio</strong></td><td>Brown</td><td>XLR/TRS audio</td></tr>
           <tr><td><strong>AES</strong></td><td>Purple</td><td>Digital audio</td></tr>
           <tr><td><strong>MADI</strong></td><td>Emerald</td><td>Multi-channel digital audio (BNC/fiber)</td></tr>
@@ -332,7 +333,7 @@ export default function DevicesAndPortsPage() {
       <h2>Network configuration</h2>
       <p>
         Devices can have a <strong>hostname</strong> field, set in the device editor. Network-capable
-        ports (Ethernet, NDI, Dante, SRT, HDBaseT, AES67, ST 2110) can also have per-port network
+        ports (Ethernet, NDI, Dante, AVB, SRT, HDBaseT, AES67, ST 2110) can also have per-port network
         configuration:
       </p>
       <ul>

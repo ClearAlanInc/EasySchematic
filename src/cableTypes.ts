@@ -11,6 +11,7 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   "s-video": "S-Video",
   ndi: "Ethernet",
   dante: "Ethernet",
+  avb: "Ethernet",
   ethernet: "Ethernet",
   srt: "Ethernet",
   hdbaset: "Ethernet",

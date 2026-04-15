@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 25;
+export const CURRENT_SCHEMA_VERSION = 26;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -148,7 +148,7 @@ const migrations: Record<number, Migration> = {
   12: (data) => {
     // v12 → v13: add addressable flag to ports
     // Network switch ports are pass-through (non-addressable)
-    const NET_SIGNALS = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
+    const NET_SIGNALS = new Set(["ethernet", "ndi", "dante", "avb", "srt", "hdbaset"]);
     for (const node of data.nodes ?? []) {
       if (node.type === "device" && node.data?.deviceType === "network-switch") {
         for (const p of node.data.ports ?? []) {
@@ -281,6 +281,22 @@ const migrations: Record<number, Migration> = {
       }
     }
     data.version = 25;
+    return data;
+  },
+  25: (data) => {
+    // v25 → v26: introduce "avb" signal type. Historical templates (L'Acoustics LA7.16,
+    // LA-RAK II AVB) carried AVB ports mislabeled as "dante". Convert any port whose
+    // label starts with "AVB" and signalType is "dante" to the new "avb" type.
+    for (const node of data.nodes ?? []) {
+      if (node.type === "device") {
+        for (const p of node.data?.ports ?? []) {
+          if (p.signalType === "dante" && typeof p.label === "string" && /^avb\b/i.test(p.label)) {
+            p.signalType = "avb";
+          }
+        }
+      }
+    }
+    data.version = 26;
     return data;
   },
 };

@@ -3,7 +3,7 @@ import type { Port, SignalType, PortDirection, ConnectorType } from "../../../sr
 import { SIGNAL_LABELS, CONNECTOR_LABELS, SIGNAL_GROUPS, CONNECTOR_GROUPS } from "../../../src/types";
 import { DEFAULT_CONNECTOR } from "../../../src/connectorTypes";
 
-const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "srt", "hdbaset"]);
+const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "avb", "srt", "hdbaset"]);
 import PortRow from "./PortRow";
 import SearchableSelect from "./SearchableSelect";
 

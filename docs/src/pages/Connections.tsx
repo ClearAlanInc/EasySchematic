@@ -31,7 +31,7 @@ export default function ConnectionsPage() {
           <strong>Bidirectional</strong> ports connect on one side at a time — connecting one side disables the other
         </li>
         <li>
-          <strong>Network signal types</strong> (Ethernet, Dante, NDI, SRT, HDBaseT, AES67, ST 2110) can connect
+          <strong>Network signal types</strong> (Ethernet, Dante, AVB, NDI, SRT, HDBaseT, AES67, ST 2110) can connect
           in <strong>any direction</strong> — input-to-input, output-to-output, or any combination
         </li>
       </ul>

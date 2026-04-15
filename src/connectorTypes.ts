@@ -6,6 +6,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   hdmi: "hdmi",
   ndi: "rj45",
   dante: "rj45",
+  avb: "rj45",
   "analog-audio": "xlr-3",
   "speaker-level": "speakon",
   bluetooth: "wireless",
@@ -269,7 +270,7 @@ export function findAdaptersForConnectorBridge(
 
 /** Signal types that can have network configuration */
 export const NETWORK_SIGNAL_TYPES: Set<SignalType> = new Set([
-  "ethernet", "ndi", "dante", "srt", "hdbaset", "aes67", "st2110",
+  "ethernet", "ndi", "dante", "avb", "srt", "hdbaset", "aes67", "st2110",
 ]);
 
 /** Signal types that can have video capabilities */

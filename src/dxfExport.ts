@@ -8,6 +8,7 @@ const SIGNAL_ACI: Record<SignalType, number> = {
   hdmi: 1,         // red
   ndi: 3,          // green
   dante: 30,       // orange
+  avb: 94,         // lime — AVB/Milan network audio
   "analog-audio": 46, // brown
   "speaker-level": 14, // rose — speaker-level audio
   bluetooth: 150,  // blue — Bluetooth wireless

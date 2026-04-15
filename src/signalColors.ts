@@ -6,6 +6,7 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   hdmi: "#dc2626",
   ndi: "#16a34a",
   dante: "#ea580c",
+  avb: "#65a30d",
   "analog-audio": "#854d0e",
   "speaker-level": "#9f1239",
   bluetooth: "#0082fc",

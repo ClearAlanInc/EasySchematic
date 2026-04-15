@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, DMX, MADI, and 57 signal types)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, AVB, DMX, MADI, and 58 signal types)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors

@@ -33,6 +33,7 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   hdmi: "H",
   ndi: "N",
   dante: "D",
+  avb: "AV",
   "analog-audio": "A",
   "speaker-level": "SPK",
   bluetooth: "BT",
