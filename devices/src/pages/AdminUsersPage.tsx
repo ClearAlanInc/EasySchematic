@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchUsers, updateUserRole, updateUserBan } from "../api";
 import type { UserRecord } from "../api";
+import { linkClick } from "../navigate";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRecord[]>([]);
@@ -40,7 +41,12 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Users</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Users</h1>
+        <a href="/admin/activity" onClick={linkClick} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+          Moderator Activity
+        </a>
+      </div>
 
       {users.length === 0 ? (
         <div className="text-center py-12 text-slate-500">No users yet.</div>

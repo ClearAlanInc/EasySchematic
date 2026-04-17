@@ -10,6 +10,7 @@ import MySubmissionsPage from "./pages/MySubmissionsPage";
 import ReviewQueuePage from "./pages/ReviewQueuePage";
 import ReviewDetailPage from "./pages/ReviewDetailPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminActivityPage from "./pages/AdminActivityPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContributorsPage from "./pages/ContributorsPage";
 import UserMenu from "./components/UserMenu";
@@ -26,7 +27,8 @@ function parseRoute(): { page: string; id?: string; draft?: string; clone?: stri
   if (path.startsWith("/admin/edit/")) return { page: "admin-edit", id: path.slice(12), auth };
   if (path === "/admin/edit") return { page: "admin-edit", auth };
   if (path === "/admin/users") return { page: "admin-users", auth };
-  if (path === "/admin") return { page: "admin-users", auth };
+  if (path === "/admin/activity") return { page: "admin-activity", auth };
+  if (path === "/admin") return { page: "admin-activity", auth };
   if (path.startsWith("/device/")) return { page: "device", id: path.slice(8), auth };
   if (path === "/login") return { page: "login", auth };
   if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, clone, auth };
@@ -250,6 +252,9 @@ export default function App() {
         {route.page === "contributors" && <ContributorsPage />}
         {route.page === "admin-users" && (
           isAdmin ? <AdminUsersPage /> : <NoAccess />
+        )}
+        {route.page === "admin-activity" && (
+          isAdmin ? <AdminActivityPage /> : <NoAccess />
         )}
         {route.page === "admin-edit" && <AdminEditorPage id={route.id} />}
       </main>

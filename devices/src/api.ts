@@ -370,3 +370,55 @@ export async function updateUserBan(id: string, banned: boolean): Promise<void> 
   });
   if (!res.ok) throw new Error(`Failed to update ban status: ${res.status}`);
 }
+
+// ==================== MOD ACTIVITY (admin) ====================
+
+export interface ModAction {
+  id: number;
+  moderator_id: string;
+  moderator_email: string;
+  moderator_name: string | null;
+  action: "approve" | "reject" | "defer";
+  submission_id: string | null;
+  template_id: string | null;
+  before_data: string | null;
+  after_data: string | null;
+  submission_data_override: string | null;
+  submission_action: "create" | "update" | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface ModeratorSummary {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+export async function fetchModActivity(opts?: {
+  moderatorId?: string;
+  action?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<ModAction[]> {
+  const params = new URLSearchParams();
+  if (opts?.moderatorId) params.set("moderator_id", opts.moderatorId);
+  if (opts?.action) params.set("action", opts.action);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.offset) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  const res = await fetch(`${API_URL}/admin/mod-activity${qs ? `?${qs}` : ""}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch mod activity: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchModerators(): Promise<ModeratorSummary[]> {
+  const res = await fetch(`${API_URL}/admin/moderators`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch moderators: ${res.status}`);
+  return res.json();
+}

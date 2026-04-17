@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { rowToTemplate, rowToSummary, templateToRow } from "./db";
-import { authMiddleware, sessionMiddleware, requireSession, requireModeratorOrToken, requireAdmin } from "./auth";
+import { authMiddleware, sessionMiddleware, requireSession, requireModeratorOrToken, requireAdmin, requireAdminOrToken } from "./auth";
 import type { Env } from "./auth";
 import { validateTemplate } from "./validate";
 import { checkRateLimit, cleanupExpiredRateLimits } from "./rateLimiter";
@@ -873,12 +873,20 @@ app.post("/submissions/:id/approve", async (c) => {
   // Allow moderator to override submission data with edits
   const body = await c.req.json<{ data?: unknown }>().catch(() => ({}) as { data?: unknown });
   let data = JSON.parse(submission.data);
+  const overrideJson = body.data ? JSON.stringify(body.data) : null;
   if (body.data) {
     const validation = validateTemplate(body.data);
     if (!validation.ok) {
       return c.json({ error: validation.error }, 400);
     }
     data = body.data;
+  }
+
+  // For update actions, snapshot existing template state before mutation (audit log)
+  let beforeData: string | null = null;
+  if (submission.action === "update" && submission.template_id) {
+    const existing = await db.prepare("SELECT * FROM templates WHERE id = ?").bind(submission.template_id).first();
+    beforeData = existing ? JSON.stringify(existing) : null;
   }
 
   let templateId: string | null = null;
@@ -966,6 +974,21 @@ app.post("/submissions/:id/approve", async (c) => {
     .bind(reviewerId, templateId, id)
     .run();
 
+  // Append audit log entry — try/catch so a logging failure never masks a successful approve
+  if (reviewerId) {
+    try {
+      const finalTemplateId = templateId ?? submission.template_id ?? null;
+      await db
+        .prepare(
+          "INSERT INTO mod_actions (moderator_id, action, submission_id, template_id, before_data, after_data, submission_data_override) VALUES (?, 'approve', ?, ?, ?, ?, ?)",
+        )
+        .bind(reviewerId, id, finalTemplateId, beforeData, JSON.stringify(data), overrideJson)
+        .run();
+    } catch (e) {
+      console.error("Failed to write mod_actions audit log for approve:", e);
+    }
+  }
+
   return c.json({ ok: true, status: "approved" }, 200, NO_CACHE_HEADERS);
 });
 
@@ -990,6 +1013,17 @@ app.post("/submissions/:id/reject", async (c) => {
     )
     .bind(reviewerId, body.note ?? null, id)
     .run();
+
+  if (reviewerId) {
+    try {
+      await c.env.easyschematic_db
+        .prepare("INSERT INTO mod_actions (moderator_id, action, submission_id, note) VALUES (?, 'reject', ?, ?)")
+        .bind(reviewerId, id, body.note ?? null)
+        .run();
+    } catch (e) {
+      console.error("Failed to write mod_actions audit log for reject:", e);
+    }
+  }
 
   return c.json({ ok: true, status: "rejected" }, 200, NO_CACHE_HEADERS);
 });
@@ -1016,6 +1050,17 @@ app.post("/submissions/:id/defer", async (c) => {
     )
     .bind(reviewerId, body.note ?? null, id)
     .run();
+
+  if (reviewerId) {
+    try {
+      await c.env.easyschematic_db
+        .prepare("INSERT INTO mod_actions (moderator_id, action, submission_id, note) VALUES (?, 'defer', ?, ?)")
+        .bind(reviewerId, id, body.note ?? null)
+        .run();
+    } catch (e) {
+      console.error("Failed to write mod_actions audit log for defer:", e);
+    }
+  }
 
   return c.json({ ok: true, status: "deferred" }, 200, NO_CACHE_HEADERS);
 });
@@ -1060,6 +1105,56 @@ app.put("/users/:id/ban", async (c) => {
     .bind(body.banned ? 1 : 0, id)
     .run();
   return c.json({ ok: true });
+});
+
+// ==================== MOD ACTIVITY (admin) ====================
+
+app.get("/admin/mod-activity", async (c) => {
+  const admin = requireAdmin(c);
+  if (!admin) return c.json({ error: "Admin access required" }, 403);
+
+  const moderatorId = c.req.query("moderator_id");
+  const action = c.req.query("action");
+  const limit = Math.min(parseInt(c.req.query("limit") || "50", 10), 200);
+  const offset = parseInt(c.req.query("offset") || "0", 10);
+
+  let query = `SELECT m.*, u.email as moderator_email, u.name as moderator_name,
+                      s.data as submission_data, s.action as submission_action
+               FROM mod_actions m
+               JOIN users u ON m.moderator_id = u.id
+               LEFT JOIN submissions s ON m.submission_id = s.id
+               WHERE 1=1`;
+  const binds: (string | number)[] = [];
+
+  if (moderatorId) {
+    query += " AND m.moderator_id = ?";
+    binds.push(moderatorId);
+  }
+  if (action) {
+    query += " AND m.action = ?";
+    binds.push(action);
+  }
+
+  query += " ORDER BY m.created_at DESC LIMIT ? OFFSET ?";
+  binds.push(limit, offset);
+
+  const { results } = await c.env.easyschematic_db
+    .prepare(query)
+    .bind(...binds)
+    .all();
+
+  return c.json(results, 200, NO_CACHE_HEADERS);
+});
+
+app.get("/admin/moderators", async (c) => {
+  const admin = requireAdmin(c);
+  if (!admin) return c.json({ error: "Admin access required" }, 403);
+
+  const { results } = await c.env.easyschematic_db
+    .prepare("SELECT id, email, name, role FROM users WHERE role IN ('moderator', 'admin') ORDER BY name, email")
+    .all();
+
+  return c.json(results, 200, NO_CACHE_HEADERS);
 });
 
 // ==================== CONTRIBUTORS (public) ====================
@@ -1358,8 +1453,8 @@ app.delete("/templates/:id", async (c) => {
 // ==================== SUPPORT EMAIL ENDPOINTS ====================
 
 app.get("/support-emails", async (c) => {
-  const auth = requireModeratorOrToken(c);
-  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireAdminOrToken(c);
+  if (!auth) return c.json({ error: "Admin access required" }, 403);
 
   const status = c.req.query("status");
   const limit = parseInt(c.req.query("limit") || "50", 10);
@@ -1382,8 +1477,8 @@ app.get("/support-emails", async (c) => {
 });
 
 app.get("/support-emails/:id", async (c) => {
-  const auth = requireModeratorOrToken(c);
-  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireAdminOrToken(c);
+  if (!auth) return c.json({ error: "Admin access required" }, 403);
 
   const id = c.req.param("id");
   const row = await c.env.easyschematic_db
@@ -1396,8 +1491,8 @@ app.get("/support-emails/:id", async (c) => {
 });
 
 app.put("/support-emails/:id/status", async (c) => {
-  const auth = requireModeratorOrToken(c);
-  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireAdminOrToken(c);
+  if (!auth) return c.json({ error: "Admin access required" }, 403);
 
   const id = c.req.param("id");
   const body = await c.req.json<{ status?: string }>();
@@ -1422,10 +1517,10 @@ app.put("/support-emails/:id/status", async (c) => {
 });
 
 app.post("/support-emails/:id/reply", async (c) => {
-  const auth = requireModeratorOrToken(c);
-  if (!auth) return c.json({ error: "Moderator access required" }, 403);
+  const auth = requireAdminOrToken(c);
+  if (!auth) return c.json({ error: "Admin access required" }, 403);
 
-  const replyKey = typeof auth === "string" ? "support-reply:token" : `support-reply:${auth.id}`;
+  const replyKey = auth === "token" ? "support-reply:token" : `support-reply:${auth.id}`;
   const limit = await checkRateLimit(c.env.easyschematic_db, replyKey, 30);
   if (!limit.allowed) return c.json({ error: "Too many replies. Try again later." }, 429);
 

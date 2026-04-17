@@ -46,6 +46,7 @@ docs/src/searchIndex.json
 
 # DB backups
 api/backup-*.sql
+backups/
 
 # Wrangler local state
 .wrangler/
