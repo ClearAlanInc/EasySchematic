@@ -21,6 +21,8 @@ interface TemplateInput {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  poeBudgetW?: number;
+  poeDrawW?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -202,6 +204,14 @@ export function validateTemplate(body: unknown): ValidationResult {
     if (vErr) return { ok: false, error: vErr };
   }
 
+  // PoE fields — optional non-negative numbers. Budget = PSE side, Draw = PD side.
+  if (obj.poeBudgetW != null && (typeof obj.poeBudgetW !== "number" || obj.poeBudgetW < 0)) {
+    return { ok: false, error: "poeBudgetW must be a non-negative number" };
+  }
+  if (obj.poeDrawW != null && (typeof obj.poeDrawW !== "number" || obj.poeDrawW < 0)) {
+    return { ok: false, error: "poeDrawW must be a non-negative number" };
+  }
+
   // Physical dimension fields — optional positive numbers
   if (obj.heightMm != null && (typeof obj.heightMm !== "number" || obj.heightMm < 0)) {
     return { ok: false, error: "heightMm must be a non-negative number" };
@@ -234,6 +244,8 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.powerDrawW != null && { powerDrawW: obj.powerDrawW as number }),
       ...(obj.powerCapacityW != null && { powerCapacityW: obj.powerCapacityW as number }),
       ...(obj.voltage != null && { voltage: obj.voltage as string }),
+      ...(obj.poeBudgetW != null && { poeBudgetW: obj.poeBudgetW as number }),
+      ...(obj.poeDrawW != null && { poeDrawW: obj.poeDrawW as number }),
       ...(obj.isVenueProvided != null && { isVenueProvided: obj.isVenueProvided as boolean }),
       ...(obj.heightMm != null && { heightMm: obj.heightMm as number }),
       ...(obj.widthMm != null && { widthMm: obj.widthMm as number }),

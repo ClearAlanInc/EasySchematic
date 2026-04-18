@@ -897,8 +897,8 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order, submitted_by)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order, submitted_by)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         templateRow.id,
@@ -917,6 +917,8 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.power_draw_w,
         templateRow.power_capacity_w,
         templateRow.voltage,
+        templateRow.poe_budget_w,
+        templateRow.poe_draw_w,
         templateRow.is_venue_provided,
         templateRow.height_mm,
         templateRow.width_mm,
@@ -935,7 +937,7 @@ app.post("/submissions/:id/approve", async (c) => {
         `UPDATE templates
          SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
-             power_draw_w = ?, power_capacity_w = ?, voltage = ?, is_venue_provided = ?,
+             power_draw_w = ?, power_capacity_w = ?, voltage = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
              height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?
          WHERE id = ?`,
@@ -956,6 +958,8 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.power_draw_w,
         templateRow.power_capacity_w,
         templateRow.voltage,
+        templateRow.poe_budget_w,
+        templateRow.poe_draw_w,
         templateRow.is_venue_provided,
         templateRow.height_mm,
         templateRow.width_mm,
@@ -1269,7 +1273,7 @@ app.get("/templates/summary", async (c) => {
     .all();
 
   const summaries = results.map((row) => rowToSummary(row as never));
-  return c.json(summaries, 200, CACHE_HEADERS);
+  return c.json(summaries, 200, NO_CACHE_HEADERS);
 });
 
 app.get("/templates", async (c) => {
@@ -1278,7 +1282,7 @@ app.get("/templates", async (c) => {
     .all();
 
   const templates = results.map((row) => rowToTemplate(row as never));
-  return c.json(templates, 200, CACHE_HEADERS);
+  return c.json(templates, 200, NO_CACHE_HEADERS);
 });
 
 app.get("/templates/:id", async (c) => {
@@ -1331,8 +1335,8 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
@@ -1351,6 +1355,8 @@ app.post("/templates", async (c) => {
       row.power_draw_w,
       row.power_capacity_w,
       row.voltage,
+      row.poe_budget_w,
+      row.poe_draw_w,
       row.is_venue_provided,
       row.height_mm,
       row.width_mm,
@@ -1394,7 +1400,7 @@ app.put("/templates/:id", async (c) => {
       `UPDATE templates
      SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
          color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
-         power_draw_w = ?, power_capacity_w = ?, voltage = ?, is_venue_provided = ?,
+         power_draw_w = ?, power_capacity_w = ?, voltage = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
          height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, sort_order = ?,
          version = version + 1, updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`,
@@ -1415,6 +1421,8 @@ app.put("/templates/:id", async (c) => {
       row.power_draw_w,
       row.power_capacity_w,
       row.voltage,
+      row.poe_budget_w,
+      row.poe_draw_w,
       row.is_venue_provided,
       row.height_mm,
       row.width_mm,

@@ -34,6 +34,8 @@ allTemplates.forEach((t, i) => {
   const powerDrawW = t.powerDrawW != null ? `${t.powerDrawW}` : "NULL";
   const powerCapacityW = t.powerCapacityW != null ? `${t.powerCapacityW}` : "NULL";
   const voltage = t.voltage ? `'${escapeSQL(t.voltage)}'` : "NULL";
+  const poeBudgetW = t.poeBudgetW != null ? `${t.poeBudgetW}` : "NULL";
+  const poeDrawW = t.poeDrawW != null ? `${t.poeDrawW}` : "NULL";
   const isVenueProvided = t.isVenueProvided ? "1" : "NULL";
   const heightMm = t.heightMm != null ? `${t.heightMm}` : "NULL";
   const widthMm = t.widthMm != null ? `${t.widthMm}` : "NULL";
@@ -41,7 +43,7 @@ allTemplates.forEach((t, i) => {
   const weightKg = t.weightKg != null ? `${t.weightKg}` : "NULL";
 
   lines.push(
-    `INSERT OR REPLACE INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${category}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${referenceUrl}, ${searchTerms}, '${ports}', ${slots}, ${slotFamily}, ${powerDrawW}, ${powerCapacityW}, ${voltage}, ${isVenueProvided}, ${heightMm}, ${widthMm}, ${depthMm}, ${weightKg}, ${i});`
+    `INSERT OR REPLACE INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order) VALUES ('${escapeSQL(id)}', ${version}, '${deviceType}', '${category}', '${label}', ${manufacturer}, ${modelNumber}, ${color}, ${imageUrl}, ${referenceUrl}, ${searchTerms}, '${ports}', ${slots}, ${slotFamily}, ${powerDrawW}, ${powerCapacityW}, ${voltage}, ${poeBudgetW}, ${poeDrawW}, ${isVenueProvided}, ${heightMm}, ${widthMm}, ${depthMm}, ${weightKg}, ${i});`
   );
 });
 

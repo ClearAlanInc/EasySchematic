@@ -153,6 +153,8 @@ export interface Port {
   poeDrawW?: number;
   /** Link speed for network ports */
   linkSpeed?: string;
+  /** Stable link back to the template port this was cloned from — used for template-sync reconciliation. */
+  templatePortId?: string;
 }
 
 export interface SlotDefinition {
@@ -203,8 +205,10 @@ export interface DeviceData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
-  /** PoE budget in watts (for network switches) */
+  /** PoE budget in watts (for network switches — power this device *supplies* over PoE) */
   poeBudgetW?: number;
+  /** PoE draw in watts (power this device *consumes* over PoE, e.g. a camera or AP) */
+  poeDrawW?: number;
   /** Unit cost in dollars (optional, for BOM/quoting) */
   unitCost?: number;
   isVenueProvided?: boolean;
@@ -331,7 +335,8 @@ export interface DeviceTemplate {
   powerCapacityW?: number;       // Total supply capacity in watts (distros only)
   voltage?: string;              // Informational: "100-240V", "208V", "120V"
   isVenueProvided?: boolean;     // Venue-owned gear — excluded from pack list
-  poeBudgetW?: number;           // PoE budget in watts (switches only)
+  poeBudgetW?: number;           // PoE budget in watts (switches/PSEs supplying PoE)
+  poeDrawW?: number;             // PoE draw in watts (PDs consuming PoE — cameras, APs, etc.)
   unitCost?: number;             // MSRP / default unit cost in dollars
   heightMm?: number;             // Physical height in millimeters — reserved for future rack management
   widthMm?: number;              // Physical width in millimeters — reserved for future rack management

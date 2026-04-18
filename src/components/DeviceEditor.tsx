@@ -17,8 +17,10 @@ import {
 } from "../types";
 import { DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES } from "../connectorTypes";
 import { getBundledTemplates, getCardsByFamily, checkSession, createDraft, createHandoff } from "../templateApi";
+import { getTemplateDrift } from "../templateSync";
 import LoginDialog from "./LoginDialog";
 import CardCreatorDialog from "./CardCreatorDialog";
+import TemplateSyncDialog from "./TemplateSyncDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
 import { AUX_FIELD_GROUPS, resolveAuxiliaryLine } from "../auxiliaryData";
@@ -66,6 +68,8 @@ export default function DeviceEditor() {
   const creatingNodeId = useSchematicStore((s) => s.creatingNodeId);
   const nodes = useSchematicStore((s) => s.nodes);
   const updateDevice = useSchematicStore((s) => s.updateDevice);
+  const syncDeviceFromTemplate = useSchematicStore((s) => s.syncDeviceFromTemplate);
+  const edges = useSchematicStore((s) => s.edges);
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
   const setCreatingNodeId = useSchematicStore((s) => s.setCreatingNodeId);
   const undo = useSchematicStore((s) => s.undo);
@@ -99,6 +103,7 @@ export default function DeviceEditor() {
   const [powerCapacityW, setPowerCapacityW] = useState<number | undefined>(undefined);
   const [voltage, setVoltage] = useState<string | undefined>(undefined);
   const [poeBudgetW, setPoeBudgetW] = useState<number | undefined>(undefined);
+  const [poeDrawW, setPoeDrawW] = useState<number | undefined>(undefined);
 
   // Cost
   const [unitCost, setUnitCost] = useState<number | undefined>(undefined);
@@ -132,6 +137,7 @@ export default function DeviceEditor() {
 
   // Login dialog for community submission
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showSyncDialog, setShowSyncDialog] = useState(false);
 
   // Drag state — which port is being dragged and where it would drop
   const [draggedPortId, setDraggedPortId] = useState<string | null>(null);
@@ -174,6 +180,7 @@ export default function DeviceEditor() {
     setPowerCapacityW(node.data.powerCapacityW);
     setVoltage(node.data.voltage);
     setPoeBudgetW(node.data.poeBudgetW);
+    setPoeDrawW(node.data.poeDrawW);
     setUnitCost(node.data.unitCost);
     setHeightMm(node.data.heightMm);
     setWidthMm(node.data.widthMm);
@@ -236,6 +243,7 @@ export default function DeviceEditor() {
       ...(powerDrawW != null ? { powerDrawW } : {}),
       ...(powerCapacityW != null ? { powerCapacityW } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
+      ...(poeDrawW != null ? { poeDrawW } : {}),
       ...(voltage ? { voltage } : {}),
       ...(unitCost != null ? { unitCost } : {}),
       ...(heightMm != null ? { heightMm } : {}),
@@ -253,7 +261,7 @@ export default function DeviceEditor() {
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
+  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -285,8 +293,9 @@ export default function DeviceEditor() {
       ...(existing?.modelNumber ? { modelNumber: existing.modelNumber } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
+      ...(poeDrawW != null ? { poeDrawW } : {}),
     });
-  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW, deviceType, color, manufacturer]);
+  }, [ports, label, hostname, node, addCustomTemplate, poeBudgetW, poeDrawW, deviceType, color, manufacturer]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -316,6 +325,7 @@ export default function DeviceEditor() {
       ...(existing?.slotFamily ? { slotFamily: existing.slotFamily } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
+      ...(poeDrawW != null ? { poeDrawW } : {}),
     };
 
     const devicesUrl = import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
@@ -342,7 +352,7 @@ export default function DeviceEditor() {
     } catch (e) {
       console.error("Failed to create draft:", e);
     }
-  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, manufacturer]);
+  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer]);
 
   const handleSaveAsPreset = useCallback(() => {
     if (!editingNodeId || !node?.data.templateId) return;
@@ -528,6 +538,7 @@ export default function DeviceEditor() {
 
   if (!editingNodeId || !node) return null;
 
+  const drift = getTemplateDrift(node.data, customTemplates);
   const hasPreset = !!(templateId && templatePresets[templateId]);
   const inputs = ports.filter((p) => p.direction === "input");
   const outputs = ports.filter((p) => p.direction === "output");
@@ -548,6 +559,21 @@ export default function DeviceEditor() {
             &times;
           </button>
         </div>
+
+        {/* Template-drift notice */}
+        {drift && (
+          <div className="px-4 py-2 border-b border-[var(--color-border)] bg-blue-50 flex items-center justify-between gap-2">
+            <span className="text-xs text-blue-900">
+              Template updated — v{drift.deviceVersion} → v{drift.currentVersion} available
+            </span>
+            <button
+              onClick={() => setShowSyncDialog(true)}
+              className="px-2.5 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+            >
+              Update
+            </button>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -816,6 +842,29 @@ export default function DeviceEditor() {
                   />
                 )}
               </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={poeDrawW != null}
+                    onChange={(e) => setPoeDrawW(e.target.checked ? 0 : undefined)}
+                    className="cursor-pointer"
+                  />
+                  Powered by PoE
+                </label>
+                {poeDrawW != null && (
+                  <input
+                    className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                    type="number"
+                    value={poeDrawW || ""}
+                    onChange={(e) => setPoeDrawW(e.target.value ? Number(e.target.value) : 0)}
+                    placeholder="Draw (W)"
+                    min={0}
+                    step={0.1}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                )}
+              </div>
             </>
           )}
 
@@ -927,6 +976,7 @@ export default function DeviceEditor() {
                   powerDrawW,
                   powerCapacityW,
                   poeBudgetW,
+                  poeDrawW,
                   voltage,
                   weightKg,
                   widthMm,
@@ -1137,6 +1187,19 @@ export default function DeviceEditor() {
         </div>
       </div>
       <LoginDialog open={showLoginDialog} onClose={() => setShowLoginDialog(false)} />
+      {showSyncDialog && drift && editingNodeId && (
+        <TemplateSyncDialog
+          deviceId={editingNodeId}
+          device={node.data}
+          template={drift.template}
+          edges={edges}
+          onConfirm={() => {
+            syncDeviceFromTemplate(editingNodeId);
+            setShowSyncDialog(false);
+          }}
+          onCancel={() => setShowSyncDialog(false)}
+        />
+      )}
     </div>
   );
 }

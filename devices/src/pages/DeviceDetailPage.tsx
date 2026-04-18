@@ -117,7 +117,7 @@ export default function DeviceDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {(template.powerDrawW != null || template.powerCapacityW != null || template.voltage) && (
+      {(template.powerDrawW != null || template.powerCapacityW != null || template.voltage || template.poeBudgetW != null || template.poeDrawW != null) && (
         <div className="mb-6 flex flex-wrap gap-4">
           {template.powerDrawW != null && (
             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -141,6 +141,12 @@ export default function DeviceDetailPage({ id }: { id: string }) {
             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
               <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">PoE Budget</div>
               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{template.poeBudgetW}W</div>
+            </div>
+          )}
+          {template.poeDrawW != null && (
+            <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">PoE Draw</div>
+              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{template.poeDrawW}W</div>
             </div>
           )}
         </div>

@@ -19,6 +19,7 @@ interface TemplateOutput {
   powerCapacityW?: number;
   voltage?: string;
   poeBudgetW?: number;
+  poeDrawW?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -46,6 +47,7 @@ export interface TemplateRow {
   power_capacity_w: number | null;
   voltage: string | null;
   poe_budget_w: number | null;
+  poe_draw_w: number | null;
   is_venue_provided: number | null;
   height_mm: number | null;
   width_mm: number | null;
@@ -73,6 +75,7 @@ interface TemplateInput {
   powerCapacityW?: number;
   voltage?: string;
   poeBudgetW?: number;
+  poeDrawW?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -101,6 +104,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     power_capacity_w: input.powerCapacityW ?? null,
     voltage: input.voltage ?? null,
     poe_budget_w: input.poeBudgetW ?? null,
+    poe_draw_w: input.poeDrawW ?? null,
     is_venue_provided: input.isVenueProvided ? 1 : null,
     height_mm: input.heightMm ?? null,
     width_mm: input.widthMm ?? null,
@@ -163,6 +167,7 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.power_capacity_w != null && { powerCapacityW: row.power_capacity_w }),
     ...(row.voltage && { voltage: row.voltage }),
     ...(row.poe_budget_w != null && { poeBudgetW: row.poe_budget_w }),
+    ...(row.poe_draw_w != null && { poeDrawW: row.poe_draw_w }),
     ...(row.is_venue_provided && { isVenueProvided: true }),
     ...(row.height_mm != null && { heightMm: row.height_mm }),
     ...(row.width_mm != null && { widthMm: row.width_mm }),

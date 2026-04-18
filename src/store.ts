@@ -37,6 +37,7 @@ import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getTemplateById } from "./templateApi";
+import { syncDeviceWithTemplate, type SyncResult } from "./templateSync";
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
 import { computeCableSchedule } from "./cableSchedule";
 
@@ -193,6 +194,8 @@ interface SchematicState {
   updateDevice: (nodeId: string, data: DeviceData) => void;
   /** Patch device data without clearing baseLabel (for spreadsheet edits). */
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
+  /** Reconcile a placed device against the latest version of its source template. */
+  syncDeviceFromTemplate: (nodeId: string) => SyncResult | null;
   /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
   swapCard: (nodeId: string, slotId: string, cardTemplateId: string | null) => void;
   /** Add a new empty expansion slot to a device. */
@@ -1038,12 +1041,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       // Clone preset ports, then map preset hiddenPorts through old→new ID mapping
       const cloned = clonePorts(preset.ports);
       const idMap = new Map<string, string>();
-      preset.ports.forEach((p, i) => { idMap.set(p.id, cloned[i].id); });
+      preset.ports.forEach((p, i) => {
+        idMap.set(p.id, cloned[i].id);
+        // Preserve templatePortId across the preset → placement clone.
+        if (p.templatePortId) cloned[i].templatePortId = p.templatePortId;
+      });
       ports = cloned;
       hiddenPorts = preset.hiddenPorts?.map((id) => idMap.get(id) ?? id).filter((id) => cloned.some((p) => p.id === id));
       color = preset.color ?? template.color;
     } else {
       ports = clonePorts(template.ports);
+      // Stamp templatePortId so sync can reconcile even if port IDs drift.
+      ports.forEach((p, i) => { p.templatePortId = template.ports[i].id; });
     }
 
     // Initialize expansion slots from template (recursively handles sub-slots)
@@ -1073,6 +1082,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ...(template.powerCapacityW != null ? { powerCapacityW: template.powerCapacityW } : {}),
         ...(template.voltage ? { voltage: template.voltage } : {}),
         ...(template.poeBudgetW != null ? { poeBudgetW: template.poeBudgetW } : {}),
+        ...(template.poeDrawW != null ? { poeDrawW: template.poeDrawW } : {}),
+        ...(template.heightMm != null ? { heightMm: template.heightMm } : {}),
+        ...(template.widthMm != null ? { widthMm: template.widthMm } : {}),
+        ...(template.depthMm != null ? { depthMm: template.depthMm } : {}),
+        ...(template.weightKg != null ? { weightKg: template.weightKg } : {}),
         ...(template.hostname ? { hostname: template.hostname } : {}),
         ...(hiddenPorts && hiddenPorts.length > 0 ? { hiddenPorts } : {}),
         ...(template.isVenueProvided ? { isVenueProvided: true } : {}),
@@ -1501,6 +1515,27 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       }),
     });
     get().saveToLocalStorage();
+  },
+
+  syncDeviceFromTemplate: (nodeId) => {
+    const state = get();
+    const node = state.nodes.find((n) => n.id === nodeId && n.type === "device") as DeviceNode | undefined;
+    if (!node?.data.templateId) return null;
+    const template = getTemplateById(node.data.templateId, state.customTemplates);
+    if (!template || template.version == null) return null;
+
+    const result = syncDeviceWithTemplate(node.data, template, nodeId, state.edges);
+
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId && n.type === "device"
+          ? ({ ...n, data: result.updatedData } as DeviceNode)
+          : n,
+      ),
+    });
+    get().saveToLocalStorage();
+    return result;
   },
 
   swapCard: (nodeId, slotId, cardTemplateId) => {

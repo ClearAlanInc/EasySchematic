@@ -38,6 +38,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
   const [editPowerCapacityW, setEditPowerCapacityW] = useState("");
   const [editVoltage, setEditVoltage] = useState("");
   const [editPoeBudgetW, setEditPoeBudgetW] = useState("");
+  const [editPoeDrawW, setEditPoeDrawW] = useState("");
   const [editHeightMm, setEditHeightMm] = useState("");
   const [editWidthMm, setEditWidthMm] = useState("");
   const [editDepthMm, setEditDepthMm] = useState("");
@@ -83,6 +84,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
     setEditPowerCapacityW((d as Record<string, unknown>).powerCapacityW != null ? String((d as Record<string, unknown>).powerCapacityW) : "");
     setEditVoltage((d as Record<string, unknown>).voltage as string ?? "");
     setEditPoeBudgetW((d as Record<string, unknown>).poeBudgetW != null ? String((d as Record<string, unknown>).poeBudgetW) : "");
+    setEditPoeDrawW((d as Record<string, unknown>).poeDrawW != null ? String((d as Record<string, unknown>).poeDrawW) : "");
     setEditHeightMm((d as Record<string, unknown>).heightMm != null ? String((d as Record<string, unknown>).heightMm) : "");
     setEditWidthMm((d as Record<string, unknown>).widthMm != null ? String((d as Record<string, unknown>).widthMm) : "");
     setEditDepthMm((d as Record<string, unknown>).depthMm != null ? String((d as Record<string, unknown>).depthMm) : "");
@@ -112,6 +114,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
           ...(editPowerCapacityW.trim() && { powerCapacityW: Number(editPowerCapacityW) }),
           ...(editVoltage.trim() && { voltage: editVoltage.trim() }),
           ...(editPoeBudgetW.trim() && { poeBudgetW: Number(editPoeBudgetW) }),
+          ...(editPoeDrawW.trim() && { poeDrawW: Number(editPoeDrawW) }),
           ...(editHeightMm.trim() && { heightMm: Number(editHeightMm) }),
           ...(editWidthMm.trim() && { widthMm: Number(editWidthMm) }),
           ...(editDepthMm.trim() && { depthMm: Number(editDepthMm) }),
@@ -536,6 +539,9 @@ function DeviceInfo({ data, compare, side }: DeviceInfoProps) {
       )}
       {extra.poeBudgetW != null && (
         <div className={dExtra("poeBudgetW")}><span className="text-slate-500">PoE Budget:</span> {String(extra.poeBudgetW)}W</div>
+      )}
+      {extra.poeDrawW != null && (
+        <div className={dExtra("poeDrawW")}><span className="text-slate-500">PoE Draw:</span> {String(extra.poeDrawW)}W</div>
       )}
       {data.voltage && (
         <div className={d("voltage")}><span className="text-slate-500">Voltage:</span> {data.voltage}</div>

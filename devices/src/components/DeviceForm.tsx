@@ -26,6 +26,7 @@ export interface DeviceFormData {
   powerCapacityW?: number;
   voltage?: string;
   poeBudgetW?: number;
+  poeDrawW?: number;
   heightMm?: number;
   widthMm?: number;
   depthMm?: number;
@@ -69,6 +70,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
   const [powerCapacityW, setPowerCapacityW] = useState<string>("");
   const [voltage, setVoltage] = useState("");
   const [poeBudgetW, setPoeBudgetW] = useState<string>("");
+  const [poeDrawW, setPoeDrawW] = useState<string>("");
   const [heightMm, setHeightMm] = useState<string>("");
   const [widthMm, setWidthMm] = useState<string>("");
   const [depthMm, setDepthMm] = useState<string>("");
@@ -121,6 +123,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
         setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
         setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
@@ -152,6 +155,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
         setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
         setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
@@ -182,6 +186,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage((t.voltage as string) ?? "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
         setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
         setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
@@ -230,6 +235,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         ...(powerCapacityW.trim() && { powerCapacityW: Number(powerCapacityW) }),
         ...(voltage.trim() && { voltage: voltage.trim() }),
         ...(poeBudgetW.trim() && { poeBudgetW: Number(poeBudgetW) }),
+        ...(poeDrawW.trim() && { poeDrawW: Number(poeDrawW) }),
         ...(heightMm.trim() && { heightMm: Number(heightMm) }),
         ...(widthMm.trim() && { widthMm: Number(widthMm) }),
         ...(depthMm.trim() && { depthMm: Number(depthMm) }),
@@ -412,6 +418,13 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
             <span className="block text-sm font-medium text-slate-700 mb-1">PoE Budget (W)</span>
             <input type="number" min="0" value={poeBudgetW} onChange={(e) => setPoeBudgetW(e.target.value)} placeholder="e.g. 370" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <span className="text-xs text-slate-400 mt-1 block">Total PoE power budget (0 or empty = no PoE)</span>
+          </label>
+        )}
+        {ports.some((p) => p.connectorType === "rj45" || p.connectorType === "ethercon") && (
+          <label>
+            <span className="block text-sm font-medium text-slate-700 mb-1">PoE Draw (W)</span>
+            <input type="number" min="0" step="0.1" value={poeDrawW} onChange={(e) => setPoeDrawW(e.target.value)} placeholder="e.g. 12.95" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span className="text-xs text-slate-400 mt-1 block">Power this device consumes via PoE (leave blank if not PoE-powered)</span>
           </label>
         )}
         {category === "Expansion Cards" && (
