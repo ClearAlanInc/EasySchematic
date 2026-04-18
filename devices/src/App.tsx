@@ -177,15 +177,15 @@ export default function App() {
           )}
         </>
       )}
+      {!authLoading && user && isMod && (
+        <a href="/admin/activity" onClick={linkClick} className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
+          Mod Activity
+        </a>
+      )}
       {isAdmin && (
-        <>
-          <a href="/admin/pending-deletions" onClick={linkClick} className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">
-            Pending Deletion
-          </a>
-          <a href="/admin" onClick={linkClick} className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
-            Admin
-          </a>
-        </>
+        <a href="/admin/pending-deletions" onClick={linkClick} className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">
+          Pending Deletion
+        </a>
       )}
       {!authLoading && (
         user ? (
@@ -261,7 +261,7 @@ export default function App() {
           isAdmin ? <AdminUsersPage /> : <NoAccess />
         )}
         {route.page === "admin-activity" && (
-          isAdmin ? <AdminActivityPage /> : <NoAccess />
+          isMod ? <AdminActivityPage currentUser={user} /> : <NoAccess />
         )}
         {route.page === "admin-pending-deletions" && (
           isAdmin ? <PendingDeletionsPage /> : <NoAccess />

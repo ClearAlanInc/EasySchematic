@@ -1124,15 +1124,17 @@ app.put("/users/:id/ban", async (c) => {
 // ==================== MOD ACTIVITY (admin) ====================
 
 app.get("/admin/mod-activity", async (c) => {
-  const admin = requireAdmin(c);
-  if (!admin) return c.json({ error: "Admin access required" }, 403);
+  const mod = requireModerator(c);
+  if (!mod) return c.json({ error: "Moderator access required" }, 403);
 
   const moderatorId = c.req.query("moderator_id");
   const action = c.req.query("action");
   const limit = Math.min(parseInt(c.req.query("limit") || "50", 10), 200);
   const offset = parseInt(c.req.query("offset") || "0", 10);
 
-  let query = `SELECT m.*, u.email as moderator_email, u.name as moderator_name,
+  // moderator_email is intentionally omitted from the response — mods see each
+  // other's actions here, but emails live on the admin-only /users endpoint.
+  let query = `SELECT m.*, u.name as moderator_name,
                       s.data as submission_data, s.action as submission_action
                FROM mod_actions m
                JOIN users u ON m.moderator_id = u.id
@@ -1161,11 +1163,12 @@ app.get("/admin/mod-activity", async (c) => {
 });
 
 app.get("/admin/moderators", async (c) => {
-  const admin = requireAdmin(c);
-  if (!admin) return c.json({ error: "Admin access required" }, 403);
+  const mod = requireModerator(c);
+  if (!mod) return c.json({ error: "Moderator access required" }, 403);
 
+  // Email intentionally omitted — mods see peers by display name only.
   const { results } = await c.env.easyschematic_db
-    .prepare("SELECT id, email, name, role FROM users WHERE role IN ('moderator', 'admin') ORDER BY name, email")
+    .prepare("SELECT id, name, role FROM users WHERE role IN ('moderator', 'admin') ORDER BY name")
     .all();
 
   return c.json(results, 200, NO_CACHE_HEADERS);

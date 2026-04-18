@@ -1,6 +1,6 @@
 import { Fragment, useState, useEffect } from "react";
 import { fetchModActivity, fetchModerators } from "../api";
-import type { ModAction, ModeratorSummary } from "../api";
+import type { ModAction, ModeratorSummary, User } from "../api";
 import { linkClick } from "../navigate";
 
 const ACTION_COLORS: Record<string, string> = {
@@ -44,7 +44,8 @@ function RelativeTime({ iso }: { iso: string }) {
   return <span>{days}d ago</span>;
 }
 
-export default function AdminActivityPage() {
+export default function AdminActivityPage({ currentUser }: { currentUser?: User | null } = {}) {
+  const isAdmin = currentUser?.role === "admin";
   const [actions, setActions] = useState<ModAction[]>([]);
   const [moderators, setModerators] = useState<ModeratorSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,9 +85,11 @@ export default function AdminActivityPage() {
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Moderator Activity</h1>
-        <a href="/admin/users" onClick={linkClick} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-          Manage Users
-        </a>
+        {isAdmin && (
+          <a href="/admin/users" onClick={linkClick} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Manage Users
+          </a>
+        )}
       </div>
 
       {/* Filters */}
@@ -99,7 +102,7 @@ export default function AdminActivityPage() {
           <option value="">All moderators</option>
           {moderators.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name || m.email} ({m.role})
+              {m.name || "Moderator"} ({m.role})
             </option>
           ))}
         </select>
@@ -169,7 +172,7 @@ export default function AdminActivityPage() {
                           </div>
                         </td>
                         <td className="py-2 px-3 text-slate-700 dark:text-slate-200">
-                          {a.moderator_name || a.moderator_email}
+                          {a.moderator_name || "Moderator"}
                         </td>
                         <td className="py-2 px-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[a.action] || "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
@@ -293,7 +296,7 @@ function DetailPanel({ action, onClose }: { action: ModAction; onClose: () => vo
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          {header} · {action.moderator_name || action.moderator_email}
+          {header} · {action.moderator_name || "Moderator"}
         </h3>
         <button
           onClick={onClose}

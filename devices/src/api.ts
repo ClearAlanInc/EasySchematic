@@ -390,7 +390,7 @@ export async function updateUserBan(id: string, banned: boolean): Promise<void> 
 export interface ModAction {
   id: number;
   moderator_id: string;
-  moderator_email: string;
+  moderator_email?: string | null; // Omitted by the server; kept optional for back-compat.
   moderator_name: string | null;
   // Action taxonomy (string, not narrowed union — taxonomy grows over time):
   //   approve, reject, defer, edit, send_back,
@@ -410,7 +410,6 @@ export interface ModAction {
 
 export interface ModeratorSummary {
   id: string;
-  email: string;
   name: string | null;
   role: string;
 }
