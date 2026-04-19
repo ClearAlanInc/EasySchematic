@@ -1,6 +1,7 @@
 import type { DeviceData, SchematicNode } from "./types";
 
 import { GRID_SIZE } from "./store";
+import { totalAuxHeight } from "./auxiliaryData";
 
 // Must be >= half the grid size so alignment snapping works with grid-snapped positions.
 // React Flow's snapToGrid moves nodes in GRID_SIZE increments, so we need to catch
@@ -36,11 +37,9 @@ function estimateDeviceHeight(node: SchematicNode): number {
   const right = ports.filter((p) => p.direction !== "bidirectional" && (p.direction === "output" ? !p.flipped : !!p.flipped)).length;
   const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
   const portRows = Math.max(left, right) + bidirs;
-  // Device height = 1px border + 40px header + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20
-  // Auxiliary data: border-t(1) + N×12px lines, padded to next multiple of 20
-  const auxLines = (data.auxiliaryData ?? []).filter((l) => l.trim()).length;
-  const auxHeight = auxLines > 0 ? Math.ceil((1 + auxLines * 12) / 20) * 20 : 0;
-  return 60 + portRows * 20 + auxHeight;
+  // Base: 1px border + 40px header band (min) + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20.
+  // totalAuxHeight adds (a) header band surplus above the 40-px baseline and (b) footer block height.
+  return 60 + portRows * 20 + totalAuxHeight(data.auxiliaryData);
 }
 
 function nodeRect(node: SchematicNode): Rect {

@@ -25,6 +25,12 @@ interface TemplateOutput {
   widthMm?: number;
   depthMm?: number;
   weightKg?: number;
+  auxiliaryData?: AuxRow[];
+}
+
+export interface AuxRow {
+  text: string;
+  position?: "header" | "footer";
 }
 
 export interface TemplateRow {
@@ -53,6 +59,7 @@ export interface TemplateRow {
   width_mm: number | null;
   depth_mm: number | null;
   weight_kg: number | null;
+  auxiliary_data: string | null;
   sort_order: number;
   flagged_for_deletion?: number;
   flagged_for_deletion_reason?: string | null;
@@ -85,6 +92,7 @@ interface TemplateInput {
   widthMm?: number;
   depthMm?: number;
   weightKg?: number;
+  auxiliaryData?: AuxRow[];
   sortOrder?: number;
 }
 
@@ -114,6 +122,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     width_mm: input.widthMm ?? null,
     depth_mm: input.depthMm ?? null,
     weight_kg: input.weightKg ?? null,
+    auxiliary_data: input.auxiliaryData ? JSON.stringify(input.auxiliaryData) : null,
     sort_order: input.sortOrder ?? 0,
   };
 }
@@ -177,5 +186,6 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.width_mm != null && { widthMm: row.width_mm }),
     ...(row.depth_mm != null && { depthMm: row.depth_mm }),
     ...(row.weight_kg != null && { weightKg: row.weight_kg }),
+    ...(row.auxiliary_data && { auxiliaryData: JSON.parse(row.auxiliary_data) as AuxRow[] }),
   };
 }

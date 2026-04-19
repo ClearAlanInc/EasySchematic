@@ -10,6 +10,7 @@ import {
   type PortDirection,
   type PortNetworkConfig,
   type PortCapabilities,
+  type AuxRow,
   type DeviceData,
   type DeviceNode,
   type DhcpServerConfig,
@@ -23,7 +24,7 @@ import CardCreatorDialog from "./CardCreatorDialog";
 import TemplateSyncDialog from "./TemplateSyncDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
-import { AUX_FIELD_GROUPS, resolveAuxiliaryLine } from "../auxiliaryData";
+import { AUX_FIELD_GROUPS, normalizeAuxRows, resolveAuxiliaryLine, trimTrailingEmpty } from "../auxiliaryData";
 
 const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
   (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
@@ -122,8 +123,8 @@ export default function DeviceEditor() {
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [adapterVisibility, setAdapterVisibility] = useState<"default" | "force-show" | "force-hide">("default");
 
-  // Auxiliary data lines
-  const [auxiliaryData, setAuxiliaryData] = useState<string[]>([]);
+  // Auxiliary data rows — each row carries its own header/footer slot.
+  const [auxiliaryData, setAuxiliaryData] = useState<AuxRow[]>([]);
   const [auxFieldMenuIdx, setAuxFieldMenuIdx] = useState<number | null>(null);
   const auxInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const auxMenuRef = useRef<HTMLDivElement | null>(null);
@@ -198,7 +199,7 @@ export default function DeviceEditor() {
     setIntegratedWithCable(node.data.integratedWithCable ?? false);
     setIsVenueProvided(node.data.isVenueProvided ?? false);
     setAdapterVisibility(node.data.adapterVisibility ?? "default");
-    setAuxiliaryData(node.data.auxiliaryData ?? []);
+    setAuxiliaryData(normalizeAuxRows(node.data.auxiliaryData));
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -270,7 +271,10 @@ export default function DeviceEditor() {
       ...(adapterVisibility !== "default" ? { adapterVisibility } : {}),
       ...(existing?.baseLabel ? { baseLabel: existing.baseLabel } : {}),
       ...(existing?.slots ? { slots: existing.slots } : {}),
-      ...(auxiliaryData.filter((line) => line.trim()).length > 0 ? { auxiliaryData: auxiliaryData.filter((line) => line.trim()) } : {}),
+      ...((() => {
+        const trimmed = trimTrailingEmpty(auxiliaryData);
+        return trimmed.some((r) => r.text.trim()) ? { auxiliaryData: trimmed } : {};
+      })()),
     };
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
@@ -295,6 +299,9 @@ export default function DeviceEditor() {
         label: p.label.trim(),
       }));
 
+    const trimmedAux = trimTrailingEmpty(auxiliaryData);
+    const existing = node?.data;
+
     addCustomTemplate({
       id: `custom-${Date.now()}`,
       deviceType: deviceType.trim() || "custom",
@@ -306,10 +313,33 @@ export default function DeviceEditor() {
       ...(modelNumber.trim() ? { modelNumber: modelNumber.trim() } : {}),
       ...(referenceUrl.trim() ? { referenceUrl: referenceUrl.trim() } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
+      ...(powerDrawW != null ? { powerDrawW } : {}),
+      ...(powerCapacityW != null ? { powerCapacityW } : {}),
+      ...(voltage ? { voltage } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(poeDrawW != null ? { poeDrawW } : {}),
+      ...(unitCost != null ? { unitCost } : {}),
+      ...(heightMm != null ? { heightMm } : {}),
+      ...(widthMm != null ? { widthMm } : {}),
+      ...(depthMm != null ? { depthMm } : {}),
+      ...(weightKg != null ? { weightKg } : {}),
+      ...(isVenueProvided ? { isVenueProvided: true } : {}),
+      // Convert InstalledSlot[] back to the blueprint SlotDefinition[] that DeviceTemplate
+      // expects — card selections are per-placement, not part of the template spec.
+      ...(existing?.slots && existing.slots.length > 0
+        ? {
+            slots: existing.slots.map((s) => ({
+              id: s.slotId,
+              label: s.label,
+              slotFamily: s.slotFamily ?? "",
+              ...(s.cardTemplateId ? { defaultCardId: s.cardTemplateId } : {}),
+            })),
+          }
+        : {}),
+      ...(existing?.slotFamily ? { slotFamily: existing.slotFamily as string } : {}),
+      ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
     });
-  }, [ports, label, hostname, addCustomTemplate, poeBudgetW, poeDrawW, deviceType, color, manufacturer, modelNumber, referenceUrl, category]);
+  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -325,6 +355,8 @@ export default function DeviceEditor() {
     const existing = node?.data;
     let dt = deviceType.trim() || "custom";
     if (dt.startsWith("custom-")) dt = "";
+
+    const trimmedAux = trimTrailingEmpty(auxiliaryData);
 
     const draftData: Record<string, unknown> = {
       label: label.trim() || "Custom Device",
@@ -348,6 +380,7 @@ export default function DeviceEditor() {
       ...(depthMm != null ? { depthMm } : {}),
       ...(weightKg != null ? { weightKg } : {}),
       ...(isVenueProvided ? { isVenueProvided: true } : {}),
+      ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
     };
 
     const devicesUrl = import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
@@ -374,7 +407,7 @@ export default function DeviceEditor() {
     } catch (e) {
       console.error("Failed to create draft:", e);
     }
-  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, heightMm, widthMm, depthMm, weightKg, isVenueProvided]);
+  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData]);
 
   const handleSaveAsPreset = useCallback(() => {
     if (!editingNodeId || !node?.data.templateId) return;
@@ -1011,7 +1044,7 @@ export default function DeviceEditor() {
             </summary>
             <div className="flex flex-col gap-1.5 pt-1 pl-2">
               <p className="text-[10px] text-[var(--color-text-muted)] -mb-0.5">
-                Up to 5 custom lines (displayed at bottom of device). Use the <span className="font-mono">+</span> button to insert a device field.
+                Up to 5 custom lines. Use the <span className="font-mono">+</span> button to insert a device field. Leave a line blank to add a separator. Toggle <span className="font-mono">H</span>/<span className="font-mono">F</span> to pin a row to the header or footer of the device.
               </p>
               {(() => {
                 const previewDevice = {
@@ -1033,9 +1066,17 @@ export default function DeviceEditor() {
                   ports,
                 } as unknown as DeviceData;
                 return [0, 1, 2, 3, 4].map((i) => {
-                  const line = auxiliaryData[i] ?? "";
-                  const hasToken = line.indexOf("{{") !== -1;
-                  const preview = hasToken ? resolveAuxiliaryLine(line, previewDevice) : "";
+                  const row = auxiliaryData[i] ?? { text: "", position: "footer" as const };
+                  const text = row.text;
+                  const position = row.position ?? "footer";
+                  const hasToken = text.indexOf("{{") !== -1;
+                  const preview = hasToken ? resolveAuxiliaryLine(text, previewDevice) : "";
+                  const setRow = (next: Partial<AuxRow>) => {
+                    const newData = [...auxiliaryData];
+                    while (newData.length <= i) newData.push({ text: "", position: "footer" });
+                    newData[i] = { ...newData[i], ...next };
+                    setAuxiliaryData(newData);
+                  };
                   return (
                     <div key={i} className="relative">
                       <div className="flex gap-1">
@@ -1043,12 +1084,8 @@ export default function DeviceEditor() {
                           ref={(el) => { auxInputRefs.current[i] = el; }}
                           type="text"
                           className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
-                          value={line}
-                          onChange={(e) => {
-                            const newData = [...auxiliaryData];
-                            newData[i] = e.target.value;
-                            setAuxiliaryData(newData);
-                          }}
+                          value={text}
+                          onChange={(e) => setRow({ text: e.target.value })}
                           placeholder="Auxiliary Data"
                           onKeyDown={(e) => e.stopPropagation()}
                         />
@@ -1059,6 +1096,14 @@ export default function DeviceEditor() {
                           onClick={() => setAuxFieldMenuIdx(auxFieldMenuIdx === i ? null : i)}
                         >
                           +
+                        </button>
+                        <button
+                          type="button"
+                          title={position === "header" ? "Pinned to header — click to move to footer" : "Pinned to footer — click to move to header"}
+                          className={`px-2 py-1 text-[10px] font-semibold rounded border cursor-pointer shrink-0 w-7 ${position === "header" ? "bg-blue-500 border-blue-500 text-white" : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"}`}
+                          onClick={() => setRow({ position: position === "header" ? "footer" : "header" })}
+                        >
+                          {position === "header" ? "H" : "F"}
                         </button>
                       </div>
                       {hasToken && (
@@ -1084,13 +1129,10 @@ export default function DeviceEditor() {
                                   onClick={() => {
                                     const input = auxInputRefs.current[i];
                                     const token = `{{${f.token}}}`;
-                                    const current = auxiliaryData[i] ?? "";
-                                    const start = input?.selectionStart ?? current.length;
-                                    const end = input?.selectionEnd ?? current.length;
-                                    const next = current.slice(0, start) + token + current.slice(end);
-                                    const newData = [...auxiliaryData];
-                                    newData[i] = next;
-                                    setAuxiliaryData(newData);
+                                    const start = input?.selectionStart ?? text.length;
+                                    const end = input?.selectionEnd ?? text.length;
+                                    const nextText = text.slice(0, start) + token + text.slice(end);
+                                    setRow({ text: nextText });
                                     setAuxFieldMenuIdx(null);
                                     // Restore focus + caret after the inserted token
                                     requestAnimationFrame(() => {

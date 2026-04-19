@@ -10,6 +10,14 @@ import type {
 import type { DxfWriter, EntityStyle } from "./writer";
 import { cssFontPxToDxfHeight, pxToIn, tintToWhite, hexToRgb, rgbToTrueColor, truncateToWidth } from "./units";
 import { CANONICAL_LAYERS, hexToTrueColor, resolveSignalColor } from "./layers";
+import {
+  auxBlockHeight,
+  auxRowHeight,
+  headerBandHeight,
+  HEADER_LABEL_ZONE_PX,
+  resolveAuxiliaryLine,
+  rowsInSlot,
+} from "../auxiliaryData";
 
 /** Matches Tailwind `rounded-lg` on the canvas DeviceNode (8px = 0.083"). */
 const DEVICE_CORNER_RADIUS_IN = 8 / 96;
@@ -139,9 +147,14 @@ export function emitDevice(
 
   const handles = getHandlePositions(node, rfInstance);
 
-  // Header area — top 40px
-  const headerH = 40;
-  const headerRect = toDxfRect(ax, ay, w, headerH);
+  // Header band — merged name strip + header aux rows. Height is 20-multiple (min 40),
+  // matching DeviceNode's headerBandHeight() so the DXF export tracks the canvas layout.
+  const headerRows = rowsInSlot(data.auxiliaryData, "header");
+  const bandH = headerBandHeight(data.auxiliaryData);
+  const headerContent = HEADER_LABEL_ZONE_PX + headerRows.reduce((s, r) => s + auxRowHeight(r), 0);
+  const headerPad = bandH - headerContent;
+  const headerPadTop = Math.floor(headerPad / 2);
+  const headerRect = toDxfRect(ax, ay, w, bandH);
   if (data.headerColor) {
     writer.addSolidHatchRect(
       CANONICAL_LAYERS.DEVICES_HEADER,
@@ -157,44 +170,94 @@ export function emitDevice(
     DEVICE_CORNER_RADIUS_IN,
   );
 
-  // Header separator (bottom edge of header band)
+  // Header separator (bottom edge of the band)
   writer.addLine(
     CANONICAL_LAYERS.DEVICES,
-    rect.x, rect.y + rect.h - pxToIn(headerH),
-    rect.x + rect.w, rect.y + rect.h - pxToIn(headerH),
+    rect.x, rect.y + rect.h - pxToIn(bandH),
+    rect.x + rect.w, rect.y + rect.h - pxToIn(bandH),
   );
 
-  // Device label in header — truncate with ellipsis if it won't fit.
-  // Canvas header uses `px-3` (12px each side). Match that exactly or the
-  // DXF will silently over-fit the label and spill past the box edge.
+  // Canvas uses `px-3` (12px each side). Match exactly or text will spill past the box.
   const HEADER_PAD_PX = 12;
   const labelAvailIn = rect.w - pxToIn(HEADER_PAD_PX * 2);
+  const auxTextHeight = cssFontPxToDxfHeight(9);
 
+  // Device label — sits in a 20-px label zone at the top of the band (below pt pad).
+  // Baseline near the bottom of the zone keeps the text visually inside the zone.
   if (data.label) {
     const labelHeight = cssFontPxToDxfHeight(12);
+    const labelBaselineY = ay + headerPadTop + HEADER_LABEL_ZONE_PX - 4;
     writer.addText(
       CANONICAL_LAYERS.LABELS,
-      pxToIn(ax + HEADER_PAD_PX),
-      -pxToIn(ay + 16),
+      pxToIn(ax + w / 2),
+      -pxToIn(labelBaselineY),
       truncateToWidth(data.label, labelAvailIn, labelHeight),
-      { height: labelHeight, align: "left" },
+      { height: labelHeight, align: "center" },
     );
   }
 
-  if (data.deviceType) {
-    const typeHeight = cssFontPxToDxfHeight(10);
-    writer.addText(
-      CANONICAL_LAYERS.LABELS,
-      pxToIn(ax + HEADER_PAD_PX),
-      -pxToIn(ay + 30),
-      truncateToWidth(data.deviceType.replace(/-/g, " "), labelAvailIn, typeHeight),
-      {
-        height: typeHeight,
-        align: "left",
-        style: { trueColor: rgbToTrueColor(120, 120, 120) },
-      },
-    );
+  // Header aux rows — flow directly below the label zone, inside the same band.
+  {
+    let cursor = ay + headerPadTop + HEADER_LABEL_ZONE_PX;
+    for (const row of headerRows) {
+      const rowH = auxRowHeight(row);
+      if (row.text.trim()) {
+        const resolved = resolveAuxiliaryLine(row.text, data);
+        if (resolved) {
+          writer.addText(
+            CANONICAL_LAYERS.LABELS,
+            pxToIn(ax + w / 2),
+            -pxToIn(cursor + rowH - 2),
+            truncateToWidth(resolved, labelAvailIn, auxTextHeight),
+            {
+              height: auxTextHeight,
+              align: "center",
+              style: { trueColor: rgbToTrueColor(120, 120, 120) },
+            },
+          );
+        }
+      }
+      cursor += rowH;
+    }
   }
+
+  // Footer aux block — still its own grid-aligned block at the device bottom.
+  const renderFooterAux = () => {
+    const rows = rowsInSlot(data.auxiliaryData, "footer");
+    if (rows.length === 0) return;
+    const blockH = auxBlockHeight(data.auxiliaryData);
+    const rawH = 1 + rows.reduce((sum, r) => sum + auxRowHeight(r), 0);
+    const extraPad = blockH - rawH;
+    const padTop = Math.floor(extraPad / 2);
+    const blockTopY = ay + h - blockH;
+    writer.addLine(
+      CANONICAL_LAYERS.DEVICES,
+      rect.x, -pxToIn(blockTopY),
+      rect.x + rect.w, -pxToIn(blockTopY),
+    );
+    let cursor = blockTopY + 1 + padTop;
+    for (const row of rows) {
+      const rowH = auxRowHeight(row);
+      if (row.text.trim()) {
+        const resolved = resolveAuxiliaryLine(row.text, data);
+        if (resolved) {
+          writer.addText(
+            CANONICAL_LAYERS.LABELS,
+            pxToIn(ax + w / 2),
+            -pxToIn(cursor + rowH - 2),
+            truncateToWidth(resolved, labelAvailIn, auxTextHeight),
+            {
+              height: auxTextHeight,
+              align: "center",
+              style: { trueColor: rgbToTrueColor(120, 120, 120) },
+            },
+          );
+        }
+      }
+      cursor += rowH;
+    }
+  };
+  renderFooterAux();
 
   // Port labels
   const portMap = new Map(data.ports.map((p) => [p.id, p]));

@@ -226,8 +226,18 @@ export interface DeviceData {
   weightKg?: number;
   /** Adapter visibility override — only meaningful for deviceType "adapter" */
   adapterVisibility?: "default" | "force-show" | "force-hide";
-  /** User-customizable auxiliary data lines (up to 5) displayed at bottom of device node */
-  auxiliaryData?: string[];
+  /** User-customizable auxiliary data rows. Each row carries its own slot (header vs
+   *  footer) and text; blank text entries within a slot render as separator gaps. */
+  auxiliaryData?: AuxRow[];
+}
+
+/** One row of auxiliary data shown on a device node. */
+export interface AuxRow {
+  /** Display text — may contain `{{token}}` placeholders (e.g. `{{modelNumber}}`). */
+  text: string;
+  /** Whether the row renders above the ports (header) or below them (footer).
+   *  Defaults to "footer" when omitted. */
+  position?: "header" | "footer";
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -346,6 +356,7 @@ export interface DeviceTemplate {
   widthMm?: number;              // Physical width in millimeters — reserved for future rack management
   depthMm?: number;              // Physical depth in millimeters — reserved for future rack management
   weightKg?: number;             // Device weight in kilograms — reserved for future rack management
+  auxiliaryData?: AuxRow[];      // Aux rows shown on the node (each row carries its own header/footer slot)
 }
 
 export interface CustomTemplateGroup {
@@ -443,6 +454,8 @@ export interface SchematicFile {
   titleBlockLayout?: TitleBlockLayout;
   hiddenSignalTypes?: SignalType[];
   hiddenPinSignalTypes?: SignalType[];
+  /** @deprecated Replaced in schema v27 by the {{deviceType}} auxiliary row. Kept on the file
+   *  shape so the migration can honor the user's prior suppression intent. */
   hideDeviceTypes?: boolean;
   hideUnconnectedPorts?: boolean;
   showPortCounts?: boolean;

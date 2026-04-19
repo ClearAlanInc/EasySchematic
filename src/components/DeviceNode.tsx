@@ -3,7 +3,14 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
 import { SIGNAL_COLORS, SIGNAL_LABELS, portSide } from "../types";
 import { useSchematicStore } from "../store";
-import { resolveAuxiliaryLine } from "../auxiliaryData";
+import {
+  resolveAuxiliaryLine,
+  auxRowHeight,
+  rowsInSlot,
+  headerBandHeight,
+  HEADER_LABEL_ZONE_PX,
+} from "../auxiliaryData";
+import type { AuxRow } from "../types";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -26,7 +33,6 @@ function buildColumnItems(ports: Port[]): ColumnItem[] {
 function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) {
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
   const hiddenPinSignalTypesStr = useSchematicStore((s) => s.hiddenPinSignalTypes);
-  const hideDeviceTypes = useSchematicStore((s) => s.hideDeviceTypes);
   const isHiddenAdapter = useSchematicStore((s) => s.hiddenAdapterNodeIds.has(id));
   const isOverlapping = useSchematicStore((s) => s.overlapNodeId === id);
 
@@ -80,6 +86,15 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     });
   }, [data.ports, data.showAllPorts, data.hiddenPorts,
       hiddenPinSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
+
+  const headerAuxRows = useMemo(
+    () => rowsInSlot(data.auxiliaryData, "header"),
+    [data.auxiliaryData],
+  );
+  const footerAuxRows = useMemo(
+    () => rowsInSlot(data.auxiliaryData, "footer"),
+    [data.auxiliaryData],
+  );
 
   const portCountInfo = useMemo(() => {
     if (!showPortCounts) return null;
@@ -234,6 +249,75 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     );
   }
 
+  /** Footer aux block — rows below the port area. Grid-rounded (20-multiple) so device
+   *  bottom stays on the snap grid. Blank rows render as 6-px separator gaps. */
+  function renderFooterAuxBlock(rows: AuxRow[]) {
+    if (rows.length === 0) return null;
+    const raw = 1 + rows.reduce((sum, r) => sum + auxRowHeight(r), 0);
+    const totalPad = Math.ceil(raw / 20) * 20 - raw;
+    const pt = Math.floor(totalPad / 2);
+    const pb = totalPad - pt;
+    return (
+      <div
+        className="auxiliaryData px-3 border-t border-[var(--color-border)]"
+        style={{ paddingTop: pt, paddingBottom: pb }}
+      >
+        {rows.map((row, i) => renderAuxRow(row, i))}
+      </div>
+    );
+  }
+
+  /** Individual aux row markup shared between header band and footer block. */
+  function renderAuxRow(row: AuxRow, key: number) {
+    if (!row.text.trim()) {
+      return <div key={key} aria-hidden style={{ height: 6 }} />;
+    }
+    const resolved = resolveAuxiliaryLine(row.text, data, { connectedCount: portCountInfo?.connected });
+    return (
+      <div
+        key={key}
+        className="text-[9px] text-[var(--color-text-muted)] leading-3 truncate whitespace-nowrap text-center"
+        title={resolved}
+      >
+        {resolved}
+      </div>
+    );
+  }
+
+  /** Header band — label zone + header aux rows, centered together in a 20-multiple band.
+   *  Replaces the old separate 40-px name strip + header aux block: eliminates the ~14-px
+   *  wasted whitespace between the label and the first aux row.
+   *
+   *  Keep the band-height formula in sync with `headerBandHeight()` in auxiliaryData.ts —
+   *  snapUtils uses it to estimate device height before React Flow measures it. */
+  function renderHeaderBand(rows: AuxRow[]) {
+    const bandH = headerBandHeight(data.auxiliaryData);
+    const content = HEADER_LABEL_ZONE_PX + rows.reduce((sum, r) => sum + auxRowHeight(r), 0);
+    const totalPad = bandH - content;
+    const pt = Math.floor(totalPad / 2);
+    const pb = totalPad - pt;
+    return (
+      <div
+        className="px-3 border-b border-[var(--color-border)] rounded-t-lg flex flex-col"
+        style={{
+          backgroundColor: data.headerColor || "var(--color-surface)",
+          paddingTop: pt,
+          paddingBottom: pb,
+        }}
+      >
+        <div
+          className="flex items-center justify-center"
+          style={{ height: HEADER_LABEL_ZONE_PX }}
+        >
+          <span className="text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight">
+            {data.label}
+          </span>
+        </div>
+        {rows.map((row, i) => renderAuxRow(row, i))}
+      </div>
+    );
+  }
+
   return (
     <div
       onDoubleClick={() => setEditingNodeId(id)}
@@ -243,24 +327,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       `}
       style={{ width: 180 }}
     >
-      {/* Header */}
-      <div
-        className="px-3 h-10 flex flex-col justify-center border-b border-[var(--color-border)] rounded-t-lg"
-        style={{ backgroundColor: data.headerColor || "var(--color-surface)" }}
-      >
-        <div className="text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight">
-          {data.label}
-        </div>
-        {!hideDeviceTypes && (
-          <div className="text-[10px] text-[var(--color-text-muted)] capitalize leading-tight">
-            {data.deviceType.replace(/-/g, " ")}
-          </div>
-        )}
-      </div>
+      {/* Header band — merged name strip + header aux rows. Height is always a 20-multiple
+           (min 40) so the first port below stays on the pathfinding grid. */}
+      {renderHeaderBand(headerAuxRows)}
 
       {/* Port area — 9px top padding aligns handle centers to the 20px grid.
-           Math: 1px (border) + 40px (header) + 9px (pad) + 10px (half row) = 60px ≡ 0 mod 20
-           9px bottom padding makes total height a multiple of 20 (60 + rows×20). */}
+           Math: 1px (border) + headerBand(20-mult) + 9px (pad) + 10px (half row) ≡ 0 mod 20. */}
       <div className="pt-[9px] pb-[9px]">
       {/* Input/Output Ports — two independent columns */}
       {(leftPorts.length > 0 || rightPorts.length > 0) && (
@@ -432,31 +504,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           </span>
         </div>
       )}
-      {/* Auxiliary data — grid-aligned with compact 12px line height.
-           Raw height = 1(border-t) + N×12. Pad to next multiple of 20. */}
-      {data.auxiliaryData?.length ? (() => {
-        const n = data.auxiliaryData!.length;
-        const raw = 1 + n * 12;
-        const totalPad = Math.ceil(raw / 20) * 20 - raw;
-        const pt = Math.floor(totalPad / 2);
-        const pb = totalPad - pt;
-        return (
-          <div className="auxiliaryData px-3 border-t border-[var(--color-border)]" style={{ paddingTop: pt, paddingBottom: pb }}>
-            {data.auxiliaryData!.map((line, i) => {
-              const resolved = resolveAuxiliaryLine(line, data, { connectedCount: portCountInfo?.connected });
-              return (
-                <div
-                  key={i}
-                  className="text-[9px] text-[var(--color-text-muted)] leading-3 truncate whitespace-nowrap text-center"
-                  title={resolved}
-                >
-                  {resolved}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })() : null}
+      {renderFooterAuxBlock(footerAuxRows)}
       </div>
     </div>
   );

@@ -28,7 +28,13 @@ interface TemplateInput {
   widthMm?: number;
   depthMm?: number;
   weightKg?: number;
+  auxiliaryData?: AuxRowInput[];
   sortOrder?: number;
+}
+
+interface AuxRowInput {
+  text: string;
+  position?: "header" | "footer";
 }
 
 interface PortInput {
@@ -46,6 +52,8 @@ type ValidationResult =
 const MAX_STRING = 200;
 const MAX_PORTS = 500;
 const MAX_SEARCH_TERMS = 20;
+const MAX_AUX_LINES = 10;
+const MAX_AUX_LINE_LENGTH = 120;
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/;
 
 function checkString(value: unknown, field: string, maxLen = MAX_STRING): string | null {
@@ -226,6 +234,32 @@ export function validateTemplate(body: unknown): ValidationResult {
     return { ok: false, error: "weightKg must be a non-negative number" };
   }
 
+  // Auxiliary data — optional array of row objects. Each row has a text string and an
+  // optional header/footer slot. Blank text values allowed (they render as separators).
+  if (obj.auxiliaryData != null) {
+    if (!Array.isArray(obj.auxiliaryData)) {
+      return { ok: false, error: "auxiliaryData must be an array of row objects" };
+    }
+    if (obj.auxiliaryData.length > MAX_AUX_LINES) {
+      return { ok: false, error: `auxiliaryData must have ${MAX_AUX_LINES} or fewer entries` };
+    }
+    for (let i = 0; i < obj.auxiliaryData.length; i++) {
+      const row = obj.auxiliaryData[i] as Record<string, unknown> | null;
+      if (!row || typeof row !== "object") {
+        return { ok: false, error: `auxiliaryData[${i}] must be an object with { text, position? }` };
+      }
+      if (typeof row.text !== "string") {
+        return { ok: false, error: `auxiliaryData[${i}].text must be a string` };
+      }
+      if (row.text.length > MAX_AUX_LINE_LENGTH) {
+        return { ok: false, error: `auxiliaryData[${i}].text must be ${MAX_AUX_LINE_LENGTH} characters or fewer` };
+      }
+      if (row.position != null && row.position !== "header" && row.position !== "footer") {
+        return { ok: false, error: `auxiliaryData[${i}].position must be 'header' or 'footer'` };
+      }
+    }
+  }
+
   return {
     ok: true,
     data: {
@@ -251,6 +285,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.widthMm != null && { widthMm: obj.widthMm as number }),
       ...(obj.depthMm != null && { depthMm: obj.depthMm as number }),
       ...(obj.weightKg != null && { weightKg: obj.weightKg as number }),
+      ...(obj.auxiliaryData != null && { auxiliaryData: obj.auxiliaryData as AuxRowInput[] }),
       ...(obj.sortOrder != null && { sortOrder: obj.sortOrder as number }),
     },
   };

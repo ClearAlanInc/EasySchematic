@@ -18,13 +18,11 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const [collapsed, setCollapsed] = useState(true);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const hiddenPinSignalTypesStr = useSchematicStore((s) => s.hiddenPinSignalTypes);
-  const hideDeviceTypes = useSchematicStore((s) => s.hideDeviceTypes);
   const hideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
   const showPortCounts = useSchematicStore((s) => s.showPortCounts);
   const setShowPortCounts = useSchematicStore((s) => s.setShowPortCounts);
   const toggleSignalTypeVisibility = useSchematicStore((s) => s.toggleSignalTypeVisibility);
   const togglePinSignalTypeVisibility = useSchematicStore((s) => s.togglePinSignalTypeVisibility);
-  const setHideDeviceTypes = useSchematicStore((s) => s.setHideDeviceTypes);
   const setHideUnconnectedPorts = useSchematicStore((s) => s.setHideUnconnectedPorts);
   const showLineJumps = useSchematicStore((s) => s.showLineJumps);
   const setShowLineJumps = useSchematicStore((s) => s.setShowLineJumps);
@@ -312,23 +310,6 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
             );
           })
         )}
-
-        {/* Divider */}
-        <div className="border-t border-[var(--color-border)] my-2" />
-
-        {/* Labels section */}
-        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
-          Labels
-        </div>
-        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
-          <input
-            type="checkbox"
-            checked={!hideDeviceTypes}
-            onChange={(e) => setHideDeviceTypes(!e.target.checked)}
-            className="w-3 h-3 accent-blue-500 cursor-pointer"
-          />
-          <span className="text-xs text-[var(--color-text)]">Show device types</span>
-        </label>
 
         {/* Divider */}
         <div className="border-t border-[var(--color-border)] my-2" />

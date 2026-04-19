@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 26;
+export const CURRENT_SCHEMA_VERSION = 27;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -297,6 +297,39 @@ const migrations: Record<number, Migration> = {
       }
     }
     data.version = 26;
+    return data;
+  },
+  26: (data) => {
+    // v26 → v27: unify the hardcoded deviceType line under the device name into the
+    // auxiliaryData pipeline and switch each row to carrying its own header/footer slot.
+    //
+    // Migration steps per device:
+    //   1. If auxiliaryData is already a string[] (pre-v27 shape), convert each entry to
+    //      an AuxRow using the device's top-level auxPosition (if any) as the default slot.
+    //      Empty auxPosition falls back to "footer" — matches today's rendering.
+    //   2. Remove the now-stale top-level auxPosition field.
+    //   3. If the device has no aux data and wasn't explicitly suppressed via the legacy
+    //      top-level hideDeviceTypes flag, seed a single header row with {{deviceType}}
+    //      so new and old schematics look identical after the hardcoded line goes away.
+    const legacySuppressed = data.hideDeviceTypes === true;
+    for (const node of data.nodes ?? []) {
+      if (node.type !== "device" || !node.data) continue;
+      const raw = node.data.auxiliaryData;
+      const legacySlot: "header" | "footer" =
+        node.data.auxPosition === "header" ? "header" : "footer";
+      if (Array.isArray(raw) && raw.length > 0) {
+        node.data.auxiliaryData = raw.map((line: unknown) =>
+          typeof line === "string"
+            ? { text: line, position: legacySlot }
+            : (line as { text: string; position?: "header" | "footer" }),
+        );
+      } else if (!legacySuppressed) {
+        node.data.auxiliaryData = [{ text: "{{deviceType}}", position: "header" }];
+      }
+      delete node.data.auxPosition;
+    }
+    delete data.hideDeviceTypes;
+    data.version = 27;
     return data;
   },
 };

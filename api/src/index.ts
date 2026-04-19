@@ -901,8 +901,8 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
+        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
       )
       .bind(
         templateRow.id,
@@ -928,6 +928,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.width_mm,
         templateRow.depth_mm,
         templateRow.weight_kg,
+        templateRow.auxiliary_data,
         templateRow.sort_order,
         submission.user_id,
         reviewerId,
@@ -944,7 +945,7 @@ app.post("/submissions/:id/approve", async (c) => {
          SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
              power_draw_w = ?, power_capacity_w = ?, voltage = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
-             height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, sort_order = ?,
+             height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, auxiliary_data = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?,
              approved_at = datetime('now'), approved_by = ?, approved_schema_version = ?,
              needs_review = 0, needs_review_reason = NULL
@@ -973,6 +974,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.width_mm,
         templateRow.depth_mm,
         templateRow.weight_kg,
+        templateRow.auxiliary_data,
         templateRow.sort_order,
         submission.user_id,
         reviewerId,
@@ -1367,8 +1369,8 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
@@ -1394,6 +1396,7 @@ app.post("/templates", async (c) => {
       row.width_mm,
       row.depth_mm,
       row.weight_kg,
+      row.auxiliary_data,
       row.sort_order,
     )
     .run();
@@ -1439,7 +1442,7 @@ app.put("/templates/:id", async (c) => {
      SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
          color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
          power_draw_w = ?, power_capacity_w = ?, voltage = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
-         height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, sort_order = ?,
+         height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, auxiliary_data = ?, sort_order = ?,
          version = version + 1, updated_at = CURRENT_TIMESTAMP,
          last_edited_by = COALESCE(?, last_edited_by)
      WHERE id = ?`,
@@ -1467,6 +1470,7 @@ app.put("/templates/:id", async (c) => {
       row.width_mm,
       row.depth_mm,
       row.weight_kg,
+      row.auxiliary_data,
       row.sort_order,
       editorId,
       id,
