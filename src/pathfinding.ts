@@ -89,7 +89,7 @@ export const ROUTING_PARAMS: typeof ROUTING_DEFAULTS = new Proxy(ROUTING_DEFAULT
 
 const CORNER_RADIUS = 8;
 export const ARC_R = 6;
-const GAP_HALF = 3;
+export const GAP_HALF = 3;
 const PENALTY_BUCKET = 10; // Grid-cell bucket size for penalty zone spatial index
 
 // ---------- Obstacles ----------

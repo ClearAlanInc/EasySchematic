@@ -71,6 +71,7 @@ const STORAGE_KEY = "easyschematic-signal-colors";
 
 /** Apply signal colors to CSS custom properties. */
 export function applySignalColors(colors: Partial<Record<SignalType, string>>) {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   // Start from defaults, overlay with provided colors
   const merged = { ...DEFAULT_SIGNAL_COLORS, ...colors };
@@ -81,6 +82,7 @@ export function applySignalColors(colors: Partial<Record<SignalType, string>>) {
 
 /** Load saved signal colors from localStorage. */
 export function loadSignalColors(): Record<SignalType, string> {
+  if (typeof localStorage === "undefined") return { ...DEFAULT_SIGNAL_COLORS };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return { ...DEFAULT_SIGNAL_COLORS, ...JSON.parse(raw) };
