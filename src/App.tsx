@@ -10,6 +10,7 @@ import {
   SelectionMode,
   useReactFlow,
   useStoreApi,
+  useUpdateNodeInternals,
   useViewport,
   reconnectEdge,
   type Node,
@@ -212,6 +213,7 @@ function SchematicCanvas() {
 
   const rfInstance = useReactFlow();
   const rfStore = useStoreApi();
+  const updateNodeInternals = useUpdateNodeInternals();
   const { screenToFlowPosition } = rfInstance;
   const rfContainerRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
@@ -476,8 +478,10 @@ function SchematicCanvas() {
     s.nodes.map((n) => {
       const base = `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${n.measured?.width ?? 0},${n.measured?.height ?? 0}`;
       if (n.type !== "device") return base;
-      const flipped = (n.data as DeviceData).ports.filter((p) => p.flipped).map((p) => p.id).join(",");
-      return flipped ? `${base}:F${flipped}` : base;
+      const ports = (n.data as DeviceData).ports;
+      const portIds = ports.map((p) => p.id).join(",");
+      const flipped = ports.filter((p) => p.flipped).map((p) => p.id).join(",");
+      return flipped ? `${base}:P${portIds}:F${flipped}` : `${base}:P${portIds}`;
     }).join("|"),
   );
   // Digest of edge connectivity
@@ -496,15 +500,46 @@ function SchematicCanvas() {
   const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
   const routingParamVersion = useSchematicStore((s) => s.routingParamVersion);
 
+  // When a device's port list changes (add/remove/reorder), React Flow won't
+  // re-measure handle bounds on its own — the internal cache stays pinned to
+  // the old port layout until updateNodeInternals() forces a re-measure.
+  // Without this, edges connected to shifted ports render at stale positions
+  // until the next page refresh.
+  const portSignatures = useSchematicStore((s) =>
+    s.nodes
+      .filter((n) => n.type === "device")
+      .map((n) => `${n.id}:${(n.data as DeviceData).ports.map((p) => p.id).join(",")}`)
+      .join("|"),
+  );
+  const prevPortSignaturesRef = useRef<Map<string, string>>(new Map());
+  useEffect(() => {
+    const current = new Map<string, string>();
+    for (const entry of portSignatures.split("|")) {
+      if (!entry) continue;
+      const idx = entry.indexOf(":");
+      if (idx < 0) continue;
+      current.set(entry.slice(0, idx), entry.slice(idx + 1));
+    }
+    const changed: string[] = [];
+    for (const [nodeId, sig] of current) {
+      if (prevPortSignaturesRef.current.get(nodeId) !== sig) changed.push(nodeId);
+    }
+    prevPortSignaturesRef.current = current;
+    if (changed.length > 0) updateNodeInternals(changed);
+  }, [portSignatures, updateNodeInternals]);
+
   useEffect(() => {
     if (isDragging) return;
     if (nodeCount === 0 && edgeCount === 0) return;
+    // Small delay lets React Flow re-measure handle bounds after
+    // updateNodeInternals() fires (e.g. on port add/remove) so routing reads
+    // fresh positions. Applies to both simple and A* paths.
     if (!autoRoute) {
-      // Simple orthogonal L-shapes — no A*, instant
-      useSchematicStore.getState().computeSimpleRoutes(rfInstance);
-      return;
+      const timer = setTimeout(() => {
+        useSchematicStore.getState().computeSimpleRoutes(rfInstance);
+      }, 50);
+      return () => clearTimeout(timer);
     }
-    // Full A* routing with small delay to let React Flow measure handles
     useSchematicStore.setState({ isRouting: true });
     const timer = setTimeout(() => {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
