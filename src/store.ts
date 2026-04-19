@@ -30,8 +30,8 @@ import { DEFAULT_SCROLL_CONFIG } from "./types";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
-import { routeAllEdges, orthogonalize, extractSegments, type RoutedEdge } from "./edgeRouter";
-import { simplifyWaypoints, waypointsToSvgPath } from "./pathfinding";
+import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
+import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
@@ -3250,6 +3250,51 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         crossingPoints: [],
       };
     }
+
+    // Detect crossings so line hops render in manual mode too.
+    const stubbedIds = new Set(state.edges.filter((e) => e.data?.stubbed).map((e) => e.id));
+    const entries = Object.values(results).filter((r) => !stubbedIds.has(r.edgeId));
+    const segCount = entries.reduce((n, r) => n + r.segments.length, 0);
+    const overBudget = entries.length > 400 || segCount * segCount > 250_000;
+    if (!overBudget) {
+      const arcMap = new Map<string, CrossingPoint[]>();
+      const gapMap = new Map<string, CrossingPoint[]>();
+      for (const r of entries) {
+        arcMap.set(r.edgeId, []);
+        gapMap.set(r.edgeId, []);
+      }
+      for (let i = 0; i < entries.length; i++) {
+        for (let j = i + 1; j < entries.length; j++) {
+          const a = entries[i];
+          const b = entries[j];
+          for (const sa of a.segments) {
+            for (const sb of b.segments) {
+              if (segmentsCross(sa, sb)) {
+                const h = sa.axis === "h" ? sa : sb;
+                const v = sa.axis === "v" ? sa : sb;
+                const pt: CrossingPoint = { x: v.x1, y: h.y1 };
+                if (sa.axis === "h") {
+                  arcMap.get(a.edgeId)!.push(pt);
+                  gapMap.get(b.edgeId)!.push(pt);
+                } else {
+                  arcMap.get(b.edgeId)!.push(pt);
+                  gapMap.get(a.edgeId)!.push(pt);
+                }
+              }
+            }
+          }
+        }
+      }
+      for (const r of entries) {
+        const arcs = arcMap.get(r.edgeId)!;
+        const gaps = gapMap.get(r.edgeId)!;
+        if (arcs.length || gaps.length) {
+          r.crossingPoints = [...arcs, ...gaps];
+          r.svgPathWithHops = waypointsToSvgPathWithHops(r.waypoints, arcs, gaps);
+        }
+      }
+    }
+
     set({ routedEdges: results });
   },
 

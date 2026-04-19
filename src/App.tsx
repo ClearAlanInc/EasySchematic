@@ -482,7 +482,7 @@ function SchematicCanvas() {
   );
   // Digest of edge connectivity
   const edgeDigest = useSchematicStore((s) =>
-    s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}`).join("|"),
+    s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}:${e.data?.stubbed ? "s" : ""}`).join("|"),
   );
 
   // Filter out edges whose signal type is hidden (presentation-only — store edges stay complete)

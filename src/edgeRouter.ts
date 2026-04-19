@@ -221,7 +221,7 @@ export function extractSegments(waypoints: Point[]): Segment[] {
 // ---------- Violation detection ----------
 
 /** Do two perpendicular segments actually cross? */
-function segmentsCross(a: Segment, b: Segment): boolean {
+export function segmentsCross(a: Segment, b: Segment): boolean {
   if (a.axis === b.axis) return false;
   // Ensure h is horizontal, v is vertical
   const h = a.axis === "h" ? a : b;
