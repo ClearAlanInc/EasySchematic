@@ -52,6 +52,9 @@ backups/
 .wrangler/
 .dev.vars
 
+# Vite cache
+.vite/
+
 # Internal notes
 internal/
 

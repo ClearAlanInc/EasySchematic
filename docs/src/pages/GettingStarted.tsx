@@ -106,6 +106,27 @@ export default function GettingStartedPage() {
         <strong>Edit → Preferences</strong>.
       </p>
 
+      <h3>Label case</h3>
+      <p>
+        Forces the display case of device names, port labels, slot labels, and card labels across
+        the canvas and in all exports (PDF, DXF, pack list, cable schedule, patch panel schedule,
+        network / power reports):
+      </p>
+      <ul>
+        <li><strong>As-typed</strong> — default; labels appear exactly as entered</li>
+        <li><strong>UPPERCASE</strong> — forces everything to uppercase</li>
+        <li><strong>lowercase</strong> — forces everything to lowercase</li>
+        <li>
+          <strong>Capitalize Words</strong> — capitalizes the first letter of each word; leaves
+          existing uppercase letters alone so acronyms like HDMI and SDI stay intact
+        </li>
+      </ul>
+      <p>
+        The preference is display-only — your underlying label data is never modified, so you can
+        switch back to <strong>As-typed</strong> at any time to see the original casing. The
+        preference is saved with the schematic, so shared files arrive with the same setting.
+      </p>
+
       <h2>View options</h2>
       <p>
         Open the <strong>View Options</strong> panel from the right sidebar (or via the{" "}
