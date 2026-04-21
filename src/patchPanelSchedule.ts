@@ -7,6 +7,7 @@ import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
 import { computeCableSchedule } from "./cableSchedule";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
 import { resolvePortGender } from "./connectorTypes";
+import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
@@ -82,7 +83,7 @@ export function computePatchPanelSchedule(
     const data = node.data as DeviceData;
     if (data.deviceType !== "patch-panel") continue;
 
-    const panelLabel = data.label || "Unnamed Panel";
+    const panelLabel = transformLabelNow(data.label || "Unnamed Panel");
     const panelRoom = getRoomLabel(nodes, node.parentId);
     const hiddenPorts = new Set(data.hiddenPorts ?? []);
 
@@ -125,7 +126,7 @@ export function computePatchPanelSchedule(
         const remoteHandle = isSource ? edge.targetHandle : edge.sourceHandle;
         const remoteNode = nodes.find((n) => n.id === remoteNodeId);
         remoteDevice = remoteNode?.type === "device"
-          ? ((remoteNode.data as DeviceData).label || "Unnamed")
+          ? transformLabelNow((remoteNode.data as DeviceData).label || "Unnamed")
           : "Unknown";
         remotePort = remoteNode ? resolvePortLabel(remoteNode, remoteHandle) : "";
         remoteRoom = remoteNode ? getRoomLabel(nodes, remoteNode.parentId) : "Unknown";
@@ -161,7 +162,7 @@ export function computePatchPanelSchedule(
         panelRoom,
         face,
         _sortKey: facePri * 10000 + portIdx,
-        position: port.label || `Port ${portIdx + 1}`,
+        position: transformLabelNow(port.label || `Port ${portIdx + 1}`),
         connector,
         gender,
         remoteDevice,

@@ -6,6 +6,7 @@ import type {
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 import { csvRow, groupBy, getRoomLabel } from "./packList";
+import { transformLabelNow } from "./labelCaseUtils";
 
 // ─── Types ───
 
@@ -63,7 +64,7 @@ export function computePowerReport(
     nodeDataMap.set(node.id, { data, parentId: node.parentId });
 
     const powerDraw = data.powerDrawW ?? 0;
-    const model = data.model ?? data.baseLabel ?? data.label;
+    const model = transformLabelNow(data.model ?? data.baseLabel ?? data.label);
     const room = getRoomLabel(nodes, node.parentId);
     const key = `${model}|${room}`;
 
@@ -132,7 +133,7 @@ export function computePowerReport(
 
     distros.push({
       nodeId: node.id,
-      label: data.label,
+      label: transformLabelNow(data.label),
       room: getRoomLabel(nodes, node.parentId),
       capacityW,
       loadW,

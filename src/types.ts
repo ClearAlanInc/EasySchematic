@@ -516,7 +516,12 @@ export interface SchematicFile {
   colorKeyOverrides?: Partial<Record<SignalType, boolean>>;
   /** Cable unit costs keyed by "cableType|signalType|cableLength" */
   cableCosts?: Record<string, number>;
+  /** Force-case device/port/slot labels on write (normal = leave as-typed) */
+  labelCase?: LabelCaseMode;
 }
+
+export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";
+export const DEFAULT_LABEL_CASE: LabelCaseMode = "as-typed";
 
 export type ScrollAction = "zoom" | "pan-x" | "pan-y";
 

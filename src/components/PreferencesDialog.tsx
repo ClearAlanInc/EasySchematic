@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSchematicStore } from "../store";
 import { DEFAULT_SCROLL_CONFIG } from "../types";
-import type { ScrollAction, ScrollConfig } from "../types";
+import type { LabelCaseMode, ScrollAction, ScrollConfig } from "../types";
 
 const AUTOROUTE_PREF_KEY = "easyschematic-autoroute-pref";
 
@@ -76,6 +76,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setScrollConfig = useSchematicStore((s) => s.setScrollConfig);
   const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
   const setEdgeHitboxSize = useSchematicStore((s) => s.setEdgeHitboxSize);
+  const labelCase = useSchematicStore((s) => s.labelCase);
+  const setLabelCase = useSchematicStore((s) => s.setLabelCase);
   const [autoRoutePref, setAutoRoutePref] = useState(
     () => localStorage.getItem(AUTOROUTE_PREF_KEY) ?? "ask",
   );
@@ -91,7 +93,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
     scrollConfig.panSpeed === DEFAULT_SCROLL_CONFIG.panSpeed &&
     scrollConfig.trackpadEnabled === DEFAULT_SCROLL_CONFIG.trackpadEnabled &&
     edgeHitboxSize === 10 &&
-    autoRoutePref === "ask";
+    autoRoutePref === "ask" &&
+    labelCase === "as-typed";
 
   return (
     <div
@@ -233,6 +236,29 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
             </p>
           </div>
 
+          {/* Labels */}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+              Labels
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-xs text-[var(--color-text)]">Display label case</span>
+              <select
+                className={selectClass}
+                value={labelCase}
+                onChange={(e) => setLabelCase(e.target.value as LabelCaseMode)}
+              >
+                <option value="as-typed">As-typed</option>
+                <option value="uppercase">UPPERCASE</option>
+                <option value="lowercase">lowercase</option>
+                <option value="capitalize">Capitalize Words</option>
+              </select>
+            </div>
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+              Display style for device, port, slot, and card labels on the canvas and in exports. Doesn't modify your data — switch back to As-typed any time to see original casing.
+            </p>
+          </div>
+
           {!isDefault && (
             <button
               onClick={() => {
@@ -240,6 +266,7 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 setEdgeHitboxSize(10);
                 localStorage.removeItem(AUTOROUTE_PREF_KEY);
                 setAutoRoutePref("ask");
+                setLabelCase("as-typed");
               }}
               className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
             >

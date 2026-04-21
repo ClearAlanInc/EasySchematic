@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { SIGNAL_LABELS } from "./types";
 import { getCableType } from "./cableTypes";
+import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
@@ -206,7 +207,7 @@ export function resolvePortLabel(
   // Strip -in/-out suffix from bidirectional handles
   const portId = handleId.replace(/-(in|out)$/, "");
   const port = data.ports.find((p) => p.id === portId);
-  return port?.label ?? handleId;
+  return transformLabelNow(port?.label ?? handleId);
 }
 
 export function resolvePort(
@@ -231,7 +232,7 @@ export function computePackList(
     if (n.type !== "device") continue;
     const data = n.data as DeviceData;
     if (data.isVenueProvided) continue;
-    const model = data.model ?? data.baseLabel ?? data.label;
+    const model = transformLabelNow(data.model ?? data.baseLabel ?? data.label);
     const room = getRoomLabel(nodes, n.parentId);
 
     if (data.isCableAccessory) {
@@ -292,7 +293,8 @@ export function computePackList(
       const device = deviceMap.get(key)!;
       for (const slot of data.slots) {
         if (!slot.cardTemplateId || !slot.cardLabel) continue;
-        const cardKey = `${slot.cardLabel}|${slot.cardManufacturer ?? ""}|${slot.cardModelNumber ?? ""}`;
+        const cardDisplayLabel = transformLabelNow(slot.cardLabel);
+        const cardKey = `${cardDisplayLabel}|${slot.cardManufacturer ?? ""}|${slot.cardModelNumber ?? ""}`;
         const existingCard = device.cards.find(
           (c) => `${c.cardLabel}|${c.manufacturer}|${c.modelNumber}` === cardKey,
         );
@@ -300,7 +302,7 @@ export function computePackList(
           existingCard.count++;
         } else {
           device.cards.push({
-            cardLabel: slot.cardLabel,
+            cardLabel: cardDisplayLabel,
             manufacturer: slot.cardManufacturer ?? "",
             modelNumber: slot.cardModelNumber ?? "",
             count: 1,

@@ -11,6 +11,7 @@ import {
   HEADER_LABEL_ZONE_PX,
 } from "../auxiliaryData";
 import type { AuxRow } from "../types";
+import { useDisplayLabel } from "../labelCaseUtils";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -32,6 +33,7 @@ function buildColumnItems(ports: Port[]): ColumnItem[] {
 
 function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) {
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
+  const displayLabel = useDisplayLabel();
   const hiddenPinSignalTypesStr = useSchematicStore((s) => s.hiddenPinSignalTypes);
   const isHiddenAdapter = useSchematicStore((s) => s.hiddenAdapterNodeIds.has(id));
   const isOverlapping = useSchematicStore((s) => s.overlapNodeId === id);
@@ -216,9 +218,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         <span
           className="text-[10px] leading-5 truncate"
           style={{ color: SIGNAL_COLORS[port.signalType] }}
-          title={`${port.label} (${SIGNAL_LABELS[port.signalType]})`}
+          title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]})`}
         >
-          {port.label}
+          {displayLabel(port.label)}
         </span>
         {!isLeft && (
           <Handle
@@ -286,7 +288,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     if (!row.text.trim()) {
       return <div key={key} aria-hidden style={{ height: 6 }} />;
     }
-    const resolved = resolveAuxiliaryLine(row.text, data, { connectedCount: portCountInfo?.connected });
+    const resolved = displayLabel(resolveAuxiliaryLine(row.text, data, { connectedCount: portCountInfo?.connected }));
     return (
       <div
         key={key}
@@ -324,7 +326,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           style={{ height: HEADER_LABEL_ZONE_PX }}
         >
           <span className="text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight">
-            {data.label}
+            {displayLabel(data.label)}
           </span>
         </div>
         {rows.map((row, i) => renderAuxRow(row, i))}
@@ -403,9 +405,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                         <span
                           className="text-[10px] leading-5 truncate"
                           style={{ color: SIGNAL_COLORS[left.signalType] }}
-                          title={`${left.label} (${SIGNAL_LABELS[left.signalType]})`}
+                          title={`${displayLabel(left.label)} (${SIGNAL_LABELS[left.signalType]})`}
                         >
-                          {left.label}
+                          {displayLabel(left.label)}
                         </span>
                       </>
                     )}
@@ -416,9 +418,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                         <span
                           className="text-[10px] leading-5 truncate"
                           style={{ color: SIGNAL_COLORS[right.signalType] }}
-                          title={`${right.label} (${SIGNAL_LABELS[right.signalType]})`}
+                          title={`${displayLabel(right.label)} (${SIGNAL_LABELS[right.signalType]})`}
                         >
-                          {right.label}
+                          {displayLabel(right.label)}
                         </span>
                         <Handle
                           type={rh.handleType}
@@ -444,7 +446,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           {data.slots.filter((s) => !s.cardTemplateId).map((slot) => (
             <div key={slot.slotId} className="flex justify-center items-center h-5 mx-1">
               <span className="text-[9px] text-[var(--color-text-muted)] opacity-40 truncate text-center italic">
-                {slot.label} (empty)
+                {displayLabel(slot.label)} (empty)
               </span>
             </div>
           ))}
@@ -490,9 +492,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                 <span
                   className="text-[10px] leading-5 truncate"
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
-                  title={`${port.label} (${SIGNAL_LABELS[port.signalType]}) — bidirectional`}
+                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — bidirectional`}
                 >
-                  ↔ {port.label}
+                  ↔ {displayLabel(port.label)}
                 </span>
                 <Handle
                   type="source"

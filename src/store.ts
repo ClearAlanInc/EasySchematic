@@ -25,8 +25,8 @@ import type {
   CustomTemplateMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType, ScrollConfig, LineStyle } from "./types";
-import { DEFAULT_SCROLL_CONFIG } from "./types";
+import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode } from "./types";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE } from "./types";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
@@ -114,6 +114,13 @@ function isDefaultScrollConfig(c: ScrollConfig): boolean {
     && c.zoomSpeed === DEFAULT_SCROLL_CONFIG.zoomSpeed
     && c.panSpeed === DEFAULT_SCROLL_CONFIG.panSpeed
     && c.trackpadEnabled === DEFAULT_SCROLL_CONFIG.trackpadEnabled;
+}
+
+/** Coerce a persisted labelCase value to a known mode. Anything unrecognized falls back to default. */
+function resolveLabelCase(v: unknown): LabelCaseMode {
+  return v === "uppercase" || v === "lowercase" || v === "capitalize" || v === "as-typed"
+    ? v
+    : DEFAULT_LABEL_CASE;
 }
 
 /** Guard: don't persist empty state before initial load completes */
@@ -404,6 +411,10 @@ interface SchematicState {
   // Cable naming scheme (#1)
   cableNamingScheme: "sequential" | "type-prefix";
   setCableNamingScheme: (v: "sequential" | "type-prefix") => void;
+
+  // Label case preference — purely a display-time transform; data is never mutated.
+  labelCase: LabelCaseMode;
+  setLabelCase: (mode: LabelCaseMode) => void;
 
   // Incompatible connection dialog (#6)
   pendingIncompatibleConnection: {
@@ -911,6 +922,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   favoriteTemplates: [],
   scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
   cableNamingScheme: "type-prefix" as "sequential" | "type-prefix",
+  labelCase: DEFAULT_LABEL_CASE,
   showLineJumps: true,
   showConnectionLabels: true,
   showCableIdLabels: true,
@@ -2600,6 +2612,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setLabelCase: (mode) => {
+    set({ labelCase: mode });
+    get().saveToLocalStorage();
+  },
+
   setShowLineJumps: (show) => {
     set({ showLineJumps: show });
     get().saveToLocalStorage();
@@ -2727,6 +2744,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
+      labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
@@ -2808,6 +2826,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             globalReportFooterLayout: data.globalReportFooterLayout ?? null,
             scrollConfig: resolveScrollConfig(data),
             cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+            labelCase: resolveLabelCase(data.labelCase),
             showLineJumps: data.showLineJumps ?? true,
             autoRoute: data.autoRoute ?? true,
             edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -2874,6 +2893,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         globalReportFooterLayout: data.globalReportFooterLayout ?? null,
         scrollConfig: resolveScrollConfig(data),
         cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+        labelCase: resolveLabelCase(data.labelCase),
         showLineJumps: data.showLineJumps ?? true,
         showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
         showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
@@ -2940,6 +2960,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
+      labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
@@ -3023,6 +3044,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       globalReportFooterLayout: data.globalReportFooterLayout ?? null,
       scrollConfig: resolveScrollConfig(data),
       cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
+      labelCase: resolveLabelCase(data.labelCase),
       showLineJumps: data.showLineJumps ?? true,
       showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
       showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,

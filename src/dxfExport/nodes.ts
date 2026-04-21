@@ -18,6 +18,7 @@ import {
   resolveAuxiliaryLine,
   rowsInSlot,
 } from "../auxiliaryData";
+import { transformLabelNow } from "../labelCaseUtils";
 
 /** Matches Tailwind `rounded-lg` on the canvas DeviceNode (8px = 0.083"). */
 const DEVICE_CORNER_RADIUS_IN = 8 / 96;
@@ -191,7 +192,7 @@ export function emitDevice(
       CANONICAL_LAYERS.LABELS,
       pxToIn(ax + w / 2),
       -pxToIn(labelBaselineY),
-      truncateToWidth(data.label, labelAvailIn, labelHeight),
+      truncateToWidth(transformLabelNow(data.label), labelAvailIn, labelHeight),
       { height: labelHeight, align: "center" },
     );
   }
@@ -202,7 +203,7 @@ export function emitDevice(
     for (const row of headerRows) {
       const rowH = auxRowHeight(row);
       if (row.text.trim()) {
-        const resolved = resolveAuxiliaryLine(row.text, data);
+        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data));
         if (resolved) {
           writer.addText(
             CANONICAL_LAYERS.LABELS,
@@ -239,7 +240,7 @@ export function emitDevice(
     for (const row of rows) {
       const rowH = auxRowHeight(row);
       if (row.text.trim()) {
-        const resolved = resolveAuxiliaryLine(row.text, data);
+        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data));
         if (resolved) {
           writer.addText(
             CANONICAL_LAYERS.LABELS,
@@ -288,11 +289,11 @@ export function emitDevice(
       const connectedOut = connectedHandles.has(outH);
       const connectedIn = connectedHandles.has(inH);
       const onRight = connectedOut && !connectedIn;
-      emitPortLabel(writer, port.label, ax, w, labelY, onRight, portTextHeight, style);
+      emitPortLabel(writer, transformLabelNow(port.label), ax, w, labelY, onRight, portTextHeight, style);
       bidirLabeled.add(portId);
     } else {
       const isLeft = port.direction === "input" ? !port.flipped : !!port.flipped;
-      emitPortLabel(writer, port.label, ax, w, labelY, !isLeft, portTextHeight, style);
+      emitPortLabel(writer, transformLabelNow(port.label), ax, w, labelY, !isLeft, portTextHeight, style);
     }
   }
 

@@ -3,6 +3,7 @@ import { SIGNAL_LABELS } from "./types";
 import { NETWORK_SIGNAL_TYPES } from "./connectorTypes";
 import { findReachableDhcpServers } from "./networkValidation";
 import { getRoomLabel } from "./packList";
+import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
@@ -51,8 +52,8 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
       rows.push({
         nodeId: node.id,
         portId: port.id,
-        deviceLabel: data.label,
-        portLabel: port.label,
+        deviceLabel: transformLabelNow(data.label),
+        portLabel: transformLabelNow(port.label),
         room,
         signalType: SIGNAL_LABELS[port.signalType] ?? port.signalType,
         hostname: data.hostname ?? "",
@@ -106,7 +107,7 @@ export function computeDhcpServerSummary(nodes: SchematicNode[]): DhcpServerSumm
     if (!data.dhcpServer?.enabled) continue;
     rows.push({
       nodeId: node.id,
-      deviceLabel: data.label,
+      deviceLabel: transformLabelNow(data.label),
       rangeStart: data.dhcpServer.rangeStart ?? "",
       rangeEnd: data.dhcpServer.rangeEnd ?? "",
       subnetMask: data.dhcpServer.subnetMask ?? "",
@@ -166,7 +167,7 @@ export function computePoeBudget(nodes: SchematicNode[], edges: ConnectionEdge[]
 
     rows.push({
       nodeId: node.id,
-      deviceLabel: data.label,
+      deviceLabel: transformLabelNow(data.label),
       room,
       budgetW: data.poeBudgetW,
       loadW,

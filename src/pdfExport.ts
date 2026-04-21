@@ -12,6 +12,7 @@ import type { RoutedEdge } from "./edgeRouter";
 import { computeCellRects, normalizeSizes, getFieldValue } from "./titleBlockLayout";
 import { useSchematicStore } from "./store";
 import { DEFAULT_SIGNAL_COLORS } from "./signalColors";
+import { transformLabelNow } from "./labelCaseUtils";
 import { collectColorKeyEntries, layoutColorKey, type ColorKeyEntry } from "./colorKeyLayout";
 
 const DPI = 96;
@@ -354,7 +355,7 @@ function computePdfCrossingLabels(
       const parent = nodes.find((p) => p.id === n.parentId);
       if (parent) room = (parent.data as { label?: string }).label;
     }
-    nodeInfo.set(n.id, { label: data.label, room });
+    nodeInfo.set(n.id, { label: transformLabelNow(data.label), room });
   }
 
   const edgeMap = new Map(edges.map((e) => [e.id, e]));

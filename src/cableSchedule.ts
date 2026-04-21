@@ -6,6 +6,7 @@ import type {
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
 import { getCableType } from "./cableTypes";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
+import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 import type { DeviceData } from "./types";
@@ -109,14 +110,14 @@ export function computeCableSchedule(
       const tgtPort = resolvePort(tgtNode, e.targetHandle);
 
       const sourceDevice = srcNode?.type === "device"
-        ? (srcNode.data as DeviceData).label
+        ? transformLabelNow((srcNode.data as DeviceData).label)
         : "Unknown";
       const sourcePort = srcNode ? resolvePortLabel(srcNode, e.sourceHandle) : "";
       const sourceConnector = srcPort?.connectorType
         ? (CONNECTOR_LABELS[srcPort.connectorType] ?? "—")
         : "—";
       const targetDevice = tgtNode?.type === "device"
-        ? (tgtNode.data as DeviceData).label
+        ? transformLabelNow((tgtNode.data as DeviceData).label)
         : "Unknown";
       const targetPort = tgtNode ? resolvePortLabel(tgtNode, e.targetHandle) : "";
       const targetConnector = tgtPort?.connectorType
