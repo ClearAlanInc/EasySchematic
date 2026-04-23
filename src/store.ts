@@ -32,7 +32,7 @@ import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from 
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
-import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
@@ -1430,12 +1430,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // screwing bare wire into screw terminals, you presumably know what signal you're carrying
     const bareWireBypass = !!sourcePort.connectorType && !!targetPort.connectorType &&
       BARE_WIRE_CONNECTORS.has(sourcePort.connectorType) && BARE_WIRE_CONNECTORS.has(targetPort.connectorType);
+    const signalBypass = areSignalsCompatibleViaConnector(
+      sourcePort.signalType, sourcePort.connectorType,
+      targetPort.signalType, targetPort.connectorType,
+    );
     if (!networkBypass && !bareWireBypass) {
       const canSource = sourcePort.direction === "output" || sourcePort.direction === "bidirectional";
       const canTarget = targetPort.direction === "input" || targetPort.direction === "bidirectional";
       if (!canSource || !canTarget) return false;
     }
-    if (sourcePort.signalType !== targetPort.signalType && !networkBypass && !bareWireBypass) return false;
+    if (sourcePort.signalType !== targetPort.signalType && !networkBypass && !bareWireBypass && !signalBypass) return false;
 
     // Multicable ports can only connect to other multicable ports
     const srcIsMulticable = sourcePort.isMulticable ?? false;

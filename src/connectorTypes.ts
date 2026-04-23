@@ -105,6 +105,26 @@ export const CONNECTOR_ACCEPTS: Partial<Record<ConnectorType, ConnectorAcceptanc
 /** Bare-wire connectors (no physical connector — cable goes straight in) are compatible with anything */
 export const BARE_WIRE_CONNECTORS: Set<ConnectorType> = new Set(["phoenix", "terminal-block"]);
 
+/** Signal pairs that physically share a connector and are interchangeable when both ports use it.
+ *  Thunderbolt ports are USB-C and carry USB; a plain USB-C cable works between them. */
+export const SIGNAL_COMPAT_VIA_CONNECTOR: ReadonlyArray<readonly [SignalType, SignalType, ConnectorType]> = [
+  ["thunderbolt", "usb", "usb-c"],
+];
+
+export function areSignalsCompatibleViaConnector(
+  aSignal: SignalType,
+  aConn: ConnectorType | undefined,
+  bSignal: SignalType,
+  bConn: ConnectorType | undefined,
+): boolean {
+  if (!aConn || !bConn || aConn !== bConn) return false;
+  return SIGNAL_COMPAT_VIA_CONNECTOR.some(
+    ([s1, s2, c]) =>
+      aConn === c &&
+      ((s1 === aSignal && s2 === bSignal) || (s1 === bSignal && s2 === aSignal)),
+  );
+}
+
 /** Check if two connector types are compatible (same type or one accepts the other) */
 export function areConnectorsCompatible(a: ConnectorType | undefined, b: ConnectorType | undefined): boolean {
   if (!a || !b) return true; // missing connector info = no mismatch
