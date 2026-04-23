@@ -22,6 +22,7 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   srt: "#15803d",
   genlock: "#475569",
   gpio: "#78716c",
+  "contact-closure": "#57534e",
   rs422: "#6d28d9",
   serial: "#525252",
   thunderbolt: "#4f46e5",

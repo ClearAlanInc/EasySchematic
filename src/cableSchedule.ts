@@ -50,6 +50,7 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   srt: "SR",
   genlock: "G",
   gpio: "GP",
+  "contact-closure": "CC",
   rs422: "RS",
   serial: "SL",
   thunderbolt: "TB",

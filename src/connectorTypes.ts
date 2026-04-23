@@ -21,6 +21,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   srt: "rj45",
   genlock: "bnc",
   gpio: "phoenix",
+  "contact-closure": "phoenix",
   rs422: "db9",
   serial: "db9",
   thunderbolt: "usb-c",

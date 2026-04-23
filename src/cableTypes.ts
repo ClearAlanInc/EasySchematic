@@ -36,6 +36,7 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   "power-neutral": "Cam-Lok",
   "power-ground": "Cam-Lok",
   gpio: "GPIO",
+  "contact-closure": "Phoenix",
   dmx: "DMX",
   madi: "MADI",
   midi: "MIDI",

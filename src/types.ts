@@ -69,6 +69,7 @@ export type SignalType =
   | "srt"
   | "genlock"
   | "gpio"
+  | "contact-closure"
   | "rs422"
   | "serial"
   | "thunderbolt"
@@ -570,6 +571,7 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   srt: "var(--color-srt)",
   genlock: "var(--color-genlock)",
   gpio: "var(--color-gpio)",
+  "contact-closure": "var(--color-contact-closure)",
   rs422: "var(--color-rs422)",
   serial: "var(--color-serial)",
   thunderbolt: "var(--color-thunderbolt)",
@@ -721,6 +723,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   srt: "SRT",
   genlock: "Genlock",
   gpio: "GPIO",
+  "contact-closure": "Contact Closure",
   rs422: "RS-422",
   serial: "Serial",
   thunderbolt: "Thunderbolt",
@@ -773,7 +776,7 @@ export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
   "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink"],
   "Network": ["ethernet", "fiber"],
-  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink"],
+  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink"],
   "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],
   "Power": ["power", "power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"],
   "Streaming": ["rtmp", "rtsp", "mpeg-ts", "rf"],

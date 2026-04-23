@@ -30,6 +30,7 @@
   --color-genlock: #475569;   /* slate — sync/timing */
   --color-wordclock: #64748b;  /* cool slate — audio clock reference */
   --color-gpio: #78716c;      /* warm gray — control */
+  --color-contact-closure: #57534e;  /* dark stone — dry-contact relay */
   --color-rs422: #6d28d9;     /* deep violet — machine control */
   --color-serial: #525252;    /* gray — generic serial */
   --color-thunderbolt: #4f46e5; /* indigo — high-speed */
