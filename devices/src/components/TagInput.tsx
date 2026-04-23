@@ -95,13 +95,13 @@ export default function TagInput({ tags, onChange, suggestions = [], autoSuggest
       {/* Auto-suggestion chips */}
       {availableAuto.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          <span className="text-xs text-slate-400 self-center mr-1">Suggested:</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500 self-center mr-1">Suggested:</span>
           {availableAuto.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => addTag(s)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700 border border-slate-200 hover:border-blue-300 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-200 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors cursor-pointer"
             >
               <span>+</span> {s}
             </button>
@@ -111,19 +111,19 @@ export default function TagInput({ tags, onChange, suggestions = [], autoSuggest
 
       {/* Tag bubbles + input */}
       <div
-        className="flex flex-wrap gap-1.5 items-center px-2 py-1.5 rounded-lg border border-slate-300 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[38px] cursor-text"
+        className="flex flex-wrap gap-1.5 items-center px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[38px] cursor-text"
         onClick={() => inputRef.current?.focus()}
       >
         {tags.map((tag, i) => (
           <span
             key={`${tag}-${i}`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 border border-blue-200"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
           >
             {tag}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); removeTag(i); }}
-              className="text-blue-400 hover:text-blue-600 leading-none cursor-pointer"
+              className="text-blue-400 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-100 leading-none cursor-pointer"
             >
               &times;
             </button>
@@ -137,7 +137,7 @@ export default function TagInput({ tags, onChange, suggestions = [], autoSuggest
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[80px] px-1 py-0.5 text-sm outline-none bg-transparent"
+          className="flex-1 min-w-[80px] px-1 py-0.5 text-sm outline-none bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
         />
       </div>
 
@@ -146,14 +146,16 @@ export default function TagInput({ tags, onChange, suggestions = [], autoSuggest
         <div className="relative">
           <ul
             ref={listRef}
-            className="absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg text-sm"
+            className="absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg text-sm"
           >
             {filtered.map((s, i) => (
               <li
                 key={s}
                 onMouseDown={() => addTag(s)}
                 className={`px-3 py-1.5 cursor-pointer ${
-                  i === activeIdx ? "bg-blue-100 text-blue-800" : "hover:bg-slate-50"
+                  i === activeIdx
+                    ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
+                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
                 {s}
@@ -164,7 +166,7 @@ export default function TagInput({ tags, onChange, suggestions = [], autoSuggest
       )}
 
       {tags.length > 0 && (
-        <span className="text-xs text-slate-400 mt-1 block">{tags.length}/{maxTags} tags</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">{tags.length}/{maxTags} tags</span>
       )}
     </div>
   );

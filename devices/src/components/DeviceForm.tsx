@@ -277,23 +277,23 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
     await doSubmit();
   };
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading...</div>;
 
   const isGenericMfr = manufacturer.trim().toLowerCase() === "generic";
 
   return (
     <>
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-sm">{error}</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Label *</span>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label *</span>
+          <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <div>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Device Type *</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Device Type *</span>
           {customDeviceType ? (
             <div>
               <div className="flex gap-2 items-center">
@@ -301,16 +301,16 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
                   value={customDeviceTypeText}
                   onChange={(e) => setCustomDeviceTypeText(e.target.value)}
                   placeholder="e.g. Commentary Box"
-                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <button type="button" onClick={() => { setCustomDeviceType(false); setCustomDeviceTypeText(""); }} className="text-xs text-slate-500 hover:text-slate-700 whitespace-nowrap">Back to list</button>
+                <button type="button" onClick={() => { setCustomDeviceType(false); setCustomDeviceTypeText(""); }} className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">Back to list</button>
               </div>
               {customDeviceTypeText.trim() && (
-                <span className="text-xs text-slate-500 mt-1 block">
-                  Will be saved as: <code className="px-1 py-0.5 bg-slate-100 rounded text-slate-700">{toKebab(customDeviceTypeText)}</code>
+                <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                  Will be saved as: <code className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-700 dark:text-slate-300">{toKebab(customDeviceTypeText)}</code>
                 </span>
               )}
-              <span className="text-xs text-amber-600 mt-1 block">A moderator will review and add this new device type.</span>
+              <span className="text-xs text-amber-600 dark:text-amber-400 mt-1 block">A moderator will review and add this new device type.</span>
             </div>
           ) : (
             <SearchableSelect
@@ -320,16 +320,16 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
               labels={DEVICE_TYPE_LABELS}
               placeholder="Search device types..."
               allowOther={{ label: "Other \u2014 suggest new type", onSelect: (q) => { setCustomDeviceType(true); setCustomDeviceTypeText(q); } }}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           )}
         </div>
         <div>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Category *</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</span>
           {!customDeviceType && DEVICE_TYPE_TO_CATEGORY[deviceType] ? (
             <div className="flex items-center gap-2">
-              <input value={category} readOnly className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-600 cursor-default" />
-              <span className="text-xs text-slate-400 whitespace-nowrap">Auto-filled</span>
+              <input value={category} readOnly className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 cursor-default" />
+              <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">Auto-filled</span>
             </div>
           ) : (
             <SearchableSelect
@@ -338,25 +338,25 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
               options={ALL_CATEGORIES}
               labels={Object.fromEntries(ALL_CATEGORIES.map((c) => [c, c]))}
               placeholder="Select category..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           )}
         </div>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Manufacturer *</span>
-          <AutocompleteInput value={manufacturer} onChange={setManufacturer} suggestions={knownManufacturers} placeholder="e.g. Blackmagic Design, or Generic" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Manufacturer *</span>
+          <AutocompleteInput value={manufacturer} onChange={setManufacturer} suggestions={knownManufacturers} placeholder="e.g. Blackmagic Design, or Generic" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Model Number {!isGenericMfr ? "*" : ""}</span>
-          <input value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Model Number {!isGenericMfr ? "*" : ""}</span>
+          <input value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label className="sm:col-span-2">
-          <span className="block text-sm font-medium text-slate-700 mb-1">Reference URL {!isGenericMfr ? "*" : ""}</span>
-          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product/specs" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">{isGenericMfr ? "Optional for generic devices" : "Link to the manufacturer's specifications page (not marketing overview) for verification"}</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Reference URL {!isGenericMfr ? "*" : ""}</span>
+          <input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://manufacturer.com/product/specs" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">{isGenericMfr ? "Optional for generic devices" : "Link to the manufacturer's specifications page (not marketing overview) for verification"}</span>
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Search Terms</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Search Terms</span>
           <TagInput
             tags={searchTerms}
             onChange={setSearchTerms}
@@ -374,72 +374,72 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
           />
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Power Draw (W)</span>
-          <input type="number" min="0" value={powerDrawW} onChange={(e) => setPowerDrawW(e.target.value)} placeholder="e.g. 150" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Max power consumption from spec sheet</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Power Draw (W)</span>
+          <input type="number" min="0" value={powerDrawW} onChange={(e) => setPowerDrawW(e.target.value)} placeholder="e.g. 150" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Max power consumption from spec sheet</span>
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Voltage</span>
-          <input value={voltage} onChange={(e) => setVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Voltage</span>
+          <input value={voltage} onChange={(e) => setVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Height (mm)</span>
-          <input type="number" min="1" step="1" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} placeholder="e.g. 44" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Chassis height from spec sheet (1U = 44mm)</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Height (mm)</span>
+          <input type="number" min="1" step="1" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} placeholder="e.g. 44" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Chassis height from spec sheet (1U = 44mm)</span>
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Width (mm)</span>
-          <input type="number" min="1" step="1" value={widthMm} onChange={(e) => setWidthMm(e.target.value)} placeholder="e.g. 482" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Chassis width from spec sheet (19" rack = 482mm)</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Width (mm)</span>
+          <input type="number" min="1" step="1" value={widthMm} onChange={(e) => setWidthMm(e.target.value)} placeholder="e.g. 482" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Chassis width from spec sheet (19" rack = 482mm)</span>
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Depth (mm)</span>
-          <input type="number" min="1" step="1" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Chassis depth from spec sheet</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Depth (mm)</span>
+          <input type="number" min="1" step="1" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Chassis depth from spec sheet</span>
         </label>
         <label>
-          <span className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</span>
-          <input type="number" min="0" step="0.1" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} placeholder="e.g. 2.5" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-slate-400 mt-1 block">Device weight from spec sheet</span>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Weight (kg)</span>
+          <input type="number" min="0" step="0.1" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} placeholder="e.g. 2.5" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Device weight from spec sheet</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={isVenueProvided} onChange={(e) => setIsVenueProvided(e.target.checked)} className="cursor-pointer" />
-          <span className="text-sm font-medium text-slate-700">Venue provided (exclude from pack list)</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Venue provided (exclude from pack list)</span>
         </label>
         {(deviceType.includes("power-distribution") || deviceType.includes("company-switch")) && (
           <label>
-            <span className="block text-sm font-medium text-slate-700 mb-1">Power Capacity (W)</span>
-            <input type="number" min="0" value={powerCapacityW} onChange={(e) => setPowerCapacityW(e.target.value)} placeholder="e.g. 2400" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <span className="text-xs text-slate-400 mt-1 block">Total supply capacity (distros only)</span>
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Power Capacity (W)</span>
+            <input type="number" min="0" value={powerCapacityW} onChange={(e) => setPowerCapacityW(e.target.value)} placeholder="e.g. 2400" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Total supply capacity (distros only)</span>
           </label>
         )}
         {ports.some((p) => p.connectorType === "rj45" || p.connectorType === "ethercon") && (
           <label>
-            <span className="block text-sm font-medium text-slate-700 mb-1">PoE Source Budget (W)</span>
-            <input type="number" min="0" value={poeBudgetW} onChange={(e) => setPoeBudgetW(e.target.value)} placeholder="e.g. 370" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <span className="text-xs text-slate-400 mt-1 block">Total PoE budget this device supplies (leave blank if not a PoE source)</span>
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">PoE Source Budget (W)</span>
+            <input type="number" min="0" value={poeBudgetW} onChange={(e) => setPoeBudgetW(e.target.value)} placeholder="e.g. 370" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Total PoE budget this device supplies (leave blank if not a PoE source)</span>
           </label>
         )}
         {ports.some((p) => p.connectorType === "rj45" || p.connectorType === "ethercon") && (
           <label>
-            <span className="block text-sm font-medium text-slate-700 mb-1">PoE Draw (W)</span>
-            <input type="number" min="0" step="0.1" value={poeDrawW} onChange={(e) => setPoeDrawW(e.target.value)} placeholder="e.g. 12.95" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <span className="text-xs text-slate-400 mt-1 block">Power this device consumes via PoE (leave blank if not PoE-powered)</span>
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">PoE Draw (W)</span>
+            <input type="number" min="0" step="0.1" value={poeDrawW} onChange={(e) => setPoeDrawW(e.target.value)} placeholder="e.g. 12.95" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Power this device consumes via PoE (leave blank if not PoE-powered)</span>
           </label>
         )}
         {category === "Expansion Cards" && (
           <label>
-            <span className="block text-sm font-medium text-slate-700 mb-1">Slot Family</span>
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Slot Family</span>
             <input
               value={slotFamily}
               onChange={(e) => setSlotFamily(e.target.value)}
               list="slot-families"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <datalist id="slot-families">
               {[...new Set(allTemplates.filter((t) => t.slotFamily).map((t) => t.slotFamily!))].map((f) => <option key={f} value={f} />)}
             </datalist>
-            <span className="text-xs text-slate-400 mt-1 block">Family this card belongs to (e.g. disguise-vfc)</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Family this card belongs to (e.g. disguise-vfc)</span>
           </label>
         )}
         {extraFields}
@@ -451,7 +451,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
       <SlotEditor slots={slots} onChange={setSlots} allTemplates={allTemplates} />
 
       <label className="block mt-8">
-        <span className="block text-sm font-medium text-slate-700 mb-1">Notes to Moderators</span>
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes to Moderators</span>
         <textarea
           value={submitterNote}
           onChange={(e) => setSubmitterNote(e.target.value)}
@@ -465,13 +465,13 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
 
       {/* Warnings confirmation dialog */}
       {showWarnings && (
-        <div className="mt-6 p-4 rounded-lg border border-amber-200 bg-amber-50">
-          <h3 className="text-sm font-semibold text-amber-800 mb-2">Review before submitting</h3>
-          <ul className="text-sm text-amber-700 space-y-1 mb-4">
+        <div className="mt-6 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+          <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200 mb-2">Review before submitting</h3>
+          <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1 mb-4">
             {warnings.map((w, i) => <li key={i} className="flex gap-2"><span className="shrink-0">&#9888;</span> {w}</li>)}
           </ul>
           <div className="flex gap-3">
-            <button onClick={() => setShowWarnings(false)} className="px-4 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors">Go Back</button>
+            <button onClick={() => setShowWarnings(false)} className="px-4 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors">Go Back</button>
             <button onClick={doSubmit} disabled={saving} className="px-4 py-1.5 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors">
               {saving ? "Submitting..." : "Submit Anyway"}
             </button>
@@ -479,10 +479,10 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         </div>
       )}
 
-      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-8 pt-6 border-t border-slate-200">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
         <div>{footer}</div>
         <div className="flex items-center gap-3">
-          <a href={cancelHref} onClick={linkClick} className="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors">
+          <a href={cancelHref} onClick={linkClick} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             Cancel
           </a>
           <button
@@ -531,33 +531,33 @@ function SlotEditor({
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => setOpen(!open)}
-          className="text-sm font-semibold text-slate-700 flex items-center gap-1 cursor-pointer"
+          className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-pointer"
         >
-          <span className={`text-[10px] text-slate-400 transition-transform ${open ? "rotate-90" : ""}`}>▶</span>
+          <span className={`text-[10px] text-slate-400 dark:text-slate-500 transition-transform ${open ? "rotate-90" : ""}`}>▶</span>
           Expansion Slots
-          {slots.length > 0 && <span className="text-xs text-slate-400 font-normal ml-1">({slots.length})</span>}
+          {slots.length > 0 && <span className="text-xs text-slate-400 dark:text-slate-500 font-normal ml-1">({slots.length})</span>}
         </button>
         <button
           onClick={addSlot}
-          className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer"
         >
           + Add Slot
         </button>
       </div>
 
       {open && slots.length === 0 && (
-        <p className="text-xs text-slate-400 mb-2">No expansion slots defined. Add a slot for devices with modular card bays.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">No expansion slots defined. Add a slot for devices with modular card bays.</p>
       )}
 
       {open && slots.map((slot, i) => {
         const familyCards = allTemplates.filter((t) => t.slotFamily === slot.slotFamily);
         return (
-          <div key={slot.id} className="border border-slate-200 rounded-lg p-3 mb-3">
+          <div key={slot.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 mb-3 bg-white dark:bg-slate-800">
             <div className="flex items-center gap-2 mb-2">
               <input
                 value={slot.label}
                 onChange={(e) => updateSlot(i, { label: e.target.value })}
-                className="flex-1 px-2 py-1 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Slot label (e.g. VFC Slot A)"
               />
               <button
@@ -571,12 +571,12 @@ function SlotEditor({
 
             {/* Slot Family */}
             <div className="mb-2">
-              <label className="block text-xs text-slate-500 mb-1">Slot Family</label>
+              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Slot Family</label>
               <input
                 value={slot.slotFamily}
                 onChange={(e) => updateSlot(i, { slotFamily: e.target.value })}
                 list="slot-families-inner"
-                className="w-full px-2 py-1 rounded border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <datalist id="slot-families-inner">
                 {knownFamilies.map((f) => <option key={f} value={f} />)}
@@ -586,11 +586,11 @@ function SlotEditor({
             {/* Default Card */}
             {slot.slotFamily && familyCards.length > 0 && (
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Default Card</label>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Default Card</label>
                 <select
                   value={slot.defaultCardId ?? ""}
                   onChange={(e) => updateSlot(i, { defaultCardId: e.target.value || undefined })}
-                  className="w-full px-2 py-1 rounded border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">(empty)</option>
                   {familyCards.map((card) => (

@@ -607,7 +607,7 @@ export default function DeviceEditor() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }} onKeyDownCapture={onCtrlEnter}>
       <div
-        className="bg-white border border-[var(--color-border)] rounded-lg shadow-2xl w-[560px] max-h-[85vh] flex flex-col"
+        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg shadow-2xl w-[560px] max-h-[85vh] flex flex-col"
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
@@ -622,8 +622,8 @@ export default function DeviceEditor() {
 
         {/* Template-drift notice */}
         {drift && (
-          <div className="px-4 py-2 border-b border-[var(--color-border)] bg-blue-50 flex items-center justify-between gap-2">
-            <span className="text-xs text-blue-900">
+          <div className="px-4 py-2 border-b border-[var(--color-border)] bg-blue-50 dark:bg-blue-900/20 flex items-center justify-between gap-2">
+            <span className="text-xs text-blue-900 dark:text-blue-200">
               Template updated — v{drift.deviceVersion} → v{drift.currentVersion} available
             </span>
             <button
@@ -741,7 +741,7 @@ export default function DeviceEditor() {
 
           {/* Preset indicator */}
           {hasPreset && templateId && (
-            <div className="text-[10px] text-[var(--color-text-muted)] bg-blue-50 border border-blue-200/60 rounded px-2 py-1 flex items-center justify-between -mt-1">
+            <div className="text-[10px] text-blue-700 dark:text-blue-200 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/60 rounded px-2 py-1 flex items-center justify-between -mt-1">
               <span>Preset active for all &ldquo;{node.data.model || "this template"}&rdquo; devices</span>
               <button
                 onClick={() => setTemplatePreset(templateId, null)}
@@ -1201,7 +1201,7 @@ export default function DeviceEditor() {
                   <select
                     value={adapterVisibility}
                     onChange={(e) => setAdapterVisibility(e.target.value as "default" | "force-show" | "force-hide")}
-                    className="text-xs border border-[var(--color-border)] rounded px-1.5 py-0.5 bg-white cursor-pointer"
+                    className="text-xs border border-[var(--color-border)] rounded px-1.5 py-0.5 bg-[var(--color-surface)] text-[var(--color-text)] cursor-pointer"
                   >
                     <option value="default">Default</option>
                     <option value="force-show">Always Show</option>
@@ -1337,7 +1337,7 @@ function BulkAddForm({
     <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-2 space-y-2 mb-2">
       <div className="flex items-center gap-1.5 flex-wrap">
         <input
-          className="w-20 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          className="w-20 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
           value={prefix}
           onChange={(e) => setPrefix(e.target.value)}
           placeholder="Prefix"
@@ -1347,7 +1347,7 @@ function BulkAddForm({
           <span className="text-[10px] text-[var(--color-text-muted)]">from</span>
           <input
             type="number"
-            className="w-12 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            className="w-12 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
             value={start}
             onChange={(e) => setStart(parseInt(e.target.value) || 1)}
             min={0}
@@ -1358,7 +1358,7 @@ function BulkAddForm({
           <span className="text-[10px] text-[var(--color-text-muted)]">to</span>
           <input
             type="number"
-            className="w-12 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            className="w-12 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
             value={end}
             onChange={(e) => setEnd(parseInt(e.target.value) || 1)}
             min={start}
@@ -1367,7 +1367,7 @@ function BulkAddForm({
           />
         </div>
         <select
-          className="bg-white border border-[var(--color-border)] rounded px-1 py-1 text-xs outline-none focus:border-blue-500 cursor-pointer"
+          className="bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] rounded px-1 py-1 text-xs outline-none focus:border-blue-500 cursor-pointer"
           value={signalType}
           onChange={(e) => setSignalType(e.target.value as SignalType)}
         >
@@ -1379,7 +1379,7 @@ function BulkAddForm({
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] text-[var(--color-text-muted)]">Section:</span>
         <input
-          className="flex-1 bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          className="flex-1 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
           value={section}
           onChange={(e) => setSection(e.target.value)}
           placeholder="(optional)"
@@ -2366,7 +2366,7 @@ function SlotEditSection({
                   onChange={(e) => updateSlot(nodeId, slot.slotId, { label: e.target.value })}
                   onKeyDown={(e) => e.stopPropagation()}
                   placeholder="Slot label"
-                  className="flex-1 min-w-0 bg-white border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[11px] outline-none focus:border-blue-500"
+                  className="flex-1 min-w-0 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[11px] outline-none focus:border-blue-500"
                 />
                 <input
                   value={slot.slotFamily ?? ""}
@@ -2374,7 +2374,7 @@ function SlotEditSection({
                   onKeyDown={(e) => e.stopPropagation()}
                   list={`slot-families-${nodeId}`}
                   placeholder="family"
-                  className="w-24 bg-white border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
+                  className="w-24 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
                 />
                 <button
                   type="button"
@@ -2402,7 +2402,7 @@ function SlotEditSection({
                 swapCard(nodeId, slot.slotId, newCardId);
               }}
               disabled={!isNested && !slot.slotFamily}
-              className="w-full bg-white border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-50"
+              className="w-full bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-50"
             >
               <option value="">{!isNested && !slot.slotFamily ? "(set slot family to enable)" : "(empty)"}</option>
               {familyCards.map((card) => (

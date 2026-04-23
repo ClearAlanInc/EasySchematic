@@ -73,14 +73,16 @@ export default function AutocompleteInput({ value, onChange, suggestions, placeh
       {show && (
         <ul
           ref={listRef}
-          className="absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg text-sm"
+          className="absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg text-sm"
         >
           {filtered.slice(0, 20).map((s, i) => (
             <li
               key={s}
               onMouseDown={() => { onChange(s); setOpen(false); }}
               className={`px-3 py-1.5 cursor-pointer ${
-                i === activeIdx ? "bg-blue-100 text-blue-800" : "hover:bg-slate-50"
+                i === activeIdx
+                  ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
               {s}

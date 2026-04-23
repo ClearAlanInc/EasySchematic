@@ -203,14 +203,14 @@ export default function SearchableSelect<T extends string>({
         type="button"
         onClick={() => setOpen(!open)}
         onKeyDown={handleKeyDown}
-        className={`text-left truncate ${className ?? "w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"}`}
+        className={`text-left truncate ${className ?? "w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"}`}
       >
-        {displayLabel || <span className="text-slate-400">{placeholder}</span>}
+        {displayLabel || <span className="text-slate-400 dark:text-slate-500">{placeholder}</span>}
       </button>
 
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden" style={{ minWidth: "200px" }}>
-          <div className="p-2 border-b border-slate-100">
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden" style={{ minWidth: "200px" }}>
+          <div className="p-2 border-b border-slate-100 dark:border-slate-700">
             <input
               ref={inputRef}
               type="text"
@@ -218,17 +218,17 @@ export default function SearchableSelect<T extends string>({
               onChange={(e) => { setQuery(e.target.value); setActiveIdx(-1); }}
               onKeyDown={handleKeyDown}
               placeholder="Search..."
-              className="w-full px-2 py-1.5 rounded border border-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <div ref={listRef} className="max-h-64 overflow-y-auto">
             {displayItems.length === 0 && (
-              <div className="px-3 py-2 text-sm text-slate-400 italic">No matches</div>
+              <div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500 italic">No matches</div>
             )}
             {displayItems.map((item, i) => {
               if ("type" in item && item.type === "header") {
                 return (
-                  <div key={`h-${item.label}`} className="px-3 py-1 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 sticky top-0">
+                  <div key={`h-${item.label}`} className="px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-900 sticky top-0">
                     {item.label}
                   </div>
                 );
@@ -238,8 +238,10 @@ export default function SearchableSelect<T extends string>({
                   <div
                     key="__other__"
                     onMouseDown={(e) => { e.preventDefault(); allowOther!.onSelect(query); close(); }}
-                    className={`px-3 py-1.5 cursor-pointer text-sm border-t border-slate-100 ${
-                      i === activeIdx ? "bg-blue-100 text-blue-800" : "text-blue-600 hover:bg-blue-50"
+                    className={`px-3 py-1.5 cursor-pointer text-sm border-t border-slate-100 dark:border-slate-700 ${
+                      i === activeIdx
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
+                        : "text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     }`}
                   >
                     {allowOther!.label}
@@ -254,19 +256,19 @@ export default function SearchableSelect<T extends string>({
                   key={`${opt.group ?? ""}-${opt.value}`}
                   onMouseDown={(e) => { e.preventDefault(); onChange(opt.value); close(); }}
                   className={`px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 ${
-                    isActive ? "bg-blue-100 text-blue-800" :
-                    isSelected ? "bg-blue-50 text-blue-700 font-medium" :
-                    "hover:bg-slate-50"
+                    isActive ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200" :
+                    isSelected ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium" :
+                    "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                   }`}
                 >
                   <span className="truncate flex-1">{opt.label}</span>
                   {opt.isRecommended && (
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-medium">
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-medium">
                       {recommendedLabel ?? "Default"}
                     </span>
                   )}
                   {isSelected && !opt.isRecommended && (
-                    <span className="shrink-0 text-blue-500">&#10003;</span>
+                    <span className="shrink-0 text-blue-500 dark:text-blue-400">&#10003;</span>
                   )}
                 </div>
               );
