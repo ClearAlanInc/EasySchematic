@@ -68,7 +68,7 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "iem-transmitter": "Microphones",
   "change-over": "Expansion Cards",
   "expansion-card": "Expansion Cards",
-  "fiber-transmitter": "Expansion Cards",
+  "fiber-transmitter": "KVM / Extenders",
   "company-switch": "Infrastructure",
   "frame": "Infrastructure",
   "power-distribution": "Infrastructure",

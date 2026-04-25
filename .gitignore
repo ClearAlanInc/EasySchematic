@@ -41,6 +41,7 @@ edge-debug.log
 
 # Generated seed data
 api/seed/seed-data.sql
+api/seed/import-*.sql
 src/deviceLibrary.fallback.json
 docs/src/searchIndex.json
 
