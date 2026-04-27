@@ -16,7 +16,14 @@ import { transformLabelNow } from "./labelCaseUtils";
 import { collectColorKeyEntries, layoutColorKey, type ColorKeyEntry } from "./colorKeyLayout";
 
 const DPI = 96;
-const PIXEL_RATIO = 1.5;
+// 5 × 96 = 480 DPI — well above the 300 DPI print standard, sharp even at high
+// zoom in PDF viewers. Bumped from 1.5 to fix soft/pixelated printed output.
+// The "FAST" deflate compression on addImage below keeps PDF sizes in check
+// independently of pixelRatio — see commit 38ce285.
+const TARGET_PIXEL_RATIO = 5;
+// Cap raster dimension to stay under browser canvas limits (~16384px in Chrome)
+// on huge custom paper sizes. Falls back to a lower effective DPI on those.
+const MAX_RASTER_DIMENSION_PX = 12000;
 
 // ─── Inter font embedding for jsPDF ───
 
@@ -699,13 +706,18 @@ export async function exportPdf(
       CSSStyleDeclaration.prototype.getPropertyValue = function (prop) {
         return origGetPropertyValue.call(this, prop) ?? '';
       };
+      const longestSidePx = Math.max(contentWPx, contentHPx);
+      const pixelRatio = Math.max(
+        1,
+        Math.min(TARGET_PIXEL_RATIO, MAX_RASTER_DIMENSION_PX / longestSidePx),
+      );
       let dataUrl: string;
       try {
         dataUrl = await toPng(viewportEl, {
           backgroundColor: "#ffffff",
           width: contentWPx,
           height: contentHPx,
-          pixelRatio: PIXEL_RATIO,
+          pixelRatio,
           fontEmbedCSS: getInterFontEmbedCSS(),
           style: {
             width: `${contentWPx}px`,
