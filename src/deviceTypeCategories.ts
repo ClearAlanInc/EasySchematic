@@ -100,6 +100,9 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "table-box": "Cable Accessories",
   "antenna": "Wireless",
   "antenna-distribution": "Wireless",
+  "conference-system": "Audio",
+  "di-box": "Audio",
+  "display": "Displays",
 };
 
 /** Human-readable labels for device types (kebab-case → Title Case with known acronyms) */

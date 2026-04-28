@@ -81,6 +81,7 @@ const CATEGORIES = {
   "power-mixer": "Powered Mixers",
   "nas": "Storage", "external-storage": "Storage",
   "audio-meter": "Monitoring", "video-scope": "Monitoring",
+  "conference-system": "Audio", "di-box": "Audio", "display": "Displays",
 };
 
 function esc(s) { return s ? s.replace(/'/g, "''") : ""; }
