@@ -65,6 +65,10 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   "mpeg-ts": "rj45",
   "component-video": "bnc",
   digilink: "digilink",
+  ebus: "phoenix",
+  "control-voltage": "phoenix",
+  "extron-exp": "rj45",
+  pots: "rj11",
   custom: "other",
 };
 

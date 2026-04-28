@@ -93,6 +93,10 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   rtmp: "RM",
   rtsp: "RP",
   "mpeg-ts": "MT",
+  ebus: "EB",
+  "control-voltage": "VC",
+  "extron-exp": "EX",
+  pots: "PT",
   custom: "X",
 };
 

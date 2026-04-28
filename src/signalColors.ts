@@ -65,6 +65,10 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   rtmp: "#16a34a",
   rtsp: "#15803d",
   "mpeg-ts": "#0891b2",
+  ebus: "#0c4a6e",
+  "control-voltage": "#92400e",
+  "extron-exp": "#7e22ce",
+  pots: "#3f3f46",
   custom: "#64748b",
 };
 

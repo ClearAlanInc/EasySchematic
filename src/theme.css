@@ -65,6 +65,10 @@
   --color-rtsp: #ea580c;      /* orange — RTSP streaming */
   --color-mpeg-ts: #ca8a04;   /* gold — MPEG-TS */
   --color-digilink: #9a3412;  /* dark orange — Avid Mini-DigiLink */
+  --color-ebus: #0c4a6e;      /* deep navy — Extron eBUS controller bus */
+  --color-control-voltage: #92400e; /* burnt amber — 0-10V analog DC control */
+  --color-extron-exp: #7e22ce; /* deep purple — Extron EXP audio expansion bus */
+  --color-pots: #3f3f46;      /* zinc — POTS / analog telephony */
   --color-custom: #64748b;    /* cool gray */
 }
 

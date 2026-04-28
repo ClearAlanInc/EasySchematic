@@ -67,6 +67,10 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   rtmp: "Ethernet",
   rtsp: "Ethernet",
   "mpeg-ts": "Ethernet",
+  ebus: "Phoenix",
+  "control-voltage": "Phoenix",
+  "extron-exp": "Cat6",
+  pots: "Phone (RJ11)",
   custom: "Other",
 };
 
