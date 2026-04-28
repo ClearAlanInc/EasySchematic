@@ -3,7 +3,10 @@
  * the live DB, validates, generates a SQL file, and applies it via wrangler.
  *
  * Usage:
- *   npx tsx seed/import-vendor.ts --file=<path> [--remote] [--dry-run]
+ *   npx tsx seed/import-vendor.ts --file=<path> [--remote] [--dry-run] [--update]
+ *
+ * --update: existing (manufacturer, modelNumber) rows are UPDATEd in place
+ *           (preserving id and created_at) instead of skipped.
  */
 import { readFileSync, writeFileSync, readdirSync } from "fs";
 import { execSync } from "child_process";
@@ -22,9 +25,10 @@ const args = process.argv.slice(2);
 const fileArg = args.find((a) => a.startsWith("--file="))?.slice("--file=".length);
 const isRemote = args.includes("--remote");
 const dryRun = args.includes("--dry-run");
+const isUpdate = args.includes("--update");
 
 if (!fileArg) {
-  console.error("Usage: npx tsx seed/import-vendor.ts --file=<path> [--remote] [--dry-run]");
+  console.error("Usage: npx tsx seed/import-vendor.ts --file=<path> [--remote] [--dry-run] [--update]");
   process.exit(1);
 }
 
@@ -53,6 +57,7 @@ let droppedMissingRequired = 0;
 let droppedInternalDup = 0;
 let droppedExistingInDb = 0;
 let droppedInvalid = 0;
+let updatedExisting = 0;
 
 // --- Step 1: pre-filter (missing mfr/model, "custom" modelNumber) ------------
 const prefiltered: Record<string, unknown>[] = [];
@@ -131,32 +136,41 @@ for (const t of normalized) {
 console.log(`\n${validated.length} validated templates. Checking DB for existing models...`);
 
 const manufacturers = [...new Set(validated.map((v) => v.input.manufacturer!.trim().toLowerCase()))];
-const existingKeys = new Set<string>();
+const existingIds = new Map<string, string>(); // key -> existing template id (UUID)
 const flag = isRemote ? "--remote" : "--local";
 
 for (const mfr of manufacturers) {
   // single-quote SQL literal; escape embedded quotes.
   const mfrEsc = mfr.replace(/'/g, "''");
-  const cmd = `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE lower(manufacturer)='${mfrEsc}'"`;
+  const cmd = `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT id, lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE lower(manufacturer)='${mfrEsc}'"`;
   const out = execSync(cmd, { cwd: apiDir, encoding: "utf-8" });
   const parsed = JSON.parse(out);
-  const rows: { k: string }[] = parsed[0]?.results ?? [];
-  for (const r of rows) existingKeys.add(r.k);
+  const rows: { id: string; k: string }[] = parsed[0]?.results ?? [];
+  for (const r of rows) existingIds.set(r.k, r.id);
   console.log(`  ${mfr}: ${rows.length} existing in DB`);
 }
 
-const fresh = validated.filter(({ input }) => {
-  const key = `${input.manufacturer!.trim().toLowerCase()}::${input.modelNumber!.trim().toLowerCase()}`;
-  if (existingKeys.has(key)) {
-    droppedExistingInDb++;
-    return false;
+// Split validated rows into fresh inserts vs updates.
+const fresh: { id: string; input: TemplateInput }[] = [];
+const updates: { id: string; input: TemplateInput }[] = [];
+for (const v of validated) {
+  const key = `${v.input.manufacturer!.trim().toLowerCase()}::${v.input.modelNumber!.trim().toLowerCase()}`;
+  const existingId = existingIds.get(key);
+  if (existingId != null) {
+    if (isUpdate) {
+      updates.push({ id: existingId, input: v.input });
+      updatedExisting++;
+    } else {
+      droppedExistingInDb++;
+    }
+  } else {
+    fresh.push(v);
   }
-  return true;
-});
+}
 
-console.log(`\n${fresh.length} new templates to import.`);
+console.log(`\n${fresh.length} new templates to import${isUpdate ? `, ${updates.length} to update` : ""}.`);
 
-if (fresh.length === 0) {
+if (fresh.length === 0 && updates.length === 0) {
   console.log("Nothing to import. Done.");
   process.exit(0);
 }
@@ -197,6 +211,29 @@ fresh.forEach(({ id, input }, i) => {
   );
 });
 
+updates.forEach(({ id, input }) => {
+  const searchTerms = input.searchTerms ? sqlStr(JSON.stringify(input.searchTerms)) : "NULL";
+  const ports = sqlStr(JSON.stringify(input.ports));
+  const slots = input.slots ? sqlStr(JSON.stringify(input.slots)) : "NULL";
+  const auxData = input.auxiliaryData ? sqlStr(JSON.stringify(input.auxiliaryData)) : "NULL";
+
+  // UPDATE in place: preserve id and created_at; refresh approved_at/approved_schema_version.
+  lines.push(
+    `UPDATE templates SET ` +
+      `device_type=${sqlStr(input.deviceType)}, category=${sqlStr(input.category)}, label=${sqlStr(input.label)}, ` +
+      `manufacturer=${sqlStr(input.manufacturer)}, model_number=${sqlStr(input.modelNumber)}, color=${sqlStr(input.color)}, ` +
+      `image_url=${sqlStr(input.imageUrl)}, reference_url=${sqlStr(input.referenceUrl)}, ` +
+      `search_terms=${searchTerms}, ports=${ports}, slots=${slots}, slot_family=${sqlStr(input.slotFamily)}, ` +
+      `power_draw_w=${sqlNum(input.powerDrawW)}, power_capacity_w=${sqlNum(input.powerCapacityW)}, voltage=${sqlStr(input.voltage)}, ` +
+      `poe_budget_w=${sqlNum(input.poeBudgetW)}, poe_draw_w=${sqlNum(input.poeDrawW)}, ` +
+      `is_venue_provided=${input.isVenueProvided ? "1" : "NULL"}, ` +
+      `height_mm=${sqlNum(input.heightMm)}, width_mm=${sqlNum(input.widthMm)}, depth_mm=${sqlNum(input.depthMm)}, weight_kg=${sqlNum(input.weightKg)}, ` +
+      `auxiliary_data=${auxData}, ` +
+      `approved_at=datetime('now'), approved_schema_version='${currentSchemaVersion}', needs_review=0 ` +
+    `WHERE id='${id}';`
+  );
+});
+
 const vendor = (validated[0]?.input.manufacturer ?? "vendor").toLowerCase().replace(/\s+/g, "-");
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 const sqlPath = path.join(__dirname, `import-${vendor}-${timestamp}.sql`);
@@ -211,7 +248,8 @@ console.log(`  dropped ("custom" model):    ${droppedCustom}`);
 console.log(`  dropped (internal dup):      ${droppedInternalDup}`);
 console.log(`  dropped (invalid):           ${droppedInvalid}`);
 console.log(`  dropped (already in DB):     ${droppedExistingInDb}`);
-console.log(`  to import:                   ${fresh.length}`);
+console.log(`  to import (new):             ${fresh.length}`);
+if (isUpdate) console.log(`  to update (existing):        ${updatedExisting}`);
 
 // --- Step 8: apply (unless dry-run) -----------------------------------------
 if (dryRun) {
