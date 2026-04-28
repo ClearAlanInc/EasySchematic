@@ -51,6 +51,7 @@ type ValidationResult =
 
 const MAX_STRING = 200;
 const MAX_PORTS = 500;
+const MAX_SLOTS = 128;
 const MAX_SEARCH_TERMS = 20;
 const MAX_AUX_LINES = 10;
 const MAX_AUX_LINE_LENGTH = 120;
@@ -179,8 +180,8 @@ export function validateTemplate(body: unknown): ValidationResult {
     if (!Array.isArray(obj.slots)) {
       return { ok: false, error: "slots must be an array" };
     }
-    if (obj.slots.length > 20) {
-      return { ok: false, error: "slots must have 20 or fewer entries" };
+    if (obj.slots.length > MAX_SLOTS) {
+      return { ok: false, error: `slots must have ${MAX_SLOTS} or fewer entries` };
     }
     for (let i = 0; i < obj.slots.length; i++) {
       const slot = obj.slots[i] as Record<string, unknown> | null;
