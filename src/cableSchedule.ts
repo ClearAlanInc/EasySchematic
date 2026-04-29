@@ -2,14 +2,21 @@ import type {
   SchematicNode,
   ConnectionEdge,
   SignalType,
+  DistanceSettings,
 } from "./types";
-import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
+import { SIGNAL_LABELS, CONNECTOR_LABELS, DEFAULT_DISTANCE_SETTINGS } from "./types";
 import { getCableType } from "./cableTypes";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
 import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 import type { DeviceData } from "./types";
+import { computeCableLength, formatLength, getRoomDistance } from "./roomDistance";
+
+export interface CableScheduleDistanceContext {
+  roomDistances?: Record<string, number>;
+  distanceSettings?: DistanceSettings;
+}
 
 export interface CableScheduleRow {
   edgeId: string;
@@ -23,6 +30,8 @@ export interface CableScheduleRow {
   cableType: string;
   signalType: string;
   cableLength: string;
+  /** Estimated cable length derived from room-to-room distance + slack (#146). */
+  computedLength?: string;
   sourceRoom: string;
   targetRoom: string;
   multicableLabel: string;
@@ -104,6 +113,7 @@ export function computeCableSchedule(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
   namingScheme: "sequential" | "type-prefix" = "sequential",
+  distanceContext?: CableScheduleDistanceContext,
 ): CableScheduleRow[] {
   const connections = edges
     .filter((e) => e.data?.signalType && !e.data?.directAttach)
@@ -113,6 +123,12 @@ export function computeCableSchedule(
       const signalType = e.data!.signalType as SignalType;
       const srcPort = resolvePort(srcNode, e.sourceHandle);
       const tgtPort = resolvePort(tgtNode, e.targetHandle);
+      const computedLength = computeRowEstimatedLength(
+        srcNode?.parentId,
+        tgtNode?.parentId,
+        nodes,
+        distanceContext,
+      );
 
       const sourceDevice = srcNode?.type === "device"
         ? transformLabelNow((srcNode.data as DeviceData).label)
@@ -147,6 +163,7 @@ export function computeCableSchedule(
         signalType: SIGNAL_LABELS[signalType],
         sourceRoom,
         targetRoom,
+        computedLength,
       };
     });
 
@@ -171,6 +188,7 @@ export function computeCableSchedule(
         cableType: c.cableType,
         signalType: c.signalType,
         cableLength: c.storedCableLength,
+        computedLength: c.computedLength,
         sourceRoom: c.sourceRoom,
         targetRoom: c.targetRoom,
         multicableLabel: c.multicableLabel,
@@ -190,10 +208,24 @@ export function computeCableSchedule(
     cableType: c.cableType,
     signalType: c.signalType,
     cableLength: c.storedCableLength,
+    computedLength: c.computedLength,
     sourceRoom: c.sourceRoom,
     targetRoom: c.targetRoom,
     multicableLabel: c.multicableLabel,
   }));
+}
+
+function computeRowEstimatedLength(
+  sourceParentId: string | undefined,
+  targetParentId: string | undefined,
+  nodes: SchematicNode[],
+  ctx: CableScheduleDistanceContext | undefined,
+): string | undefined {
+  if (!ctx?.roomDistances) return undefined;
+  const dist = getRoomDistance(sourceParentId, targetParentId, { roomDistances: ctx.roomDistances }, nodes);
+  if (dist === undefined) return undefined;
+  const settings = ctx.distanceSettings ?? DEFAULT_DISTANCE_SETTINGS;
+  return formatLength(computeCableLength(dist, settings), settings.unit);
 }
 
 export function exportCableScheduleCsv(
@@ -209,14 +241,14 @@ export function exportCableScheduleCsv(
   lines.push(csvRow([
     "Cable ID", "Source", "Src Port", "Src Conn",
     "Target", "Tgt Port", "Tgt Conn",
-    "Cable Type", "Signal", "Length",
+    "Cable Type", "Signal", "Length", "Est. Length",
     "Src Room", "Tgt Room", "Snake",
   ]));
   for (const r of rows) {
     lines.push(csvRow([
       r.cableId, r.sourceDevice, r.sourcePort, r.sourceConnector,
       r.targetDevice, r.targetPort, r.targetConnector,
-      r.cableType, r.signalType, r.cableLength,
+      r.cableType, r.signalType, r.cableLength, r.computedLength ?? "",
       r.sourceRoom, r.targetRoom, r.multicableLabel,
     ]));
   }
@@ -247,6 +279,7 @@ export function getCableScheduleTableData(
     cableType: r.cableType,
     signalType: r.signalType,
     cableLength: r.cableLength,
+    computedLength: r.computedLength ?? "",
     sourceRoom: r.sourceRoom,
     targetRoom: r.targetRoom,
     multicableLabel: r.multicableLabel,

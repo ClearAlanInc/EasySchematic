@@ -25,8 +25,9 @@ import type {
   CustomTemplateMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode } from "./types";
-import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE } from "./types";
+import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings } from "./types";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS } from "./types";
+import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
@@ -350,6 +351,12 @@ interface SchematicState {
   colorKeyOverrides: Partial<Record<SignalType, boolean>> | undefined;
   cableCosts: Record<string, number> | undefined;
   setCableCost: (key: string, cost: number | undefined) => void;
+  // Room distance + cable-length estimation (#146)
+  roomDistances: Record<string, number> | undefined;
+  distanceSettings: DistanceSettings | undefined;
+  setRoomDistance: (roomIdA: string, roomIdB: string, distance: number | undefined) => void;
+  clearRoomDistance: (roomIdA: string, roomIdB: string) => void;
+  setDistanceSettings: (partial: Partial<DistanceSettings>) => void;
   setColorKeyEnabled: (v: boolean) => void;
   setColorKeyCorner: (c: "top-left" | "top-right" | "bottom-left" | "bottom-right") => void;
   setColorKeyColumns: (n: number) => void;
@@ -906,6 +913,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   colorKeyPage: "all" as "first" | "last" | "all",
   colorKeyOverrides: undefined,
   cableCosts: undefined,
+  roomDistances: undefined,
+  distanceSettings: undefined,
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
@@ -1236,9 +1245,23 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         return n;
       });
 
+    // Purge any pairwise distances referencing a deleted room (#146).
+    let nextDistances = state.roomDistances;
+    if (state.roomDistances && deletedRoomIds.size > 0) {
+      const filtered: Record<string, number> = {};
+      for (const [key, value] of Object.entries(state.roomDistances)) {
+        const [a, b] = key.split("|");
+        if (!deletedRoomIds.has(a) && !deletedRoomIds.has(b)) {
+          filtered[key] = value;
+        }
+      }
+      nextDistances = Object.keys(filtered).length > 0 ? filtered : undefined;
+    }
+
     set({
       nodes: renumberNodes(remainingNodes),
       edges: newEdges,
+      ...(nextDistances !== state.roomDistances ? { roomDistances: nextDistances } : {}),
     });
     get().saveToLocalStorage();
   },
@@ -2500,6 +2523,33 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({ cableCosts: Object.keys(current).length > 0 ? current : undefined });
     get().saveToLocalStorage();
   },
+  setRoomDistance: (roomIdA, roomIdB, distance) => {
+    if (roomIdA === roomIdB) return;
+    const current = { ...(get().roomDistances ?? {}) };
+    const key = pairKey(roomIdA, roomIdB);
+    if (distance == null || !Number.isFinite(distance) || distance <= 0) {
+      delete current[key];
+    } else {
+      current[key] = distance;
+    }
+    set({ roomDistances: Object.keys(current).length > 0 ? current : undefined });
+    get().saveToLocalStorage();
+  },
+  clearRoomDistance: (roomIdA, roomIdB) => {
+    get().setRoomDistance(roomIdA, roomIdB, undefined);
+  },
+  setDistanceSettings: (partial) => {
+    const merged: DistanceSettings = {
+      ...DEFAULT_DISTANCE_SETTINGS,
+      ...(get().distanceSettings ?? {}),
+      ...partial,
+    };
+    // Clamp slack values so UI-typed garbage never propagates.
+    if (!Number.isFinite(merged.slackPercent) || merged.slackPercent < 0) merged.slackPercent = 0;
+    if (!Number.isFinite(merged.slackFixed) || merged.slackFixed < 0) merged.slackFixed = 0;
+    set({ distanceSettings: merged });
+    get().saveToLocalStorage();
+  },
   setTitleBlock: (tb) => { set({ titleBlock: tb }); get().saveToLocalStorage(); },
   setTitleBlockLayout: (layout) => { set({ titleBlockLayout: layout }); get().saveToLocalStorage(); },
 
@@ -2770,6 +2820,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyPage: state.colorKeyPage !== "all" ? state.colorKeyPage : undefined,
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
+      distanceSettings: state.distanceSettings,
     };
     // Persist cloud identity alongside autosave (not part of SchematicFile export)
     const blob: Record<string, unknown> = { ...data };
@@ -2853,6 +2905,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             colorKeyPage: data.colorKeyPage ?? "all",
             colorKeyOverrides: data.colorKeyOverrides ?? undefined,
             cableCosts: data.cableCosts ?? undefined,
+            roomDistances: data.roomDistances ?? undefined,
+            distanceSettings: data.distanceSettings ?? undefined,
           });
           hydrated = true;
           get().saveToLocalStorage();
@@ -2920,6 +2974,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         colorKeyPage: data.colorKeyPage ?? "all",
         colorKeyOverrides: data.colorKeyOverrides ?? undefined,
         cableCosts: data.cableCosts ?? undefined,
+        roomDistances: data.roomDistances ?? undefined,
+        distanceSettings: data.distanceSettings ?? undefined,
         // Restore cloud identity from autosave (not part of SchematicFile)
         cloudSchematicId: parsed.cloudSchematicId ?? null,
         cloudSavedAt: parsed.cloudSavedAt ?? null,
@@ -2986,6 +3042,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyPage: state.colorKeyPage !== "all" ? state.colorKeyPage : undefined,
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
+      distanceSettings: state.distanceSettings,
     };
   },
 
@@ -3071,6 +3129,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyPage: data.colorKeyPage ?? "all",
       colorKeyOverrides: data.colorKeyOverrides ?? undefined,
       cableCosts: data.cableCosts ?? undefined,
+      roomDistances: data.roomDistances ?? undefined,
+      distanceSettings: data.distanceSettings ?? undefined,
       // File imports and shared schematics always start as local-only
       cloudSchematicId: null,
       cloudSavedAt: null,

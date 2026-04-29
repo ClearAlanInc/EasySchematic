@@ -524,10 +524,28 @@ export interface SchematicFile {
   cableCosts?: Record<string, number>;
   /** Force-case device/port/slot labels on write (normal = leave as-typed) */
   labelCase?: LabelCaseMode;
+  /** Pairwise distances between top-level rooms; key is canonical pairKey("idA","idB"). */
+  roomDistances?: Record<string, number>;
+  /** Unit + slack settings for converting room distance → estimated cable length (#146). */
+  distanceSettings?: DistanceSettings;
 }
 
 export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";
 export const DEFAULT_LABEL_CASE: LabelCaseMode = "as-typed";
+
+export interface DistanceSettings {
+  unit: "m" | "ft";
+  /** Additional slack as a percentage of the room-to-room distance (e.g. 15 = +15%). */
+  slackPercent: number;
+  /** Additional slack added after percent (same unit as distance). */
+  slackFixed: number;
+}
+
+export const DEFAULT_DISTANCE_SETTINGS: DistanceSettings = {
+  unit: "ft",
+  slackPercent: 15,
+  slackFixed: 0,
+};
 
 export type ScrollAction = "zoom" | "pan-x" | "pan-y";
 

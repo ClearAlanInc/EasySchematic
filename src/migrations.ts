@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 27;
+export const CURRENT_SCHEMA_VERSION = 28;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -330,6 +330,14 @@ const migrations: Record<number, Migration> = {
     }
     delete data.hideDeviceTypes;
     data.version = 27;
+    return data;
+  },
+  27: (data) => {
+    // v27 → v28: add optional roomDistances + distanceSettings for inter-room
+    // cable-length estimation (#146). No data transform needed — fields default
+    // to undefined and are populated on-demand when the user opens the new
+    // Room Distances dialog.
+    data.version = 28;
     return data;
   },
 };

@@ -292,6 +292,7 @@ export function createDefaultCableScheduleLayout(): ReportLayout {
           { key: "cableType",       header: "Cable Type",  widthMm: 22, visible: true },
           { key: "signalType",      header: "Signal",      widthMm: 20, visible: true },
           { key: "cableLength",     header: "Length",      widthMm: 16, visible: true },
+          { key: "computedLength",  header: "Est. Length", widthMm: 18, visible: false },
           { key: "sourceRoom",      header: "Src Room",    widthMm: 24, visible: true },
           { key: "targetRoom",      header: "Tgt Room",    widthMm: 24, visible: true },
           { key: "multicableLabel", header: "Snake",       widthMm: 24, visible: true },

@@ -12,6 +12,7 @@ import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
 import AboutDialog from "./AboutDialog";
 import PreferencesDialog from "./PreferencesDialog";
+import RoomDistancesDialog from "./RoomDistancesDialog";
 import AlignmentMenu from "./AlignmentMenu";
 import UserMenuButton from "./UserMenuButton";
 import SchematicBrowser from "./SchematicBrowser";
@@ -141,6 +142,7 @@ export default function MenuBar() {
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showRoomDistances, setShowRoomDistances] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showSchematicBrowser, setShowSchematicBrowser] = useState(false);
   const [showCloudLogin, setShowCloudLogin] = useState(false);
@@ -589,6 +591,8 @@ export default function MenuBar() {
       { type: "item", label: "Pack List...", onClick: () => setReportsTab("packList") },
       { type: "item", label: "Network Report...", onClick: () => setReportsTab("network") },
       { type: "item", label: "Power Report...", onClick: () => setReportsTab("power") },
+      { type: "separator" },
+      { type: "item", label: "Room Distances...", onClick: () => setShowRoomDistances(true) },
     ],
     Help: [
       {
@@ -962,6 +966,9 @@ export default function MenuBar() {
       )}
       {showPreferences && (
         <PreferencesDialog onClose={() => setShowPreferences(false)} />
+      )}
+      {showRoomDistances && (
+        <RoomDistancesDialog onClose={() => setShowRoomDistances(false)} />
       )}
       {showCsvImport && (
         <CsvImportWizard onClose={() => setShowCsvImport(false)} />

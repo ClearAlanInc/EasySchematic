@@ -81,8 +81,11 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
     } else if (tab === "devices") {
       exportDevicesCsv(nodes, ownedGear, schematicName);
     } else if (tab === "cableSchedule") {
-      const cableNamingScheme = useSchematicStore.getState().cableNamingScheme;
-      const rows = computeCableSchedule(nodes, edges, cableNamingScheme);
+      const s = useSchematicStore.getState();
+      const rows = computeCableSchedule(nodes, edges, s.cableNamingScheme, {
+        roomDistances: s.roomDistances,
+        distanceSettings: s.distanceSettings,
+      });
       exportCableScheduleCsv(rows, schematicName);
     } else if (tab === "patchPanel") {
       const cableNamingScheme = useSchematicStore.getState().cableNamingScheme;
@@ -237,9 +240,16 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           reportKey={CABLE_SCHEDULE_LAYOUT_KEY}
           defaultLayout={cableScheduleDefaultLayout}
           titleBlock={titleBlock}
-          getTableData={(layout) =>
-            getCableScheduleTableData(computeCableSchedule(nodes, edges, useSchematicStore.getState().cableNamingScheme), layout)
-          }
+          getTableData={(layout) => {
+            const s = useSchematicStore.getState();
+            return getCableScheduleTableData(
+              computeCableSchedule(nodes, edges, s.cableNamingScheme, {
+                roomDistances: s.roomDistances,
+                distanceSettings: s.distanceSettings,
+              }),
+              layout,
+            );
+          }}
           onClose={() => setShowCableSchedulePreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Cable Schedule.pdf`}
         />
@@ -1393,7 +1403,7 @@ const DeviceRow = memo(function DeviceRow({
 
 // ─── Cable Schedule Tab ────────────────────────────────────────
 
-type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector" | "targetDevice" | "targetPort" | "targetConnector" | "cableType" | "signalType" | "cableLength" | "sourceRoom" | "targetRoom" | "multicableLabel";
+type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector" | "targetDevice" | "targetPort" | "targetConnector" | "cableType" | "signalType" | "cableLength" | "computedLength" | "sourceRoom" | "targetRoom" | "multicableLabel";
 type CableGroupBy = "" | "sourceRoom" | "signalType" | "cableType" | "multicableLabel";
 
 const cableScheduleColumns: SpreadsheetColumn<CableScheduleRow>[] = [
@@ -1414,7 +1424,12 @@ function CableScheduleTabInline() {
   const [groupByKey, setGroupByKey] = useState<CableGroupBy>("");
 
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
-  const rows = useMemo(() => computeCableSchedule(nodes, edges, cableNamingScheme), [nodes, edges, cableNamingScheme]);
+  const roomDistances = useSchematicStore((s) => s.roomDistances);
+  const distanceSettings = useSchematicStore((s) => s.distanceSettings);
+  const rows = useMemo(
+    () => computeCableSchedule(nodes, edges, cableNamingScheme, { roomDistances, distanceSettings }),
+    [nodes, edges, cableNamingScheme, roomDistances, distanceSettings],
+  );
 
   const filtered = useMemo(() => {
     const q = filter.toLowerCase();
@@ -1431,6 +1446,7 @@ function CableScheduleTabInline() {
         r.cableType.toLowerCase().includes(q) ||
         r.signalType.toLowerCase().includes(q) ||
         r.cableLength.toLowerCase().includes(q) ||
+        (r.computedLength ?? "").toLowerCase().includes(q) ||
         r.sourceRoom.toLowerCase().includes(q) ||
         r.targetRoom.toLowerCase().includes(q) ||
         r.multicableLabel.toLowerCase().includes(q),
@@ -1440,7 +1456,7 @@ function CableScheduleTabInline() {
   const sorted = useMemo(() => {
     const copy = [...filtered];
     copy.sort((a, b) => {
-      const cmp = a[sortKey].localeCompare(b[sortKey]);
+      const cmp = (a[sortKey] ?? "").localeCompare(b[sortKey] ?? "");
       return sortAsc ? cmp : -cmp;
     });
     return copy;
@@ -1614,6 +1630,7 @@ function CableScheduleTabInline() {
               <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
               <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
               <th className={thClass} onClick={() => toggleSort("cableLength")}>Length{sortArrow("cableLength")}</th>
+              <th className={thClass} onClick={() => toggleSort("computedLength")} title="Estimated length from room-to-room distance + slack">Est. Length{sortArrow("computedLength")}</th>
               <th className={thClass} onClick={() => toggleSort("sourceRoom")}>Src Room{sortArrow("sourceRoom")}</th>
               <th className={thClass} onClick={() => toggleSort("targetRoom")}>Tgt Room{sortArrow("targetRoom")}</th>
               <th className={thClass} onClick={() => toggleSort("multicableLabel")}>Snake{sortArrow("multicableLabel")}</th>
@@ -1737,6 +1754,7 @@ const CableScheduleRow_ = memo(function CableScheduleRow_({
       <td className={tdClass}>{row.cableType}</td>
       <td className={tdClass}>{row.signalType}</td>
       <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableLength" value={row.cableLength} />
+      <td className={`${tdClass} text-[var(--color-text-muted)]`}>{row.computedLength ?? ""}</td>
       <td className={tdClass}>{row.sourceRoom}</td>
       <td className={tdClass}>{row.targetRoom}</td>
       <td className={tdClass}>{row.multicableLabel}</td>
@@ -1766,7 +1784,7 @@ function renderGroupedCableSchedule(
     elements.push(
       <tr key={`h-${group}`}>
         <td
-          colSpan={14}
+          colSpan={15}
           className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
         >
           {group}
