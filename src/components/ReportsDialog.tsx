@@ -88,8 +88,11 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
       });
       exportCableScheduleCsv(rows, schematicName);
     } else if (tab === "patchPanel") {
-      const cableNamingScheme = useSchematicStore.getState().cableNamingScheme;
-      const rows = computePatchPanelSchedule(nodes, edges, cableNamingScheme);
+      const s = useSchematicStore.getState();
+      const rows = computePatchPanelSchedule(nodes, edges, s.cableNamingScheme, {
+        roomDistances: s.roomDistances,
+        distanceSettings: s.distanceSettings,
+      });
       exportPatchPanelScheduleCsv(rows, schematicName);
     } else if (tab === "power") {
       const data = computePowerReport(nodes, edges);
@@ -260,12 +263,16 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           reportKey={PATCH_PANEL_LAYOUT_KEY}
           defaultLayout={patchPanelDefaultLayout}
           titleBlock={titleBlock}
-          getTableData={(layout) =>
-            getPatchPanelScheduleTableData(
-              computePatchPanelSchedule(nodes, edges, useSchematicStore.getState().cableNamingScheme),
+          getTableData={(layout) => {
+            const s = useSchematicStore.getState();
+            return getPatchPanelScheduleTableData(
+              computePatchPanelSchedule(nodes, edges, s.cableNamingScheme, {
+                roomDistances: s.roomDistances,
+                distanceSettings: s.distanceSettings,
+              }),
               layout,
-            )
-          }
+            );
+          }}
           onClose={() => setShowPatchPanelPreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Patch Panel Schedule.pdf`}
         />
@@ -1813,7 +1820,7 @@ function renderGroupedCableSchedule(
 type PatchPanelSortKey =
   | "panel" | "panelRoom" | "face" | "position" | "connector" | "gender"
   | "remoteDevice" | "remotePort" | "remoteRoom"
-  | "cableId" | "cableType" | "signalType" | "cableLength" | "multicableLabel";
+  | "cableId" | "cableType" | "signalType" | "cableLength" | "computedLength" | "multicableLabel";
 
 type PatchPanelGroupBy = "" | "panel" | "panelRoom" | "signalType" | "face";
 
@@ -1821,6 +1828,8 @@ function PatchPanelScheduleTabInline() {
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
+  const roomDistances = useSchematicStore((s) => s.roomDistances);
+  const distanceSettings = useSchematicStore((s) => s.distanceSettings);
 
   const [filter, setFilter] = useState("");
   const [sortKey, setSortKey] = useState<PatchPanelSortKey>("panel");
@@ -1829,8 +1838,8 @@ function PatchPanelScheduleTabInline() {
   const [hideUnconnected, setHideUnconnected] = useState(false);
 
   const rows = useMemo(
-    () => computePatchPanelSchedule(nodes, edges, cableNamingScheme),
-    [nodes, edges, cableNamingScheme],
+    () => computePatchPanelSchedule(nodes, edges, cableNamingScheme, { roomDistances, distanceSettings }),
+    [nodes, edges, cableNamingScheme, roomDistances, distanceSettings],
   );
 
   const filtered = useMemo(() => {
@@ -1852,6 +1861,7 @@ function PatchPanelScheduleTabInline() {
         r.cableType.toLowerCase().includes(q) ||
         r.signalType.toLowerCase().includes(q) ||
         r.cableLength.toLowerCase().includes(q) ||
+        r.computedLength.toLowerCase().includes(q) ||
         r.multicableLabel.toLowerCase().includes(q),
     );
   }, [rows, filter, hideUnconnected]);
@@ -1982,6 +1992,7 @@ function PatchPanelScheduleTabInline() {
             <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
             <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
             <th className={thClass} onClick={() => toggleSort("cableLength")}>Length{sortArrow("cableLength")}</th>
+            <th className={thClass} onClick={() => toggleSort("computedLength")} title="Estimated length from room-to-room distance + slack">Est. Length{sortArrow("computedLength")}</th>
             <th className={thClass} onClick={() => toggleSort("multicableLabel")}>Snake{sortArrow("multicableLabel")}</th>
           </tr>
         </thead>
@@ -1991,7 +2002,7 @@ function PatchPanelScheduleTabInline() {
               {g.label && (
                 <tr>
                   <td
-                    colSpan={14}
+                    colSpan={15}
                     className="bg-[var(--color-surface)] text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] py-1 px-2"
                   >
                     {g.label}
@@ -2018,6 +2029,7 @@ function PatchPanelScheduleTabInline() {
                     <td className={tdClass}>{r.cableType || "—"}</td>
                     <td className={tdClass}>{r.signalType || "—"}</td>
                     <td className={tdClass}>{r.cableLength || "—"}</td>
+                    <td className={`${tdClass} text-[var(--color-text-muted)]`}>{r.computedLength || "—"}</td>
                     <td className={tdClass}>{r.multicableLabel || "—"}</td>
                   </tr>
                 );

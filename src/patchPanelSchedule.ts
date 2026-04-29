@@ -4,7 +4,7 @@ import type {
   DeviceData,
 } from "./types";
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
-import { computeCableSchedule } from "./cableSchedule";
+import { computeCableSchedule, type CableScheduleDistanceContext } from "./cableSchedule";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
 import { resolvePortGender } from "./connectorTypes";
 import { transformLabelNow } from "./labelCaseUtils";
@@ -36,6 +36,8 @@ export interface PatchPanelScheduleRow {
   cableType: string;
   signalType: string;
   cableLength: string;
+  /** Estimated cable length derived from room-to-room distance + slack (#146). */
+  computedLength: string;
   multicableLabel: string;
 }
 
@@ -46,10 +48,11 @@ export function computePatchPanelSchedule(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
   namingScheme: "sequential" | "type-prefix" = "sequential",
+  distanceContext?: CableScheduleDistanceContext,
 ): PatchPanelScheduleRow[] {
   // Lookup cable IDs + gender-aware cable labels from the cable schedule so the same edge
   // shows the same cable ID and type in both reports.
-  const cableRows = computeCableSchedule(nodes, edges, namingScheme);
+  const cableRows = computeCableSchedule(nodes, edges, namingScheme, distanceContext);
   const cableByEdge = new Map(cableRows.map((r) => [r.edgeId, r]));
 
   // Index edges by (nodeId, portId). Strip -in/-out suffixes so bidirectional handles
@@ -117,6 +120,7 @@ export function computePatchPanelSchedule(
       let cableType = "";
       let signalType = "";
       let cableLength = "";
+      let computedLength = "";
       let multicableLabel = "";
 
       if (edge) {
@@ -137,6 +141,7 @@ export function computePatchPanelSchedule(
           cableType = cableRow.cableType;
           signalType = cableRow.signalType;
           cableLength = cableRow.cableLength;
+          computedLength = cableRow.computedLength ?? "";
           multicableLabel = cableRow.multicableLabel;
         } else {
           // Fallback — edge exists but cable schedule excluded it (e.g. missing signal type).
@@ -172,6 +177,7 @@ export function computePatchPanelSchedule(
         cableType,
         signalType,
         cableLength,
+        computedLength,
         multicableLabel,
       });
     });
@@ -202,7 +208,7 @@ export function exportPatchPanelScheduleCsv(
   lines.push(csvRow([
     "Panel", "Panel Room", "Face", "Position", "Connector", "Gender",
     "Remote Device", "Remote Port", "Remote Room",
-    "Cable ID", "Cable Type", "Signal", "Length", "Snake",
+    "Cable ID", "Cable Type", "Signal", "Length", "Est. Length", "Snake",
   ]));
   for (const r of rows) {
     lines.push(csvRow([
@@ -210,7 +216,7 @@ export function exportPatchPanelScheduleCsv(
       r.remoteDevice === EMPTY ? "" : r.remoteDevice,
       r.remotePort === EMPTY ? "" : r.remotePort,
       r.remoteRoom === EMPTY ? "" : r.remoteRoom,
-      r.cableId, r.cableType, r.signalType, r.cableLength, r.multicableLabel,
+      r.cableId, r.cableType, r.signalType, r.cableLength, r.computedLength, r.multicableLabel,
     ]));
   }
 
@@ -243,6 +249,7 @@ export function getPatchPanelScheduleTableData(
     cableType: r.cableType,
     signalType: r.signalType,
     cableLength: r.cableLength,
+    computedLength: r.computedLength,
     multicableLabel: r.multicableLabel,
   }));
 
