@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 28,
   "name": "Untitled Schematic",
   "nodes": [
     {
@@ -105,84 +105,124 @@
             "label": "TB5 1",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-12"
           },
           {
             "id": "p1773360118182-1",
             "label": "TB5 2",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-13"
           },
           {
             "id": "p1773360118182-2",
             "label": "TB5 3",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-14"
           },
           {
             "id": "p1773360118182-3",
             "label": "TB5 4",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-15"
           },
           {
             "id": "p1773360118182-4",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
-          },
-          {
-            "id": "p1773360118182-7",
-            "label": "USB-C Front 1",
-            "signalType": "usb",
-            "direction": "bidirectional",
-            "connectorType": "usb-a"
-          },
-          {
-            "id": "p1773360118182-8",
-            "label": "USB-C Front 2",
-            "signalType": "usb",
-            "direction": "bidirectional",
-            "connectorType": "usb-a"
-          },
-          {
-            "id": "p1773360118182-9",
-            "label": "Ethernet",
-            "signalType": "ethernet",
-            "direction": "output",
-            "connectorType": "rj45",
-            "networkConfig": {
-              "ip": "192.168.0.3",
-              "subnetMask": "255.255.255.0"
-            }
+            "connectorType": "hdmi",
+            "templatePortId": "port-16"
           },
           {
             "id": "p1773360118182-5",
             "label": "USB-A 1",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-17"
           },
           {
             "id": "p1773360118182-6",
             "label": "USB-A 2",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-18"
+          },
+          {
+            "id": "p1773360118182-7",
+            "label": "USB-C Front 1",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-c",
+            "templatePortId": "port-19"
+          },
+          {
+            "id": "p1773360118182-8",
+            "label": "USB-C Front 2",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-c",
+            "templatePortId": "port-20"
+          },
+          {
+            "id": "p1773360118182-9",
+            "label": "Ethernet",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-21",
+            "networkConfig": {
+              "ip": "192.168.0.3",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "pw-device-33",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-22"
+          },
+          {
+            "id": "device-33-sync-1mo686",
+            "label": "SDXC Card",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "other",
+            "templatePortId": "port-23"
+          },
+          {
+            "id": "device-33-sync-dfz4u3",
+            "label": "Headphone",
+            "signalType": "analog-audio",
+            "direction": "output",
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-24"
           }
         ],
-        "model": "Mac Studio (M4)"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0024-4000-8000-000000000036",
+        "manufacturer": "Apple",
+        "modelNumber": "Mac Studio (M4)",
+        "heightMm": 95,
+        "widthMm": 197,
+        "depthMm": 197,
+        "weightKg": 2.7,
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -208,56 +248,64 @@
             "label": "RGBHV In (BNC)",
             "signalType": "vga",
             "direction": "input",
-            "connectorType": "vga"
+            "connectorType": "vga",
+            "templatePortId": "port-3536"
           },
           {
             "id": "p1773360337151-1",
             "label": "RGB In (VGA)",
             "signalType": "vga",
             "direction": "input",
-            "connectorType": "vga"
+            "connectorType": "vga",
+            "templatePortId": "port-3537"
           },
           {
             "id": "p1773360337151-2",
             "label": "DVI-D In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-3538"
           },
           {
             "id": "p1773360337151-3",
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-3539"
           },
           {
             "id": "p1773360337151-4",
             "label": "SDI In 1",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3540"
           },
           {
             "id": "p1773360337151-5",
             "label": "SDI In 2 (3G)",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3541"
           },
           {
             "id": "p1773360337151-6",
             "label": "Composite In",
             "signalType": "composite",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3542"
           },
           {
             "id": "p1773360337151-7",
             "label": "RS-232 In",
             "signalType": "serial",
             "direction": "input",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-3543"
           },
           {
             "id": "p1773360337151-8",
@@ -265,6 +313,7 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
+            "templatePortId": "port-3544",
             "networkConfig": {
               "ip": "192.168.0.5",
               "subnetMask": "255.255.255.0"
@@ -275,18 +324,33 @@
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-3545"
           },
           {
             "id": "pw-device-38",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-3546"
           }
         ],
         "baseLabel": "Panasonic DZ13K",
-        "model": "Panasonic DZ13K"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0022-4000-8000-000000000034",
+        "manufacturer": "Panasonic",
+        "modelNumber": "PT-DZ13K",
+        "heightMm": 200,
+        "widthMm": 530,
+        "depthMm": 549,
+        "weightKg": 24,
+        "powerDrawW": 1000
       },
       "parentId": "room-4",
       "measured": {
@@ -312,18 +376,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-39",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -349,18 +422,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-40",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -386,18 +468,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-41",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -423,18 +514,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-42",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -460,18 +560,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-43",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -497,18 +606,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-44",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -534,18 +652,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-45",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -571,18 +698,27 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-1715"
           },
           {
             "id": "pw-device-46",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-1716"
           }
         ],
         "baseLabel": "TV",
-        "model": "TV"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0004-4000-8000-000000000004",
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -608,74 +744,121 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3423"
           },
           {
             "id": "p1773360761700-1",
             "label": "DP In",
             "signalType": "displayport",
             "direction": "input",
-            "connectorType": "displayport"
+            "connectorType": "displayport",
+            "templatePortId": "port-3424"
           },
           {
             "id": "p1773360761700-2",
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-3425"
           },
           {
             "id": "p1773360761700-3",
             "label": "Genlock In",
             "signalType": "genlock",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3426"
           },
           {
             "id": "p1773360761700-4",
             "label": "SDI Out 1",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3427"
           },
           {
             "id": "p1773360761700-5",
             "label": "SDI Out 2",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3428"
           },
           {
             "id": "p1773360761700-6",
             "label": "SDI Out 3",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3429"
           },
           {
             "id": "p1773360761700-7",
             "label": "SDI Out 4",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3430"
           },
           {
             "id": "p1773360761700-8",
             "label": "DP Loop",
             "signalType": "displayport",
             "direction": "output",
-            "connectorType": "displayport"
+            "connectorType": "displayport",
+            "templatePortId": "port-3431"
           },
           {
             "id": "pw-device-47",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-3432"
+          },
+          {
+            "id": "device-47-sync-d0onp3",
+            "label": "Ethernet 1",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-3433"
+          },
+          {
+            "id": "device-47-sync-65po46",
+            "label": "Ethernet 2",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-3434"
+          },
+          {
+            "id": "device-47-sync-k39900",
+            "label": "USB-B",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-b",
+            "templatePortId": "port-3435"
           }
         ],
         "baseLabel": "Datapath FX4 SDI",
-        "model": "Datapath FX4 SDI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0020-4000-8000-000000000032",
+        "manufacturer": "Datapath",
+        "modelNumber": "FX4 SDI",
+        "heightMm": 42,
+        "widthMm": 316,
+        "depthMm": 172,
+        "weightKg": 1.9,
+        "powerDrawW": 35
       },
       "measured": {
         "width": 180,
@@ -701,74 +884,121 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3423"
           },
           {
             "id": "p1773360771090-1",
             "label": "DP In",
             "signalType": "displayport",
             "direction": "input",
-            "connectorType": "displayport"
+            "connectorType": "displayport",
+            "templatePortId": "port-3424"
           },
           {
             "id": "p1773360771090-2",
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-3425"
           },
           {
             "id": "p1773360771090-3",
             "label": "Genlock In",
             "signalType": "genlock",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3426"
           },
           {
             "id": "p1773360771090-4",
             "label": "SDI Out 1",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3427"
           },
           {
             "id": "p1773360771090-5",
             "label": "SDI Out 2",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3428"
           },
           {
             "id": "p1773360771090-6",
             "label": "SDI Out 3",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3429"
           },
           {
             "id": "p1773360771090-7",
             "label": "SDI Out 4",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-3430"
           },
           {
             "id": "p1773360771090-8",
             "label": "DP Loop",
             "signalType": "displayport",
             "direction": "output",
-            "connectorType": "displayport"
+            "connectorType": "displayport",
+            "templatePortId": "port-3431"
           },
           {
             "id": "pw-device-48",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-3432"
+          },
+          {
+            "id": "device-48-sync-5jn2q0",
+            "label": "Ethernet 1",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-3433"
+          },
+          {
+            "id": "device-48-sync-j9pvgc",
+            "label": "Ethernet 2",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-3434"
+          },
+          {
+            "id": "device-48-sync-mo6b1d",
+            "label": "USB-B",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-b",
+            "templatePortId": "port-3435"
           }
         ],
         "baseLabel": "Datapath FX4 SDI",
-        "model": "Datapath FX4 SDI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0020-4000-8000-000000000032",
+        "manufacturer": "Datapath",
+        "modelNumber": "FX4 SDI",
+        "heightMm": 42,
+        "widthMm": 316,
+        "depthMm": 172,
+        "weightKg": 1.9,
+        "powerDrawW": 35
       },
       "measured": {
         "width": 180,
@@ -794,25 +1024,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360933938-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360933938-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -838,25 +1084,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360956827-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360956827-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -882,25 +1144,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360957146-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360957146-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -926,25 +1204,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360957595-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360957595-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -970,25 +1264,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360957946-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360957946-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -1014,25 +1324,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360958363-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360958363-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -1058,25 +1384,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360959547-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360959547-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -1102,25 +1444,41 @@
             "label": "SDI In",
             "signalType": "sdi",
             "direction": "input",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2763"
           },
           {
             "id": "p1773360960220-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2764"
           },
           {
             "id": "p1773360960220-2",
             "label": "SDI Loop",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2765"
           }
         ],
         "baseLabel": "BMD SDI→HDMI",
-        "model": "BMD SDI→HDMI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0006-4000-8000-000000000006",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter SDI to HDMI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -1147,7 +1505,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3169"
           },
           {
             "id": "p1773415859541-1",
@@ -1155,7 +1515,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3170"
           },
           {
             "id": "p1773415859541-2",
@@ -1163,7 +1525,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3171"
           },
           {
             "id": "p1773415859541-3",
@@ -1171,7 +1535,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3172"
           },
           {
             "id": "p1773415859541-4",
@@ -1179,7 +1545,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3173"
           },
           {
             "id": "p1773415859541-5",
@@ -1187,7 +1555,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3174"
           },
           {
             "id": "p1773415859541-6",
@@ -1195,7 +1565,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3175"
           },
           {
             "id": "p1773415859541-7",
@@ -1203,18 +1575,29 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3176"
           },
           {
             "id": "pw-device-60",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-3177"
           }
         ],
         "baseLabel": "Ethernet Switch (8-port)",
-        "model": "Ethernet Switch (8-port)"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0026-4000-8000-000000000038",
+        "powerDrawW": 25,
+        "poeBudgetW": 120
       },
       "measured": {
         "width": 180,
@@ -1240,7 +1623,8 @@
             "label": "3.5mm Audio In",
             "signalType": "analog-audio",
             "direction": "input",
-            "connectorType": "xlr-3"
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-29"
           },
           {
             "id": "p1773416243486-1",
@@ -1248,6 +1632,7 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
+            "templatePortId": "port-30",
             "networkConfig": {
               "ip": "192.168.0.6",
               "subnetMask": "255.255.255.0"
@@ -1258,46 +1643,81 @@
             "label": "RS-232 In",
             "signalType": "serial",
             "direction": "input",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-31"
           },
           {
             "id": "p1773416243486-3",
             "label": "SDI Out",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-32"
           },
           {
             "id": "p1773416243486-4",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-33"
           },
           {
             "id": "p1773416243486-5",
             "label": "USB-C Out",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-c",
+            "templatePortId": "port-34"
           },
           {
             "id": "p1773416243486-6",
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-35"
           },
           {
             "id": "pw-device-61",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-36"
+          },
+          {
+            "id": "device-61-sync-9ij7rw",
+            "label": "3.5mm Audio Out",
+            "signalType": "analog-audio",
+            "direction": "output",
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-37"
+          },
+          {
+            "id": "device-61-sync-0eboba",
+            "label": "RS-485",
+            "signalType": "serial",
+            "direction": "bidirectional",
+            "connectorType": "phoenix",
+            "templatePortId": "port-38"
           }
         ],
         "baseLabel": "PTZOptics Move SE",
-        "model": "PTZOptics Move SE"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-002a-4000-8000-000000000042",
+        "manufacturer": "PTZOptics",
+        "modelNumber": "Move SE",
+        "heightMm": 164,
+        "widthMm": 142,
+        "depthMm": 169,
+        "weightKg": 1.5,
+        "powerDrawW": 25
       },
       "measured": {
         "width": 180,
@@ -1323,7 +1743,8 @@
             "label": "3.5mm Audio In",
             "signalType": "analog-audio",
             "direction": "input",
-            "connectorType": "xlr-3"
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-29"
           },
           {
             "id": "p1773416246636-1",
@@ -1331,6 +1752,7 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
+            "templatePortId": "port-30",
             "networkConfig": {
               "ip": "192.168.0.7",
               "subnetMask": "255.255.255.0"
@@ -1341,46 +1763,81 @@
             "label": "RS-232 In",
             "signalType": "serial",
             "direction": "input",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-31"
           },
           {
             "id": "p1773416246636-3",
             "label": "SDI Out",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-32"
           },
           {
             "id": "p1773416246636-4",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-33"
           },
           {
             "id": "p1773416246636-5",
             "label": "USB-C Out",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-c",
+            "templatePortId": "port-34"
           },
           {
             "id": "p1773416246636-6",
             "label": "RS-232 Out",
             "signalType": "serial",
             "direction": "output",
-            "connectorType": "db9"
+            "connectorType": "db9",
+            "templatePortId": "port-35"
           },
           {
             "id": "pw-device-62",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-36"
+          },
+          {
+            "id": "device-62-sync-a4sn8m",
+            "label": "3.5mm Audio Out",
+            "signalType": "analog-audio",
+            "direction": "output",
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-37"
+          },
+          {
+            "id": "device-62-sync-1uzide",
+            "label": "RS-485",
+            "signalType": "serial",
+            "direction": "bidirectional",
+            "connectorType": "phoenix",
+            "templatePortId": "port-38"
           }
         ],
         "baseLabel": "PTZOptics Move SE",
-        "model": "PTZOptics Move SE"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-002a-4000-8000-000000000042",
+        "manufacturer": "PTZOptics",
+        "modelNumber": "Move SE",
+        "heightMm": 164,
+        "widthMm": 142,
+        "depthMm": 169,
+        "weightKg": 1.5,
+        "powerDrawW": 25
       },
       "measured": {
         "width": 180,
@@ -1407,7 +1864,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3164"
           },
           {
             "id": "p1773416490870-1",
@@ -1415,7 +1874,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3165"
           },
           {
             "id": "p1773416490870-2",
@@ -1423,7 +1884,9 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3166"
           },
           {
             "id": "p1773416490870-3",
@@ -1431,18 +1894,29 @@
             "signalType": "ethernet",
             "direction": "bidirectional",
             "connectorType": "rj45",
-            "addressable": false
+            "addressable": false,
+            "linkSpeed": "1G",
+            "templatePortId": "port-3167"
           },
           {
             "id": "pw-device-63",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-3168"
           }
         ],
         "baseLabel": "Ethernet Switch (4-port)",
-        "model": "Ethernet Switch (4-port)"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0025-4000-8000-000000000037",
+        "powerDrawW": 15,
+        "poeBudgetW": 60
       },
       "measured": {
         "width": 180,
@@ -1496,7 +1970,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "Designer Computer"
+        "model": "Designer Computer",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1550,7 +2030,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "Associate Computer"
+        "model": "Associate Computer",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1600,7 +2086,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "1920x1080 Monitor"
+        "model": "1920x1080 Monitor",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1626,11 +2118,19 @@
             "label": "USB-A",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-3644"
           }
         ],
         "baseLabel": "Mouse",
-        "model": "Mouse"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0028-4000-8000-000000000040",
+        "powerDrawW": 0
       },
       "measured": {
         "width": 180,
@@ -1656,10 +2156,18 @@
             "label": "USB-A",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-3645"
           }
         ],
-        "model": "Keyboard"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0029-4000-8000-000000000041",
+        "powerDrawW": 0
       },
       "measured": {
         "width": 180,
@@ -1685,25 +2193,41 @@
             "label": "HDMI In",
             "signalType": "hdmi",
             "direction": "input",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2766"
           },
           {
             "id": "p1773420713933-1",
             "label": "SDI Out",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2767"
           },
           {
             "id": "p1773420713933-2",
             "label": "SDI Out 2",
             "signalType": "sdi",
             "direction": "output",
-            "connectorType": "bnc"
+            "connectorType": "bnc",
+            "templatePortId": "port-2768"
           }
         ],
         "baseLabel": "BMD HDMI→SDI",
-        "model": "BMD HDMI→SDI"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0007-4000-8000-000000000007",
+        "manufacturer": "Blackmagic Design",
+        "modelNumber": "Micro Converter HDMI to SDI 3G",
+        "heightMm": 25,
+        "widthMm": 77,
+        "depthMm": 46,
+        "weightKg": 0.2,
+        "powerDrawW": 2
       },
       "measured": {
         "width": 180,
@@ -1753,7 +2277,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "1920x1080 Monitor"
+        "model": "1920x1080 Monitor",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1803,7 +2333,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "1920x1080 Monitor"
+        "model": "1920x1080 Monitor",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1878,7 +2414,13 @@
             "connectorType": "edison"
           }
         ],
-        "model": "1920x1080 Monitor"
+        "model": "1920x1080 Monitor",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 180,
@@ -1904,84 +2446,124 @@
             "label": "TB5 1",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-12"
           },
           {
             "id": "p1773508594582-1",
             "label": "TB5 2",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-13"
           },
           {
             "id": "p1773508594582-2",
             "label": "TB5 3",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-14"
           },
           {
             "id": "p1773508594582-3",
             "label": "TB5 4",
             "signalType": "thunderbolt",
             "direction": "bidirectional",
-            "connectorType": "usb-c"
+            "connectorType": "usb-c",
+            "templatePortId": "port-15"
           },
           {
             "id": "p1773508594582-4",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
-          },
-          {
-            "id": "p1773508594582-5",
-            "label": "USB-C Front 1",
-            "signalType": "usb",
-            "direction": "bidirectional",
-            "connectorType": "usb-a"
-          },
-          {
-            "id": "p1773508594582-6",
-            "label": "USB-C Front 2",
-            "signalType": "usb",
-            "direction": "bidirectional",
-            "connectorType": "usb-a"
-          },
-          {
-            "id": "p1773508594582-7",
-            "label": "Ethernet",
-            "signalType": "ethernet",
-            "direction": "output",
-            "connectorType": "rj45",
-            "networkConfig": {
-              "ip": "192.168.0.4",
-              "subnetMask": "255.255.255.0"
-            }
+            "connectorType": "hdmi",
+            "templatePortId": "port-16"
           },
           {
             "id": "p1773508594582-8",
             "label": "USB-A 1",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-17"
           },
           {
             "id": "p1773508594582-9",
             "label": "USB-A 2",
             "signalType": "usb",
             "direction": "bidirectional",
-            "connectorType": "usb-a"
+            "connectorType": "usb-a",
+            "templatePortId": "port-18"
+          },
+          {
+            "id": "p1773508594582-5",
+            "label": "USB-C Front 1",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-c",
+            "templatePortId": "port-19"
+          },
+          {
+            "id": "p1773508594582-6",
+            "label": "USB-C Front 2",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "usb-c",
+            "templatePortId": "port-20"
+          },
+          {
+            "id": "p1773508594582-7",
+            "label": "Ethernet",
+            "signalType": "ethernet",
+            "direction": "bidirectional",
+            "connectorType": "rj45",
+            "templatePortId": "port-21",
+            "networkConfig": {
+              "ip": "192.168.0.4",
+              "subnetMask": "255.255.255.0"
+            }
           },
           {
             "id": "pw-device-77",
             "label": "AC Power",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "edison"
+            "connectorType": "iec",
+            "templatePortId": "port-22"
+          },
+          {
+            "id": "device-77-sync-u6l87p",
+            "label": "SDXC Card",
+            "signalType": "usb",
+            "direction": "bidirectional",
+            "connectorType": "other",
+            "templatePortId": "port-23"
+          },
+          {
+            "id": "device-77-sync-p5doi2",
+            "label": "Headphone",
+            "signalType": "analog-audio",
+            "direction": "output",
+            "connectorType": "trs-eighth",
+            "templatePortId": "port-24"
           }
         ],
-        "model": "Mac Studio (M4)"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "templateId": "c0a80101-0024-4000-8000-000000000036",
+        "manufacturer": "Apple",
+        "modelNumber": "Mac Studio (M4)",
+        "heightMm": 95,
+        "widthMm": 197,
+        "depthMm": 197,
+        "weightKg": 2.7,
+        "powerDrawW": 150
       },
       "measured": {
         "width": 180,
@@ -2008,7 +2590,8 @@
             "signalType": "power-l1",
             "direction": "input",
             "connectorType": "cam-lok",
-            "section": "3-Phase Input"
+            "section": "3-Phase Input",
+            "templatePortId": "port-3820"
           },
           {
             "id": "p1774317685062-1",
@@ -2016,7 +2599,8 @@
             "signalType": "power-l2",
             "direction": "input",
             "connectorType": "cam-lok",
-            "section": "3-Phase Input"
+            "section": "3-Phase Input",
+            "templatePortId": "port-3821"
           },
           {
             "id": "p1774317685062-2",
@@ -2024,7 +2608,8 @@
             "signalType": "power-l3",
             "direction": "input",
             "connectorType": "cam-lok",
-            "section": "3-Phase Input"
+            "section": "3-Phase Input",
+            "templatePortId": "port-3822"
           },
           {
             "id": "p1774317685062-3",
@@ -2032,7 +2617,8 @@
             "signalType": "power-neutral",
             "direction": "input",
             "connectorType": "cam-lok",
-            "section": "3-Phase Input"
+            "section": "3-Phase Input",
+            "templatePortId": "port-3823"
           },
           {
             "id": "p1774317685062-4",
@@ -2040,101 +2626,123 @@
             "signalType": "power-ground",
             "direction": "input",
             "connectorType": "cam-lok",
-            "section": "3-Phase Input"
+            "section": "3-Phase Input",
+            "templatePortId": "port-3824"
           },
           {
             "id": "p1774317685062-5",
             "label": "L5-20 Out 1",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3825"
           },
           {
             "id": "p1774317685062-6",
             "label": "L5-20 Out 2",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3826"
           },
           {
             "id": "p1774317685062-7",
             "label": "L5-20 Out 3",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3827"
           },
           {
             "id": "p1774317685062-8",
             "label": "L5-20 Out 4",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3828"
           },
           {
             "id": "p1774317685062-9",
             "label": "L5-20 Out 5",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3829"
           },
           {
             "id": "p1774317685062-10",
             "label": "L5-20 Out 6",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3830"
           },
           {
             "id": "p1774317685062-11",
             "label": "L6-20 Out 1",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3831"
           },
           {
             "id": "p1774317685062-12",
             "label": "L6-20 Out 2",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3832"
           },
           {
             "id": "p1774317685062-13",
             "label": "L6-20 Out 3",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3833"
           },
           {
             "id": "p1774317685062-14",
             "label": "L6-20 Out 4",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3834"
           },
           {
             "id": "p1774317685062-15",
             "label": "L6-20 Out 5",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3835"
           },
           {
             "id": "p1774317685062-16",
             "label": "L6-20 Out 6",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "l6-20"
+            "connectorType": "l6-20",
+            "templatePortId": "port-3836"
           }
         ],
         "baseLabel": "Lex DB-100",
-        "model": "Lex DB-100",
         "templateId": "c0a80101-021b-4000-8000-000000000539",
         "templateVersion": 1,
         "manufacturer": "Lex Products",
         "modelNumber": "DB-100",
         "powerCapacityW": 20800,
-        "voltage": "208V"
+        "voltage": "208V",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "heightMm": 359,
+        "widthMm": 362,
+        "depthMm": 362,
+        "weightKg": 14.5
       },
       "measured": {
         "width": 180,
@@ -2161,18 +2769,26 @@
             "signalType": "thunderbolt",
             "direction": "input",
             "connectorType": "usb-c",
-            "directAttach": true
+            "directAttach": true,
+            "templatePortId": "port-2836"
           },
           {
             "id": "p1774318146564-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2837"
           }
         ],
         "templateId": "c0a80101-001e-4000-8000-000000000030",
-        "model": "TB (M) → HDMI (F) Adapter"
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "powerDrawW": 0
       },
       "measured": {
         "width": 191,
@@ -2200,19 +2816,27 @@
             "signalType": "thunderbolt",
             "direction": "input",
             "connectorType": "usb-c",
-            "directAttach": true
+            "directAttach": true,
+            "templatePortId": "port-2836"
           },
           {
             "id": "p1774318632632-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2837"
           }
         ],
         "baseLabel": "TB (M) → HDMI (F) Adapter",
-        "model": "TB (M) → HDMI (F) Adapter",
-        "templateId": "c0a80101-001e-4000-8000-000000000030"
+        "templateId": "c0a80101-001e-4000-8000-000000000030",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "powerDrawW": 0
       },
       "measured": {
         "width": 191,
@@ -2240,19 +2864,27 @@
             "signalType": "thunderbolt",
             "direction": "input",
             "connectorType": "usb-c",
-            "directAttach": true
+            "directAttach": true,
+            "templatePortId": "port-2836"
           },
           {
             "id": "p1774318838122-1",
             "label": "HDMI Out",
             "signalType": "hdmi",
             "direction": "output",
-            "connectorType": "hdmi"
+            "connectorType": "hdmi",
+            "templatePortId": "port-2837"
           }
         ],
         "baseLabel": "TB (M) → HDMI (F) Adapter",
-        "model": "TB (M) → HDMI (F) Adapter",
-        "templateId": "c0a80101-001e-4000-8000-000000000030"
+        "templateId": "c0a80101-001e-4000-8000-000000000030",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "powerDrawW": 0
       },
       "measured": {
         "width": 193,
@@ -2279,7 +2911,8 @@
             "signalType": "power-l1",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 1"
+            "section": "Feed 1",
+            "templatePortId": "port-3770"
           },
           {
             "id": "p1774320816606-1",
@@ -2287,7 +2920,8 @@
             "signalType": "power-l2",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 1"
+            "section": "Feed 1",
+            "templatePortId": "port-3771"
           },
           {
             "id": "p1774320816606-2",
@@ -2295,7 +2929,8 @@
             "signalType": "power-l3",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 1"
+            "section": "Feed 1",
+            "templatePortId": "port-3772"
           },
           {
             "id": "p1774320816606-3",
@@ -2303,7 +2938,8 @@
             "signalType": "power-neutral",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 1"
+            "section": "Feed 1",
+            "templatePortId": "port-3773"
           },
           {
             "id": "p1774320816606-4",
@@ -2311,7 +2947,8 @@
             "signalType": "power-ground",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 1"
+            "section": "Feed 1",
+            "templatePortId": "port-3774"
           },
           {
             "id": "p1774320816606-5",
@@ -2319,7 +2956,8 @@
             "signalType": "power-l1",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 2"
+            "section": "Feed 2",
+            "templatePortId": "port-3775"
           },
           {
             "id": "p1774320816606-6",
@@ -2327,7 +2965,8 @@
             "signalType": "power-l2",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 2"
+            "section": "Feed 2",
+            "templatePortId": "port-3776"
           },
           {
             "id": "p1774320816606-7",
@@ -2335,7 +2974,8 @@
             "signalType": "power-l3",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 2"
+            "section": "Feed 2",
+            "templatePortId": "port-3777"
           },
           {
             "id": "p1774320816606-8",
@@ -2343,7 +2983,8 @@
             "signalType": "power-neutral",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 2"
+            "section": "Feed 2",
+            "templatePortId": "port-3778"
           },
           {
             "id": "p1774320816606-9",
@@ -2351,16 +2992,22 @@
             "signalType": "power-ground",
             "direction": "output",
             "connectorType": "cam-lok",
-            "section": "Feed 2"
+            "section": "Feed 2",
+            "templatePortId": "port-3779"
           }
         ],
         "baseLabel": "Company Switch 400A 3-Phase",
-        "model": "Company Switch 400A 3-Phase",
         "templateId": "c0a80101-0301-4000-8000-000000000701",
         "templateVersion": 1,
         "powerCapacityW": 144000,
         "voltage": "208V 3-Phase",
-        "isVenueProvided": true
+        "isVenueProvided": true,
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ]
       },
       "measured": {
         "width": 214,
@@ -2385,19 +3032,27 @@
             "label": "L5-20 In",
             "signalType": "power",
             "direction": "input",
-            "connectorType": "l5-20"
+            "connectorType": "l5-20",
+            "templatePortId": "port-3051"
           },
           {
             "id": "p1774320860171-1",
             "label": "Edison Out",
             "signalType": "power",
             "direction": "output",
-            "connectorType": "edison"
+            "connectorType": "edison",
+            "templatePortId": "port-3052"
           }
         ],
         "baseLabel": "L5-20 (M) → Edison (F) Adapter",
-        "model": "L5-20 (M) → Edison (F) Adapter",
-        "templateId": "c0a80101-00d4-4000-8000-000000000212"
+        "templateId": "c0a80101-00d4-4000-8000-000000000212",
+        "auxiliaryData": [
+          {
+            "text": "{{deviceType}}",
+            "position": "header"
+          }
+        ],
+        "powerDrawW": 0
       },
       "measured": {
         "width": 210,
