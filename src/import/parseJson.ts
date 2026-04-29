@@ -65,6 +65,7 @@ function normalizeTemplate(raw: Record<string, unknown>): Partial<DeviceTemplate
     powerDrawW: num(raw.powerDrawW),
     powerCapacityW: num(raw.powerCapacityW),
     voltage: str(raw.voltage),
+    thermalBtuh: num(raw.thermalBtuh),
     poeBudgetW: num(raw.poeBudgetW),
     unitCost: num(raw.unitCost),
     heightMm: num(raw.heightMm),

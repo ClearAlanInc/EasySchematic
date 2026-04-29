@@ -56,7 +56,7 @@ export function validateTemplate(t: Partial<DeviceTemplate>): TemplateValidation
   }
 
   // Numeric fields
-  for (const field of ["powerDrawW", "powerCapacityW", "heightMm", "widthMm", "depthMm", "weightKg"] as const) {
+  for (const field of ["powerDrawW", "powerCapacityW", "thermalBtuh", "heightMm", "widthMm", "depthMm", "weightKg"] as const) {
     const v = t[field];
     if (v != null && (typeof v !== "number" || v < 0 || !isFinite(v))) {
       errors.push(`${field} must be a non-negative number`);

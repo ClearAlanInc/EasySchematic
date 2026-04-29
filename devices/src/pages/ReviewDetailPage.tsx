@@ -35,6 +35,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
   const [editSlotFamily, setEditSlotFamily] = useState("");
   const [editHostname, setEditHostname] = useState("");
   const [editPowerDrawW, setEditPowerDrawW] = useState("");
+  const [editThermalBtuh, setEditThermalBtuh] = useState("");
   const [editPowerCapacityW, setEditPowerCapacityW] = useState("");
   const [editVoltage, setEditVoltage] = useState("");
   const [editPoeBudgetW, setEditPoeBudgetW] = useState("");
@@ -82,6 +83,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
     setEditSlotFamily((d as Record<string, unknown>).slotFamily as string ?? "");
     setEditHostname((d as Record<string, unknown>).hostname as string ?? "");
     setEditPowerDrawW((d as Record<string, unknown>).powerDrawW != null ? String((d as Record<string, unknown>).powerDrawW) : "");
+    setEditThermalBtuh((d as Record<string, unknown>).thermalBtuh != null ? String((d as Record<string, unknown>).thermalBtuh) : "");
     setEditPowerCapacityW((d as Record<string, unknown>).powerCapacityW != null ? String((d as Record<string, unknown>).powerCapacityW) : "");
     setEditVoltage((d as Record<string, unknown>).voltage as string ?? "");
     setEditPoeBudgetW((d as Record<string, unknown>).poeBudgetW != null ? String((d as Record<string, unknown>).poeBudgetW) : "");
@@ -115,6 +117,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
           ...(editPowerDrawW.trim() && { powerDrawW: Number(editPowerDrawW) }),
           ...(editPowerCapacityW.trim() && { powerCapacityW: Number(editPowerCapacityW) }),
           ...(editVoltage.trim() && { voltage: editVoltage.trim() }),
+          ...(editThermalBtuh.trim() && { thermalBtuh: Number(editThermalBtuh) }),
           ...(editPoeBudgetW.trim() && { poeBudgetW: Number(editPoeBudgetW) }),
           ...(editPoeDrawW.trim() && { poeDrawW: Number(editPoeDrawW) }),
           ...(editHeightMm.trim() && { heightMm: Number(editHeightMm) }),
@@ -334,6 +337,21 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
             <label>
               <span className="block text-sm font-medium text-slate-700 mb-1">Voltage</span>
               <input value={editVoltage} onChange={(e) => setEditVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+            <label>
+              <span className="block text-sm font-medium text-slate-700 mb-1">Thermal (BTU/h)</span>
+              <input
+                type="number"
+                min="0"
+                value={editThermalBtuh}
+                onChange={(e) => setEditThermalBtuh(e.target.value)}
+                placeholder={(() => {
+                  const w = Number(editPowerDrawW);
+                  return w > 0 ? `auto: ${Math.round(w * 3.412)}` : "e.g. 512";
+                })()}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-xs text-slate-400 mt-1 block">Leave blank to auto-derive from power draw (W × 3.412)</span>
             </label>
             {(editDeviceType.includes("power-distribution") || editDeviceType.includes("company-switch")) && (
               <label>
@@ -558,7 +576,7 @@ function diffCls(changed: boolean, side?: "current" | "proposed"): string {
   return side === "proposed" ? "bg-green-50 rounded px-1 -mx-1" : "bg-red-50 rounded px-1 -mx-1";
 }
 
-type DeviceInfoFields = "label" | "deviceType" | "manufacturer" | "modelNumber" | "color" | "referenceUrl" | "slots" | "slotFamily" | "powerDrawW" | "powerCapacityW" | "voltage" | "heightMm" | "widthMm" | "depthMm" | "weightKg";
+type DeviceInfoFields = "label" | "deviceType" | "manufacturer" | "modelNumber" | "color" | "referenceUrl" | "slots" | "slotFamily" | "powerDrawW" | "powerCapacityW" | "voltage" | "thermalBtuh" | "heightMm" | "widthMm" | "depthMm" | "weightKg";
 
 type DeviceInfoProps = {
   data: Pick<DeviceTemplate, DeviceInfoFields>;
@@ -611,6 +629,9 @@ function DeviceInfo({ data, compare, side }: DeviceInfoProps) {
       )}
       {data.voltage && (
         <div className={d("voltage")}><span className="text-slate-500">Voltage:</span> {data.voltage}</div>
+      )}
+      {(data as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh != null && (
+        <div className={d("thermalBtuh")}><span className="text-slate-500">Thermal:</span> {(data as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh} BTU/h</div>
       )}
       {(extra.heightMm != null || extra.widthMm != null || extra.depthMm != null) && (
         <div className={`${dExtra("heightMm")} ${dExtra("widthMm")} ${dExtra("depthMm")}`}>

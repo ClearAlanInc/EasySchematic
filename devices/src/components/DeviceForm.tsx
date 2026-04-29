@@ -25,6 +25,7 @@ export interface DeviceFormData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  thermalBtuh?: number;
   poeBudgetW?: number;
   poeDrawW?: number;
   heightMm?: number;
@@ -69,6 +70,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
   const [powerDrawW, setPowerDrawW] = useState<string>("");
   const [powerCapacityW, setPowerCapacityW] = useState<string>("");
   const [voltage, setVoltage] = useState("");
+  const [thermalBtuh, setThermalBtuh] = useState<string>("");
   const [poeBudgetW, setPoeBudgetW] = useState<string>("");
   const [poeDrawW, setPoeDrawW] = useState<string>("");
   const [heightMm, setHeightMm] = useState<string>("");
@@ -122,6 +124,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
+        setThermalBtuh((t as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh != null ? String((t as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh) : "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
         setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
@@ -154,6 +157,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage(t.voltage ?? "");
+        setThermalBtuh((t as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh != null ? String((t as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh) : "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
         setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
@@ -185,6 +189,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
         setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
         setVoltage((t.voltage as string) ?? "");
+        setThermalBtuh(t.thermalBtuh != null ? String(t.thermalBtuh) : "");
         setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
         setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
         setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
@@ -234,6 +239,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         ...(powerDrawW.trim() && { powerDrawW: Number(powerDrawW) }),
         ...(powerCapacityW.trim() && { powerCapacityW: Number(powerCapacityW) }),
         ...(voltage.trim() && { voltage: voltage.trim() }),
+        ...(thermalBtuh.trim() && { thermalBtuh: Number(thermalBtuh) }),
         ...(poeBudgetW.trim() && { poeBudgetW: Number(poeBudgetW) }),
         ...(poeDrawW.trim() && { poeDrawW: Number(poeDrawW) }),
         ...(heightMm.trim() && { heightMm: Number(heightMm) }),
@@ -381,6 +387,21 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
         <label>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Voltage</span>
           <input value={voltage} onChange={(e) => setVoltage(e.target.value)} placeholder="e.g. 100-240V" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </label>
+        <label>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Thermal (BTU/h)</span>
+          <input
+            type="number"
+            min="0"
+            value={thermalBtuh}
+            onChange={(e) => setThermalBtuh(e.target.value)}
+            placeholder={(() => {
+              const w = Number(powerDrawW);
+              return w > 0 ? `auto: ${Math.round(w * 3.412)}` : "e.g. 512";
+            })()}
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 block">Leave blank to auto-derive from power draw (W × 3.412)</span>
         </label>
         <label>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Height (mm)</span>

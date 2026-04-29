@@ -7,13 +7,13 @@ const REQUIRED_COLUMNS = ["model_number", "label", "device_type", "port_label", 
 
 const DEVICE_FIELDS = [
   "manufacturer", "label", "device_type", "category", "reference_url",
-  "height_mm", "width_mm", "depth_mm", "weight_kg", "power_draw_w", "voltage",
+  "height_mm", "width_mm", "depth_mm", "weight_kg", "power_draw_w", "voltage", "thermal_btuh",
 ] as const;
 
 /** Parse a row-per-port CSV into device templates.
  *
  * Required columns: model_number, label, device_type, port_label, port_signal_type, port_direction
- * Optional device columns: manufacturer, category, reference_url, height_mm, width_mm, depth_mm, weight_kg, power_draw_w, voltage
+ * Optional device columns: manufacturer, category, reference_url, height_mm, width_mm, depth_mm, weight_kg, power_draw_w, voltage, thermal_btuh
  * Optional port columns: port_connector_type, port_section
  */
 export function parseCsvImport(raw: string): ParseResult {
@@ -98,6 +98,7 @@ export function parseCsvImport(raw: string): ParseResult {
       depthMm: numField(deviceData.depth_mm),
       weightKg: numField(deviceData.weight_kg),
       powerDrawW: numField(deviceData.power_draw_w),
+      thermalBtuh: numField(deviceData.thermal_btuh),
       ports: ports as Port[],
     };
 

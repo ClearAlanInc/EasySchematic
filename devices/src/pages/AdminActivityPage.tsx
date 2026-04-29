@@ -370,6 +370,7 @@ function TemplateSummaryCard({ data }: { data: TemplateLike }) {
   const powerDrawW = data.powerDrawW as number | undefined;
   const powerCapacityW = data.powerCapacityW as number | undefined;
   const voltage = data.voltage as string | undefined;
+  const thermalBtuh = data.thermalBtuh as number | undefined;
   const poeBudgetW = data.poeBudgetW as number | undefined;
   const poeDrawW = data.poeDrawW as number | undefined;
   const heightMm = data.heightMm as number | undefined;
@@ -388,6 +389,7 @@ function TemplateSummaryCard({ data }: { data: TemplateLike }) {
   if (powerDrawW != null) chips.push(`${powerDrawW}W draw`);
   if (powerCapacityW != null) chips.push(`${powerCapacityW}W capacity`);
   if (voltage) chips.push(voltage);
+  if (thermalBtuh != null) chips.push(`${thermalBtuh} BTU/h`);
   if (poeBudgetW != null) chips.push(`PoE ${poeBudgetW}W src`);
   if (poeDrawW != null) chips.push(`PoE ${poeDrawW}W draw`);
   const dims = formatDimensions(widthMm, depthMm, heightMm);
@@ -520,6 +522,7 @@ const FIELD_LABELS: Record<string, string> = {
   powerDrawW: "Power draw (W)",
   powerCapacityW: "Power capacity (W)",
   voltage: "Voltage",
+  thermalBtuh: "Thermal (BTU/h)",
   poeBudgetW: "PoE source budget (W)",
   poeDrawW: "PoE draw (W)",
   heightMm: "Height (mm)",

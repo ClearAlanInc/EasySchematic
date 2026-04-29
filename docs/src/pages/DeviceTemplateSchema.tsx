@@ -95,6 +95,7 @@ export default function DeviceTemplateSchemaPage() {
           <tr><td><code>powerCapacityW</code></td><td>number</td><td>For power distros: total capacity in watts</td></tr>
           <tr><td><code>poeBudgetW</code></td><td>number</td><td>For PoE switches: total PoE budget in watts</td></tr>
           <tr><td><code>voltage</code></td><td>string</td><td>e.g. "100-240V" or "12V DC"</td></tr>
+          <tr><td><code>thermalBtuh</code></td><td>number</td><td>Thermal load in BTU/h for HVAC sizing. Auto-derived from <code>powerDrawW × 3.412</code> if omitted; specify only when the measured value differs (e.g. devices with low standby dissipation).</td></tr>
           <tr><td><code>unitCost</code></td><td>number</td><td>MSRP / typical unit cost in USD</td></tr>
           <tr><td><code>searchTerms</code></td><td>string[]</td><td>Extra keywords for the device library search</td></tr>
           <tr><td><code>color</code></td><td>string</td><td>Hex color (e.g. "#3b82f6") for the device card</td></tr>
@@ -115,7 +116,7 @@ export default function DeviceTemplateSchemaPage() {
         rows by <code>(manufacturer, model_number)</code>.
       </p>
       <p><strong>Required columns:</strong> <code>model_number</code>, <code>label</code>, <code>device_type</code>, <code>port_label</code>, <code>port_signal_type</code>, <code>port_direction</code></p>
-      <p><strong>Optional columns:</strong> <code>manufacturer</code>, <code>category</code>, <code>reference_url</code>, <code>height_mm</code>, <code>width_mm</code>, <code>depth_mm</code>, <code>weight_kg</code>, <code>power_draw_w</code>, <code>voltage</code>, <code>port_connector_type</code>, <code>port_section</code></p>
+      <p><strong>Optional columns:</strong> <code>manufacturer</code>, <code>category</code>, <code>reference_url</code>, <code>height_mm</code>, <code>width_mm</code>, <code>depth_mm</code>, <code>weight_kg</code>, <code>power_draw_w</code>, <code>voltage</code>, <code>thermal_btuh</code>, <code>port_connector_type</code>, <code>port_section</code></p>
       <pre style={{ fontSize: "11px" }}><code>{SAMPLE_CSV}</code></pre>
 
       <hr />

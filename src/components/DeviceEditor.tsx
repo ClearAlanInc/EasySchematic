@@ -26,6 +26,7 @@ import TemplateSyncDialog from "./TemplateSyncDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
 import IpInput from "./IpInput";
 import { AUX_FIELD_GROUPS, normalizeAuxRows, resolveAuxiliaryLine, trimTrailingEmpty } from "../auxiliaryData";
+import { deriveThermalBtuh } from "../thermal";
 
 const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
   (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
@@ -107,6 +108,7 @@ export default function DeviceEditor() {
   const [powerDrawW, setPowerDrawW] = useState<number | undefined>(undefined);
   const [powerCapacityW, setPowerCapacityW] = useState<number | undefined>(undefined);
   const [voltage, setVoltage] = useState<string | undefined>(undefined);
+  const [thermalBtuh, setThermalBtuh] = useState<number | undefined>(undefined);
   const [poeBudgetW, setPoeBudgetW] = useState<number | undefined>(undefined);
   const [poeDrawW, setPoeDrawW] = useState<number | undefined>(undefined);
 
@@ -191,6 +193,7 @@ export default function DeviceEditor() {
     setPowerDrawW(node.data.powerDrawW);
     setPowerCapacityW(node.data.powerCapacityW);
     setVoltage(node.data.voltage);
+    setThermalBtuh(node.data.thermalBtuh);
     setPoeBudgetW(node.data.poeBudgetW);
     setPoeDrawW(node.data.poeDrawW);
     setUnitCost(node.data.unitCost);
@@ -263,6 +266,7 @@ export default function DeviceEditor() {
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(poeDrawW != null ? { poeDrawW } : {}),
       ...(voltage ? { voltage } : {}),
+      ...(thermalBtuh != null ? { thermalBtuh } : {}),
       ...(unitCost != null ? { unitCost } : {}),
       ...(heightMm != null ? { heightMm } : {}),
       ...(widthMm != null ? { widthMm } : {}),
@@ -282,7 +286,7 @@ export default function DeviceEditor() {
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
+  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -319,6 +323,7 @@ export default function DeviceEditor() {
       ...(powerDrawW != null ? { powerDrawW } : {}),
       ...(powerCapacityW != null ? { powerCapacityW } : {}),
       ...(voltage ? { voltage } : {}),
+      ...(thermalBtuh != null ? { thermalBtuh } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(poeDrawW != null ? { poeDrawW } : {}),
       ...(unitCost != null ? { unitCost } : {}),
@@ -342,7 +347,7 @@ export default function DeviceEditor() {
       ...(existing?.slotFamily ? { slotFamily: existing.slotFamily as string } : {}),
       ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
     });
-  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData]);
+  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -376,6 +381,7 @@ export default function DeviceEditor() {
       ...(powerDrawW != null ? { powerDrawW } : {}),
       ...(powerCapacityW != null ? { powerCapacityW } : {}),
       ...(voltage ? { voltage } : {}),
+      ...(thermalBtuh != null ? { thermalBtuh } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(poeDrawW != null ? { poeDrawW } : {}),
       ...(heightMm != null ? { heightMm } : {}),
@@ -410,7 +416,7 @@ export default function DeviceEditor() {
     } catch (e) {
       console.error("Failed to create draft:", e);
     }
-  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData]);
+  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, thermalBtuh, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData]);
 
   const handleSaveAsPreset = useCallback(() => {
     if (!editingNodeId || !node?.data.templateId) return;
@@ -1003,6 +1009,25 @@ export default function DeviceEditor() {
                     onKeyDown={(e) => e.stopPropagation()}
                   />
                 </div>
+                <div className="col-span-2">
+                  <label
+                    className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5"
+                    title="Thermal load for HVAC sizing. Auto-derived from Power Draw × 3.412 if left blank."
+                  >
+                    Thermal (BTU/h)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    value={thermalBtuh ?? ""}
+                    onChange={(e) => setThermalBtuh(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder={(() => {
+                      const auto = deriveThermalBtuh(powerDrawW);
+                      return auto != null ? `auto: ${auto}` : "0";
+                    })()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                </div>
                 {deviceType.includes("power-distribution") && (
                   <div className="col-span-2">
                     <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
@@ -1065,6 +1090,7 @@ export default function DeviceEditor() {
                   poeBudgetW,
                   poeDrawW,
                   voltage,
+                  thermalBtuh,
                   weightKg,
                   widthMm,
                   heightMm,

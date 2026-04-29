@@ -21,6 +21,7 @@ interface TemplateInput {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  thermalBtuh?: number;
   poeBudgetW?: number;
   poeDrawW?: number;
   isVenueProvided?: boolean;
@@ -216,6 +217,9 @@ export function validateTemplate(body: unknown): ValidationResult {
     const vErr = checkString(obj.voltage, "voltage", 50);
     if (vErr) return { ok: false, error: vErr };
   }
+  if (obj.thermalBtuh != null && (typeof obj.thermalBtuh !== "number" || obj.thermalBtuh < 0)) {
+    return { ok: false, error: "thermalBtuh must be a non-negative number" };
+  }
 
   // PoE fields — optional non-negative numbers. Budget = PSE side, Draw = PD side.
   if (obj.poeBudgetW != null && (typeof obj.poeBudgetW !== "number" || obj.poeBudgetW < 0)) {
@@ -283,6 +287,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.powerDrawW != null && { powerDrawW: obj.powerDrawW as number }),
       ...(obj.powerCapacityW != null && { powerCapacityW: obj.powerCapacityW as number }),
       ...(obj.voltage != null && { voltage: obj.voltage as string }),
+      ...(obj.thermalBtuh != null && { thermalBtuh: obj.thermalBtuh as number }),
       ...(obj.poeBudgetW != null && { poeBudgetW: obj.poeBudgetW as number }),
       ...(obj.poeDrawW != null && { poeDrawW: obj.poeDrawW as number }),
       ...(obj.isVenueProvided != null && { isVenueProvided: obj.isVenueProvided as boolean }),

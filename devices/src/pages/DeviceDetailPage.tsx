@@ -17,6 +17,7 @@ import {
 import type { User, TemplateAdminView, TemplateNote } from "../api";
 import SignalBadge from "../components/SignalBadge";
 import { linkClick, navigateTo } from "../navigate";
+import { effectiveThermalBtuh } from "../thermal";
 
 type TemplateWithAttribution = DeviceTemplate & {
   submittedBy?: { name: string };
@@ -176,6 +177,21 @@ export default function DeviceDetailPage({ id, currentUser }: { id: string; curr
               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{template.voltage}</div>
             </div>
           )}
+          {(() => {
+            const t = effectiveThermalBtuh(template);
+            if (!t) return null;
+            return (
+              <div
+                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                title={t.isDerived ? "Auto-derived from power draw (× 3.412)" : undefined}
+              >
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Thermal</div>
+                <div className={`text-sm font-semibold text-slate-900 dark:text-slate-100${t.isDerived ? " italic" : ""}`}>
+                  {t.isDerived ? "~" : ""}{t.value} BTU/h
+                </div>
+              </div>
+            );
+          })()}
           {template.poeBudgetW != null && (
             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
               <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">PoE Budget</div>

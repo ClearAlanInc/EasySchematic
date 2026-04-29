@@ -58,6 +58,7 @@ const FACTUAL_FIELDS = [
   "powerDrawW",
   "powerCapacityW",
   "voltage",
+  "thermalBtuh",
   "poeBudgetW",
   "poeDrawW",
   "unitCost",

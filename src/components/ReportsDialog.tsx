@@ -2458,6 +2458,18 @@ function PowerReportTab() {
             {(report.totalPowerW / 120).toFixed(1)}A @120V &middot; {(report.totalPowerW / 208).toFixed(1)}A @208V
           </div>
         </div>
+        {report.totalThermalBtuh > 0 && (
+          <div
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-3 py-2"
+            title="Thermal load for HVAC sizing. Auto-derived from power draw (× 3.412) where not explicitly entered."
+          >
+            <div className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wide">Total Thermal</div>
+            <div className="text-sm font-semibold text-[var(--color-text-heading)]">{report.totalThermalBtuh.toLocaleString()} BTU/h</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">
+              ≈ {(report.totalThermalBtuh / 12000).toFixed(1)} ton AC
+            </div>
+          </div>
+        )}
         {report.unconnectedPowerW > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2">
             <div className="text-[10px] text-amber-600 uppercase tracking-wide">Unconnected</div>
@@ -2522,21 +2534,33 @@ function PowerReportTab() {
               <th className={thClass}>Room</th>
               <th className={thClass}>Power (W)</th>
               <th className={thClass}>Total (W)</th>
+              <th className={thClass}>Thermal (BTU/h)</th>
+              <th className={thClass}>Total (BTU/h)</th>
               <th className={thClass}>Voltage</th>
             </tr>
           </thead>
           <tbody>
-            {report.devices.map((d, i) => (
-              <tr key={`${d.model}-${d.room}-${i}`} className={rowClass(i)}>
-                <td className={tdClass}>{d.count}x</td>
-                <td className={tdClass}>{d.model}</td>
-                <td className={tdClass}>{d.deviceType}</td>
-                <td className={tdClass}>{d.room}</td>
-                <td className={tdClass}>{d.powerDrawW > 0 ? d.powerDrawW.toLocaleString() : "—"}</td>
-                <td className={tdClass}>{d.powerDrawW > 0 ? (d.powerDrawW * d.count).toLocaleString() : "—"}</td>
-                <td className={tdClass}>{d.voltage || "—"}</td>
-              </tr>
-            ))}
+            {report.devices.map((d, i) => {
+              const thermalTitle = d.thermalDerived ? "Auto-derived from power draw (× 3.412)" : undefined;
+              const thermalCls = d.thermalDerived ? `${tdClass} italic text-[var(--color-text-muted)]` : tdClass;
+              return (
+                <tr key={`${d.model}-${d.room}-${i}`} className={rowClass(i)}>
+                  <td className={tdClass}>{d.count}x</td>
+                  <td className={tdClass}>{d.model}</td>
+                  <td className={tdClass}>{d.deviceType}</td>
+                  <td className={tdClass}>{d.room}</td>
+                  <td className={tdClass}>{d.powerDrawW > 0 ? d.powerDrawW.toLocaleString() : "—"}</td>
+                  <td className={tdClass}>{d.powerDrawW > 0 ? (d.powerDrawW * d.count).toLocaleString() : "—"}</td>
+                  <td className={thermalCls} title={thermalTitle}>
+                    {d.thermalBtuh > 0 ? `${d.thermalDerived ? "~" : ""}${d.thermalBtuh.toLocaleString()}` : "—"}
+                  </td>
+                  <td className={thermalCls} title={thermalTitle}>
+                    {d.thermalBtuh > 0 ? `${d.thermalDerived ? "~" : ""}${(d.thermalBtuh * d.count).toLocaleString()}` : "—"}
+                  </td>
+                  <td className={tdClass}>{d.voltage || "—"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

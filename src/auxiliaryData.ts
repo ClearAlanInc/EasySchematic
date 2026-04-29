@@ -1,4 +1,5 @@
 import type { AuxRow, DeviceData, Port } from "./types";
+import { effectiveThermalBtuh } from "./thermal";
 
 export interface AuxResolveContext {
   /** Number of connected port handles — only known at render time in DeviceNode. */
@@ -23,6 +24,8 @@ const prettyDeviceType = (v: unknown): string => {
 };
 
 const fmtW = (v: unknown): string => (typeof v === "number" ? `${v.toLocaleString()} W` : "");
+const fmtBtuh = (v: unknown, derived = false): string =>
+  typeof v === "number" ? `${derived ? "~" : ""}${v.toLocaleString()} BTU/h` : "";
 const fmtMm = (v: unknown): string => (typeof v === "number" ? `${v.toLocaleString()} mm` : "");
 const fmtKg = (v: unknown): string => (typeof v === "number" ? `${v.toLocaleString()} kg` : "");
 const fmtUsd = (v: unknown): string =>
@@ -43,6 +46,15 @@ export const AUX_FIELDS: AuxField[] = [
   { token: "powerCapacityW", label: "Power Capacity", group: "Power", resolve: (d) => fmtW(d.powerCapacityW) },
   { token: "poeBudgetW", label: "PoE Budget", group: "Power", resolve: (d) => fmtW(d.poeBudgetW) },
   { token: "voltage", label: "Voltage", group: "Power", resolve: (d) => str(d.voltage) },
+  {
+    token: "thermalBtuh",
+    label: "Thermal (BTU/h)",
+    group: "Power",
+    resolve: (d) => {
+      const t = effectiveThermalBtuh(d);
+      return t ? fmtBtuh(t.value, t.isDerived) : "";
+    },
+  },
 
   // Physical
   { token: "weightKg", label: "Weight", group: "Physical", resolve: (d) => fmtKg(d.weightKg) },

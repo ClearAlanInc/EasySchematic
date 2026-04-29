@@ -7,6 +7,7 @@ import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 import { csvRow, groupBy, getRoomLabel } from "./packList";
 import { transformLabelNow } from "./labelCaseUtils";
+import { effectiveThermalBtuh } from "./thermal";
 
 // ─── Types ───
 
@@ -16,6 +17,8 @@ export interface PowerReportDevice {
   deviceType: string;
   room: string;
   powerDrawW: number;
+  thermalBtuh: number;
+  thermalDerived: boolean;
   voltage: string;
   count: number;
 }
@@ -34,7 +37,9 @@ export interface PowerReportData {
   devices: PowerReportDevice[];
   distros: PowerReportDistro[];
   totalPowerW: number;
+  totalThermalBtuh: number;
   unconnectedPowerW: number;
+  unconnectedThermalBtuh: number;
 }
 
 // ─── Helpers ───
@@ -64,6 +69,7 @@ export function computePowerReport(
     nodeDataMap.set(node.id, { data, parentId: node.parentId });
 
     const powerDraw = data.powerDrawW ?? 0;
+    const thermal = effectiveThermalBtuh(data);
     const model = transformLabelNow(data.model ?? data.baseLabel ?? data.label);
     const room = getRoomLabel(nodes, node.parentId);
     const key = `${model}|${room}`;
@@ -78,6 +84,8 @@ export function computePowerReport(
         deviceType: data.deviceType,
         room,
         powerDrawW: powerDraw,
+        thermalBtuh: thermal?.value ?? 0,
+        thermalDerived: thermal?.isDerived ?? false,
         voltage: data.voltage ?? "",
         count: 1,
       });
@@ -89,6 +97,7 @@ export function computePowerReport(
   );
 
   const totalPowerW = devices.reduce((sum, d) => sum + d.powerDrawW * d.count, 0);
+  const totalThermalBtuh = devices.reduce((sum, d) => sum + d.thermalBtuh * d.count, 0);
 
   // 2. Identify distros and compute loading via graph walk
   const distros: PowerReportDistro[] = [];
@@ -144,6 +153,7 @@ export function computePowerReport(
 
   // 3. Calculate unconnected power
   let unconnectedPowerW = 0;
+  let unconnectedThermalBtuh = 0;
   for (const node of nodes) {
     if (node.type !== "device") continue;
     const data = node.data as DeviceData;
@@ -152,10 +162,19 @@ export function computePowerReport(
     const powerDraw = data.powerDrawW ?? 0;
     if (powerDraw > 0 && !connectedToDistro.has(node.id)) {
       unconnectedPowerW += powerDraw;
+      const thermal = effectiveThermalBtuh(data);
+      unconnectedThermalBtuh += thermal?.value ?? 0;
     }
   }
 
-  return { devices, distros, totalPowerW, unconnectedPowerW };
+  return {
+    devices,
+    distros,
+    totalPowerW,
+    totalThermalBtuh,
+    unconnectedPowerW,
+    unconnectedThermalBtuh,
+  };
 }
 
 // ─── CSV Export ───
@@ -171,21 +190,30 @@ export function exportPowerReportCsv(
   lines.push("");
 
   lines.push("DEVICE POWER DRAW");
-  lines.push(csvRow(["Qty", "Device", "Type", "Room", "Power (W)", "Voltage"]));
+  lines.push(csvRow(["Qty", "Device", "Type", "Room", "Power (W)", "Thermal (BTU/h)", "Total Thermal (BTU/h)", "Voltage"]));
   for (const d of data.devices) {
+    const thermalCell = d.thermalBtuh > 0
+      ? `${d.thermalDerived ? "~" : ""}${d.thermalBtuh}`
+      : "";
+    const totalThermalCell = d.thermalBtuh > 0
+      ? `${d.thermalDerived ? "~" : ""}${d.thermalBtuh * d.count}`
+      : "";
     lines.push(csvRow([
       `${d.count}`,
       d.model,
       d.deviceType,
       d.room,
       `${d.powerDrawW}`,
+      thermalCell,
+      totalThermalCell,
       d.voltage,
     ]));
   }
   lines.push("");
   lines.push(csvRow(["Total System Power", `${data.totalPowerW}W`, `${(data.totalPowerW / 120).toFixed(1)}A @120V`, `${(data.totalPowerW / 208).toFixed(1)}A @208V`]));
+  lines.push(csvRow(["Total System Thermal", `${data.totalThermalBtuh} BTU/h`, `≈ ${(data.totalThermalBtuh / 12000).toFixed(1)} ton AC`]));
   if (data.unconnectedPowerW > 0) {
-    lines.push(csvRow(["Unconnected Power", `${data.unconnectedPowerW}W`]));
+    lines.push(csvRow(["Unconnected Power", `${data.unconnectedPowerW}W`, `${data.unconnectedThermalBtuh} BTU/h`]));
   }
   lines.push("");
 
@@ -223,15 +251,20 @@ export function getPowerReportTableData(
   const distrosTableDef = layout.tables.find((t) => t.id === "powerDistros");
 
   // Devices table
-  const deviceRows: Record<string, string>[] = data.devices.map((d) => ({
-    count: `${d.count}x`,
-    model: d.model,
-    deviceType: d.deviceType,
-    room: d.room,
-    powerDrawW: d.powerDrawW > 0 ? `${d.powerDrawW}` : "—",
-    totalPowerW: d.powerDrawW > 0 ? `${d.powerDrawW * d.count}` : "—",
-    voltage: d.voltage || "—",
-  }));
+  const deviceRows: Record<string, string>[] = data.devices.map((d) => {
+    const prefix = d.thermalDerived ? "~" : "";
+    return {
+      count: `${d.count}x`,
+      model: d.model,
+      deviceType: d.deviceType,
+      room: d.room,
+      powerDrawW: d.powerDrawW > 0 ? `${d.powerDrawW}` : "—",
+      totalPowerW: d.powerDrawW > 0 ? `${d.powerDrawW * d.count}` : "—",
+      thermalBtuh: d.thermalBtuh > 0 ? `${prefix}${d.thermalBtuh}` : "—",
+      totalThermalBtuh: d.thermalBtuh > 0 ? `${prefix}${d.thermalBtuh * d.count}` : "—",
+      voltage: d.voltage || "—",
+    };
+  });
 
   // Add total row
   deviceRows.push({
@@ -241,6 +274,8 @@ export function getPowerReportTableData(
     room: "",
     powerDrawW: "",
     totalPowerW: `${data.totalPowerW}`,
+    thermalBtuh: "",
+    totalThermalBtuh: `${data.totalThermalBtuh}`,
     voltage: `${(data.totalPowerW / 120).toFixed(1)}A @120V / ${(data.totalPowerW / 208).toFixed(1)}A @208V`,
     _isFooter: "true",
   });

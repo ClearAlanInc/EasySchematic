@@ -219,6 +219,8 @@ export interface DeviceData {
   powerDrawW?: number;
   powerCapacityW?: number;
   voltage?: string;
+  /** Thermal load in BTU/h for HVAC sizing; auto-derived from powerDrawW × 3.412 if omitted */
+  thermalBtuh?: number;
   /** PoE budget in watts (for network switches — power this device *supplies* over PoE) */
   poeBudgetW?: number;
   /** PoE draw in watts (power this device *consumes* over PoE, e.g. a camera or AP) */
@@ -358,6 +360,7 @@ export interface DeviceTemplate {
   powerDrawW?: number;           // Max power consumption in watts
   powerCapacityW?: number;       // Total supply capacity in watts (distros only)
   voltage?: string;              // Informational: "100-240V", "208V", "120V"
+  thermalBtuh?: number;          // Thermal load in BTU/h for HVAC sizing; auto-derived from powerDrawW × 3.412 if omitted
   isVenueProvided?: boolean;     // Venue-owned gear — excluded from pack list
   poeBudgetW?: number;           // PoE budget in watts (switches/PSEs supplying PoE)
   poeDrawW?: number;             // PoE draw in watts (PDs consuming PoE — cameras, APs, etc.)
