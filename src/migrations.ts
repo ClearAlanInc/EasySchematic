@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 28;
+export const CURRENT_SCHEMA_VERSION = 29;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -338,6 +338,12 @@ const migrations: Record<number, Migration> = {
     // to undefined and are populated on-demand when the user opens the new
     // Room Distances dialog.
     data.version = 28;
+    return data;
+  },
+  28: (data) => {
+    // v28 → v29: add optional currency field for multi-currency cost reports (#158).
+    // No data transform needed — field defaults to "USD" on load.
+    data.version = 29;
     return data;
   },
 };

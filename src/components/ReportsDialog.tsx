@@ -33,6 +33,7 @@ import ReportPreviewDialog from "./ReportPreviewDialog";
 import IpInput from "./IpInput";
 import type { DeviceData, SchematicNode, ConnectionData, OwnedGearItem } from "../types";
 import { inventoryKeyFromDeviceData, inventoryKeyFromTemplate } from "../inventoryKey";
+import { formatCurrency } from "../auxiliaryData";
 import { useSpreadsheetSelection } from "../spreadsheet/useSpreadsheetSelection";
 import type { SpreadsheetColumn } from "../spreadsheet/types";
 import FillSeriesDialog from "../spreadsheet/FillSeriesDialog";
@@ -1322,6 +1323,7 @@ const DeviceRow = memo(function DeviceRow({
 }) {
   const cellProps = spreadsheet.getCellProps(rowIndex, "label");
   const hasSelection = cellProps.isSelected;
+  const currency = useSchematicStore((s) => s.currency);
 
   return (
     <tr className={hasSelection ? "bg-blue-50" : altClass}>
@@ -1391,7 +1393,7 @@ const DeviceRow = memo(function DeviceRow({
             onDoubleClick={costCellProps.onDoubleClick}
           >
             <span className="text-[10px] px-1 select-none">
-              {row.unitCost > 0 ? `$${row.unitCost.toFixed(2)}` : "—"}
+              {row.unitCost > 0 ? formatCurrency(row.unitCost, currency) : "—"}
             </span>
           </td>
         );
@@ -2056,6 +2058,7 @@ function PackListTabInline() {
 
   const cableCosts = useSchematicStore((s) => s.cableCosts);
   const setCableCost = useSchematicStore((s) => s.setCableCost);
+  const currency = useSchematicStore((s) => s.currency);
 
   const data = useMemo(() => computePackList(nodes, edges), [nodes, edges]);
 
@@ -2153,8 +2156,8 @@ function PackListTabInline() {
               </thead>
               <tbody>
                 {(groupDevicesByRoom
-                  ? renderGroupedDevices(data.devices)
-                  : renderDeviceRows(mergeDevicesByModel(data.devices))
+                  ? renderGroupedDevices(data.devices, currency)
+                  : renderDeviceRows(mergeDevicesByModel(data.devices), "", currency)
                 )}
               </tbody>
             </table>
@@ -2185,9 +2188,9 @@ function PackListTabInline() {
                       <td className={tdClass}>{s.cableLength}</td>
                       {showPath && <td className={tdClass}>{s.route}</td>}
                       <td className={`${tdClass} p-0.5`}>
-                        <CableCostCell costKey={key} value={uc} onChange={setCableCost} />
+                        <CableCostCell costKey={key} value={uc} onChange={setCableCost} currency={currency} />
                       </td>
-                      <td className={tdClass}>{ext > 0 ? `$${ext.toFixed(2)}` : "—"}</td>
+                      <td className={tdClass}>{ext > 0 ? formatCurrency(ext, currency) : "—"}</td>
                     </tr>
                   );
                 };
@@ -2292,7 +2295,7 @@ function PackListTabInline() {
   );
 }
 
-function renderDeviceRows(devices: PackListDevice[], keyPrefix = "") {
+function renderDeviceRows(devices: PackListDevice[], keyPrefix = "", currency = "USD") {
   const elements: React.ReactNode[] = [];
   let idx = 0;
   for (const d of devices) {
@@ -2302,8 +2305,8 @@ function renderDeviceRows(devices: PackListDevice[], keyPrefix = "") {
         <td className={tdClass}>{d.count}&times;</td>
         <td className={tdClass}>{d.model}</td>
         <td className={tdClass}>{d.deviceType}</td>
-        <td className={tdClass}>{d.unitCost > 0 ? `$${d.unitCost.toFixed(2)}` : "—"}</td>
-        <td className={tdClass}>{extCost > 0 ? `$${extCost.toFixed(2)}` : "—"}</td>
+        <td className={tdClass}>{d.unitCost > 0 ? formatCurrency(d.unitCost, currency) : "—"}</td>
+        <td className={tdClass}>{extCost > 0 ? formatCurrency(extCost, currency) : "—"}</td>
       </tr>,
     );
     idx++;
@@ -2317,8 +2320,8 @@ function renderDeviceRows(devices: PackListDevice[], keyPrefix = "") {
             <span className="pl-3">{c.cardLabel}</span>
           </td>
           <td className={tdClass} />
-          <td className={`${tdClass} text-[var(--color-text-muted)]`}>{c.cardUnitCost > 0 ? `$${c.cardUnitCost.toFixed(2)}` : ""}</td>
-          <td className={`${tdClass} text-[var(--color-text-muted)]`}>{cardExt > 0 ? `$${cardExt.toFixed(2)}` : ""}</td>
+          <td className={`${tdClass} text-[var(--color-text-muted)]`}>{c.cardUnitCost > 0 ? formatCurrency(c.cardUnitCost, currency) : ""}</td>
+          <td className={`${tdClass} text-[var(--color-text-muted)]`}>{cardExt > 0 ? formatCurrency(cardExt, currency) : ""}</td>
         </tr>,
       );
     }
@@ -2326,7 +2329,7 @@ function renderDeviceRows(devices: PackListDevice[], keyPrefix = "") {
   return elements;
 }
 
-function renderGroupedDevices(devices: PackListDevice[]) {
+function renderGroupedDevices(devices: PackListDevice[], currency = "USD") {
   const groups = new Map<string, PackListDevice[]>();
   for (const d of devices) {
     const arr = groups.get(d.room);
@@ -2346,7 +2349,7 @@ function renderGroupedDevices(devices: PackListDevice[]) {
         </td>
       </tr>,
     );
-    elements.push(...renderDeviceRows(rows, `${room}-`));
+    elements.push(...renderDeviceRows(rows, `${room}-`, currency));
   }
   return elements;
 }
@@ -2573,10 +2576,12 @@ const CableCostCell = memo(function CableCostCell({
   costKey,
   value,
   onChange,
+  currency = "USD",
 }: {
   costKey: string;
   value: number;
   onChange: (key: string, cost: number | undefined) => void;
+  currency?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -2612,7 +2617,7 @@ const CableCostCell = memo(function CableCostCell({
       className="text-[10px] px-1 cursor-cell select-none block"
       onDoubleClick={() => { setEditValue(value > 0 ? value.toFixed(2) : ""); setEditing(true); }}
     >
-      {value > 0 ? `$${value.toFixed(2)}` : "—"}
+      {value > 0 ? formatCurrency(value, currency) : "—"}
     </span>
   );
 });

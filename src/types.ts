@@ -531,6 +531,8 @@ export interface SchematicFile {
   roomDistances?: Record<string, number>;
   /** Unit + slack settings for converting room distance → estimated cable length (#146). */
   distanceSettings?: DistanceSettings;
+  /** ISO 4217 currency code for cost display in reports (#158). Defaults to "USD". */
+  currency?: string;
 }
 
 export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";

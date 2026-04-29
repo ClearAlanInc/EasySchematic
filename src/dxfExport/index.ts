@@ -88,7 +88,7 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
 
   // ─── Devices ────────────────────────────────────────────────────────
   for (const node of nodes) {
-    if (node.type === "device") emitDevice(writer, node, rfInstance, edges, state.signalColors);
+    if (node.type === "device") emitDevice(writer, node, rfInstance, edges, state.signalColors, state.currency);
   }
 
   // ─── Annotations ────────────────────────────────────────────────────

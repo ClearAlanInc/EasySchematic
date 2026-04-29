@@ -423,6 +423,10 @@ interface SchematicState {
   labelCase: LabelCaseMode;
   setLabelCase: (mode: LabelCaseMode) => void;
 
+  // ISO 4217 currency code for cost display in reports (#158).
+  currency: string;
+  setCurrency: (code: string) => void;
+
   // Incompatible connection dialog (#6)
   pendingIncompatibleConnection: {
     connection: Connection;
@@ -932,6 +936,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   scrollConfig: { ...DEFAULT_SCROLL_CONFIG },
   cableNamingScheme: "type-prefix" as "sequential" | "type-prefix",
   labelCase: DEFAULT_LABEL_CASE,
+  currency: "USD",
   showLineJumps: true,
   showConnectionLabels: true,
   showCableIdLabels: true,
@@ -2671,6 +2676,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setCurrency: (code) => {
+    set({ currency: code });
+    get().saveToLocalStorage();
+  },
+
   setShowLineJumps: (show) => {
     set({ showLineJumps: show });
     get().saveToLocalStorage();
@@ -2799,6 +2809,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
+      currency: state.currency !== "USD" ? state.currency : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
@@ -2883,6 +2894,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             scrollConfig: resolveScrollConfig(data),
             cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
             labelCase: resolveLabelCase(data.labelCase),
+            currency: data.currency ?? "USD",
             showLineJumps: data.showLineJumps ?? true,
             autoRoute: data.autoRoute ?? true,
             edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -2952,6 +2964,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         scrollConfig: resolveScrollConfig(data),
         cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
         labelCase: resolveLabelCase(data.labelCase),
+        currency: data.currency ?? "USD",
         showLineJumps: data.showLineJumps ?? true,
         showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
         showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
@@ -3021,6 +3034,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
+      currency: state.currency !== "USD" ? state.currency : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
@@ -3107,6 +3121,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       scrollConfig: resolveScrollConfig(data),
       cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
       labelCase: resolveLabelCase(data.labelCase),
+      currency: data.currency ?? "USD",
       showLineJumps: data.showLineJumps ?? true,
       showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
       showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,

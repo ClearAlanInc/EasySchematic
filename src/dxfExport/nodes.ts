@@ -135,6 +135,7 @@ export function emitDevice(
   rfInstance: ReactFlowInstance,
   edges: ConnectionEdge[],
   signalColors: Partial<Record<SignalType, string>> | undefined,
+  currency = "USD",
 ) {
   if (node.type !== "device") return;
   const internal = rfInstance.getInternalNode(node.id);
@@ -203,7 +204,7 @@ export function emitDevice(
     for (const row of headerRows) {
       const rowH = auxRowHeight(row);
       if (row.text.trim()) {
-        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data));
+        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data, { currency }));
         if (resolved) {
           writer.addText(
             CANONICAL_LAYERS.LABELS,
@@ -240,7 +241,7 @@ export function emitDevice(
     for (const row of rows) {
       const rowH = auxRowHeight(row);
       if (row.text.trim()) {
-        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data));
+        const resolved = transformLabelNow(resolveAuxiliaryLine(row.text, data, { currency }));
         if (resolved) {
           writer.addText(
             CANONICAL_LAYERS.LABELS,

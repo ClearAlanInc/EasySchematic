@@ -45,6 +45,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
 
   const hideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
   const showPortCounts = useSchematicStore((s) => s.showPortCounts);
+  const currency = useSchematicStore((s) => s.currency);
   const templateHiddenStr = useSchematicStore((s) => {
     if (!data.templateId) return "";
     const arr = s.templateHiddenSignals[data.templateId];
@@ -288,7 +289,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     if (!row.text.trim()) {
       return <div key={key} aria-hidden style={{ height: 6 }} />;
     }
-    const resolved = displayLabel(resolveAuxiliaryLine(row.text, data, { connectedCount: portCountInfo?.connected }));
+    const resolved = displayLabel(resolveAuxiliaryLine(row.text, data, { connectedCount: portCountInfo?.connected, currency }));
     return (
       <div
         key={key}

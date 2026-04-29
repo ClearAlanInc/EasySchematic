@@ -79,6 +79,7 @@ export default function DeviceEditor() {
   const addCustomTemplate = useSchematicStore((s) => s.addCustomTemplate);
   const customTemplates = useSchematicStore((s) => s.customTemplates);
   const templateHiddenSignals = useSchematicStore((s) => s.templateHiddenSignals);
+  const currency = useSchematicStore((s) => s.currency);
   const setTemplateHiddenSignals = useSchematicStore((s) => s.setTemplateHiddenSignals);
   const templatePresets = useSchematicStore((s) => s.templatePresets);
   const setTemplatePreset = useSchematicStore((s) => s.setTemplatePreset);
@@ -1054,7 +1055,7 @@ export default function DeviceEditor() {
             </summary>
             <div className="pt-1 pl-2" style={{ maxWidth: "50%" }}>
               <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
-                Unit Cost ($)
+                Unit Cost ({currency})
               </label>
               <input
                 type="number"

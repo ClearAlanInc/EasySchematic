@@ -4,6 +4,8 @@ import { effectiveThermalBtuh } from "./thermal";
 export interface AuxResolveContext {
   /** Number of connected port handles — only known at render time in DeviceNode. */
   connectedCount?: number;
+  /** ISO 4217 currency code for formatting cost fields. Defaults to "USD". */
+  currency?: string;
 }
 
 export interface AuxField {
@@ -28,9 +30,9 @@ const fmtBtuh = (v: unknown, derived = false): string =>
   typeof v === "number" ? `${derived ? "~" : ""}${v.toLocaleString()} BTU/h` : "";
 const fmtMm = (v: unknown): string => (typeof v === "number" ? `${v.toLocaleString()} mm` : "");
 const fmtKg = (v: unknown): string => (typeof v === "number" ? `${v.toLocaleString()} kg` : "");
-const fmtUsd = (v: unknown): string =>
+export const formatCurrency = (v: unknown, currency = "USD"): string =>
   typeof v === "number"
-    ? `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(v)
     : "";
 
 export const AUX_FIELDS: AuxField[] = [
@@ -63,7 +65,7 @@ export const AUX_FIELDS: AuxField[] = [
   { token: "depthMm", label: "Depth", group: "Physical", resolve: (d) => fmtMm(d.depthMm) },
 
   // Cost
-  { token: "unitCost", label: "Unit Cost", group: "Cost", resolve: (d) => fmtUsd(d.unitCost) },
+  { token: "unitCost", label: "Unit Cost", group: "Cost", resolve: (d, ctx) => formatCurrency(d.unitCost, ctx?.currency) },
 
   // Ports (derived)
   {
