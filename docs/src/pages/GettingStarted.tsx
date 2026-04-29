@@ -35,8 +35,10 @@ export default function GettingStartedPage() {
         <tbody>
           <tr><td><strong>Pan</strong></td><td>Hold Space + drag, or middle-mouse drag</td></tr>
           <tr><td><strong>Zoom</strong></td><td>Scroll wheel</td></tr>
-          <tr><td><strong>Select</strong></td><td>Click a device or connection. Shift+click for multi-select</td></tr>
+          <tr><td><strong>Select</strong></td><td>Click a device or connection</td></tr>
+          <tr><td><strong>Toggle selection</strong></td><td>Shift+click to add/remove items from the current selection</td></tr>
           <tr><td><strong>Box select</strong></td><td>Click and drag on empty canvas</td></tr>
+          <tr><td><strong>Directional select</strong></td><td>Shift+drag — AutoCAD-style: drag right to enclose (only items fully inside), drag left to crossing-select (anything the box touches)</td></tr>
           <tr><td><strong>Delete</strong></td><td>Select items, then press Delete or Backspace</td></tr>
           <tr><td><strong>Connect</strong></td><td>Click an output port, then click a compatible input</td></tr>
           <tr><td><strong>Reconnect</strong></td><td>Drag from a connected port to move the connection</td></tr>
@@ -46,6 +48,7 @@ export default function GettingStartedPage() {
           <tr><td><strong>Align</strong></td><td>Select multiple items, then use the Align menu in the menu bar</td></tr>
           <tr><td><strong>Quick-add device</strong></td><td>Double-click empty canvas or room background</td></tr>
           <tr><td><strong>Room properties</strong></td><td>Right-click a room</td></tr>
+          <tr><td><strong>Connection menu</strong></td><td>Right-click a connection — add waypoints, toggle stub, override connector mismatch, hide label, reset route</td></tr>
           <tr><td><strong>Print View</strong></td><td>Press F9</td></tr>
           <tr><td><strong>Dark mode</strong></td><td>Sun/moon icon in the menu bar (right side)</td></tr>
         </tbody>

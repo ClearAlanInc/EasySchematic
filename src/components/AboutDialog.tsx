@@ -63,9 +63,9 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
           </p>
 
           <div className="flex flex-col gap-1 text-xs text-[var(--color-text)]">
-            <span>{Math.floor(DEVICE_TEMPLATES.length / 10) * 10}+ device templates</span>
-            <span>57 signal types</span>
-            <span>Community device database</span>
+            <span>{Math.floor(DEVICE_TEMPLATES.length / 10) * 10}+ bundled device templates</span>
+            <span>2,000+ in the community library</span>
+            <span>68 signal types</span>
           </div>
 
           <div className="w-full h-px bg-[var(--color-border)]" />

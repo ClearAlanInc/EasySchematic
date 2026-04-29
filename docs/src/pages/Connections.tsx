@@ -58,6 +58,16 @@ export default function ConnectionsPage() {
         The pack list groups cables by length when summarizing.
       </p>
 
+      <h3>Estimated cable length</h3>
+      <p>
+        When both endpoints of a connection live inside <strong>placed rooms</strong>, EasySchematic estimates a cable
+        length from the geometry between the two rooms (room-to-room distance, plus a small slack allowance). The
+        estimate appears in a separate <strong>Est. Length</strong> column in both the cable schedule and the patch
+        panel schedule, so you can compare it against the manual <strong>Cable Length</strong> column or use it as a
+        starting point when filling in your final lengths. Devices outside any room don't get an estimate — the tool
+        needs both endpoints anchored in real space to do the math.
+      </p>
+
       <h2>Line styles</h2>
       <p>
         Each connection can have a custom <strong>line style</strong> — solid (default),

@@ -5,32 +5,18 @@ export default function DeviceLibraryPage() {
 
       <h2>Built-in templates</h2>
       <p>
-        The device library sidebar contains <strong>500+ real-world device templates</strong> organized by category:
+        The device library sidebar contains <strong>2,000+ real-world device templates</strong> drawn from the
+        community device library — switchers, routers, audio consoles, mixing consoles, microphones, intercom, KVM
+        extenders, lighting, LED processors, media servers, and many more. Templates are fetched live from the
+        community database when you're online, with a bundled subset shipped with the app for offline use.
       </p>
-      <ul>
-        <li><strong>Sources</strong> — cameras, PTZ cameras, graphics, computers, media players</li>
-        <li><strong>Switching</strong> — video switchers (ATEM family, Roland, Barco, Analog Way), routers</li>
-        <li><strong>Processing</strong> — converters, scalers, frame syncs, multiviewers, capture cards</li>
-        <li><strong>Distribution</strong> — DAs, video wall controllers</li>
-        <li><strong>Monitoring</strong> — production monitors (SmartView, SmallHD, Marshall, Atomos)</li>
-        <li><strong>Recording</strong> — HyperDecks, Ki Pro, Sound Devices</li>
-        <li><strong>Audio</strong> — consoles (Yamaha CL/QL/TF, A&H dLive/SQ, DiGiCo SD7), stage boxes, DSP, wireless mics, intercom</li>
-        <li><strong>Speakers</strong> — line arrays, powered speakers, subwoofers (Meyer, L'Acoustics, QSC, JBL)</li>
-        <li><strong>Amplifiers</strong> — power amplifiers (Crown, QSC, Behringer, Lab Gruppen)</li>
-        <li><strong>Networking</strong> — NDI encoders/decoders, streaming encoders, network switches, AV-over-IP</li>
-        <li><strong>Codecs</strong> — video conferencing codecs (Cisco Room Kit, Codec Pro)</li>
-        <li><strong>LED Video</strong> — LED processors (Brompton Tessera, Novastar)</li>
-        <li><strong>Media Servers</strong> — Disguise d3, Dataton WATCHPAX</li>
-        <li><strong>Lighting</strong> — consoles (ETC, grandMA3, Road Hog), moving lights, LED fixtures, DMX splitters</li>
-        <li><strong>Wireless</strong> — wireless video transmitters/receivers, intercom</li>
-        <li><strong>KVM / Extenders</strong> — KVM switches, HDBaseT extenders</li>
-        <li><strong>Control</strong> — control processors, tally systems, timecode generators, MIDI devices</li>
-        <li><strong>Projection</strong> — large venue projectors</li>
-        <li><strong>Infrastructure</strong> — patch panels, rack shelves, power distribution</li>
-        <li><strong>Cloud Services</strong> — cloud platforms, streaming services, SaaS endpoints</li>
-        <li><strong>Cable Accessories</strong> — snakes, breakout cables, stage boxes, multicables</li>
-        <li><strong>Peripherals</strong> — mice, keyboards, adapters</li>
-      </ul>
+      <p>
+        Browse the full live library — including category breakdowns and search — at{" "}
+        <a href="https://devices.easyschematic.live" target="_blank" rel="noopener noreferrer">
+          devices.easyschematic.live
+        </a>
+        .
+      </p>
 
       <h2>Using templates</h2>
       <ol>
@@ -129,6 +115,10 @@ export default function DeviceLibraryPage() {
           the contributors hall of fame</li>
         <li><strong>Submit from the app</strong> — right-click any custom device on the canvas and choose
           "Submit to Community" to submit it directly without re-entering the details on the devices site</li>
+        <li><strong>Clone from an existing device</strong> — on the devices site, the "Submit a device" form has a
+          <em>Clone existing device</em> option; pick any current template and the form prefills with its ports,
+          connectors, and metadata. Tweak what's different (a sibling model, a regional variant) and submit — the
+          moderation queue gets a much cleaner diff than a freshly typed-out form</li>
       </ul>
     </>
   );

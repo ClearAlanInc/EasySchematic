@@ -5,12 +5,12 @@ const features = [
   {
     title: "Drag-and-Drop Device Library",
     description:
-      "500+ professional AV device templates — cameras, switchers, routers, audio consoles, media servers, displays, and more. Drag devices onto the canvas and connect them in seconds.",
+      "2,000+ professional AV device templates — cameras, switchers, routers, audio consoles, media servers, displays, and more. Drag devices onto the canvas and connect them in seconds.",
   },
   {
     title: "Color-Coded Signal Types",
     description:
-      "35+ signal types including SDI, HDMI, NDI, Dante, AES67, MADI, DMX, Analog Audio, HDBaseT, ST 2110, and more — each with a distinct color so signal paths are instantly readable.",
+      "68 signal types including SDI, HDMI, NDI, Dante, AVB, AES67, MADI, DMX, Analog Audio, HDBaseT, ST 2110, and more — each with a distinct color so signal paths are instantly readable.",
   },
   {
     title: "Smart Connection Routing",
@@ -98,7 +98,7 @@ export default function LandingPage() {
             broadcast, live production, and AV integration. Free and browser-based.
           </p>
           <p className="text-slate-500 mb-8">
-            500+ device templates &middot; 35+ signal types &middot;
+            2,000+ device templates &middot; 68 signal types &middot;
             Smart edge routing &middot; DXF/PDF/PNG export
           </p>
           <button

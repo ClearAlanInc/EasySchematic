@@ -21,7 +21,7 @@ export default function OverviewPage() {
       <h2>Key features</h2>
       <ul>
         <li>
-          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, AVB, DMX, MADI, and 58 signal types)
+          <strong>Devices</strong> with typed input/output ports (SDI, HDMI, NDI, Dante, AVB, DMX, MADI, and 68 signal types in total)
         </li>
         <li>
           <strong>Signal-type coloring</strong> — connections are color-coded by signal type, with customizable colors
@@ -42,8 +42,9 @@ export default function OverviewPage() {
           <strong>Line jump arcs</strong> — arc markers at connection crossings for visual clarity
         </li>
         <li>
-          <strong>Device library</strong> — 500+ real-world device templates across cameras, switchers, audio, lighting,
-          LED video, and more
+          <strong>Device library</strong> — 2,000+ real-world device templates from the community library — cameras,
+          switchers, audio consoles, lighting consoles, LED processors, media servers, and more — fetched live with a
+          bundled offline fallback
         </li>
         <li>
           <strong>Expansion slots</strong> — devices with swappable card bays; right-click a slot to swap I/O cards in or out
@@ -86,6 +87,40 @@ export default function OverviewPage() {
         </li>
         <li>
           <strong>Network &amp; power reports</strong> — IP address schedules, VLAN assignments, PoE budgets, and power distribution analysis
+        </li>
+        <li>
+          <strong>Patch panel schedule</strong> — per-port report of every patch panel in the schematic, including
+          unconnected ports, with occupancy badges and group-by Panel / Room / Signal / Face
+        </li>
+        <li>
+          <strong>Connector gender</strong> — auto-derived per port, with M-M / F-F suffixes on cables that need
+          like-gendered plugs so the pack list matches what you actually buy
+        </li>
+        <li>
+          <strong>Estimated cable length</strong> — auto-populated from room-to-room distances when both endpoints
+          live in placed rooms
+        </li>
+        <li>
+          <strong>Owned Gear library</strong> — maintain an inventory of gear you own; the pack list reports used vs.
+          needed counts so you know what to pull and what to rent
+        </li>
+        <li>
+          <strong>Bulk device-template import</strong> — import many user templates at once from a JSON or CSV file
+          (e.g. a vendor catalog dump)
+        </li>
+        <li>
+          <strong>Label case</strong> — display preference (As-typed / UPPERCASE / lowercase / Capitalize Words),
+          saved with the schematic
+        </li>
+        <li>
+          <strong>Signal type filter</strong> — narrow device search to templates exposing a chosen signal type
+        </li>
+        <li>
+          <strong>IO counts</strong> — optional badges on devices showing connected vs. total ports per direction
+        </li>
+        <li>
+          <strong>Custom label expansion</strong> — embed <code>{"{{cableId}}"}</code> and other tokens in device
+          labels for inline cable references
         </li>
         <li>
           <strong>CSV import</strong> — import cable schedule spreadsheets to auto-generate schematics

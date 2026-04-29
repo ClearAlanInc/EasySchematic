@@ -20,7 +20,7 @@ export default function DevicesAndPortsPage() {
       <h2>Signal types</h2>
       <p>
         Every port has a <strong>signal type</strong> that determines its color and connection compatibility. You can
-        only connect ports of the <strong>same signal type</strong>. EasySchematic includes 57 built-in signal types
+        only connect ports of the <strong>same signal type</strong>. EasySchematic includes 68 built-in signal types
         covering video, audio, data, power, and control:
       </p>
       <table>
@@ -37,6 +37,7 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>HDMI</strong></td><td>Red</td><td>Consumer/prosumer video</td></tr>
           <tr><td><strong>DisplayPort</strong></td><td>Dark Teal</td><td>Display connections</td></tr>
           <tr><td><strong>Composite</strong></td><td>Yellow</td><td>Legacy analog video (BNC/RCA)</td></tr>
+          <tr><td><strong>Component Video</strong></td><td>Green/Blue/Red</td><td>Legacy analog component video (Y/Pb/Pr, three BNC/RCA)</td></tr>
           <tr><td><strong>VGA</strong></td><td>Dark Blue</td><td>Analog video (DB15)</td></tr>
           <tr><td><strong>S-Video</strong></td><td>Amber</td><td>Legacy Y/C video (Mini-DIN-4)</td></tr>
           <tr><td><strong>DVI</strong></td><td>Deep Blue</td><td>Digital Visual Interface</td></tr>
@@ -51,6 +52,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Dante</strong></td><td>Orange</td><td>Network audio (Audinate)</td></tr>
           <tr><td><strong>AVB</strong></td><td>Lime</td><td>Network audio (IEEE 802.1 / TSN, Avnu — Biamp, Meyer, MOTU, PreSonus)</td></tr>
           <tr><td><strong>Analog Audio</strong></td><td>Brown</td><td>XLR/TRS audio</td></tr>
+          <tr><td><strong>Speaker-Level</strong></td><td>Brown</td><td>Amplified speaker output (banana, binding post, speakON)</td></tr>
+          <tr><td><strong>Bluetooth</strong></td><td>Blue</td><td>Wireless audio (no physical cable)</td></tr>
           <tr><td><strong>AES</strong></td><td>Purple</td><td>Digital audio</td></tr>
           <tr><td><strong>MADI</strong></td><td>Emerald</td><td>Multi-channel digital audio (BNC/fiber)</td></tr>
           <tr><td><strong>S/PDIF</strong></td><td>Light Violet</td><td>Digital audio (coaxial RCA)</td></tr>
@@ -65,6 +68,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>SLink</strong></td><td>Light Violet</td><td>Allen &amp; Heath SLink audio network</td></tr>
           <tr><td><strong>SoundGrid</strong></td><td>Deep Violet</td><td>Waves SoundGrid audio network</td></tr>
           <tr><td><strong>fibreACE</strong></td><td>Purple</td><td>Allen &amp; Heath fiber audio network</td></tr>
+          <tr><td><strong>dSnake</strong></td><td>Orange</td><td>Allen &amp; Heath dSnake protocol over Cat5</td></tr>
+          <tr><td><strong>Digilink</strong></td><td>Indigo</td><td>Avid/Digidesign Digilink audio I/O (HD/HDX)</td></tr>
 
           <tr><td colSpan={3}><strong>Network</strong></td></tr>
           <tr><td><strong>Ethernet</strong></td><td>Teal</td><td>Network data</td></tr>
@@ -75,6 +80,8 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Thunderbolt</strong></td><td>Indigo</td><td>High-speed I/O</td></tr>
           <tr><td><strong>DMX</strong></td><td>Dark Red</td><td>Lighting control (XLR-5)</td></tr>
           <tr><td><strong>GPIO</strong></td><td>Warm Gray</td><td>General purpose I/O</td></tr>
+          <tr><td><strong>Contact Closure</strong></td><td>Slate</td><td>Dry-contact relay outputs / inputs</td></tr>
+          <tr><td><strong>Control Voltage</strong></td><td>Amber</td><td>0–10 V control voltage (lighting dimmers, modular synths)</td></tr>
           <tr><td><strong>RS-422</strong></td><td>Deep Violet</td><td>Machine control</td></tr>
           <tr><td><strong>Serial</strong></td><td>Gray</td><td>Generic serial</td></tr>
           <tr><td><strong>Tally</strong></td><td>Rose</td><td>Tally/status indicators</td></tr>
@@ -82,6 +89,9 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>sACN</strong></td><td>Yellow</td><td>Streaming ACN lighting protocol</td></tr>
           <tr><td><strong>IR</strong></td><td>Orange</td><td>Infrared control</td></tr>
           <tr><td><strong>DX Link</strong></td><td>Blue</td><td>AMX/Harman control network</td></tr>
+          <tr><td><strong>eBUS</strong></td><td>Slate</td><td>Crestron eBUS control bus</td></tr>
+          <tr><td><strong>Extron Expansion</strong></td><td>Slate</td><td>Extron proprietary expansion bus</td></tr>
+          <tr><td><strong>POTS</strong></td><td>Gray</td><td>Plain old telephone service / analog phone line</td></tr>
           <tr><td><strong>MIDI</strong></td><td>Fuchsia</td><td>Musical instrument digital interface</td></tr>
 
           <tr><td colSpan={3}><strong>Sync / Clock</strong></td></tr>
@@ -236,6 +246,11 @@ export default function DevicesAndPortsPage() {
           <tr><td>Other</td><td>Other</td></tr>
         </tbody>
       </table>
+      <p>
+        <strong>Bare wire connectors</strong> — Phoenix and Terminal Block ports are universally compatible with any
+        other connector type, since there's no physical connector at the panel — the cable lands straight in the
+        block. EasySchematic skips the adapter prompt for these connections.
+      </p>
 
       <h2>Connector gender</h2>
       <p>

@@ -139,8 +139,8 @@ docker compose up -d`}</code>
             <td>Yes</td>
           </tr>
           <tr>
-            <td>500+ built-in device templates</td>
-            <td>Yes (bundled at build time)</td>
+            <td>Bundled offline device templates (~780)</td>
+            <td>Yes (bundled at build time; live community library still loads when the hosted API is reachable)</td>
           </tr>
           <tr>
             <td>Export (PNG, SVG, DXF, PDF, JSON)</td>
