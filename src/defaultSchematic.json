@@ -1,5 +1,5 @@
 {
-  "version": 28,
+  "version": 29,
   "name": "Untitled Schematic",
   "nodes": [
     {
@@ -226,7 +226,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 251
+        "height": 300
       },
       "parentId": "room-3",
       "selected": false,
@@ -355,7 +355,7 @@
       "parentId": "room-4",
       "measured": {
         "width": 180,
-        "height": 251
+        "height": 260
       },
       "selected": false,
       "dragging": false
@@ -400,7 +400,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -446,7 +446,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -492,7 +492,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -538,7 +538,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -584,7 +584,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -630,7 +630,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -676,7 +676,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -722,7 +722,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-4",
       "selected": false,
@@ -862,7 +862,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 151
+        "height": 220
       },
       "parentId": "room-3",
       "selected": false,
@@ -873,7 +873,7 @@
       "type": "device",
       "position": {
         "x": 1240,
-        "y": 240
+        "y": 280
       },
       "data": {
         "label": "Datapath FX4 SDI 2",
@@ -1002,7 +1002,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 151
+        "height": 220
       },
       "parentId": "room-3",
       "selected": false,
@@ -1062,7 +1062,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1122,7 +1122,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1182,7 +1182,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1242,7 +1242,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1302,7 +1302,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1362,7 +1362,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1422,7 +1422,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1482,7 +1482,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "selected": false,
       "dragging": false,
@@ -1601,7 +1601,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 231
+        "height": 240
       },
       "parentId": "room-3",
       "selected": false,
@@ -1721,7 +1721,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 151
+        "height": 200
       },
       "parentId": "room-4",
       "selected": false,
@@ -1841,7 +1841,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 151
+        "height": 200
       },
       "parentId": "room-4",
       "selected": false,
@@ -1920,7 +1920,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 151
+        "height": 160
       },
       "parentId": "room-5",
       "selected": false,
@@ -1980,7 +1980,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "parentId": "room-5",
       "selected": false,
@@ -2040,7 +2040,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "parentId": "room-5",
       "selected": false,
@@ -2096,7 +2096,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "selected": false,
       "dragging": false,
@@ -2134,7 +2134,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 71
+        "height": 80
       },
       "parentId": "room-3",
       "selected": false,
@@ -2171,7 +2171,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 71
+        "height": 80
       },
       "parentId": "room-3",
       "selected": false,
@@ -2182,7 +2182,7 @@
       "type": "device",
       "position": {
         "x": 1240,
-        "y": 420
+        "y": 500
       },
       "data": {
         "label": "BMD HDMI→SDI",
@@ -2231,10 +2231,10 @@
       },
       "measured": {
         "width": 180,
-        "height": 91
+        "height": 100
       },
       "parentId": "room-3",
-      "selected": false,
+      "selected": true,
       "dragging": false
     },
     {
@@ -2287,7 +2287,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "selected": false,
       "dragging": false,
@@ -2343,7 +2343,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "selected": false,
       "dragging": false,
@@ -2424,7 +2424,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 111
+        "height": 120
       },
       "selected": false,
       "dragging": false,
@@ -2567,7 +2567,7 @@
       },
       "measured": {
         "width": 180,
-        "height": 251
+        "height": 300
       },
       "parentId": "room-3",
       "selected": false,
@@ -2746,9 +2746,9 @@
       },
       "measured": {
         "width": 180,
-        "height": 291
+        "height": 300
       },
-      "selected": true,
+      "selected": false,
       "dragging": false
     },
     {
@@ -2791,8 +2791,8 @@
         "powerDrawW": 0
       },
       "measured": {
-        "width": 191,
-        "height": 71
+        "width": 180,
+        "height": 80
       },
       "selected": false,
       "dragging": false,
@@ -2839,8 +2839,8 @@
         "powerDrawW": 0
       },
       "measured": {
-        "width": 191,
-        "height": 71
+        "width": 180,
+        "height": 80
       },
       "style": {},
       "selected": false,
@@ -2851,7 +2851,7 @@
       "type": "device",
       "position": {
         "x": 880,
-        "y": 391
+        "y": 400
       },
       "parentId": "room-3",
       "data": {
@@ -2887,8 +2887,8 @@
         "powerDrawW": 0
       },
       "measured": {
-        "width": 193,
-        "height": 71
+        "width": 180,
+        "height": 80
       },
       "selected": false,
       "dragging": false,
@@ -3010,8 +3010,8 @@
         ]
       },
       "measured": {
-        "width": 214,
-        "height": 291
+        "width": 180,
+        "height": 300
       },
       "selected": false,
       "dragging": false
@@ -3020,7 +3020,7 @@
       "id": "device-84",
       "type": "device",
       "position": {
-        "x": 225,
+        "x": 220,
         "y": 920
       },
       "data": {
@@ -3055,8 +3055,8 @@
         "powerDrawW": 0
       },
       "measured": {
-        "width": 210,
-        "height": 71
+        "width": 180,
+        "height": 80
       },
       "selected": false,
       "dragging": false,
