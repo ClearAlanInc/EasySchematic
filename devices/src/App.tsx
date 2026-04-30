@@ -182,7 +182,7 @@ export default function App() {
           Mod Activity
         </a>
       )}
-      {isAdmin && (
+      {!authLoading && user && isAdmin && (
         <a href="/admin/pending-deletions" onClick={linkClick} className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">
           Pending Deletion
         </a>
