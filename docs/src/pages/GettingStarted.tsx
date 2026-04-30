@@ -33,12 +33,12 @@ export default function GettingStartedPage() {
           </tr>
         </thead>
         <tbody>
-          <tr><td><strong>Pan</strong></td><td>Hold Space + drag, or middle-mouse drag</td></tr>
+          <tr><td><strong>Pan</strong></td><td>Hold Space + drag, or middle-mouse drag (always available). In "Drag to pan" mode, left drag also pans.</td></tr>
           <tr><td><strong>Zoom</strong></td><td>Scroll wheel</td></tr>
           <tr><td><strong>Select</strong></td><td>Click a device or connection</td></tr>
           <tr><td><strong>Toggle selection</strong></td><td>Shift+click to add/remove items from the current selection</td></tr>
-          <tr><td><strong>Box select</strong></td><td>Click and drag on empty canvas</td></tr>
-          <tr><td><strong>Directional select</strong></td><td>Shift+drag — AutoCAD-style: drag right to enclose (only items fully inside), drag left to crossing-select (anything the box touches)</td></tr>
+          <tr><td><strong>Box select</strong></td><td>Click and drag on empty canvas (default mode). In "Drag to pan" mode, hold Shift and drag instead.</td></tr>
+          <tr><td><strong>Directional select</strong></td><td>Drag right to enclose (only items fully inside), drag left to crossing-select (anything the box touches) — AutoCAD-style</td></tr>
           <tr><td><strong>Delete</strong></td><td>Select items, then press Delete or Backspace</td></tr>
           <tr><td><strong>Connect</strong></td><td>Click an output port, then click a compatible input</td></tr>
           <tr><td><strong>Reconnect</strong></td><td>Drag from a connected port to move the connection</td></tr>
@@ -68,6 +68,31 @@ export default function GettingStartedPage() {
       <h2>Preferences</h2>
       <p>
         Open <strong>Edit → Preferences</strong> to customize application behavior.
+      </p>
+
+      <h3>Navigation (left-drag behavior)</h3>
+      <p>
+        Controls what left drag does on the canvas background. The full button map is always
+        shown in Preferences so you can see exactly what each input does at a glance:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Input</th>
+            <th>Drag to select (default)</th>
+            <th>Drag to pan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Left drag</strong></td><td>Selection box</td><td>Pan canvas</td></tr>
+          <tr><td><strong>Shift + left drag</strong></td><td>Add to selection</td><td>Selection box</td></tr>
+          <tr><td><strong>Middle drag</strong></td><td colSpan={2}>Pan canvas (always)</td></tr>
+          <tr><td><strong>Space + drag</strong></td><td colSpan={2}>Pan canvas (always)</td></tr>
+        </tbody>
+      </table>
+      <p>
+        "Drag to pan" is useful if you're coming from Figma, Miro, or draw.io and prefer left drag
+        to navigate rather than select.
       </p>
 
       <h3>Scroll wheel configuration</h3>

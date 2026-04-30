@@ -155,7 +155,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Copy/paste** with offset positioning
 - **Double-click device** to open device editor (label, type, ports, presets); **Ctrl+Enter** applies and closes from any field
 - **Double-click canvas** to quick-add a device via search dialog
-- **Preferences** — scroll wheel configuration, trackpad support with sensitivity sliders, label case display (UPPERCASE / lowercase / Capitalize), via Edit menu
+- **Preferences** — navigation mode (left drag: selection box or pan canvas), scroll wheel configuration, trackpad support with sensitivity sliders, label case display (UPPERCASE / lowercase / Capitalize), via Edit menu
 - **Right-click room** for context menu — edit properties (label, colors, border style) or lock/unlock the room
 
 ## Getting Started
