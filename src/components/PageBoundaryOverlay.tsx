@@ -246,14 +246,20 @@ function CrossingLabels({ labels, pxPerPt }: { labels: CrossingLabel[]; pxPerPt:
 const GRID_SNAP = 20;
 
 function OriginDragHandle({
+  handleX,
+  handleY,
   originX,
   originY,
   zoom,
+  corner,
   onDrag,
 }: {
+  handleX: number;
+  handleY: number;
   originX: number;
   originY: number;
   zoom: number;
+  corner: "tl" | "tr" | "bl" | "br";
   onDrag: (x: number, y: number) => void;
 }) {
   const dragging = useRef(false);
@@ -291,6 +297,10 @@ function OriginDragHandle({
   const strokeW = 2 / zoom;
   const hitSize = 16 / zoom;
 
+  // Arms point inward: right for tl/bl, left for tr/br; down for tl/tr, up for bl/br
+  const xSign = corner === "tl" || corner === "bl" ? 1 : -1;
+  const ySign = corner === "tl" || corner === "tr" ? 1 : -1;
+
   return (
     <g
       style={{ pointerEvents: "all", cursor: "move" }}
@@ -300,36 +310,36 @@ function OriginDragHandle({
     >
       {/* Hit area */}
       <rect
-        x={originX - hitSize / 2}
-        y={originY - hitSize / 2}
+        x={handleX - hitSize / 2}
+        y={handleY - hitSize / 2}
         width={hitSize}
         height={hitSize}
         fill="transparent"
       />
-      {/* L-bracket: right arm */}
+      {/* L-bracket: horizontal arm */}
       <line
-        x1={originX}
-        y1={originY}
-        x2={originX + armLen}
-        y2={originY}
+        x1={handleX}
+        y1={handleY}
+        x2={handleX + xSign * armLen}
+        y2={handleY}
         stroke="#2563eb"
         strokeWidth={strokeW}
         strokeLinecap="round"
       />
-      {/* L-bracket: down arm */}
+      {/* L-bracket: vertical arm */}
       <line
-        x1={originX}
-        y1={originY}
-        x2={originX}
-        y2={originY + armLen}
+        x1={handleX}
+        y1={handleY}
+        x2={handleX}
+        y2={handleY + ySign * armLen}
         stroke="#2563eb"
         strokeWidth={strokeW}
         strokeLinecap="round"
       />
       {/* Corner dot */}
       <circle
-        cx={originX}
-        cy={originY}
+        cx={handleX}
+        cy={handleY}
         r={3 / zoom}
         fill="#2563eb"
       />
@@ -509,6 +519,11 @@ function PageBoundaryOverlay() {
   const minCol = Math.min(...pages.map((p) => p.col));
   const minRow = Math.min(...pages.map((p) => p.row));
 
+  const pageMinX = Math.min(...pages.map((p) => p.x));
+  const pageMinY = Math.min(...pages.map((p) => p.y));
+  const pageMaxX = Math.max(...pages.map((p) => p.x + p.widthPx));
+  const pageMaxY = Math.max(...pages.map((p) => p.y + p.heightPx));
+
   return (
     <div
       className="page-boundary-overlay"
@@ -535,7 +550,18 @@ function PageBoundaryOverlay() {
         ))}
         <CrossingLabels labels={crossingLabels} pxPerPt={pxPerPt} />
         {colorKeyEnabled && <ColorKeyLegend entries={colorKeyEntries} pages={pages} corner={colorKeyCorner} columns={colorKeyColumns} pageFilter={colorKeyPage} pxPerPt={pxPerPt} />}
-        <OriginDragHandle originX={printOriginOffsetX} originY={printOriginOffsetY} zoom={zoom} onDrag={setPrintOriginOffset} />
+        {(["tl", "tr", "bl", "br"] as const).map((corner) => (
+          <OriginDragHandle
+            key={corner}
+            handleX={corner === "tl" || corner === "bl" ? pageMinX : pageMaxX}
+            handleY={corner === "tl" || corner === "tr" ? pageMinY : pageMaxY}
+            originX={printOriginOffsetX}
+            originY={printOriginOffsetY}
+            zoom={zoom}
+            corner={corner}
+            onDrag={setPrintOriginOffset}
+          />
+        ))}
       </svg>
     </div>
   );
