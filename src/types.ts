@@ -117,6 +117,9 @@ export type SignalType =
   | "control-voltage"
   | "extron-exp"
   | "pots"
+  | "blu-link"
+  | "cresnet"
+  | "sensor"
   | "custom";
 
 export type LineStyle = "solid" | "dashed" | "dotted" | "dash-dot";
@@ -653,6 +656,9 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   "control-voltage": "var(--color-control-voltage)",
   "extron-exp": "var(--color-extron-exp)",
   pots: "var(--color-pots)",
+  "blu-link": "var(--color-blu-link)",
+  cresnet: "var(--color-cresnet)",
+  sensor: "var(--color-sensor)",
   custom: "var(--color-custom)",
 };
 
@@ -810,6 +816,9 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   "control-voltage": "0-10V Control",
   "extron-exp": "Extron EXP",
   pots: "POTS",
+  "blu-link": "BLU link",
+  cresnet: "Cresnet",
+  sensor: "Sensor",
   custom: "Custom",
 };
 
@@ -817,9 +826,9 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
 export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
   "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "s-video", "vga"],
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
-  "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink", "extron-exp", "pots"],
+  "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink", "extron-exp", "pots", "blu-link"],
   "Network": ["ethernet", "fiber"],
-  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink", "ebus", "control-voltage"],
+  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink", "ebus", "control-voltage", "cresnet", "sensor"],
   "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],
   "Power": ["power", "power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"],
   "Streaming": ["rtmp", "rtsp", "mpeg-ts", "rf"],

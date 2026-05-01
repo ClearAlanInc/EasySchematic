@@ -106,6 +106,9 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   "control-voltage": "VC",
   "extron-exp": "EX",
   pots: "PT",
+  "blu-link": "BL",
+  cresnet: "CN",
+  sensor: "SNS",
   custom: "X",
 };
 

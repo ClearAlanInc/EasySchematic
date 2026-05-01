@@ -69,6 +69,9 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   "control-voltage": "phoenix",
   "extron-exp": "rj45",
   pots: "rj11",
+  "blu-link": "rj45",
+  cresnet: "terminal-block",
+  sensor: "phoenix",
   custom: "other",
 };
 

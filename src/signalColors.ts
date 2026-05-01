@@ -69,6 +69,9 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   "control-voltage": "#92400e",
   "extron-exp": "#7e22ce",
   pots: "#3f3f46",
+  "blu-link": "#0284c7",
+  cresnet: "#a21caf",
+  sensor: "#71717a",
   custom: "#64748b",
 };
 

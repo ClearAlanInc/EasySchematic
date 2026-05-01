@@ -69,6 +69,9 @@
   --color-control-voltage: #92400e; /* burnt amber — 0-10V analog DC control */
   --color-extron-exp: #7e22ce; /* deep purple — Extron EXP audio expansion bus */
   --color-pots: #3f3f46;      /* zinc — POTS / analog telephony */
+  --color-blu-link: #0284c7;  /* sky blue — BSS BLU link audio bus */
+  --color-cresnet: #a21caf;   /* magenta — Crestron Cresnet control bus */
+  --color-sensor: #71717a;    /* zinc gray — ambient sensor input */
   --color-custom: #64748b;    /* cool gray */
 }
 

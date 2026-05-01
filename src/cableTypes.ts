@@ -71,6 +71,9 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   "control-voltage": "Phoenix",
   "extron-exp": "Cat6",
   pots: "Phone (RJ11)",
+  "blu-link": "BLU link",
+  cresnet: "Cresnet",
+  sensor: "Sensor",
   custom: "Other",
 };
 

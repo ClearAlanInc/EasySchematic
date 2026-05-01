@@ -64,7 +64,7 @@ const CATEGORIES = {
   "wireless-video": "Wireless", "antenna": "Wireless", "antenna-distribution": "Wireless",
   "access-point": "Networking",
   "intercom": "Intercom", "intercom-transceiver": "Intercom",
-  "commentary-box": "Intercom", "phone-hybrid": "Intercom",
+  "commentary-box": "Intercom", "phone-hybrid": "Intercom", "interpreter-desk": "Intercom",
   "led-processor": "LED Video", "led-cabinet": "LED Video",
   "media-server": "Media Servers",
   "lighting-console": "Lighting", "moving-light": "Lighting", "led-fixture": "Lighting",
