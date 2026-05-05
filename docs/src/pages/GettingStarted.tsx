@@ -38,7 +38,8 @@ export default function GettingStartedPage() {
           <tr><td><strong>Select</strong></td><td>Click a device or connection</td></tr>
           <tr><td><strong>Toggle selection</strong></td><td>Shift+click to add/remove items from the current selection</td></tr>
           <tr><td><strong>Box select</strong></td><td>Click and drag on empty canvas (default mode). In "Drag to pan" mode, hold Shift and drag instead.</td></tr>
-          <tr><td><strong>Directional select</strong></td><td>Drag right to enclose (only items fully inside), drag left to crossing-select (anything the box touches) — AutoCAD-style</td></tr>
+          <tr><td><strong>Directional select</strong></td><td>Drag right to enclose (only items fully inside), drag left to crossing-select (anything the box touches) — AutoCAD-style. Crossing mode also picks up connections whose routed paths cross the box.</td></tr>
+          <tr><td><strong>Selection bar</strong></td><td>Appears at the bottom of the canvas when 2+ items are selected. Shows a chip per entity kind — click to solo that kind, Ctrl/⌘+click to deselect it. When connections are selected, an <strong>Edit N connections…</strong> button opens the bulk edit panel.</td></tr>
           <tr><td><strong>Delete</strong></td><td>Select items, then press Delete or Backspace</td></tr>
           <tr><td><strong>Connect</strong></td><td>Click an output port, then click a compatible input</td></tr>
           <tr><td><strong>Reconnect</strong></td><td>Drag from a connected port to move the connection</td></tr>

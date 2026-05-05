@@ -87,7 +87,8 @@
 - **Space + drag** to pan (Vectorworks-style)
 - **Subrooms** — nested room containers for representing locations within locations (e.g., rack bays inside a control room)
 - **Equipment racks** — mark a room as an equipment rack via right-click for rack-style rendering
-- **Shift+click toggle selection** — add/remove items from selection; Shift+drag for AutoCAD-style directional selection
+- **Shift+click toggle selection** — add/remove items from selection; Shift+drag for AutoCAD-style directional selection. Crossing (right-to-left) drag also selects connections whose routed paths cross the box.
+- **Selection filter bar** — appears at the bottom of the canvas when 2+ items are selected; chip per entity kind with click-to-solo / Ctrl+click-to-deselect. When connections are in the selection, an **Edit N connections…** button opens a bulk edit panel for label, line style, direct attach, and label visibility — applied in one undo step.
 
 ### Signal Types
 

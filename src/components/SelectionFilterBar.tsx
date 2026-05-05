@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSchematicStore } from "../store";
 import type { SchematicNode, ConnectionEdge } from "../types";
+import BulkConnectionEditPanel from "./BulkConnectionEditPanel";
 
 type EntityKind = "device" | "room" | "stub-label" | "note" | "annotation" | "waypoint" | "edge";
 
@@ -53,10 +54,14 @@ export default function SelectionFilterBar() {
     return out;
   }, [selectionKey]);
 
+  const edgeCount = counts.edge ?? 0;
   const presentKinds = KIND_ORDER.filter((k) => (counts[k] ?? 0) > 0);
   const totalSelected = presentKinds.reduce((sum, k) => sum + (counts[k] ?? 0), 0);
-  // Hide when only one kind or nothing selected — there's nothing to filter.
-  if (presentKinds.length < 2) return null;
+
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Show bar whenever 2+ entities are selected, or the edit panel is pinned open
+  if (totalSelected < 2 && !panelOpen) return null;
 
   const apply = (kind: EntityKind, mode: "deselect" | "solo") => {
     const state = useSchematicStore.getState();
@@ -87,39 +92,57 @@ export default function SelectionFilterBar() {
   };
 
   return (
-    <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[40] flex items-center gap-1.5 px-2 py-1.5 bg-white border border-[var(--color-border)] rounded-lg shadow-lg"
-      data-print-hide
-      onMouseDown={(e) => e.stopPropagation()}
-    >
-      <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] px-1">
-        {totalSelected} selected
-      </span>
-      {presentKinds.map((kind) => {
-        const count = counts[kind] ?? 0;
-        const labels = KIND_LABELS[kind];
-        const label = count === 1 ? labels.singular : labels.plural;
-        return (
-          <button
-            key={kind}
-            title={`Click to deselect ${labels.plural}. ${navigator.platform.toLowerCase().includes("mac") ? "⌘" : "Ctrl"}+click to keep only ${labels.plural}.`}
-            className="px-2 py-0.5 text-[11px] rounded bg-[var(--color-surface-hover)] hover:bg-blue-50 hover:text-blue-700 border border-[var(--color-border)] transition-colors cursor-pointer"
-            onClick={(e) => {
-              const solo = e.metaKey || e.ctrlKey;
-              apply(kind, solo ? "solo" : "deselect");
-            }}
-          >
-            {count} {label}
-          </button>
-        );
-      })}
-      <button
-        title="Clear selection (Esc)"
-        className="px-2 py-0.5 text-[11px] rounded text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-        onClick={clearAll}
+    <>
+      {panelOpen && <BulkConnectionEditPanel onClose={() => setPanelOpen(false)} />}
+      <div
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[40] flex items-center gap-1.5 px-2 py-1.5 bg-white border border-[var(--color-border)] rounded-lg shadow-lg"
+        data-print-hide
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        ✕ Clear
-      </button>
-    </div>
+        <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] px-1">
+          {totalSelected} selected
+        </span>
+        {presentKinds.map((kind) => {
+            const count = counts[kind] ?? 0;
+            const labels = KIND_LABELS[kind];
+            const label = count === 1 ? labels.singular : labels.plural;
+            return (
+              <button
+                key={kind}
+                title={`Click to keep only ${labels.plural}. ${navigator.platform.toLowerCase().includes("mac") ? "⌘" : "Ctrl"}+click to deselect ${labels.plural}.`}
+                className="px-2 py-0.5 text-[11px] rounded bg-[var(--color-surface-hover)] hover:bg-blue-50 hover:text-blue-700 border border-[var(--color-border)] transition-colors cursor-pointer"
+                onClick={(e) => {
+                  const deselect = e.metaKey || e.ctrlKey;
+                  apply(kind, deselect ? "deselect" : "solo");
+                }}
+              >
+                {count} {label}
+              </button>
+            );
+          })}
+        {(edgeCount >= 2 || panelOpen) && (
+          <button
+            title="Edit properties of selected connections"
+            className={`px-2 py-0.5 text-[11px] rounded border transition-colors cursor-pointer ${
+              panelOpen
+                ? "bg-blue-600 text-white border-blue-600"
+                : "text-blue-700 border-blue-300 bg-blue-50 hover:bg-blue-100"
+            }`}
+            onClick={() => setPanelOpen((v) => !v)}
+          >
+            {edgeCount >= 2 ? `Edit ${edgeCount}…` : "Edit connections…"}
+          </button>
+        )}
+        {totalSelected > 0 && (
+          <button
+            title="Clear selection (Esc)"
+            className="px-2 py-0.5 text-[11px] rounded text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+            onClick={clearAll}
+          >
+            ✕ Clear
+          </button>
+        )}
+      </div>
+    </>
   );
 }

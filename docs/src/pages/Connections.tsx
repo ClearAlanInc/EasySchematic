@@ -228,6 +228,34 @@ export default function ConnectionsPage() {
         jump arcs on or off from the <strong>View</strong> menu.
       </p>
 
+      <h2>Bulk editing connections</h2>
+      <p>
+        Select multiple connections and edit their properties all at once. Use box-select or Shift+click to build up
+        a selection — crossing-select (right-to-left drag) picks up any connection whose path crosses the box,
+        not just those with both endpoints inside.
+      </p>
+      <p>
+        Whenever 2 or more items are selected, a <strong>selection bar</strong> appears at the bottom center of the
+        canvas showing a chip for each kind of entity in your selection. Click a chip to <strong>solo</strong> that
+        kind (keep only those items selected). Ctrl/⌘+click to <strong>deselect</strong> that kind instead.
+      </p>
+      <p>
+        When connections are among the selected items, an <strong>Edit N connections…</strong> button appears in the
+        selection bar. Click it to open the bulk edit panel, which lets you apply changes to all selected connections
+        in one undo step:
+      </p>
+      <ul>
+        <li><strong>Label</strong> — overwrite all labels with new text, or append text to each existing label. Use the Clear button to remove labels from all selected connections.</li>
+        <li><strong>Line style</strong> — set solid, dashed, dotted, or dash-dot across the whole selection. A highlighted button shows the current style when all connections match; shows "(mixed)" when they differ.</li>
+        <li><strong>Direct Attach</strong> — toggle the direct-attach flag (thin gray line, excluded from cable schedule).</li>
+        <li><strong>Hide Cable ID</strong> — hide or show the auto-generated cable ID label.</li>
+        <li><strong>Hide Custom Label</strong> — hide or show the custom label independently of the cable ID.</li>
+      </ul>
+      <p>
+        The panel stays open even if you accidentally click the canvas and deselect everything — re-select
+        connections and the controls become active again.
+      </p>
+
       <h2>Stubbed connections</h2>
       <p>
         Connections can be rendered as short <strong>stubs</strong> from each port instead of full routed lines. This
