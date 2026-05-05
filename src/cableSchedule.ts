@@ -118,14 +118,35 @@ export function computeCableSchedule(
   namingScheme: "sequential" | "type-prefix" = "sequential",
   distanceContext?: CableScheduleDistanceContext,
 ): CableScheduleRow[] {
+  // For stubbed connections (split into 2 stub-leg edges sharing a linkedConnectionId),
+  // emit ONE row per logical cable using the source-side leg as canonical and following
+  // through to the target-side leg to find the real target device. The target-side leg
+  // is skipped — its cable ID gets attached via recomputeCableIds in store.ts.
+  const linkedPartner = new Map<string, ConnectionEdge>();
+  for (const e of edges) {
+    const link = e.data?.linkedConnectionId;
+    if (!link) continue;
+    const partner = edges.find((p) => p.id !== e.id && p.data?.linkedConnectionId === link);
+    if (partner) linkedPartner.set(e.id, partner);
+  }
+  const isSourceLeg = (e: ConnectionEdge): boolean => {
+    const src = nodes.find((n) => n.id === e.source);
+    return src?.type !== "stub-label";
+  };
+
   const connections = edges
     .filter((e) => e.data?.signalType && !e.data?.directAttach)
+    // For linked pairs, only process the source-side leg (the one whose source is a real device).
+    .filter((e) => !e.data?.linkedConnectionId || isSourceLeg(e))
     .map((e) => {
+      // For a source-side leg of a linked pair, follow the partner to find the real target device.
+      const partner = linkedPartner.get(e.id);
+      const effectiveTargetEdge = partner ?? e;
       const srcNode = nodes.find((n) => n.id === e.source);
-      const tgtNode = nodes.find((n) => n.id === e.target);
+      const tgtNode = nodes.find((n) => n.id === effectiveTargetEdge.target);
       const signalType = e.data!.signalType as SignalType;
       const srcPort = resolvePort(srcNode, e.sourceHandle);
-      const tgtPort = resolvePort(tgtNode, e.targetHandle);
+      const tgtPort = resolvePort(tgtNode, effectiveTargetEdge.targetHandle);
       const computedLength = computeRowEstimatedLength(
         srcNode?.parentId,
         tgtNode?.parentId,
@@ -143,7 +164,7 @@ export function computeCableSchedule(
       const targetDevice = tgtNode?.type === "device"
         ? transformLabelNow((tgtNode.data as DeviceData).label)
         : "Unknown";
-      const targetPort = tgtNode ? resolvePortLabel(tgtNode, e.targetHandle) : "";
+      const targetPort = tgtNode ? resolvePortLabel(tgtNode, effectiveTargetEdge.targetHandle) : "";
       const targetConnector = tgtPort?.connectorType
         ? (CONNECTOR_LABELS[tgtPort.connectorType] ?? "—")
         : "—";

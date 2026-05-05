@@ -408,6 +408,9 @@ export function enforceMinSpacing(
   snapResult?: SnapResult,
 ): { x: number; y: number } | null {
   if (draggedNode.type === "room") return null;
+  // Stub labels are visual annotations, not routing obstacles. They also center-snap
+  // to the grid — the final round-to-grid below would clobber that offset.
+  if (draggedNode.type === "stub-label") return null;
 
   const dragged = nodeRect(draggedNode);
   const dw = dragged.right - dragged.left;
@@ -426,7 +429,7 @@ export function enforceMinSpacing(
 
   const neighbors = allNodes.filter((n) => {
     if (n.id === draggedNode.id) return false;
-    if (n.type === "room" || n.type === "note") return false;
+    if (n.type === "room" || n.type === "note" || n.type === "stub-label") return false;
     if (n.parentId !== draggedNode.parentId) return false;
     if (hiddenNodeIds?.has(n.id)) return false;
     return true;

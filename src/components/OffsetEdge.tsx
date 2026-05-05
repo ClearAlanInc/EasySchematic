@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { memo, useState, useRef, useEffect, useCallback } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,80 +7,13 @@ import {
 } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { GRID_SIZE } from "../store";
-import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle, type StubLabelPageMode } from "../types";
+import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle } from "../types";
 import { extractSegments, orthogonalize } from "../edgeRouter";
 import { waypointsToSvgPath, simplifyWaypoints } from "../pathfinding";
-import { computePageGrid } from "../printPageGrid";
-import { getPaperSize } from "../printConfig";
-import { resolvePortLabel } from "../packList";
 
 /** Snap a value to the nearest grid increment. */
 function snapToGrid(v: number): number {
   return Math.round(v / GRID_SIZE) * GRID_SIZE;
-}
-
-/** Draggable stub end label — shows destination device name and acts as the drag handle.
- *  The stub line terminates at this label. Drag to reposition. */
-function StubEndLabel({ x, y, dx, dy, text, color, edgeId, field }: {
-  x: number; y: number; dx: number; dy: number; text: string; color: string;
-  edgeId: string; field: "stubSourceEnd" | "stubTargetEnd";
-}) {
-  const rfInstance = useReactFlow();
-  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const pos = dragPos ?? { x, y };
-
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const onMove = (me: MouseEvent) => {
-      const fp = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
-      setDragPos({ x: snapToGrid(fp.x), y: snapToGrid(fp.y) });
-    };
-    const onUp = (me: MouseEvent) => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      const fp = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
-      const final = { x: snapToGrid(fp.x), y: snapToGrid(fp.y) };
-      setDragPos(null);
-      useSchematicStore.getState().patchEdgeData(edgeId, { [field]: final });
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }, [edgeId, field, rfInstance]);
-
-  // Anchor the label so the line flows into its center from the approach direction
-  // Horizontal stubs: anchor left/right edge, always center vertically
-  // Vertical stubs: anchor top/bottom edge, always center horizontally
-  const anchorX = dx > 0 ? "0%" : dx < 0 ? "-100%" : "-50%";
-  const anchorY = dx !== 0 ? "-50%" : (dy > 0 ? "0%" : dy < 0 ? "-100%" : "-50%");
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        transform: `translate(${pos.x}px, ${pos.y}px) translate(${anchorX}, ${anchorY})`,
-        fontSize: 9,
-        lineHeight: 1,
-        fontFamily: "'Inter', system-ui, sans-serif",
-        fontWeight: 500,
-        whiteSpace: "nowrap",
-        pointerEvents: "all",
-        cursor: "grab",
-        padding: "1.5px 4px",
-        borderRadius: 2,
-        border: `1px solid ${color}`,
-        backgroundColor: "white",
-        color: "#374151",
-        display: "flex",
-        alignItems: "center",
-      }}
-      onMouseDown={onMouseDown}
-    >
-      {text}
-    </div>
-  );
 }
 
 function OffsetEdgeComponent({
@@ -223,90 +156,19 @@ function OffsetEdgeComponent({
     return edge?.data?.customLabelMode as "endpoint" | "midpoint" | undefined;
   });
 
-  // Read stubbed flag and custom endpoints (stable primitive selectors)
-  const stubbed = useSchematicStore((s) => {
+  // Endpoint cable-ID labels are suppressed at any stub-label endpoint — the stub box
+  // itself already identifies the connection there; printing the cable ID at both the
+  // device port AND the stub label would yield 4 IDs per logical cable instead of 2.
+  const sourceIsStub = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.stubbed === true;
+    if (!edge) return false;
+    return s.nodes.find((n) => n.id === edge.source)?.type === "stub-label";
   });
-  const stubSourceEndStr = useSchematicStore((s) => {
+  const targetIsStub = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
-    const p = edge?.data?.stubSourceEnd;
-    return p ? `${p.x},${p.y}` : "";
+    if (!edge) return false;
+    return s.nodes.find((n) => n.id === edge.target)?.type === "stub-label";
   });
-  const stubSrcWpStr = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.stubSourceWaypoints?.map((p) => `${p.x},${p.y}`).join("|") ?? "";
-  });
-  const stubTgtWpStr = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.stubTargetWaypoints?.map((p) => `${p.x},${p.y}`).join("|") ?? "";
-  });
-  const stubTargetEndStr = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    const p = edge?.data?.stubTargetEnd;
-    return p ? `${p.x},${p.y}` : "";
-  });
-  // Device info for stub end labels (serialized to string for stable selector)
-  const stubLabelStr = useSchematicStore((s) => {
-    if (!stubbed) return "";
-    const edge = s.edges.find((e) => e.id === id);
-    if (!edge) return "";
-    const srcNode = s.nodes.find((n) => n.id === edge.source);
-    const tgtNode = s.nodes.find((n) => n.id === edge.target);
-    const srcRoom = srcNode?.parentId ? s.nodes.find((n) => n.id === srcNode.parentId) : null;
-    const tgtRoom = tgtNode?.parentId ? s.nodes.find((n) => n.id === tgtNode.parentId) : null;
-    const sl = (srcNode?.data as Record<string, unknown>)?.label as string ?? "";
-    const tl = (tgtNode?.data as Record<string, unknown>)?.label as string ?? "";
-    const sr = (srcRoom?.data as Record<string, unknown>)?.label as string ?? "";
-    const tr = (tgtRoom?.data as Record<string, unknown>)?.label as string ?? "";
-    const sportLabel = srcNode ? resolvePortLabel(srcNode, edge.sourceHandle) : "";
-    const tportLabel = tgtNode ? resolvePortLabel(tgtNode, edge.targetHandle) : "";
-    // Compute page numbers inline if in print view
-    let sp = "", tp = "";
-    if (s.printView && srcNode && tgtNode) {
-      const paperSize = getPaperSize(s.printPaperId, s.printCustomWidthIn, s.printCustomHeightIn);
-      const pages = computePageGrid(paperSize, s.printOrientation, s.printScale, s.nodes, s.titleBlockLayout?.heightIn ?? 1, s.printOriginOffsetX, s.printOriginOffsetY);
-      if (pages.length > 1) {
-        const findPage = (x: number, y: number) => {
-          for (const p of pages) {
-            if (x >= p.x && x < p.x + p.widthPx && y >= p.y && y < p.y + p.heightPx)
-              return p.index + 1;
-          }
-          return 0;
-        };
-        const srcAbs = srcNode.parentId
-          ? { x: srcNode.position.x + (s.nodes.find((n) => n.id === srcNode.parentId)?.position.x ?? 0), y: srcNode.position.y + (s.nodes.find((n) => n.id === srcNode.parentId)?.position.y ?? 0) }
-          : srcNode.position;
-        const tgtAbs = tgtNode.parentId
-          ? { x: tgtNode.position.x + (s.nodes.find((n) => n.id === tgtNode.parentId)?.position.x ?? 0), y: tgtNode.position.y + (s.nodes.find((n) => n.id === tgtNode.parentId)?.position.y ?? 0) }
-          : tgtNode.position;
-        const spi = findPage(srcAbs.x, srcAbs.y);
-        const tpi = findPage(tgtAbs.x, tgtAbs.y);
-        if (spi > 0) sp = String(spi);
-        if (tpi > 0) tp = String(tpi);
-      }
-    }
-    return `${sl}\0${tl}\0${sr}\0${tr}\0${sp}\0${tp}\0${sportLabel}\0${tportLabel}`;
-  });
-  const stubLabelInfo = useMemo(() => {
-    if (!stubLabelStr) return null;
-    const [srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage, srcPort, tgtPort] = stubLabelStr.split("\0");
-    return { srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage, srcPort, tgtPort };
-  }, [stubLabelStr]);
-
-  // Effective stub-label settings: per-edge override falls back to global preference.
-  const stubShowPortGlobal = useSchematicStore((s) => s.stubLabelShowPort);
-  const stubPageModeGlobal = useSchematicStore((s) => s.stubLabelPageMode);
-  const stubShowPortOverride = useSchematicStore((s) => {
-    const e = s.edges.find((e) => e.id === id);
-    return e?.data?.stubLabelShowPort as boolean | undefined;
-  });
-  const stubPageModeOverride = useSchematicStore((s) => {
-    const e = s.edges.find((e) => e.id === id);
-    return e?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
-  });
-  const effectiveStubShowPort = stubShowPortOverride ?? stubShowPortGlobal;
-  const effectiveStubPageMode: StubLabelPageMode = stubPageModeOverride ?? stubPageModeGlobal;
 
   // Read effective line style: per-connection override > per-signal-type default > solid
   const lineStyle = useSchematicStore((s) => {
@@ -685,57 +547,6 @@ function OffsetEdgeComponent({
     }
   }
 
-  // --- Stubbed connection rendering ---
-  // Stubs are always horizontal lines exiting the device handle in its natural direction.
-  // Source exits right (or left if flipped), target exits left (or right if flipped).
-  // If a custom endpoint is set, the line goes horizontal to the endpoint X, then vertical
-  // to the endpoint Y, always entering the label horizontally.
-  let stubPaths: { srcPath: string; tgtPath: string; srcEnd: {x:number;y:number;dx:number;dy:number}; tgtEnd: {x:number;y:number;dx:number;dy:number}; srcIntermediates: {x:number;y:number}[]; tgtIntermediates: {x:number;y:number}[] } | null = null;
-  if (stubbed) {
-    const STUB_LEN = 40;
-    // Exit direction: use routed direction if available, else assume right for source, left for target
-    const srcExitDx = srcDx !== 0 ? srcDx : 1;
-    const tgtExitDx = tgtDx !== 0 ? -tgtDx : -1; // tgtDx points INTO the handle, we want OUT
-
-    const buildStub = (hx: number, hy: number, exitDx: number, customEnd: string, wpStr: string) => {
-      const endX = customEnd ? Number(customEnd.split(",")[0]) : hx + exitDx * STUB_LEN;
-      const endY = customEnd ? Number(customEnd.split(",")[1]) : hy;
-      const intermediates = wpStr
-        ? wpStr.split("|").map((s) => { const [x, y] = s.split(","); return { x: Number(x), y: Number(y) }; })
-        : [];
-
-      // Build raw points: handle → intermediates → runway → endpoint
-      // The runway ensures a horizontal entry into the label (one grid unit back)
-      const runwayX = endX - exitDx * GRID_SIZE;
-      const needsRunway = endY !== hy || intermediates.length > 0;
-      const rawPts = [
-        { x: hx, y: hy },
-        ...intermediates,
-        ...(needsRunway ? [{ x: runwayX, y: endY }] : []),
-        { x: endX, y: endY },
-      ];
-      // Orthogonalize to ensure clean right-angle paths with proper routing
-      const pts = simplifyWaypoints(orthogonalize(rawPts));
-
-      return { path: pts, dx: exitDx, dy: 0, intermediates };
-    };
-
-    const srcStub = buildStub(sourceX, sourceY, srcExitDx, stubSourceEndStr, stubSrcWpStr);
-    const tgtStub = buildStub(targetX, targetY, tgtExitDx, stubTargetEndStr, stubTgtWpStr);
-
-    const srcEndPt = srcStub.path[srcStub.path.length - 1];
-    const tgtEndPt = tgtStub.path[tgtStub.path.length - 1];
-
-    stubPaths = {
-      srcPath: waypointsToSvgPath(srcStub.path),
-      tgtPath: waypointsToSvgPath(tgtStub.path),
-      srcEnd: { ...srcEndPt, dx: srcStub.dx, dy: srcStub.dy },
-      tgtEnd: { ...tgtEndPt, dx: tgtStub.dx, dy: tgtStub.dy },
-      srcIntermediates: srcStub.intermediates,
-      tgtIntermediates: tgtStub.intermediates,
-    };
-  }
-
   // --- Label rendering (#5, #61) ---
   const signalColor = (style?.stroke as string) ?? "#6b7280";
   const labelText = cableId;
@@ -897,9 +708,9 @@ function OffsetEdgeComponent({
   const cableIdLabels = showCableId ? (
     cableIdLabelMode === "endpoint" ? (
       <>
-        {makeEndpointLabel(true, cableIdGap, labelText, cableIdLabelStyle, "cid-src",
+        {!sourceIsStub && makeEndpointLabel(true, cableIdGap, labelText, cableIdLabelStyle, "cid-src",
           sourceX, sourceY, srcDx, srcDy)}
-        {makeEndpointLabel(false, cableIdGap, labelText, cableIdLabelStyle, "cid-tgt",
+        {!targetIsStub && makeEndpointLabel(false, cableIdGap, labelText, cableIdLabelStyle, "cid-tgt",
           tgtLabelX, tgtLabelY, -tgtDx, -tgtDy)}
       </>
     ) : (
@@ -989,85 +800,6 @@ function OffsetEdgeComponent({
   // Hidden virtual edges (secondary half of adapter pair) — render nothing
   if (isHiddenVirtualEdge) {
     return null;
-  }
-
-  if (stubbed && stubPaths) {
-    // Build stub end labels — the label IS the endpoint, line terminates at it
-    const stubColor = edgeStyle.stroke as string ?? "#999";
-    const formatStubText = (
-      label: string, port: string, room: string,
-      page: string, otherPage: string, exitDx: number,
-    ) => {
-      const arrow = exitDx >= 0 ? "→" : "←";
-      let text = `${arrow} ${label}`;
-      if (effectiveStubShowPort && port) text += ` [${port}]`;
-      if (room) text += ` (${room})`;
-      const showPage = !!page && (
-        effectiveStubPageMode === "always" ||
-        (effectiveStubPageMode === "cross-page" && page !== otherPage)
-      );
-      if (showPage) text += ` Pg ${page}`;
-      return text;
-    };
-    // Each stub label describes the FAR end of the connection — source-end label
-    // shows target device/port/room/page, and vice versa.
-    const srcLabelText = stubLabelInfo ? formatStubText(
-      stubLabelInfo.tgtLabel, stubLabelInfo.tgtPort, stubLabelInfo.tgtRoom,
-      stubLabelInfo.tgtPage, stubLabelInfo.srcPage, stubPaths.srcEnd.dx,
-    ) : "";
-    const tgtLabelText = stubLabelInfo ? formatStubText(
-      stubLabelInfo.srcLabel, stubLabelInfo.srcPort, stubLabelInfo.srcRoom,
-      stubLabelInfo.srcPage, stubLabelInfo.tgtPage, stubPaths.tgtEnd.dx,
-    ) : "";
-
-    const stubLabelsPortal = (
-      <EdgeLabelRenderer>
-        {cableIdLabels}
-        {srcLabelText && (
-          <StubEndLabel x={stubPaths.srcEnd.x} y={stubPaths.srcEnd.y} dx={stubPaths.srcEnd.dx} dy={stubPaths.srcEnd.dy}
-            text={srcLabelText} color={stubColor} edgeId={id} field="stubSourceEnd" />
-        )}
-        {tgtLabelText && (
-          <StubEndLabel x={stubPaths.tgtEnd.x} y={stubPaths.tgtEnd.y} dx={stubPaths.tgtEnd.dx} dy={stubPaths.tgtEnd.dy}
-            text={tgtLabelText} color={stubColor} edgeId={id} field="stubTargetEnd" />
-        )}
-      </EdgeLabelRenderer>
-    );
-
-    // Draggable intermediate waypoint handles on stub paths
-    const makeStubWpHandles = (intermediates: {x:number;y:number}[], field: "stubSourceWaypoints" | "stubTargetWaypoints") =>
-      selected && intermediates.length > 0 ? intermediates.map((wp, i) => (
-        <g key={`${field}-${i}`}>
-          <circle cx={wp.x} cy={wp.y} r={5} fill="white" stroke="#1a73e8" strokeWidth={2} style={{ pointerEvents: "none" }} />
-          <circle cx={wp.x} cy={wp.y} r={10} fill="rgba(0,0,0,0.001)" stroke="rgba(0,0,0,0.001)" strokeWidth={4}
-            style={{ cursor: "grab", pointerEvents: "all" }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              const onMove = (me: MouseEvent) => {
-                const fp = rfInstance.screenToFlowPosition({ x: me.clientX, y: me.clientY });
-                const newWps = intermediates.map((w, j) => j === i ? { x: snapToGrid(fp.x), y: snapToGrid(fp.y) } : w);
-                useSchematicStore.getState().patchEdgeData(id, { [field]: newWps });
-              };
-              const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-              window.addEventListener("mousemove", onMove);
-              window.addEventListener("mouseup", onUp);
-            }}
-          />
-        </g>
-      )) : null;
-
-    return (
-      <>
-        {gradientDef}
-        <path d={stubPaths.srcPath} fill="none" style={edgeStyle} markerEnd={undefined} />
-        <path d={stubPaths.tgtPath} fill="none" style={edgeStyle} markerEnd={undefined} />
-        {makeStubWpHandles(stubPaths.srcIntermediates, "stubSourceWaypoints")}
-        {makeStubWpHandles(stubPaths.tgtIntermediates, "stubTargetWaypoints")}
-        {stubLabelsPortal}
-        {debugLabel}
-      </>
-    );
   }
 
   return (

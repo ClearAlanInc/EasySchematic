@@ -352,7 +352,10 @@ function computePdfCrossingLabels(
 
   const marginPx = page.contentX - page.x;
 
-  // Build node info lookup
+  // Build node info lookup. Devices use their own label/room. Stub-label nodes
+  // proxy to the FAR device of their logical connection (the device on the other
+  // side of the linkedConnectionId pair) — so cross-page indicators on a stub-leg
+  // edge still point the reader toward the actual destination.
   const nodeInfo = new Map<string, { label: string; room?: string }>();
   for (const n of nodes) {
     if (n.type !== "device") continue;
@@ -363,6 +366,24 @@ function computePdfCrossingLabels(
       if (parent) room = (parent.data as { label?: string }).label;
     }
     nodeInfo.set(n.id, { label: transformLabelNow(data.label), room });
+  }
+  for (const n of nodes) {
+    if (n.type !== "stub-label") continue;
+    const stubData = n.data as { linkedConnectionId?: string; side?: "source" | "target" };
+    if (!stubData.linkedConnectionId) continue;
+    // Find the partner leg (the OTHER edge with the same linkedConnectionId)
+    const myEdge = edges.find((e) =>
+      e.data?.linkedConnectionId === stubData.linkedConnectionId &&
+      (stubData.side === "source" ? e.target === n.id : e.source === n.id),
+    );
+    if (!myEdge) continue;
+    const partnerEdge = edges.find((e) =>
+      e.data?.linkedConnectionId === stubData.linkedConnectionId && e.id !== myEdge.id,
+    );
+    if (!partnerEdge) continue;
+    const farDeviceId = stubData.side === "source" ? partnerEdge.target : partnerEdge.source;
+    const farInfo = nodeInfo.get(farDeviceId);
+    if (farInfo) nodeInfo.set(n.id, farInfo);
   }
 
   const edgeMap = new Map(edges.map((e) => [e.id, e]));
@@ -383,7 +404,6 @@ function computePdfCrossingLabels(
   for (const [edgeId, route] of Object.entries(routedEdges)) {
     const edge = edgeMap.get(edgeId);
     if (!edge) continue;
-    if (edge.data?.stubbed) continue;
     const sourceInfo = nodeInfo.get(edge.source);
     const targetInfo = nodeInfo.get(edge.target);
     if (!sourceInfo || !targetInfo) continue;

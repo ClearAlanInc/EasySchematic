@@ -91,6 +91,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setPanMode = useSchematicStore((s) => s.setPanMode);
   const stubLabelShowPort = useSchematicStore((s) => s.stubLabelShowPort);
   const setStubLabelShowPort = useSchematicStore((s) => s.setStubLabelShowPort);
+  const stubLabelShowRoom = useSchematicStore((s) => s.stubLabelShowRoom);
+  const setStubLabelShowRoom = useSchematicStore((s) => s.setStubLabelShowRoom);
   const stubLabelPageMode = useSchematicStore((s) => s.stubLabelPageMode);
   const setStubLabelPageMode = useSchematicStore((s) => s.setStubLabelPageMode);
   const [autoRoutePref, setAutoRoutePref] = useState(
@@ -354,6 +356,18 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 </div>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
                   Adds the destination port (e.g. <code className="text-[10px]">[HDMI In 1]</code>) after the device name on stubbed connections.
+                </p>
+                <div className="flex items-center justify-between py-1 mt-2">
+                  <span className="text-xs text-[var(--color-text)]">Show room name on stub labels</span>
+                  <input
+                    type="checkbox"
+                    checked={stubLabelShowRoom}
+                    onChange={(e) => setStubLabelShowRoom(e.target.checked)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Adds the destination room (e.g. <code className="text-[10px]">(Server Room)</code>) after the device name on stubbed connections. Per-stub overrides via right-click on the label.
                 </p>
                 <div className="flex items-center justify-between py-1 mt-2">
                   <span className="text-xs text-[var(--color-text)]">Page number on stub labels</span>

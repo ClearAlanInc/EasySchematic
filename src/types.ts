@@ -294,7 +294,25 @@ export interface AnnotationData {
 
 export type AnnotationNode = Node<AnnotationData, "annotation">;
 
-export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode;
+export interface StubLabelData {
+  [key: string]: unknown;
+  /** Signal type — controls border color, matches the linked connection */
+  signalType: SignalType;
+  /** Shared with the partner stub node + both stub-leg edges. Identifies one logical cable. */
+  linkedConnectionId: string;
+  /** Which end of the logical connection this stub represents */
+  side: "source" | "target";
+  /** When true, append [PortName] to the label text (per-stub override; falls back to global setting) */
+  showPort?: boolean;
+  /** When true, append (RoomName) to the label text (per-stub override; falls back to global setting) */
+  showRoom?: boolean;
+  /** When/whether to append page number (per-stub override; falls back to global setting) */
+  pageMode?: StubLabelPageMode;
+}
+
+export type StubLabelNode = Node<StubLabelData, "stub-label">;
+
+export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode;
 
 export interface ConnectionData {
   [key: string]: unknown;
@@ -308,15 +326,18 @@ export interface ConnectionData {
   multicableLabel?: string;
   /** User-defined label displayed on the connection line (#5) */
   label?: string;
-  /** When true, render as a short stub from each end instead of a full connection (#13) */
+  /** When set, this edge is one half of a logical cable that has been split into two
+   *  stub-leg edges connected via stub-label nodes. Both halves share the same id. */
+  linkedConnectionId?: string;
+  /** @deprecated v31+: stubs are real nodes now. Kept on the type so the v30→v31 migration can read it. */
   stubbed?: boolean;
-  /** Custom position for source stub endpoint (absolute canvas coords) */
+  /** @deprecated v31+: replaced by StubLabelNode position. */
   stubSourceEnd?: { x: number; y: number };
-  /** Custom position for target stub endpoint (absolute canvas coords) */
+  /** @deprecated v31+: replaced by StubLabelNode position. */
   stubTargetEnd?: { x: number; y: number };
-  /** Intermediate waypoints for source stub path */
+  /** @deprecated v31+: migrated to the source-leg edge's manualWaypoints. */
   stubSourceWaypoints?: { x: number; y: number }[];
-  /** Intermediate waypoints for target stub path */
+  /** @deprecated v31+: migrated to the target-leg edge's manualWaypoints. */
   stubTargetWaypoints?: { x: number; y: number }[];
   /** Allow connection between incompatible connector types (#6) */
   allowIncompatible?: boolean;
@@ -338,9 +359,9 @@ export interface ConnectionData {
   cableIdLabelMode?: "endpoint" | "midpoint";
   /** Per-edge: custom label display mode override (#61) */
   customLabelMode?: "endpoint" | "midpoint";
-  /** Per-edge: stub label port-name display override. undefined = use global setting. */
+  /** @deprecated v31+: moved to StubLabelData.showPort. */
   stubLabelShowPort?: boolean;
-  /** Per-edge: stub label page-number display override. undefined = use global setting. */
+  /** @deprecated v31+: moved to StubLabelData.pageMode. */
   stubLabelPageMode?: StubLabelPageMode;
   /** Edge represents a direct physical attachment, not a separate cable */
   directAttach?: boolean;
@@ -546,6 +567,8 @@ export interface SchematicFile {
   panMode?: PanMode;
   /** Show the destination port name on stub labels (e.g. "→ Projector [HDMI In 1]") */
   stubLabelShowPort?: boolean;
+  /** Show the destination room name on stub labels (e.g. "→ Projector (Room A)") */
+  stubLabelShowRoom?: boolean;
   /** When to show "Pg N" on stub labels: always | only when ends are on different pages | never */
   stubLabelPageMode?: StubLabelPageMode;
 }
@@ -558,6 +581,7 @@ export const DEFAULT_PAN_MODE: PanMode = "select-first";
 
 export type StubLabelPageMode = "always" | "cross-page" | "never";
 export const DEFAULT_STUB_LABEL_SHOW_PORT = false;
+export const DEFAULT_STUB_LABEL_SHOW_ROOM = true;
 export const DEFAULT_STUB_LABEL_PAGE_MODE: StubLabelPageMode = "cross-page";
 
 export interface DistanceSettings {

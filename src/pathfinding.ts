@@ -103,7 +103,7 @@ export function buildObstacles(
   const rects: Rect[] = [];
   const pad = ROUTING_PARAMS.PAD * CELL_SIZE; // PAD is in grid cells
   for (const n of nodes) {
-    if (n.type === "room" || n.type === "note") continue;
+    if (n.type === "room" || n.type === "note" || n.type === "stub-label") continue;
     if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);
     const w = n.measured?.width ?? 180;
@@ -933,6 +933,7 @@ export function computeEdgePath(
   precomputedGridRects?: GridRect[],
   penaltySpatialIndex?: PenaltySpatialIndex,
   globalGrid?: IntGrid,
+  freeEndDir?: boolean,
 ): { path: string; labelX: number; labelY: number; turns: string; waypoints: Point[]; arrivalDir: number } | null {
   // Convert pixel coordinates to grid coordinates
   const sgx = px2g(sourceX);
@@ -984,7 +985,7 @@ export function computeEdgePath(
   const astarResult = astarOrthogonal(
     grid, stubSGX, sgy, stubTGX, tgy,
     penalties,
-    noSourceStub, false, excludeStartDir, excludeEndDir, sourceExitsRight,
+    noSourceStub, freeEndDir ?? false, excludeStartDir, excludeEndDir, sourceExitsRight,
     penaltySpatialIndex,
   );
 

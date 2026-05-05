@@ -2,7 +2,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { resolvePort } from "../packList";
-import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle, type StubLabelPageMode } from "../types";
+import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle } from "../types";
 
 /** Project a point onto the nearest segment and return the projected point. */
 function projectOntoSegments(
@@ -260,8 +260,11 @@ export default function EdgeContextMenu() {
     if (!menu) return;
     const store = useSchematicStore.getState();
     const edge = store.edges.find((e) => e.id === menu.edgeId);
-    const current = edge?.data?.stubbed === true;
-    store.patchEdgeData(menu.edgeId, { stubbed: current ? undefined : true });
+    if (edge?.data?.linkedConnectionId) {
+      store.collapseStubsForEdge(menu.edgeId);
+    } else {
+      store.convertEdgeToStubs(menu.edgeId);
+    }
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
@@ -300,32 +303,6 @@ export default function EdgeContextMenu() {
     const current = (edge?.data?.customLabelMode as string) ?? store.customLabelMode;
     const next = current === "endpoint" ? "midpoint" : "endpoint";
     store.patchEdgeData(menu.edgeId, { customLabelMode: next });
-    useSchematicStore.setState({ edgeContextMenu: null });
-  }, [menu]);
-
-  // Stub-label port-display override: undefined (use global) -> true (force show) -> false (force hide) -> undefined
-  const cycleEdgeStubShowPort = useCallback(() => {
-    if (!menu) return;
-    const store = useSchematicStore.getState();
-    const edge = store.edges.find((e) => e.id === menu.edgeId);
-    const cur = edge?.data?.stubLabelShowPort as boolean | undefined;
-    const next: boolean | undefined = cur === undefined ? true : cur === true ? false : undefined;
-    store.patchEdgeData(menu.edgeId, { stubLabelShowPort: next });
-    useSchematicStore.setState({ edgeContextMenu: null });
-  }, [menu]);
-
-  // Stub-label page-display override: undefined -> always -> cross-page -> never -> undefined
-  const cycleEdgeStubPageMode = useCallback(() => {
-    if (!menu) return;
-    const store = useSchematicStore.getState();
-    const edge = store.edges.find((e) => e.id === menu.edgeId);
-    const cur = edge?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
-    const next: StubLabelPageMode | undefined =
-      cur === undefined ? "always"
-      : cur === "always" ? "cross-page"
-      : cur === "cross-page" ? "never"
-      : undefined;
-    store.patchEdgeData(menu.edgeId, { stubLabelPageMode: next });
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
@@ -379,27 +356,15 @@ export default function EdgeContextMenu() {
   const store = useSchematicStore.getState();
   const edge = store.edges.find((e) => e.id === menu.edgeId);
   const hasManual = !!(edge?.data?.manualWaypoints?.length);
-  const isStubbed = edge?.data?.stubbed === true;
+  const isStubbed = !!edge?.data?.linkedConnectionId;
   const isCableIdHidden = edge?.data?.hideCableId === true;
   const isCustomLabelHidden = edge?.data?.hideCustomLabel === true;
   const hasCustomLabel = !!(edge?.data?.label);
   const edgeCableIdMode = (edge?.data?.cableIdLabelMode as string) ?? useSchematicStore.getState().cableIdLabelMode;
   const edgeCustomLabelMode = (edge?.data?.customLabelMode as string) ?? useSchematicStore.getState().customLabelMode;
-  const stubShowPortOverride = edge?.data?.stubLabelShowPort as boolean | undefined;
-  const stubPageModeOverride = edge?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
-  const stubShowPortLabel =
-    stubShowPortOverride === true ? "Stub Port: Show (override)"
-    : stubShowPortOverride === false ? "Stub Port: Hide (override)"
-    : `Stub Port: Default (${store.stubLabelShowPort ? "Show" : "Hide"})`;
-  const PAGE_MODE_LABEL: Record<StubLabelPageMode, string> = {
-    "always": "Always",
-    "cross-page": "Cross-page",
-    "never": "Never",
-  };
-  const stubPageModeLabel =
-    stubPageModeOverride !== undefined
-      ? `Stub Page: ${PAGE_MODE_LABEL[stubPageModeOverride]} (override)`
-      : `Stub Page: Default (${PAGE_MODE_LABEL[store.stubLabelPageMode]})`;
+  // NOTE: Stub label show-port / page-mode overrides moved to StubLabelNode.data
+  // (per-stub, not per-edge). Right-click on a stub label node will surface these
+  // options in a future menu; for now they fall back to the global setting.
   const currentLineStyle: LineStyle = (edge?.data?.lineStyle as LineStyle) ?? "solid";
   const hasMismatch = edge?.data?.connectorMismatch === true;
   const allowIncompatible = edge?.data?.allowIncompatible === true;
@@ -429,9 +394,6 @@ export default function EdgeContextMenu() {
     return false;
   };
   if (hasManual) nearWaypoint = checkNear(edge!.data!.manualWaypoints!);
-  if (isStubbed) {
-    nearWaypoint = nearWaypoint || checkNear(edge?.data?.stubSourceWaypoints ?? []) || checkNear(edge?.data?.stubTargetWaypoints ?? []);
-  }
 
   if (editingLabel) {
     return (
@@ -521,12 +483,6 @@ export default function EdgeContextMenu() {
         label={isStubbed ? "Show Full Connection" : "Stub Connection"}
         onClick={toggleStubbed}
       />
-      {isStubbed && (
-        <>
-          <MenuItem label={stubShowPortLabel} onClick={cycleEdgeStubShowPort} />
-          <MenuItem label={stubPageModeLabel} onClick={cycleEdgeStubPageMode} />
-        </>
-      )}
       {(hasMismatch || allowIncompatible) && (
         <MenuItem
           label={allowIncompatible ? "Disallow Incompatible" : "Allow Incompatible"}

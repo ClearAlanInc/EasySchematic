@@ -761,10 +761,6 @@ export function routeAllEdges(
     return overBudget;
   };
 
-  // Stubbed edges should be excluded from crossing detection —
-  // their invisible middle sections shouldn't affect other edges.
-  const stubbedIds = new Set(edgeEndpoints.filter((ep) => ep.edge.data?.stubbed).map((ep) => ep.edge.id));
-
   // ---------- Route manual edges first (unchanged — they get a clean slate) ----------
   const manualEndpoints: EdgeEndpoints[] = [];
   const autoEndpoints: EdgeEndpoints[] = [];
@@ -934,7 +930,6 @@ export function routeAllEdges(
   };
   const columnEdges: ColumnEdge[] = [];
   for (const ep of autoEndpoints) {
-    if (stubbedIds.has(ep.edge.id)) continue;
     const srcGX = px2g(ep.sourceX);
     const srcGY = px2g(ep.sourceY);
     const tgtGX = px2g(ep.targetX);
@@ -1339,60 +1334,6 @@ export function routeAllEdges(
     }
   }
 
-  // Route any stubbed auto edges that were skipped from column allocation
-  for (const ep of autoEndpoints) {
-    if (!stubbedIds.has(ep.edge.id)) continue;
-    const sigType = ep.edge.data?.signalType;
-    const pens = runningPenalties.length > 0 ? runningPenalties : undefined;
-    let result = checkBudget() ? null : computeEdgePath(
-      ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-      obs.rects, 0, ep.stubSpread,
-      pens,
-      sigType, undefined, undefined, undefined, undefined, undefined,
-      ep.sourceExitsRight, ep.targetEntersLeft,
-      precomputedGridRects, penaltySpatialIdx,
-    );
-    if (!result && !overBudget) {
-      const excludeSet = new Set([ep.edge.source, ep.edge.target]);
-      const relaxedRects = obs.rects.filter((r) => !r.nodeId || !excludeSet.has(r.nodeId));
-      result = computeEdgePath(
-        ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-        relaxedRects, 0, ep.stubSpread,
-        pens,
-        sigType, undefined, undefined, undefined, undefined, undefined,
-        ep.sourceExitsRight, ep.targetEntersLeft,
-        undefined, penaltySpatialIdx,
-      );
-    }
-    if (result) {
-      const rs: RouteState = {
-        edgeId: ep.edge.id, waypoints: result.waypoints,
-        segments: extractSegments(result.waypoints), svgPath: result.path,
-        labelX: result.labelX, labelY: result.labelY,
-        turns: result.turns, status: "good", signalType: sigType,
-      };
-      routeStates.push(rs);
-      appendPenalties(rs);
-    } else {
-      const midX = Math.max(ep.sourceX, ep.targetX) + 40;
-      const wp: Point[] = [
-        { x: ep.sourceX, y: ep.sourceY },
-        { x: midX, y: ep.sourceY },
-        { x: midX, y: ep.targetY },
-        { x: ep.targetX, y: ep.targetY },
-      ];
-      const rs: RouteState = {
-        edgeId: ep.edge.id, waypoints: wp,
-        segments: extractSegments(wp),
-        svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
-        labelX: midX, labelY: (ep.sourceY + ep.targetY) / 2,
-        turns: "fallback", status: "bad", signalType: sigType,
-      };
-      routeStates.push(rs);
-      appendPenalties(rs);
-    }
-  }
-
   // Detect crossing points between all edge pairs (skip if over budget — cosmetic only).
   // Horizontal edge at a crossing gets an arc (hop over);
   // vertical edge at the same crossing gets a gap (moveTo cut).
@@ -1407,7 +1348,6 @@ export function routeAllEdges(
       for (let j = i + 1; j < routeStates.length; j++) {
         const a = routeStates[i];
         const b = routeStates[j];
-        if (stubbedIds.has(a.edgeId) || stubbedIds.has(b.edgeId)) continue;
         for (const sa of a.segments) {
           for (const sb of b.segments) {
             if (segmentsCross(sa, sb)) {

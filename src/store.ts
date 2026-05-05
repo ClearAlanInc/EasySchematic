@@ -26,7 +26,8 @@ import type {
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
-import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
+import { defaultStubPlacement } from "./stubPlacement";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_SHOW_ROOM, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
 import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
@@ -281,12 +282,17 @@ interface SchematicState {
   patchEdgeData: (edgeId: string, patch: Partial<import("./types").ConnectionData>) => void;
   batchPatchEdgeData: (changes: { edgeId: string; patch: Partial<import("./types").ConnectionData> }[]) => void;
 
+  // Stub conversion (real React Flow nodes for the labels)
+  convertEdgeToStubs: (edgeId: string) => void;
+  collapseStubsForEdge: (edgeId: string) => void;
+
   // Manual edge routing
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
   roomContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
+  stubLabelContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   portContextMenu: { nodeId: string; portId: string; screenX: number; screenY: number } | null;
 
   // Centralized edge routing
@@ -481,8 +487,11 @@ interface SchematicState {
   setCustomLabelMode: (mode: "endpoint" | "midpoint") => void;
   stubLabelShowPort: boolean;
   setStubLabelShowPort: (show: boolean) => void;
+  stubLabelShowRoom: boolean;
+  setStubLabelShowRoom: (show: boolean) => void;
   stubLabelPageMode: StubLabelPageMode;
   setStubLabelPageMode: (mode: StubLabelPageMode) => void;
+  patchStubLabelData: (nodeId: string, patch: Partial<import("./types").StubLabelData>) => void;
   cableIdMap: Record<string, string>;
   recomputeCableIds: () => void;
 
@@ -896,6 +905,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   edgeContextMenu: null,
   roomContextMenu: null,
   deviceContextMenu: null,
+  stubLabelContextMenu: null,
   portContextMenu: null,
   autoRoute: true,
   _edgeWaypointStash: null,
@@ -961,6 +971,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
   customLabelMode: "endpoint" as "endpoint" | "midpoint",
   stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
+  stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
   stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
   cableIdMap: {},
   cloudSchematicId: null,
@@ -2768,6 +2779,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setStubLabelShowRoom: (show) => {
+    set({ stubLabelShowRoom: show });
+    get().saveToLocalStorage();
+  },
+
   setStubLabelPageMode: (mode) => {
     set({ stubLabelPageMode: mode });
     get().saveToLocalStorage();
@@ -2778,6 +2794,28 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const rows = computeCableSchedule(state.nodes, state.edges, state.cableNamingScheme);
     const map: Record<string, string> = {};
     for (const r of rows) map[r.edgeId] = r.cableId;
+    // Mirror cable IDs to the partner stub-leg edge so both halves render the same
+    // cable label. The schedule emits one row per logical connection (source-side leg);
+    // the target-side leg shares the same cable ID via linkedConnectionId.
+    const linkById = new Map<string, string>();
+    const idsByLink = new Map<string, string[]>();
+    for (const e of state.edges) {
+      const link = e.data?.linkedConnectionId;
+      if (!link) continue;
+      linkById.set(e.id, link);
+      const list = idsByLink.get(link) ?? [];
+      list.push(e.id);
+      idsByLink.set(link, list);
+    }
+    for (const e of state.edges) {
+      if (map[e.id]) continue;
+      const link = linkById.get(e.id);
+      if (!link) continue;
+      const partners = idsByLink.get(link) ?? [];
+      for (const pid of partners) {
+        if (map[pid]) { map[e.id] = map[pid]; break; }
+      }
+    }
     set({ cableIdMap: map });
   },
 
@@ -2863,6 +2901,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
       customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
+      stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
@@ -2954,6 +2993,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
             customLabelMode: data.customLabelMode ?? "endpoint",
             stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
+            stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
             stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
             hideAdapters: data.hideAdapters ?? false,
             categoryOrder: data.categoryOrder ?? null,
@@ -3026,6 +3066,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
         customLabelMode: data.customLabelMode ?? "endpoint",
         stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
+        stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
         hideAdapters: data.hideAdapters ?? false,
         autoRoute: data.autoRoute ?? true,
@@ -3099,6 +3140,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
       customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
+      stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
@@ -3282,6 +3324,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
         customLabelMode: "endpoint" as "endpoint" | "midpoint",
         stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
+        stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
         autoRoute: true,
         edgeHitboxSize: 10,
@@ -3314,6 +3357,199 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         }
         return { ...e, data: merged };
       }),
+    });
+    get().saveToLocalStorage();
+  },
+
+  patchStubLabelData: (nodeId, patch) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.id !== nodeId || n.type !== "stub-label") return n;
+        const merged = { ...(n.data as Record<string, unknown>), ...patch } as typeof n.data;
+        for (const k of Object.keys(patch) as (keyof typeof patch)[]) {
+          if (patch[k] === undefined) delete (merged as Record<string, unknown>)[k];
+        }
+        return { ...n, data: merged };
+      }),
+    });
+    get().saveToLocalStorage();
+  },
+
+  convertEdgeToStubs: (edgeId) => {
+    const state = get();
+    const edge = state.edges.find((e) => e.id === edgeId);
+    if (!edge) return;
+    if (edge.data?.linkedConnectionId) return; // already a stub leg
+
+    const srcDevice = state.nodes.find((n) => n.id === edge.source);
+    const tgtDevice = state.nodes.find((n) => n.id === edge.target);
+    if (!srcDevice || !tgtDevice) return;
+
+    const absPos = (n: typeof state.nodes[number]): { x: number; y: number } => {
+      let x = n.position.x;
+      let y = n.position.y;
+      let pid = n.parentId;
+      while (pid) {
+        const p = state.nodes.find((nn) => nn.id === pid);
+        if (!p) break;
+        x += p.position.x;
+        y += p.position.y;
+        pid = p.parentId;
+      }
+      return { x, y };
+    };
+
+    const findPort = (deviceNode: typeof state.nodes[number] | undefined, handleId: string | null | undefined) => {
+      if (!deviceNode || !handleId || deviceNode.type !== "device") return null;
+      const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
+      const baseId = handleId.replace(/-(in|out)$/, "");
+      const p = ports.find((pp) => pp.id === baseId);
+      if (!p) return null;
+      const side: "left" | "right" =
+        p.direction === "input" ? (p.flipped ? "right" : "left")
+        : p.direction === "output" ? (p.flipped ? "left" : "right")
+        : (p.flipped ? "right" : "left");
+      return { side };
+    };
+
+    const approxHandlePos = (deviceNode: typeof state.nodes[number], handleId: string | null | undefined) => {
+      const dPos = absPos(deviceNode);
+      const portInfo = findPort(deviceNode, handleId);
+      const w = (deviceNode.measured?.width as number | undefined) ?? 180;
+      const h = (deviceNode.measured?.height as number | undefined) ?? 60;
+      const x = portInfo?.side === "right" ? dPos.x + w : dPos.x;
+      return { x, y: dPos.y + h / 2 };
+    };
+
+    const srcHandlePos = approxHandlePos(srcDevice, edge.sourceHandle);
+    const tgtHandlePos = approxHandlePos(tgtDevice, edge.targetHandle);
+    const srcPortInfo = findPort(srcDevice, edge.sourceHandle);
+    const tgtPortInfo = findPort(tgtDevice, edge.targetHandle);
+
+    const srcPlace = defaultStubPlacement(srcHandlePos, srcPortInfo?.side ?? "right");
+    const tgtPlace = defaultStubPlacement(tgtHandlePos, tgtPortInfo?.side ?? "left");
+    const srcStubAbs = srcPlace.pos;
+    const tgtStubAbs = tgtPlace.pos;
+    const srcSide = srcPlace.handle;
+    const tgtSide = tgtPlace.handle;
+
+    const srcParentId = srcDevice.parentId;
+    const tgtParentId = tgtDevice.parentId;
+    const srcParentAbs = srcParentId
+      ? absPos(state.nodes.find((n) => n.id === srcParentId)!)
+      : { x: 0, y: 0 };
+    const tgtParentAbs = tgtParentId
+      ? absPos(state.nodes.find((n) => n.id === tgtParentId)!)
+      : { x: 0, y: 0 };
+
+    const linkedConnectionId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `link-${edge.id}-${Date.now()}`;
+    const stubNodeIdSrc = `stub-${edge.id}-src`;
+    const stubNodeIdTgt = `stub-${edge.id}-tgt`;
+    const sigType = edge.data!.signalType;
+
+    const srcStubNode: SchematicNode = {
+      id: stubNodeIdSrc,
+      type: "stub-label",
+      position: { x: srcStubAbs.x - srcParentAbs.x, y: srcStubAbs.y - srcParentAbs.y },
+      ...(srcParentId ? { parentId: srcParentId } : {}),
+      data: { signalType: sigType, linkedConnectionId, side: "source" },
+    } as SchematicNode;
+    const tgtStubNode: SchematicNode = {
+      id: stubNodeIdTgt,
+      type: "stub-label",
+      position: { x: tgtStubAbs.x - tgtParentAbs.x, y: tgtStubAbs.y - tgtParentAbs.y },
+      ...(tgtParentId ? { parentId: tgtParentId } : {}),
+      data: { signalType: sigType, linkedConnectionId, side: "target" },
+    } as SchematicNode;
+
+    const baseData = { ...edge.data! };
+    delete (baseData as Record<string, unknown>).manualWaypoints;
+    delete (baseData as Record<string, unknown>).autoRouteWaypoints;
+
+    const srcLeg: ConnectionEdge = {
+      ...edge,
+      id: `${edge.id}-src`,
+      source: edge.source,
+      sourceHandle: edge.sourceHandle,
+      target: stubNodeIdSrc,
+      targetHandle: srcSide,
+      data: { ...baseData, linkedConnectionId },
+    };
+    const tgtLegData = { ...baseData, linkedConnectionId } as ConnectionEdge["data"];
+    delete (tgtLegData as Record<string, unknown>).cableId;
+    delete (tgtLegData as Record<string, unknown>).label;
+    delete (tgtLegData as Record<string, unknown>).cableLength;
+    delete (tgtLegData as Record<string, unknown>).multicableLabel;
+    const tgtLeg: ConnectionEdge = {
+      ...edge,
+      id: `${edge.id}-tgt`,
+      source: stubNodeIdTgt,
+      sourceHandle: tgtSide,
+      target: edge.target,
+      targetHandle: edge.targetHandle,
+      data: tgtLegData,
+    };
+
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: [...state.nodes, srcStubNode, tgtStubNode],
+      edges: [...state.edges.filter((e) => e.id !== edgeId), srcLeg, tgtLeg],
+    });
+    get().saveToLocalStorage();
+  },
+
+  collapseStubsForEdge: (edgeId) => {
+    const state = get();
+    const edge = state.edges.find((e) => e.id === edgeId);
+    if (!edge) return;
+    const linkedId = edge.data?.linkedConnectionId;
+    if (!linkedId) return;
+
+    const linkedEdges = state.edges.filter((e) => e.data?.linkedConnectionId === linkedId);
+    if (linkedEdges.length < 2) return;
+    const srcLeg = linkedEdges.find((e) => {
+      const src = state.nodes.find((n) => n.id === e.source);
+      return src?.type !== "stub-label";
+    });
+    const tgtLeg = linkedEdges.find((e) => {
+      const tgt = state.nodes.find((n) => n.id === e.target);
+      return tgt?.type !== "stub-label";
+    });
+    if (!srcLeg || !tgtLeg) return;
+
+    const stubIds = new Set<string>();
+    for (const e of linkedEdges) {
+      const src = state.nodes.find((n) => n.id === e.source);
+      const tgt = state.nodes.find((n) => n.id === e.target);
+      if (src?.type === "stub-label") stubIds.add(src.id);
+      if (tgt?.type === "stub-label") stubIds.add(tgt.id);
+    }
+
+    // Reconstruct a single direct edge. Use srcLeg as the metadata canonical
+    // (it's where cableId/label live after migration/conversion).
+    const mergedData = { ...srcLeg.data! };
+    delete (mergedData as Record<string, unknown>).linkedConnectionId;
+
+    const directId = srcLeg.id.endsWith("-src") ? srcLeg.id.slice(0, -4) : `merged-${srcLeg.id}`;
+    const directEdge: ConnectionEdge = {
+      ...srcLeg,
+      id: directId,
+      source: srcLeg.source,
+      sourceHandle: srcLeg.sourceHandle,
+      target: tgtLeg.target,
+      targetHandle: tgtLeg.targetHandle,
+      data: mergedData,
+    };
+
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.filter((n) => !stubIds.has(n.id)),
+      edges: [...state.edges.filter((e) => e.data?.linkedConnectionId !== linkedId), directEdge],
     });
     get().saveToLocalStorage();
   },
