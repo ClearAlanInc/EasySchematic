@@ -2,7 +2,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { resolvePort } from "../packList";
-import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle } from "../types";
+import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle, type StubLabelPageMode } from "../types";
 
 /** Project a point onto the nearest segment and return the projected point. */
 function projectOntoSegments(
@@ -303,6 +303,32 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
+  // Stub-label port-display override: undefined (use global) -> true (force show) -> false (force hide) -> undefined
+  const cycleEdgeStubShowPort = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    const cur = edge?.data?.stubLabelShowPort as boolean | undefined;
+    const next: boolean | undefined = cur === undefined ? true : cur === true ? false : undefined;
+    store.patchEdgeData(menu.edgeId, { stubLabelShowPort: next });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  // Stub-label page-display override: undefined -> always -> cross-page -> never -> undefined
+  const cycleEdgeStubPageMode = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    const cur = edge?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
+    const next: StubLabelPageMode | undefined =
+      cur === undefined ? "always"
+      : cur === "always" ? "cross-page"
+      : cur === "cross-page" ? "never"
+      : undefined;
+    store.patchEdgeData(menu.edgeId, { stubLabelPageMode: next });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
   const toggleAdapterVisibility = useCallback(() => {
     if (!menu) return;
     const store = useSchematicStore.getState();
@@ -359,6 +385,21 @@ export default function EdgeContextMenu() {
   const hasCustomLabel = !!(edge?.data?.label);
   const edgeCableIdMode = (edge?.data?.cableIdLabelMode as string) ?? useSchematicStore.getState().cableIdLabelMode;
   const edgeCustomLabelMode = (edge?.data?.customLabelMode as string) ?? useSchematicStore.getState().customLabelMode;
+  const stubShowPortOverride = edge?.data?.stubLabelShowPort as boolean | undefined;
+  const stubPageModeOverride = edge?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
+  const stubShowPortLabel =
+    stubShowPortOverride === true ? "Stub Port: Show (override)"
+    : stubShowPortOverride === false ? "Stub Port: Hide (override)"
+    : `Stub Port: Default (${store.stubLabelShowPort ? "Show" : "Hide"})`;
+  const PAGE_MODE_LABEL: Record<StubLabelPageMode, string> = {
+    "always": "Always",
+    "cross-page": "Cross-page",
+    "never": "Never",
+  };
+  const stubPageModeLabel =
+    stubPageModeOverride !== undefined
+      ? `Stub Page: ${PAGE_MODE_LABEL[stubPageModeOverride]} (override)`
+      : `Stub Page: Default (${PAGE_MODE_LABEL[store.stubLabelPageMode]})`;
   const currentLineStyle: LineStyle = (edge?.data?.lineStyle as LineStyle) ?? "solid";
   const hasMismatch = edge?.data?.connectorMismatch === true;
   const allowIncompatible = edge?.data?.allowIncompatible === true;
@@ -480,6 +521,12 @@ export default function EdgeContextMenu() {
         label={isStubbed ? "Show Full Connection" : "Stub Connection"}
         onClick={toggleStubbed}
       />
+      {isStubbed && (
+        <>
+          <MenuItem label={stubShowPortLabel} onClick={cycleEdgeStubShowPort} />
+          <MenuItem label={stubPageModeLabel} onClick={cycleEdgeStubPageMode} />
+        </>
+      )}
       {(hasMismatch || allowIncompatible) && (
         <MenuItem
           label={allowIncompatible ? "Disallow Incompatible" : "Allow Incompatible"}

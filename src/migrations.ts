@@ -13,7 +13,7 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 
-export const CURRENT_SCHEMA_VERSION = 29;
+export const CURRENT_SCHEMA_VERSION = 30;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -344,6 +344,15 @@ const migrations: Record<number, Migration> = {
     // v28 → v29: add optional currency field for multi-currency cost reports (#158).
     // No data transform needed — field defaults to "USD" on load.
     data.version = 29;
+    return data;
+  },
+  29: (data) => {
+    // v29 → v30: add stub label customization (port name + page-mode controls).
+    // Behavior change: same-page stubs in print view stop showing "Pg N" by default
+    // (new pageMode default is "cross-page"). Old saves get the new default.
+    data.stubLabelShowPort ??= false;
+    data.stubLabelPageMode ??= "cross-page";
+    data.version = 30;
     return data;
   },
 };

@@ -25,8 +25,8 @@ import type {
   CustomTemplateMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode } from "./types";
-import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE } from "./types";
+import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
 import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
@@ -477,6 +477,10 @@ interface SchematicState {
   setCableIdLabelMode: (mode: "endpoint" | "midpoint") => void;
   customLabelMode: "endpoint" | "midpoint";
   setCustomLabelMode: (mode: "endpoint" | "midpoint") => void;
+  stubLabelShowPort: boolean;
+  setStubLabelShowPort: (show: boolean) => void;
+  stubLabelPageMode: StubLabelPageMode;
+  setStubLabelPageMode: (mode: StubLabelPageMode) => void;
   cableIdMap: Record<string, string>;
   recomputeCableIds: () => void;
 
@@ -953,6 +957,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   customLabelMidOffset: 0,
   cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
   customLabelMode: "endpoint" as "endpoint" | "midpoint",
+  stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
+  stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
   cableIdMap: {},
   cloudSchematicId: null,
   cloudSavedAt: null,
@@ -2754,6 +2760,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setStubLabelShowPort: (show) => {
+    set({ stubLabelShowPort: show });
+    get().saveToLocalStorage();
+  },
+
+  setStubLabelPageMode: (mode) => {
+    set({ stubLabelPageMode: mode });
+    get().saveToLocalStorage();
+  },
+
   recomputeCableIds: () => {
     const state = get();
     const rows = computeCableSchedule(state.nodes, state.edges, state.cableNamingScheme);
@@ -2843,6 +2859,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       customLabelMidOffset: state.customLabelMidOffset !== 0 ? state.customLabelMidOffset : undefined,
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
       customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
+      stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
+      stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
       edgeHitboxSize: state.edgeHitboxSize !== 10 ? state.edgeHitboxSize : undefined,
@@ -2932,6 +2950,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             customLabelMidOffset: data.customLabelMidOffset ?? 0,
             cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
             customLabelMode: data.customLabelMode ?? "endpoint",
+            stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
+            stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
             hideAdapters: data.hideAdapters ?? false,
             categoryOrder: data.categoryOrder ?? null,
             showOwnedGearPane: data.showOwnedGearPane ?? false,
@@ -3001,6 +3021,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         customLabelMidOffset: data.customLabelMidOffset ?? 0,
         cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
         customLabelMode: data.customLabelMode ?? "endpoint",
+        stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
+        stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
         hideAdapters: data.hideAdapters ?? false,
         autoRoute: data.autoRoute ?? true,
         edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -3071,6 +3093,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       customLabelMidOffset: state.customLabelMidOffset !== 0 ? state.customLabelMidOffset : undefined,
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
       customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
+      stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
+      stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
       edgeHitboxSize: state.edgeHitboxSize !== 10 ? state.edgeHitboxSize : undefined,
@@ -3160,6 +3184,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       customLabelMidOffset: data.customLabelMidOffset ?? 0,
       cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
       customLabelMode: data.customLabelMode ?? "endpoint",
+      stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
+      stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
       hideAdapters: data.hideAdapters ?? false,
       autoRoute: data.autoRoute ?? true,
       edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -3249,6 +3275,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         customLabelMidOffset: 0,
         cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
         customLabelMode: "endpoint" as "endpoint" | "midpoint",
+        stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
+        stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
         autoRoute: true,
         edgeHitboxSize: 10,
         panMode: DEFAULT_PAN_MODE,

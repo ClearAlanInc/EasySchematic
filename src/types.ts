@@ -338,6 +338,10 @@ export interface ConnectionData {
   cableIdLabelMode?: "endpoint" | "midpoint";
   /** Per-edge: custom label display mode override (#61) */
   customLabelMode?: "endpoint" | "midpoint";
+  /** Per-edge: stub label port-name display override. undefined = use global setting. */
+  stubLabelShowPort?: boolean;
+  /** Per-edge: stub label page-number display override. undefined = use global setting. */
+  stubLabelPageMode?: StubLabelPageMode;
   /** Edge represents a direct physical attachment, not a separate cable */
   directAttach?: boolean;
   /** Visual line style — solid (default), dashed, dotted, or dash-dot */
@@ -540,6 +544,10 @@ export interface SchematicFile {
   currency?: string;
   /** Left-drag canvas behavior — select box (default) or pan viewport */
   panMode?: PanMode;
+  /** Show the destination port name on stub labels (e.g. "→ Projector [HDMI In 1]") */
+  stubLabelShowPort?: boolean;
+  /** When to show "Pg N" on stub labels: always | only when ends are on different pages | never */
+  stubLabelPageMode?: StubLabelPageMode;
 }
 
 export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";
@@ -547,6 +555,10 @@ export const DEFAULT_LABEL_CASE: LabelCaseMode = "as-typed";
 
 export type PanMode = "select-first" | "pan-first";
 export const DEFAULT_PAN_MODE: PanMode = "select-first";
+
+export type StubLabelPageMode = "always" | "cross-page" | "never";
+export const DEFAULT_STUB_LABEL_SHOW_PORT = false;
+export const DEFAULT_STUB_LABEL_PAGE_MODE: StubLabelPageMode = "cross-page";
 
 export interface DistanceSettings {
   unit: "m" | "ft";

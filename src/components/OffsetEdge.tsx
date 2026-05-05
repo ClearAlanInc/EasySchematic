@@ -7,11 +7,12 @@ import {
 } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { GRID_SIZE } from "../store";
-import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle } from "../types";
+import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle, type StubLabelPageMode } from "../types";
 import { extractSegments, orthogonalize } from "../edgeRouter";
 import { waypointsToSvgPath, simplifyWaypoints } from "../pathfinding";
 import { computePageGrid } from "../printPageGrid";
 import { getPaperSize } from "../printConfig";
+import { resolvePortLabel } from "../packList";
 
 /** Snap a value to the nearest grid increment. */
 function snapToGrid(v: number): number {
@@ -258,6 +259,8 @@ function OffsetEdgeComponent({
     const tl = (tgtNode?.data as Record<string, unknown>)?.label as string ?? "";
     const sr = (srcRoom?.data as Record<string, unknown>)?.label as string ?? "";
     const tr = (tgtRoom?.data as Record<string, unknown>)?.label as string ?? "";
+    const sportLabel = srcNode ? resolvePortLabel(srcNode, edge.sourceHandle) : "";
+    const tportLabel = tgtNode ? resolvePortLabel(tgtNode, edge.targetHandle) : "";
     // Compute page numbers inline if in print view
     let sp = "", tp = "";
     if (s.printView && srcNode && tgtNode) {
@@ -283,13 +286,27 @@ function OffsetEdgeComponent({
         if (tpi > 0) tp = String(tpi);
       }
     }
-    return `${sl}\0${tl}\0${sr}\0${tr}\0${sp}\0${tp}`;
+    return `${sl}\0${tl}\0${sr}\0${tr}\0${sp}\0${tp}\0${sportLabel}\0${tportLabel}`;
   });
   const stubLabelInfo = useMemo(() => {
     if (!stubLabelStr) return null;
-    const [srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage] = stubLabelStr.split("\0");
-    return { srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage };
+    const [srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage, srcPort, tgtPort] = stubLabelStr.split("\0");
+    return { srcLabel, tgtLabel, srcRoom, tgtRoom, srcPage, tgtPage, srcPort, tgtPort };
   }, [stubLabelStr]);
+
+  // Effective stub-label settings: per-edge override falls back to global preference.
+  const stubShowPortGlobal = useSchematicStore((s) => s.stubLabelShowPort);
+  const stubPageModeGlobal = useSchematicStore((s) => s.stubLabelPageMode);
+  const stubShowPortOverride = useSchematicStore((s) => {
+    const e = s.edges.find((e) => e.id === id);
+    return e?.data?.stubLabelShowPort as boolean | undefined;
+  });
+  const stubPageModeOverride = useSchematicStore((s) => {
+    const e = s.edges.find((e) => e.id === id);
+    return e?.data?.stubLabelPageMode as StubLabelPageMode | undefined;
+  });
+  const effectiveStubShowPort = stubShowPortOverride ?? stubShowPortGlobal;
+  const effectiveStubPageMode: StubLabelPageMode = stubPageModeOverride ?? stubPageModeGlobal;
 
   // Read effective line style: per-connection override > per-signal-type default > solid
   const lineStyle = useSchematicStore((s) => {
@@ -977,15 +994,31 @@ function OffsetEdgeComponent({
   if (stubbed && stubPaths) {
     // Build stub end labels — the label IS the endpoint, line terminates at it
     const stubColor = edgeStyle.stroke as string ?? "#999";
-    const formatStubText = (label: string, room: string, page: string, exitDx: number) => {
+    const formatStubText = (
+      label: string, port: string, room: string,
+      page: string, otherPage: string, exitDx: number,
+    ) => {
       const arrow = exitDx >= 0 ? "→" : "←";
       let text = `${arrow} ${label}`;
+      if (effectiveStubShowPort && port) text += ` [${port}]`;
       if (room) text += ` (${room})`;
-      if (page) text += ` Pg ${page}`;
+      const showPage = !!page && (
+        effectiveStubPageMode === "always" ||
+        (effectiveStubPageMode === "cross-page" && page !== otherPage)
+      );
+      if (showPage) text += ` Pg ${page}`;
       return text;
     };
-    const srcLabelText = stubLabelInfo ? formatStubText(stubLabelInfo.tgtLabel, stubLabelInfo.tgtRoom, stubLabelInfo.tgtPage, stubPaths.srcEnd.dx) : "";
-    const tgtLabelText = stubLabelInfo ? formatStubText(stubLabelInfo.srcLabel, stubLabelInfo.srcRoom, stubLabelInfo.srcPage, stubPaths.tgtEnd.dx) : "";
+    // Each stub label describes the FAR end of the connection — source-end label
+    // shows target device/port/room/page, and vice versa.
+    const srcLabelText = stubLabelInfo ? formatStubText(
+      stubLabelInfo.tgtLabel, stubLabelInfo.tgtPort, stubLabelInfo.tgtRoom,
+      stubLabelInfo.tgtPage, stubLabelInfo.srcPage, stubPaths.srcEnd.dx,
+    ) : "";
+    const tgtLabelText = stubLabelInfo ? formatStubText(
+      stubLabelInfo.srcLabel, stubLabelInfo.srcPort, stubLabelInfo.srcRoom,
+      stubLabelInfo.srcPage, stubLabelInfo.tgtPage, stubPaths.tgtEnd.dx,
+    ) : "";
 
     const stubLabelsPortal = (
       <EdgeLabelRenderer>

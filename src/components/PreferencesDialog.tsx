@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSchematicStore } from "../store";
-import { DEFAULT_SCROLL_CONFIG } from "../types";
-import type { LabelCaseMode, PanMode, ScrollAction, ScrollConfig } from "../types";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE } from "../types";
+import type { LabelCaseMode, PanMode, ScrollAction, ScrollConfig, StubLabelPageMode } from "../types";
 
 const AUTOROUTE_PREF_KEY = "easyschematic-autoroute-pref";
 
@@ -89,6 +89,10 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setCurrency = useSchematicStore((s) => s.setCurrency);
   const panMode = useSchematicStore((s) => s.panMode);
   const setPanMode = useSchematicStore((s) => s.setPanMode);
+  const stubLabelShowPort = useSchematicStore((s) => s.stubLabelShowPort);
+  const setStubLabelShowPort = useSchematicStore((s) => s.setStubLabelShowPort);
+  const stubLabelPageMode = useSchematicStore((s) => s.stubLabelPageMode);
+  const setStubLabelPageMode = useSchematicStore((s) => s.setStubLabelPageMode);
   const [autoRoutePref, setAutoRoutePref] = useState(
     () => localStorage.getItem(AUTOROUTE_PREF_KEY) ?? "ask",
   );
@@ -108,7 +112,9 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
     autoRoutePref === "ask" &&
     labelCase === "as-typed" &&
     currency === "USD" &&
-    panMode === "select-first";
+    panMode === "select-first" &&
+    stubLabelShowPort === DEFAULT_STUB_LABEL_SHOW_PORT &&
+    stubLabelPageMode === DEFAULT_STUB_LABEL_PAGE_MODE;
 
   return (
     <div
@@ -332,6 +338,40 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 </p>
               </div>
 
+              {/* Stub labels */}
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Stub labels
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-[var(--color-text)]">Show port name on stub labels</span>
+                  <input
+                    type="checkbox"
+                    checked={stubLabelShowPort}
+                    onChange={(e) => setStubLabelShowPort(e.target.checked)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Adds the destination port (e.g. <code className="text-[10px]">[HDMI In 1]</code>) after the device name on stubbed connections.
+                </p>
+                <div className="flex items-center justify-between py-1 mt-2">
+                  <span className="text-xs text-[var(--color-text)]">Page number on stub labels</span>
+                  <select
+                    className={selectClass}
+                    value={stubLabelPageMode}
+                    onChange={(e) => setStubLabelPageMode(e.target.value as StubLabelPageMode)}
+                  >
+                    <option value="cross-page">Cross-page only</option>
+                    <option value="always">Always</option>
+                    <option value="never">Never</option>
+                  </select>
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  When to display the destination page on stub labels. Cross-page only suppresses the tag when both ends are on the same printed page.
+                </p>
+              </div>
+
               {/* Costs */}
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
@@ -379,6 +419,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 setLabelCase("as-typed");
                 setCurrency("USD");
                 setPanMode("select-first");
+                setStubLabelShowPort(DEFAULT_STUB_LABEL_SHOW_PORT);
+                setStubLabelPageMode(DEFAULT_STUB_LABEL_PAGE_MODE);
               }}
               className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
             >
