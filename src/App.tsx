@@ -8,6 +8,7 @@ import {
   ConnectionLineType,
   ConnectionMode,
   SelectionMode,
+  useNodesInitialized,
   useReactFlow,
   useStoreApi,
   useUpdateNodeInternals,
@@ -218,6 +219,24 @@ function SchematicCanvas() {
   const { screenToFlowPosition } = rfInstance;
   const rfContainerRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
+
+  // Refit viewport whenever a new schematic is wholesale-loaded (import, share link, "New", autosave hydrate).
+  // The <ReactFlow fitView> boolean prop only fires on first mount; without this, opening a file whose content
+  // sits far from the origin leaves the viewport at its previous transform and the canvas appears blank.
+  const loadSeq = useSchematicStore((s) => s.loadSeq);
+  const nodesInitialized = useNodesInitialized();
+  const lastFittedSeq = useRef<number | null>(null);
+  useEffect(() => {
+    if (lastFittedSeq.current === null) {
+      // First render: defer to <ReactFlow fitView> so we don't double-fit.
+      lastFittedSeq.current = loadSeq;
+      return;
+    }
+    if (lastFittedSeq.current === loadSeq) return;
+    if (!nodesInitialized) return;
+    lastFittedSeq.current = loadSeq;
+    rfInstance.fitView({ duration: 200, padding: 0.1 });
+  }, [loadSeq, nodesInitialized, rfInstance]);
 
   // Locked rooms have pointer-events: none (CSS) so right-clicks fall through.
   // React Flow's pane handler uses wrapHandler() which only fires when

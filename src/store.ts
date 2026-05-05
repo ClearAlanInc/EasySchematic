@@ -176,6 +176,8 @@ interface SchematicState {
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
   schematicName: string;
+  /** Bumped when a new schematic is wholesale-loaded (import, share link, demo, autosave hydrate). Canvas refits its viewport when this changes. */
+  loadSeq: number;
   editingNodeId: string | null;
   creatingNodeId: string | null;
   customTemplates: DeviceTemplate[];
@@ -878,6 +880,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   nodes: [],
   edges: [],
   schematicName: "Untitled Schematic",
+  loadSeq: 0,
   editingNodeId: null,
   creatingNodeId: null,
   customTemplates: _initCustomTemplates,
@@ -2964,6 +2967,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             cableCosts: data.cableCosts ?? undefined,
             roomDistances: data.roomDistances ?? undefined,
             distanceSettings: data.distanceSettings ?? undefined,
+            loadSeq: get().loadSeq + 1,
           });
           hydrated = true;
           get().saveToLocalStorage();
@@ -3040,6 +3044,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         // Restore cloud identity from autosave (not part of SchematicFile)
         cloudSchematicId: parsed.cloudSchematicId ?? null,
         cloudSavedAt: parsed.cloudSavedAt ?? null,
+        loadSeq: get().loadSeq + 1,
       });
       hydrated = true;
       return true;
@@ -3204,6 +3209,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       cloudSchematicId: null,
       cloudSavedAt: null,
       fileHandle: null,
+      loadSeq: get().loadSeq + 1,
     });
     saveCategoryOrder(data.categoryOrder ?? null);
     get().saveToLocalStorage();
@@ -3284,6 +3290,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         libraryActiveTab: "devices" as "devices" | "owned",
         undoSize: 0,
         redoSize: 0,
+        loadSeq: get().loadSeq + 1,
       });
     }
     get().saveToLocalStorage();
