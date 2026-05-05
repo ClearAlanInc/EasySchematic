@@ -166,12 +166,13 @@ function getHandlePositions(
 function getAbsPos(node: SchematicNode, nodeMap: Map<string, SchematicNode>) {
   let x = node.position.x;
   let y = node.position.y;
-  if (node.parentId) {
-    const parent = nodeMap.get(node.parentId);
-    if (parent) {
-      x += parent.position.x;
-      y += parent.position.y;
-    }
+  let parentId = node.parentId;
+  while (parentId) {
+    const parent = nodeMap.get(parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    parentId = parent.parentId;
   }
   return { x, y };
 }

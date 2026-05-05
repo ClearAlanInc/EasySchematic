@@ -37,16 +37,17 @@ export interface NodeInfo {
   parentId?: string;
 }
 
-/** Resolve a node's absolute position (accounts for room parenting). */
+/** Resolve a node's absolute position (accounts for nested room parenting). */
 function getAbsolutePosition(node: NodeInfo, allNodes: NodeInfo[]): { x: number; y: number } {
   let x = node.position.x;
   let y = node.position.y;
-  if (node.parentId) {
-    const parent = allNodes.find((p) => p.id === node.parentId);
-    if (parent) {
-      x += parent.position.x;
-      y += parent.position.y;
-    }
+  let parentId = node.parentId;
+  while (parentId) {
+    const parent = allNodes.find((p) => p.id === parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    parentId = parent.parentId;
   }
   return { x, y };
 }
