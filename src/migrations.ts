@@ -14,7 +14,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
 
-export const CURRENT_SCHEMA_VERSION = 31;
+export const CURRENT_SCHEMA_VERSION = 32;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -367,7 +367,40 @@ const migrations: Record<number, Migration> = {
     data.version = 31;
     return data;
   },
+  31: (data) => {
+    // v31 → v32: manual edge waypoints become first-class React Flow nodes (selectable,
+    // box-drag-able alongside devices). The edge's manualWaypoints array stays as the
+    // canonical position store; waypoint nodes mirror it 1:1 and a sync layer keeps
+    // the two in step. This migration spawns the initial waypoint nodes.
+    if (Array.isArray(data.edges) && Array.isArray(data.nodes)) {
+      spawnWaypointNodes(data);
+    }
+    data.version = 32;
+    return data;
+  },
 };
+
+// ---------- v31 → v32 helpers ----------
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function spawnWaypointNodes(data: any): void {
+  const newNodes: any[] = [];
+  for (const edge of data.edges) {
+    const wps = edge.data?.manualWaypoints;
+    if (!Array.isArray(wps) || wps.length === 0) continue;
+    for (let i = 0; i < wps.length; i++) {
+      const p = wps[i];
+      newNodes.push({
+        id: `wp-${edge.id}-${i}`,
+        type: "waypoint",
+        position: { x: p.x, y: p.y },
+        data: { edgeId: edge.id, index: i },
+      });
+    }
+  }
+  if (newNodes.length > 0) data.nodes = [...data.nodes, ...newNodes];
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ---------- v30 → v31 helpers ----------
 

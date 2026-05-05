@@ -312,7 +312,17 @@ export interface StubLabelData {
 
 export type StubLabelNode = Node<StubLabelData, "stub-label">;
 
-export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode;
+export interface WaypointData {
+  [key: string]: unknown;
+  /** The connection edge this waypoint belongs to. */
+  edgeId: string;
+  /** Position within the edge's manualWaypoints array. */
+  index: number;
+}
+
+export type WaypointNode = Node<WaypointData, "waypoint">;
+
+export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode | WaypointNode;
 
 export interface ConnectionData {
   [key: string]: unknown;

@@ -37,6 +37,7 @@ import PendingSubmissionBanner from "./components/PendingSubmissionBanner";
 import PortContextMenu from "./components/PortContextMenu";
 import RoutingDebugOverlay from "./components/RoutingDebugOverlay";
 import RoutingTuningPanel from "./components/RoutingTuningPanel";
+import SelectionFilterBar from "./components/SelectionFilterBar";
 import RoomContextMenu from "./components/RoomContextMenu";
 import DeviceContextMenu from "./components/DeviceContextMenu";
 import StubLabelContextMenu from "./components/StubLabelContextMenu";
@@ -1123,6 +1124,20 @@ function SchematicCanvas() {
   const onNodeDrag = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
       const state = useSchematicStore.getState();
+
+      // Waypoint nodes are simple: snap to grid, no overlap or reparent logic.
+      if (draggedNode.type === "waypoint") {
+        const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
+        const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
+        if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
+          const updated = state.nodes.map((n) =>
+            n.id === draggedNode.id ? { ...n, position: { x: sx, y: sy } } : n,
+          );
+          useSchematicStore.setState({ nodes: updated as SchematicNode[] });
+        }
+        return;
+      }
+
       const snap = computeSnap(draggedNode as SchematicNode, state.nodes);
       setSnapGuides(snap.guides);
 
@@ -1164,8 +1179,31 @@ function SchematicCanvas() {
     (_event: React.MouseEvent, draggedNode: Node) => {
       setSnapGuides([]);
 
-      // Apply final snap so the node lands on the aligned position
       const state = useSchematicStore.getState();
+
+      // Waypoints don't participate in spacing/overlap/reparent logic. Just
+      // grid-snap the final position and bail out so the manualWaypoints sync
+      // (in store.onNodesChange) sees the resting position.
+      if (draggedNode.type === "waypoint") {
+        const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
+        const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
+        if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
+          const updated = state.nodes.map((n) =>
+            n.id === draggedNode.id ? { ...n, position: { x: sx, y: sy } } : n,
+          );
+          useSchematicStore.setState({
+            nodes: updated as SchematicNode[],
+            isDragging: false,
+            overlapNodeId: null,
+          });
+        } else {
+          useSchematicStore.setState({ isDragging: false, overlapNodeId: null });
+        }
+        flushPendingSnapshot();
+        return;
+      }
+
+      // Apply final snap so the node lands on the aligned position
       const snap = computeSnap(draggedNode as SchematicNode, state.nodes);
       let finalX = snap.x;
       let finalY = snap.y;
@@ -1461,6 +1499,7 @@ function SchematicCanvas() {
       <RoutingDebugOverlay />
     </ReactFlow>
     <RoutingTuningPanel />
+    <SelectionFilterBar />
     {quickAddPos && (
       <QuickAddDevice
         position={quickAddPos}

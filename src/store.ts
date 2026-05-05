@@ -32,6 +32,7 @@ import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
+import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector } from "./connectorTypes";
@@ -1005,27 +1006,40 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   onNodesChange: (changes) => {
     const updated = applyNodeChanges(changes, get().nodes) as SchematicNode[];
     // Keep room zIndex pinned low (React Flow may reset it)
-    set({
-      nodes: updated.map((n) => {
-        if (n.type !== "room") return n;
-        const locked = (n.data as import("./types").RoomData).locked;
-        return {
-          ...n,
-          zIndex: -1,
-          selectable: !locked,
-          className: locked ? "locked" : undefined,
-        };
-      }),
+    const normalized = updated.map((n) => {
+      if (n.type !== "room") return n;
+      const locked = (n.data as import("./types").RoomData).locked;
+      return {
+        ...n,
+        zIndex: -1,
+        selectable: !locked,
+        className: locked ? "locked" : undefined,
+      };
     });
+    // Mirror waypoint node positions back to canonical edge.data.manualWaypoints
+    // so the router and persistence see drag/multi-select-drag results.
+    const hasPositionChange = changes.some((c) => c.type === "position");
+    const oldEdges = get().edges;
+    const newEdges = hasPositionChange
+      ? syncEdgesFromWaypointNodes(oldEdges, normalized)
+      : oldEdges;
+    set({ nodes: normalized, ...(newEdges !== oldEdges ? { edges: newEdges } : {}) });
     get().saveToLocalStorage();
   },
 
   onEdgesChange: (changes) => {
-    if (changes.some((c) => c.type === "remove")) {
+    const hasRemove = changes.some((c) => c.type === "remove");
+    if (hasRemove) {
       const state = get();
       pushUndo({ nodes: state.nodes, edges: state.edges });
     }
-    set({ edges: applyEdgeChanges(changes, get().edges) as ConnectionEdge[] });
+    const newEdges = applyEdgeChanges(changes, get().edges) as ConnectionEdge[];
+    if (hasRemove) {
+      // Removed edges may have had waypoint nodes — reconcile them away.
+      set({ edges: newEdges, nodes: reconcileWaypointNodes(get().nodes, newEdges) });
+    } else {
+      set({ edges: newEdges });
+    }
     get().saveToLocalStorage();
   },
 
@@ -1243,6 +1257,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         .map((n) => n.id),
     );
 
+    // Capture selected waypoint nodes — their indices will be spliced out of the
+    // owning edge's manualWaypoints below before reconciliation re-spawns the rest.
+    const selectedWaypoints = state.nodes.filter(
+      (n) => n.type === "waypoint" && n.selected,
+    ) as import("./types").WaypointNode[];
+
     // Build a map for absolute position resolution (needed for multi-level nesting)
     const nodeMap = new Map(state.nodes.map((n) => [n.id, n]));
     function computeAbsolutePos(nId: string): { x: number; y: number } {
@@ -1253,13 +1273,25 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       return { x: n.position.x + p.x, y: n.position.y + p.y };
     }
 
-    // Also remove edges connected to deleted nodes
-    const newEdges = state.edges.filter(
+    // Also remove edges connected to deleted nodes (excluding waypoint nodes —
+    // a waypoint's source/target relationship doesn't exist; they're floating).
+    const deletedConnectingNodes = new Set(
+      [...selectedNodeIds].filter((id) => {
+        const n = nodeMap.get(id);
+        return n && n.type !== "waypoint";
+      }),
+    );
+    const survivingEdges = state.edges.filter(
       (e) =>
         !selectedEdgeIds.has(e.id) &&
-        !selectedNodeIds.has(e.source) &&
-        !selectedNodeIds.has(e.target),
+        !deletedConnectingNodes.has(e.source) &&
+        !deletedConnectingNodes.has(e.target),
     );
+
+    // Splice manualWaypoints entries for each selected waypoint node so their
+    // indices vanish from the canonical store. Waypoints belonging to deleted
+    // edges are dropped wholesale by reconcileWaypointNodes below.
+    const edgesAfterSplice = spliceWaypointsForRemovedNodes(survivingEdges, selectedWaypoints);
 
     const remainingNodes = state.nodes
       .filter((n) => !n.selected)
@@ -1276,6 +1308,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         return n;
       });
 
+    // After deleting nodes/edges, waypoint node ids may be stale (indices shifted
+    // or owning edges removed). Reconcile against the new canonical edges.
+    const reconciledNodes = reconcileWaypointNodes(remainingNodes, edgesAfterSplice);
+
     // Purge any pairwise distances referencing a deleted room (#146).
     let nextDistances = state.roomDistances;
     if (state.roomDistances && deletedRoomIds.size > 0) {
@@ -1290,8 +1326,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
 
     set({
-      nodes: renumberNodes(remainingNodes),
-      edges: newEdges,
+      nodes: renumberNodes(reconciledNodes),
+      edges: edgesAfterSplice,
       ...(nextDistances !== state.roomDistances ? { roomDistances: nextDistances } : {}),
     });
     get().saveToLocalStorage();
@@ -1329,7 +1365,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   copySelected: () => {
     const state = get();
-    const selectedNodes = state.nodes.filter((n) => n.selected);
+    // Waypoint nodes are derived from edge.data.manualWaypoints. Excluding them
+    // here keeps the clipboard small and lets paste re-spawn waypoints fresh
+    // (with re-keyed ids) via reconcileWaypointNodes.
+    const selectedNodes = state.nodes.filter((n) => n.selected && n.type !== "waypoint");
     if (selectedNodes.length === 0) return;
 
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
@@ -1400,15 +1439,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     // Deselect existing nodes/edges, add pasted ones as selected
     const current = get();
+    const mergedNodes = [
+      ...current.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
+      ...newNodes,
+    ];
+    const mergedEdges = [
+      ...current.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
+      ...newEdges,
+    ];
+    // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them.
     set({
-      nodes: renumberNodes([
-        ...current.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
-        ...newNodes,
-      ]),
-      edges: [
-        ...current.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
-        ...newEdges,
-      ],
+      nodes: renumberNodes(reconcileWaypointNodes(mergedNodes, mergedEdges)),
+      edges: mergedEdges,
     });
 
     // Update clipboard positions so repeated paste keeps offsetting
@@ -3496,9 +3538,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     };
 
     pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newEdges = [...state.edges.filter((e) => e.id !== edgeId), srcLeg, tgtLeg];
     set({
-      nodes: [...state.nodes, srcStubNode, tgtStubNode],
-      edges: [...state.edges.filter((e) => e.id !== edgeId), srcLeg, tgtLeg],
+      nodes: reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], newEdges),
+      edges: newEdges,
     });
     get().saveToLocalStorage();
   },
@@ -3547,9 +3590,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     };
 
     pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newEdges = [...state.edges.filter((e) => e.data?.linkedConnectionId !== linkedId), directEdge];
     set({
-      nodes: state.nodes.filter((n) => !stubIds.has(n.id)),
-      edges: [...state.edges.filter((e) => e.data?.linkedConnectionId !== linkedId), directEdge],
+      nodes: reconcileWaypointNodes(state.nodes.filter((n) => !stubIds.has(n.id)), newEdges),
+      edges: newEdges,
     });
     get().saveToLocalStorage();
   },
@@ -3575,12 +3619,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   setManualWaypoints: (edgeId, waypoints) => {
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newEdges = state.edges.map((e) =>
+      e.id === edgeId
+        ? { ...e, data: { ...e.data!, manualWaypoints: waypoints, autoRouteWaypoints: undefined } }
+        : e,
+    );
     set({
-      edges: state.edges.map((e) =>
-        e.id === edgeId
-          ? { ...e, data: { ...e.data!, manualWaypoints: waypoints, autoRouteWaypoints: undefined } }
-          : e,
-      ),
+      edges: newEdges,
+      nodes: reconcileWaypointNodes(state.nodes, newEdges),
     });
     get().saveToLocalStorage();
   },
@@ -3591,12 +3637,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     if (!edge?.data?.manualWaypoints) return;
     pushUndo({ nodes: state.nodes, edges: state.edges });
     const { manualWaypoints: _, ...restData } = edge.data;
+    const newEdges = state.edges.map((e) =>
+      e.id === edgeId
+        ? { ...e, data: restData as ConnectionEdge["data"] }
+        : e,
+    );
     set({
-      edges: state.edges.map((e) =>
-        e.id === edgeId
-          ? { ...e, data: restData as ConnectionEdge["data"] }
-          : e,
-      ),
+      edges: newEdges,
+      nodes: reconcileWaypointNodes(state.nodes, newEdges),
     });
     get().saveToLocalStorage();
   },
@@ -3872,8 +3920,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { manualWaypoints, autoRouteWaypoints, ...restData } = e.data;
         return { ...e, data: restData };
+      }) as typeof state.edges;
+      set({
+        autoRoute: true,
+        edges: updatedEdges,
+        nodes: reconcileWaypointNodes(state.nodes, updatedEdges),
+        _edgeWaypointStash: stash,
       });
-      set({ autoRoute: true, edges: updatedEdges as typeof state.edges, _edgeWaypointStash: stash });
     }
   },
 
@@ -3896,8 +3949,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           ...e,
           data: { ...e.data!, manualWaypoints: interior, autoRouteWaypoints: true },
         };
+      }) as typeof state.edges;
+      set({
+        autoRoute: false,
+        edges: updatedEdges,
+        nodes: reconcileWaypointNodes(state.nodes, updatedEdges),
+        _edgeWaypointStash: null,
+        autoRouteConfirmPending: false,
       });
-      set({ autoRoute: false, edges: updatedEdges as typeof state.edges, _edgeWaypointStash: null, autoRouteConfirmPending: false });
     } else {
       // Restore previous — use stash
       const stash = state._edgeWaypointStash;
@@ -3921,8 +3980,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           ...e,
           data: { ...e.data!, manualWaypoints: interior, autoRouteWaypoints: true },
         };
+      }) as typeof state.edges;
+      set({
+        autoRoute: false,
+        edges: updatedEdges,
+        nodes: reconcileWaypointNodes(state.nodes, updatedEdges),
+        _edgeWaypointStash: null,
+        autoRouteConfirmPending: false,
+        routedEdges: {},
       });
-      set({ autoRoute: false, edges: updatedEdges as typeof state.edges, _edgeWaypointStash: null, autoRouteConfirmPending: false, routedEdges: {} });
     }
   },
 
