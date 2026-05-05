@@ -71,8 +71,10 @@ export default function ConnectionsPage() {
       <h2>Line styles</h2>
       <p>
         Each connection can have a custom <strong>line style</strong> — solid (default),
-        dashed, dotted, or dash-dot. Set it per-connection via the right-click context menu,
-        or set a default line style per signal type in the <strong>Signal Colors</strong> panel.
+        dashed, dotted, or dash-dot. Set it per-connection by right-clicking the connection
+        and hovering the <strong>Line Style</strong> submenu, which previews each option as a
+        swatch before you commit. Or set a default line style per signal type in the{" "}
+        <strong>Signal Colors</strong> panel.
       </p>
 
       <h2>Multicable connections</h2>
