@@ -24,6 +24,7 @@ interface TemplateInput {
   thermalBtuh?: number;
   poeBudgetW?: number;
   poeDrawW?: number;
+  unitCost?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -168,6 +169,45 @@ export function validateTemplate(body: unknown): ValidationResult {
     if (port.gender != null && port.gender !== "male" && port.gender !== "female") {
       return { ok: false, error: `ports[${i}].gender must be 'male' or 'female'` };
     }
+    // networkConfig — optional object with known fields only
+    if (port.networkConfig != null) {
+      if (typeof port.networkConfig !== "object" || Array.isArray(port.networkConfig)) {
+        return { ok: false, error: `ports[${i}].networkConfig must be an object` };
+      }
+      const nc = port.networkConfig as Record<string, unknown>;
+      for (const field of ["ip", "subnetMask", "gateway"] as const) {
+        if (nc[field] != null && typeof nc[field] !== "string") {
+          return { ok: false, error: `ports[${i}].networkConfig.${field} must be a string` };
+        }
+      }
+      if (nc.vlan != null && (typeof nc.vlan !== "number" || !Number.isInteger(nc.vlan) || nc.vlan < 0 || nc.vlan > 4094)) {
+        return { ok: false, error: `ports[${i}].networkConfig.vlan must be an integer 0–4094` };
+      }
+      if (nc.dhcp != null && typeof nc.dhcp !== "boolean") {
+        return { ok: false, error: `ports[${i}].networkConfig.dhcp must be a boolean` };
+      }
+    }
+    // capabilities — optional object with known fields only
+    if (port.capabilities != null) {
+      if (typeof port.capabilities !== "object" || Array.isArray(port.capabilities)) {
+        return { ok: false, error: `ports[${i}].capabilities must be an object` };
+      }
+      const cap = port.capabilities as Record<string, unknown>;
+      if (cap.maxResolution != null && typeof cap.maxResolution !== "string") {
+        return { ok: false, error: `ports[${i}].capabilities.maxResolution must be a string` };
+      }
+      if (cap.maxFrameRate != null && (typeof cap.maxFrameRate !== "number" || cap.maxFrameRate < 0)) {
+        return { ok: false, error: `ports[${i}].capabilities.maxFrameRate must be a non-negative number` };
+      }
+      if (cap.maxBitDepth != null && (typeof cap.maxBitDepth !== "number" || cap.maxBitDepth < 0)) {
+        return { ok: false, error: `ports[${i}].capabilities.maxBitDepth must be a non-negative number` };
+      }
+      if (cap.colorSpaces != null) {
+        if (!Array.isArray(cap.colorSpaces) || cap.colorSpaces.length > 20 || cap.colorSpaces.some((c) => typeof c !== "string")) {
+          return { ok: false, error: `ports[${i}].capabilities.colorSpaces must be an array of up to 20 strings` };
+        }
+      }
+    }
   }
 
   // Slot family — optional string for expansion card templates
@@ -227,6 +267,9 @@ export function validateTemplate(body: unknown): ValidationResult {
   }
   if (obj.poeDrawW != null && (typeof obj.poeDrawW !== "number" || obj.poeDrawW < 0)) {
     return { ok: false, error: "poeDrawW must be a non-negative number" };
+  }
+  if (obj.unitCost != null && (typeof obj.unitCost !== "number" || obj.unitCost < 0)) {
+    return { ok: false, error: "unitCost must be a non-negative number" };
   }
 
   // Physical dimension fields — optional positive numbers
@@ -290,6 +333,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.thermalBtuh != null && { thermalBtuh: obj.thermalBtuh as number }),
       ...(obj.poeBudgetW != null && { poeBudgetW: obj.poeBudgetW as number }),
       ...(obj.poeDrawW != null && { poeDrawW: obj.poeDrawW as number }),
+      ...(obj.unitCost != null && { unitCost: obj.unitCost as number }),
       ...(obj.isVenueProvided != null && { isVenueProvided: obj.isVenueProvided as boolean }),
       ...(obj.heightMm != null && { heightMm: obj.heightMm as number }),
       ...(obj.widthMm != null && { widthMm: obj.widthMm as number }),

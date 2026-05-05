@@ -198,13 +198,13 @@ fresh.forEach(({ id, input }, i) => {
   lines.push(
     `INSERT INTO templates (` +
       `id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, ` +
-      `search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, ` +
+      `search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, unit_cost, ` +
       `is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, ` +
       `approved_at, approved_schema_version, needs_review` +
     `) VALUES (` +
       `'${id}', 1, ${sqlStr(input.deviceType)}, ${sqlStr(input.category)}, ${sqlStr(input.label)}, ` +
       `${sqlStr(input.manufacturer)}, ${sqlStr(input.modelNumber)}, ${sqlStr(input.color)}, ${sqlStr(input.imageUrl)}, ${sqlStr(input.referenceUrl)}, ` +
-      `${searchTerms}, ${ports}, ${slots}, ${sqlStr(input.slotFamily)}, ${sqlNum(input.powerDrawW)}, ${sqlNum(input.powerCapacityW)}, ${sqlStr(input.voltage)}, ${sqlNum(input.thermalBtuh)}, ${sqlNum(input.poeBudgetW)}, ${sqlNum(input.poeDrawW)}, ` +
+      `${searchTerms}, ${ports}, ${slots}, ${sqlStr(input.slotFamily)}, ${sqlNum(input.powerDrawW)}, ${sqlNum(input.powerCapacityW)}, ${sqlStr(input.voltage)}, ${sqlNum(input.thermalBtuh)}, ${sqlNum(input.poeBudgetW)}, ${sqlNum(input.poeDrawW)}, ${sqlNum(input.unitCost)}, ` +
       `${input.isVenueProvided ? "1" : "NULL"}, ${sqlNum(input.heightMm)}, ${sqlNum(input.widthMm)}, ${sqlNum(input.depthMm)}, ${sqlNum(input.weightKg)}, ${auxData}, ${i}, ` +
       `datetime('now'), '${currentSchemaVersion}', 0` +
     `);`
@@ -225,7 +225,7 @@ updates.forEach(({ id, input }) => {
       `image_url=${sqlStr(input.imageUrl)}, reference_url=${sqlStr(input.referenceUrl)}, ` +
       `search_terms=${searchTerms}, ports=${ports}, slots=${slots}, slot_family=${sqlStr(input.slotFamily)}, ` +
       `power_draw_w=${sqlNum(input.powerDrawW)}, power_capacity_w=${sqlNum(input.powerCapacityW)}, voltage=${sqlStr(input.voltage)}, ` +
-      `thermal_btuh=${sqlNum(input.thermalBtuh)}, poe_budget_w=${sqlNum(input.poeBudgetW)}, poe_draw_w=${sqlNum(input.poeDrawW)}, ` +
+      `thermal_btuh=${sqlNum(input.thermalBtuh)}, poe_budget_w=${sqlNum(input.poeBudgetW)}, poe_draw_w=${sqlNum(input.poeDrawW)}, unit_cost=${sqlNum(input.unitCost)}, ` +
       `is_venue_provided=${input.isVenueProvided ? "1" : "NULL"}, ` +
       `height_mm=${sqlNum(input.heightMm)}, width_mm=${sqlNum(input.widthMm)}, depth_mm=${sqlNum(input.depthMm)}, weight_kg=${sqlNum(input.weightKg)}, ` +
       `auxiliary_data=${auxData}, ` +

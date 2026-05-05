@@ -901,8 +901,8 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
+        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, unit_cost, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
       )
       .bind(
         templateRow.id,
@@ -924,6 +924,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.thermal_btuh,
         templateRow.poe_budget_w,
         templateRow.poe_draw_w,
+        templateRow.unit_cost,
         templateRow.is_venue_provided,
         templateRow.height_mm,
         templateRow.width_mm,
@@ -945,7 +946,7 @@ app.post("/submissions/:id/approve", async (c) => {
         `UPDATE templates
          SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
-             power_draw_w = ?, power_capacity_w = ?, voltage = ?, thermal_btuh = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
+             power_draw_w = ?, power_capacity_w = ?, voltage = ?, thermal_btuh = ?, poe_budget_w = ?, poe_draw_w = ?, unit_cost = ?, is_venue_provided = ?,
              height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, auxiliary_data = ?, sort_order = ?,
              version = version + 1, updated_at = CURRENT_TIMESTAMP, last_edited_by = ?,
              approved_at = datetime('now'), approved_by = ?, approved_schema_version = ?,
@@ -971,6 +972,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.thermal_btuh,
         templateRow.poe_budget_w,
         templateRow.poe_draw_w,
+        templateRow.unit_cost,
         templateRow.is_venue_provided,
         templateRow.height_mm,
         templateRow.width_mm,

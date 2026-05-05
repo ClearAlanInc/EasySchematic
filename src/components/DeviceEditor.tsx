@@ -77,6 +77,7 @@ export default function DeviceEditor() {
   const setCreatingNodeId = useSchematicStore((s) => s.setCreatingNodeId);
   const undo = useSchematicStore((s) => s.undo);
   const addCustomTemplate = useSchematicStore((s) => s.addCustomTemplate);
+  const updateCustomTemplate = useSchematicStore((s) => s.updateCustomTemplate);
   const customTemplates = useSchematicStore((s) => s.customTemplates);
   const templateHiddenSignals = useSchematicStore((s) => s.templateHiddenSignals);
   const currency = useSchematicStore((s) => s.currency);
@@ -127,6 +128,9 @@ export default function DeviceEditor() {
   const [integratedWithCable, setIntegratedWithCable] = useState(false);
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [adapterVisibility, setAdapterVisibility] = useState<"default" | "force-show" | "force-hide">("default");
+
+  // Search terms — raw string kept as-is so commas can be typed freely; parsed to array at save
+  const [searchTermsRaw, setSearchTermsRaw] = useState("");
 
   // Auxiliary data rows — each row carries its own header/footer slot.
   const [auxiliaryData, setAuxiliaryData] = useState<AuxRow[]>([]);
@@ -207,6 +211,7 @@ export default function DeviceEditor() {
     setIsVenueProvided(node.data.isVenueProvided ?? false);
     setAdapterVisibility(node.data.adapterVisibility ?? "default");
     setAuxiliaryData(normalizeAuxRows(node.data.auxiliaryData));
+    setSearchTermsRaw((node.data.searchTerms ?? []).join(", "));
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -283,11 +288,12 @@ export default function DeviceEditor() {
         const trimmed = trimTrailingEmpty(auxiliaryData);
         return trimmed.some((r) => r.text.trim()) ? { auxiliaryData: trimmed } : {};
       })()),
+      ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     };
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData]);
+  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -347,8 +353,60 @@ export default function DeviceEditor() {
         : {}),
       ...(existing?.slotFamily ? { slotFamily: existing.slotFamily as string } : {}),
       ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
+      ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     });
-  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData]);
+  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw]);
+
+  const handleUpdateUserTemplate = useCallback(() => {
+    if (!node?.data.templateId) return;
+    const finalPorts: Port[] = ports
+      .filter((p) => p.label.trim())
+      .map((p, i) => ({
+        ...p,
+        id: `tpl-${i}`,
+        label: p.label.trim(),
+      }));
+    const trimmedAux = trimTrailingEmpty(auxiliaryData);
+    const existing = node.data;
+    updateCustomTemplate(node.data.templateId, {
+      id: node.data.templateId,
+      deviceType: deviceType.trim() || "custom",
+      label: label.trim() || "Custom Device",
+      ports: finalPorts,
+      ...(color ? { color } : {}),
+      ...(category.trim() ? { category: category.trim() } : {}),
+      ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
+      ...(modelNumber.trim() ? { modelNumber: modelNumber.trim() } : {}),
+      ...(referenceUrl.trim() ? { referenceUrl: referenceUrl.trim() } : {}),
+      ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
+      ...(powerDrawW != null ? { powerDrawW } : {}),
+      ...(powerCapacityW != null ? { powerCapacityW } : {}),
+      ...(voltage ? { voltage } : {}),
+      ...(thermalBtuh != null ? { thermalBtuh } : {}),
+      ...(poeBudgetW != null ? { poeBudgetW } : {}),
+      ...(poeDrawW != null ? { poeDrawW } : {}),
+      ...(unitCost != null ? { unitCost } : {}),
+      ...(heightMm != null ? { heightMm } : {}),
+      ...(widthMm != null ? { widthMm } : {}),
+      ...(depthMm != null ? { depthMm } : {}),
+      ...(weightKg != null ? { weightKg } : {}),
+      ...(isVenueProvided ? { isVenueProvided: true } : {}),
+      ...(existing.slots && existing.slots.length > 0
+        ? {
+            slots: existing.slots.map((s) => ({
+              id: s.slotId,
+              label: s.label,
+              slotFamily: s.slotFamily ?? "",
+              ...(s.cardTemplateId ? { defaultCardId: s.cardTemplateId } : {}),
+            })),
+          }
+        : {}),
+      ...(existing.slotFamily ? { slotFamily: existing.slotFamily as string } : {}),
+      ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
+      ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
+    });
+    handleSave();
+  }, [node, ports, label, hostname, updateCustomTemplate, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw, handleSave]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -385,12 +443,14 @@ export default function DeviceEditor() {
       ...(thermalBtuh != null ? { thermalBtuh } : {}),
       ...(poeBudgetW != null ? { poeBudgetW } : {}),
       ...(poeDrawW != null ? { poeDrawW } : {}),
+      ...(unitCost != null ? { unitCost } : {}),
       ...(heightMm != null ? { heightMm } : {}),
       ...(widthMm != null ? { widthMm } : {}),
       ...(depthMm != null ? { depthMm } : {}),
       ...(weightKg != null ? { weightKg } : {}),
       ...(isVenueProvided ? { isVenueProvided: true } : {}),
       ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
+      ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     };
 
     const devicesUrl = import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
@@ -417,7 +477,7 @@ export default function DeviceEditor() {
     } catch (e) {
       console.error("Failed to create draft:", e);
     }
-  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, thermalBtuh, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData]);
+  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, unitCost, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, thermalBtuh, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData, searchTermsRaw]);
 
   const handleSaveAsPreset = useCallback(() => {
     if (!editingNodeId || !node?.data.templateId) return;
@@ -473,6 +533,30 @@ export default function DeviceEditor() {
     })));
     setHiddenPorts([]);
     setColor(tpl.color);
+
+    // For user templates, also revert all editable metadata fields
+    if (customTemplates.some((t) => t.id === templateId)) {
+      setLabel(tpl.label ?? "");
+      setManufacturer(tpl.manufacturer ?? "");
+      setModelNumber(tpl.modelNumber ?? "");
+      setReferenceUrl(tpl.referenceUrl ?? "");
+      setCategory(tpl.category ?? "");
+      setHostname(tpl.hostname ?? "");
+      setPowerDrawW(tpl.powerDrawW);
+      setPowerCapacityW(tpl.powerCapacityW);
+      setVoltage(tpl.voltage);
+      setThermalBtuh(tpl.thermalBtuh);
+      setPoeBudgetW(tpl.poeBudgetW);
+      setPoeDrawW(tpl.poeDrawW);
+      setUnitCost(tpl.unitCost);
+      setHeightMm(tpl.heightMm);
+      setWidthMm(tpl.widthMm);
+      setDepthMm(tpl.depthMm);
+      setWeightKg(tpl.weightKg);
+      setIsVenueProvided(tpl.isVenueProvided ?? false);
+      setAuxiliaryData(normalizeAuxRows(tpl.auxiliaryData));
+      setSearchTermsRaw((tpl.searchTerms ?? []).join(", "));
+    }
   }, [node, customTemplates]);
 
   const handleRevertToPreset = useCallback(() => {
@@ -588,10 +672,33 @@ export default function DeviceEditor() {
       });
     };
 
+    const isUserTemplate = customTemplates.some((t) => t.id === templateId);
+
     const dirtyVsTemplate = !!tpl && (
       !portsMatch(ports, tpl.ports) ||
       hiddenPorts.length > 0 ||
-      (color ?? undefined) !== (tpl.color ?? undefined)
+      (color ?? undefined) !== (tpl.color ?? undefined) ||
+      // For user templates, also check all editable metadata fields
+      (isUserTemplate && (
+        label !== (tpl.label ?? "") ||
+        (manufacturer ?? "") !== (tpl.manufacturer ?? "") ||
+        (modelNumber ?? "") !== (tpl.modelNumber ?? "") ||
+        (referenceUrl ?? "") !== (tpl.referenceUrl ?? "") ||
+        (category ?? "") !== (tpl.category ?? "") ||
+        (hostname ?? "") !== (tpl.hostname ?? "") ||
+        powerDrawW !== tpl.powerDrawW ||
+        powerCapacityW !== tpl.powerCapacityW ||
+        (voltage ?? undefined) !== (tpl.voltage ?? undefined) ||
+        thermalBtuh !== tpl.thermalBtuh ||
+        poeBudgetW !== tpl.poeBudgetW ||
+        poeDrawW !== tpl.poeDrawW ||
+        unitCost !== tpl.unitCost ||
+        heightMm !== tpl.heightMm ||
+        widthMm !== tpl.widthMm ||
+        depthMm !== tpl.depthMm ||
+        weightKg !== tpl.weightKg ||
+        isVenueProvided !== (tpl.isVenueProvided ?? false)
+      ))
     );
 
     const dirtyVsPreset = !!preset && (
@@ -601,7 +708,7 @@ export default function DeviceEditor() {
     );
 
     return { dirtyVsPreset, dirtyVsTemplate };
-  }, [templateId, ports, hiddenPorts, color, templatePresets, customTemplates]);
+  }, [templateId, ports, hiddenPorts, color, templatePresets, customTemplates, label, manufacturer, modelNumber, referenceUrl, category, hostname, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided]);
 
   if (!editingNodeId || !node) return null;
 
@@ -1048,6 +1155,26 @@ export default function DeviceEditor() {
             </details>
           )}
 
+          {/* Search Terms */}
+          <details className="text-xs">
+            <summary className="cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text)] select-none py-1">
+              {(() => { const n = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).length; return `Search Terms${n > 0 ? ` (${n})` : ""}`; })()}
+            </summary>
+            <div className="pt-1 pl-2">
+              <p className="text-[10px] text-[var(--color-text-muted)] mb-1">
+                Comma-separated keywords used to find this device in the library. Edit here and "Submit to Community" to contribute improvements back.
+              </p>
+              <input
+                type="text"
+                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                value={searchTermsRaw}
+                onChange={(e) => setSearchTermsRaw(e.target.value)}
+                placeholder="e.g. matrix, router, video switcher"
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+            </div>
+          </details>
+
           {/* Cost */}
           <details className="text-xs">
             <summary className="cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text)] select-none py-1">
@@ -1267,7 +1394,15 @@ export default function DeviceEditor() {
               Submit to Community
             </button>
           )}
-          {templateId && (
+          {templateId && customTemplates.some((t) => t.id === templateId) ? (
+            <button
+              onClick={handleUpdateUserTemplate}
+              className="px-3 py-1.5 text-xs rounded bg-[var(--color-surface)] text-[var(--color-text)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
+              title="Overwrite the saved user template with this configuration"
+            >
+              Update User Template
+            </button>
+          ) : templateId ? (
             <button
               onClick={handleSaveAsPreset}
               className="px-3 py-1.5 text-xs rounded bg-[var(--color-surface)] text-[var(--color-text)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
@@ -1275,7 +1410,7 @@ export default function DeviceEditor() {
             >
               Save as Preset
             </button>
-          )}
+          ) : null}
           {hasPreset && dirtyVsPreset && (
             <button
               onClick={handleRevertToPreset}

@@ -21,6 +21,7 @@ interface TemplateOutput {
   thermalBtuh?: number;
   poeBudgetW?: number;
   poeDrawW?: number;
+  unitCost?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -56,6 +57,7 @@ export interface TemplateRow {
   thermal_btuh: number | null;
   poe_budget_w: number | null;
   poe_draw_w: number | null;
+  unit_cost: number | null;
   is_venue_provided: number | null;
   height_mm: number | null;
   width_mm: number | null;
@@ -90,6 +92,7 @@ interface TemplateInput {
   thermalBtuh?: number;
   poeBudgetW?: number;
   poeDrawW?: number;
+  unitCost?: number;
   isVenueProvided?: boolean;
   heightMm?: number;
   widthMm?: number;
@@ -121,6 +124,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     thermal_btuh: input.thermalBtuh ?? null,
     poe_budget_w: input.poeBudgetW ?? null,
     poe_draw_w: input.poeDrawW ?? null,
+    unit_cost: input.unitCost ?? null,
     is_venue_provided: input.isVenueProvided ? 1 : null,
     height_mm: input.heightMm ?? null,
     width_mm: input.widthMm ?? null,
@@ -186,6 +190,7 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.thermal_btuh != null && { thermalBtuh: row.thermal_btuh }),
     ...(row.poe_budget_w != null && { poeBudgetW: row.poe_budget_w }),
     ...(row.poe_draw_w != null && { poeDrawW: row.poe_draw_w }),
+    ...(row.unit_cost != null && { unitCost: row.unit_cost }),
     ...(row.is_venue_provided && { isVenueProvided: true }),
     ...(row.height_mm != null && { heightMm: row.height_mm }),
     ...(row.width_mm != null && { widthMm: row.width_mm }),

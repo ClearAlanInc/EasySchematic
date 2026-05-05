@@ -102,6 +102,79 @@ export default function DeviceTemplateSchemaPage() {
         </tbody>
       </table>
 
+      <h2>Port-level fields</h2>
+      <p>
+        Each object in the <code>ports</code> array supports additional per-port fields beyond
+        the required <code>label</code>, <code>signalType</code>, and <code>direction</code>.
+      </p>
+
+      <h3><code>networkConfig</code> — network port pre-configuration</h3>
+      <p>
+        For Ethernet and fiber ports on addressable devices (switches, NVX endpoints, Dante
+        interfaces, etc.), you can pre-populate IP configuration that appears in the port
+        inspector when the device is placed on a schematic.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ip</code></td><td>string</td><td>Static IP address, e.g. "192.168.1.10"</td></tr>
+          <tr><td><code>subnetMask</code></td><td>string</td><td>e.g. "255.255.255.0"</td></tr>
+          <tr><td><code>gateway</code></td><td>string</td><td>e.g. "192.168.1.1"</td></tr>
+          <tr><td><code>vlan</code></td><td>integer 0–4094</td><td>VLAN ID</td></tr>
+          <tr><td><code>dhcp</code></td><td>boolean</td><td>true if the port obtains an address via DHCP</td></tr>
+        </tbody>
+      </table>
+      <p>Example — a switch with a pre-configured management port:</p>
+      <pre><code>{`{
+  "label": "Cisco SG350-10",
+  "manufacturer": "Cisco",
+  "modelNumber": "SG350-10",
+  "deviceType": "network-switch",
+  "referenceUrl": "https://www.cisco.com/c/en/us/products/switches/sg350-10-10-port-gigabit-managed-switch",
+  "ports": [
+    {
+      "label": "MGMT",
+      "signalType": "ethernet",
+      "connectorType": "rj45",
+      "direction": "bidirectional",
+      "networkConfig": { "ip": "192.168.1.1", "subnetMask": "255.255.255.0", "vlan": 1 }
+    }
+  ]
+}`}</code></pre>
+
+      <h3><code>capabilities</code> — video port capabilities</h3>
+      <p>
+        For HDMI, DisplayPort, SDI, and other video ports, you can record the signal
+        capabilities the port supports. These appear in the port inspector and help
+        document max resolution, frame rate, and color space constraints.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>maxResolution</code></td><td>string</td><td>e.g. "4K", "1080p", "8K"</td></tr>
+          <tr><td><code>maxFrameRate</code></td><td>number</td><td>Frames per second, e.g. 60</td></tr>
+          <tr><td><code>maxBitDepth</code></td><td>number</td><td>Bits per channel, e.g. 10</td></tr>
+          <tr><td><code>colorSpaces</code></td><td>string[]</td><td>Supported color spaces, e.g. ["Rec.709", "Rec.2020", "DCI-P3"] (max 20)</td></tr>
+        </tbody>
+      </table>
+      <p>Example — a 4K HDMI output:</p>
+      <pre><code>{`{
+  "label": "HDMI OUT",
+  "signalType": "hdmi",
+  "connectorType": "hdmi",
+  "direction": "output",
+  "capabilities": {
+    "maxResolution": "4K",
+    "maxFrameRate": 60,
+    "maxBitDepth": 10,
+    "colorSpaces": ["Rec.709", "Rec.2020"]
+  }
+}`}</code></pre>
+
       <h2>Port direction values</h2>
       <ul>
         <li><code>input</code> — accepts signal flowing in</li>

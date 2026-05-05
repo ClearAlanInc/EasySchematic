@@ -253,6 +253,7 @@ interface SchematicState {
 
   // Custom templates
   addCustomTemplate: (template: DeviceTemplate) => void;
+  updateCustomTemplate: (id: string, template: DeviceTemplate) => void;
   removeCustomTemplate: (deviceType: string) => void;
   clearAllCustomTemplates: () => void;
   addOwnedGear: (template: DeviceTemplate, quantity?: number) => void;
@@ -1216,6 +1217,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ...(template.voltage ? { voltage: template.voltage } : {}),
         ...(template.poeBudgetW != null ? { poeBudgetW: template.poeBudgetW } : {}),
         ...(template.poeDrawW != null ? { poeDrawW: template.poeDrawW } : {}),
+        ...(template.unitCost != null ? { unitCost: template.unitCost } : {}),
+        ...(template.thermalBtuh != null ? { thermalBtuh: template.thermalBtuh } : {}),
+        ...(template.searchTerms?.length ? { searchTerms: [...template.searchTerms] } : {}),
         ...(template.heightMm != null ? { heightMm: template.heightMm } : {}),
         ...(template.widthMm != null ? { widthMm: template.widthMm } : {}),
         ...(template.depthMm != null ? { depthMm: template.depthMm } : {}),
@@ -2222,6 +2226,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({ customTemplates: updated, customTemplateOrder: order });
     saveCustomTemplates(updated);
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
+  },
+
+  updateCustomTemplate: (id, template) => {
+    const updated = get().customTemplates.map((t) => (t.id === id ? template : t));
+    set({ customTemplates: updated });
+    saveCustomTemplates(updated);
   },
 
   addOwnedGear: (template, quantity = 1) => {
