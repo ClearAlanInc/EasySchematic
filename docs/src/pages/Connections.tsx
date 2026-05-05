@@ -244,6 +244,29 @@ export default function ConnectionsPage() {
         <li>Stubbed connections don't generate <strong>page-break crossing labels</strong></li>
       </ul>
 
+      <h3>Customizing stub labels</h3>
+      <p>
+        Two options in <strong>Preferences → Display → Stub labels</strong> control what appears on stub labels
+        across the whole schematic:
+      </p>
+      <ul>
+        <li>
+          <strong>Show port name on stub labels</strong> — adds the destination port in brackets after the device,
+          e.g. <code>→ Projector [HDMI In 1] (Main Hall) Pg 3</code>. Useful when a device has many ports of the
+          same signal type.
+        </li>
+        <li>
+          <strong>Page number on stub labels</strong> — choose <em>Cross-page only</em> (default), <em>Always</em>,
+          or <em>Never</em>. Cross-page only suppresses the <code>Pg N</code> tag when both ends of a stub
+          happen to land on the same printed page, which is usually noise.
+        </li>
+      </ul>
+      <p>
+        Both settings can also be overridden on a single connection. Right-click a stubbed connection and use
+        <strong>Stub Port</strong> or <strong>Stub Page</strong> — each cycles through <em>Default</em>
+        (use the global setting) and explicit values, so an individual stub can opt in or out independently.
+      </p>
+
       <h2>Connector compatibility</h2>
       <p>
         Ports have a <strong>connector type</strong> (XLR-3, RJ45, HDMI, etc.) in addition to their signal type.

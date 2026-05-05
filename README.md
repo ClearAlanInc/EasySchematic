@@ -57,7 +57,7 @@
 - **Multicable support** — cable accessory templates (snakes, socapex), trunk ports, break-in/break-out devices
 - **Cable ID labels** — auto-assigned with type-prefix naming (e.g. "SDI-1", "HDMI-2") or sequential ("Cable 1", "Cable 2")
 - **Line jump arcs** at connection crossings
-- **Stubbed connections** — render as short stubs with destination labels (device name, room, page) instead of full routed lines; drag labels to reposition, add intermediate waypoints via right-click
+- **Stubbed connections** — render as short stubs with destination labels (device name, optional port, room, page) instead of full routed lines; drag labels to reposition, add intermediate waypoints via right-click. Globally toggle port-name display and page-number mode (cross-page only / always / never), or override per connection.
 - **Connector mismatch override** — force-connect ports with incompatible connectors
 - **Bare wire compatibility** — Phoenix and Terminal Block connectors connect to any connector type without adapter warnings
 - **68 signal types**, all color-coded (see below)
