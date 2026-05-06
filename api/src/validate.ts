@@ -30,6 +30,7 @@ interface TemplateInput {
   widthMm?: number;
   depthMm?: number;
   weightKg?: number;
+  rackForm?: "full" | "half" | "shelf-only";
   auxiliaryData?: AuxRowInput[];
   sortOrder?: number;
 }
@@ -286,6 +287,11 @@ export function validateTemplate(body: unknown): ValidationResult {
     return { ok: false, error: "weightKg must be a non-negative number" };
   }
 
+  // Rack-form override — optional enum
+  if (obj.rackForm != null && obj.rackForm !== "full" && obj.rackForm !== "half" && obj.rackForm !== "shelf-only") {
+    return { ok: false, error: "rackForm must be 'full', 'half', or 'shelf-only'" };
+  }
+
   // Auxiliary data — optional array of row objects. Each row has a text string and an
   // optional header/footer slot. Blank text values allowed (they render as separators).
   if (obj.auxiliaryData != null) {
@@ -339,6 +345,7 @@ export function validateTemplate(body: unknown): ValidationResult {
       ...(obj.widthMm != null && { widthMm: obj.widthMm as number }),
       ...(obj.depthMm != null && { depthMm: obj.depthMm as number }),
       ...(obj.weightKg != null && { weightKg: obj.weightKg as number }),
+      ...(obj.rackForm != null && { rackForm: obj.rackForm as "full" | "half" | "shelf-only" }),
       ...(obj.auxiliaryData != null && { auxiliaryData: obj.auxiliaryData as AuxRowInput[] }),
       ...(obj.sortOrder != null && { sortOrder: obj.sortOrder as number }),
     },

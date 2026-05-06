@@ -45,6 +45,9 @@ import RoomEditor from "./components/RoomEditor";
 import AnnotationEditor from "./components/AnnotationEditor";
 import QuickAddDevice from "./components/QuickAddDevice";
 import DeviceCreatorPicker from "./components/DeviceCreatorPicker";
+import PageTabs from "./components/PageTabs";
+import RackPage from "./components/RackPage";
+import PrintSheetPage from "./components/PrintSheetPage";
 import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, type GuideLine } from "./snapUtils";
 import { STUB_W_EST, STUB_H_EST } from "./stubPlacement";
 import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
@@ -1617,6 +1620,12 @@ function DemoBanner() {
 
 export default function App() {
   const printView = useSchematicStore((s) => s.printView);
+  const activePage = useSchematicStore((s) => s.activePage);
+  const activePgType = useSchematicStore((s) => {
+    if (!s.activePage || s.activePage === "schematic") return null;
+    return s.pages.find((p) => p.id === s.activePage)?.type ?? null;
+  });
+  const isSchematicActive = activePage === "schematic";
 
   // Handle /s/{token} URLs for shared schematics
   useEffect(() => {
@@ -1639,21 +1648,28 @@ export default function App() {
       </div>
       <DemoBanner />
       <PendingSubmissionBanner />
-      {printView && <PrintViewBar />}
-      <PrintTitleBlock />
-      <div className="flex flex-1 overflow-hidden">
-        <div data-print-hide data-mobile-hide>
-          <DeviceLibrary />
+      {printView && isSchematicActive && <PrintViewBar />}
+      {isSchematicActive && <PrintTitleBlock />}
+      <PageTabs />
+      {isSchematicActive ? (
+        <div className="flex flex-1 overflow-hidden">
+          <div data-print-hide data-mobile-hide>
+            <DeviceLibrary />
+          </div>
+          <div className="flex-1">
+            <SchematicCanvas />
+          </div>
+          <div data-print-hide className="hidden md:flex">
+            <ViewOptionsPanel />
+            <ShowInfoPanel />
+            <SignalColorPanel />
+          </div>
         </div>
-        <div className="flex-1">
-          <SchematicCanvas />
-        </div>
-        <div data-print-hide className="hidden md:flex">
-          <ViewOptionsPanel />
-          <ShowInfoPanel />
-          <SignalColorPanel />
-        </div>
-      </div>
+      ) : activePgType === "print-sheet" ? (
+        <PrintSheetPage />
+      ) : (
+        <RackPage />
+      )}
       <DeviceEditor />
       <RoomEditor />
       <AnnotationEditor />

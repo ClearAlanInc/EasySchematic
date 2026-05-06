@@ -65,7 +65,6 @@ export default function RoomContextMenu() {
   const node = useSchematicStore.getState().nodes.find((n) => n.id === menu.nodeId);
   const roomData = node?.data as RoomData | undefined;
   const isLocked = !!roomData?.locked;
-  const isNested = !!node?.parentId;
   const isEquipmentRack = !!roomData?.isEquipmentRack;
 
   return (
@@ -83,12 +82,10 @@ export default function RoomContextMenu() {
     >
       <MenuItem label="Edit Properties..." onClick={editProperties} />
       <MenuItem label={isLocked ? "Unlock Room" : "Lock Room"} onClick={toggleLock} />
-      {isNested && (
-        <MenuItem
-          label={isEquipmentRack ? "Remove Equipment Rack" : "Mark as Equipment Rack"}
-          onClick={toggleEquipmentRack}
-        />
-      )}
+      <MenuItem
+        label={isEquipmentRack ? "Remove Equipment Rack" : "Mark as Equipment Rack"}
+        onClick={toggleEquipmentRack}
+      />
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Delete Room" onClick={deleteRoom} danger />
       <MenuItem label="Delete Room & Contents" onClick={deleteRoomAndContents} danger />

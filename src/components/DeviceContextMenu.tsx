@@ -1,15 +1,20 @@
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSchematicStore } from "../store";
+import type { DeviceData, RackElevationPage } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
+import { inferRackHeightU } from "../rackUtils";
 
 export default function DeviceContextMenu() {
   const menu = useSchematicStore((s) => s.deviceContextMenu);
+  const allPages = useSchematicStore((s) => s.pages);
+  const pages = useMemo(() => allPages.filter((p): p is RackElevationPage => p.type === "rack-elevation"), [allPages]);
+  const setActivePage = useSchematicStore((s) => s.setActivePage);
+  const nodes = useSchematicStore((s) => s.nodes);
   const { ref: menuRef, pos: menuPos } = useContextMenuPosition(
     menu?.screenX ?? 0,
     menu?.screenY ?? 0,
   );
 
-  // Close on click anywhere or Escape
   useEffect(() => {
     if (!menu) return;
     const close = () => useSchematicStore.setState({ deviceContextMenu: null });
@@ -43,6 +48,14 @@ export default function DeviceContextMenu() {
 
   if (!menu) return null;
 
+  const { nodeId } = menu;
+  const node = nodes.find((n) => n.id === nodeId);
+  const deviceData = node?.type === "device" ? (node.data as DeviceData) : null;
+
+  const placement = pages
+    .flatMap((p) => p.placements.map((pl) => ({ page: p, placement: pl })))
+    .find((x) => x.placement.deviceNodeId === nodeId);
+
   return (
     <div
       ref={menuRef}
@@ -57,16 +70,76 @@ export default function DeviceContextMenu() {
       onClick={(e) => e.stopPropagation()}
     >
       <MenuItem label="Edit Properties..." onClick={editProperties} />
+
+      {deviceData && (
+        <>
+          <div className="border-t border-gray-200 my-1" />
+          {placement ? (
+            <MenuItem
+              label={`Show in Rack (${placement.page.label})`}
+              onClick={() => {
+                setActivePage(placement.page.id);
+                useSchematicStore.setState({ deviceContextMenu: null });
+              }}
+            />
+          ) : pages.length > 0 ? (
+            <>
+              <div className="px-3 py-1 text-neutral-400 text-[10px] uppercase tracking-wider">
+                Place in Rack
+              </div>
+              {pages.map((page) =>
+                page.racks.map((rack) => (
+                  <MenuItem
+                    key={`${page.id}-${rack.id}`}
+                    label={`${rack.label} (${rack.heightU}U)`}
+                    indent
+                    onClick={() => {
+                      const state = useSchematicStore.getState();
+                      const heightU = inferRackHeightU(deviceData);
+                      for (let u = 1; u <= rack.heightU - heightU + 1; u++) {
+                        if (state.isRackSlotAvailable(page.id, rack.id, u, heightU, "front")) {
+                          state.addRackPlacement(page.id, {
+                            rackId: rack.id,
+                            deviceNodeId: nodeId,
+                            uPosition: u,
+                            face: "front",
+                          });
+                          state.addToast(`Placed ${deviceData.label} in ${rack.label} at U${u}`, "success");
+                          useSchematicStore.setState({ deviceContextMenu: null });
+                          return;
+                        }
+                      }
+                      state.addToast(`No space in ${rack.label} for ${heightU}U device`, "error");
+                      useSchematicStore.setState({ deviceContextMenu: null });
+                    }}
+                  />
+                ))
+              )}
+            </>
+          ) : null}
+        </>
+      )}
+
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Delete Device" onClick={deleteDevice} danger />
     </div>
   );
 }
 
-function MenuItem({ label, onClick, danger }: { label: string; onClick: () => void; danger?: boolean }) {
+function MenuItem({
+  label,
+  onClick,
+  danger,
+  indent,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  indent?: boolean;
+}) {
   return (
     <button
-      className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer ${
+      className={`w-full text-left py-1.5 text-xs cursor-pointer ${indent ? "px-5" : "px-3"} ${
         danger
           ? "text-red-600 hover:bg-red-50 hover:text-red-700"
           : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"

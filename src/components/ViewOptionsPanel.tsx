@@ -26,6 +26,8 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const setHideUnconnectedPorts = useSchematicStore((s) => s.setHideUnconnectedPorts);
   const showLineJumps = useSchematicStore((s) => s.showLineJumps);
   const setShowLineJumps = useSchematicStore((s) => s.setShowLineJumps);
+  const showFacePlateDetail = useSchematicStore((s) => s.showFacePlateDetail);
+  const setShowFacePlateDetail = useSchematicStore((s) => s.setShowFacePlateDetail);
   const showCableIdLabels = useSchematicStore((s) => s.showCableIdLabels);
   const setShowCableIdLabels = useSchematicStore((s) => s.setShowCableIdLabels);
   const showCustomLabels = useSchematicStore((s) => s.showCustomLabels);
@@ -423,6 +425,23 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
             className="w-3 h-3 accent-blue-500 cursor-pointer"
           />
           <span className="text-xs text-[var(--color-text)]">Hide all adapters</span>
+        </label>
+
+        {/* Divider */}
+        <div className="border-t border-[var(--color-border)] my-2" />
+
+        {/* Racks */}
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+          Racks
+        </div>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showFacePlateDetail}
+            onChange={(e) => setShowFacePlateDetail(e.target.checked)}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Show face-plate detail (advanced)</span>
         </label>
 
       </div>

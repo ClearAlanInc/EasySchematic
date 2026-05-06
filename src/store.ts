@@ -16,6 +16,13 @@ import type {
   OwnedGearItem,
   Port,
   SchematicFile,
+  SchematicPage,
+  RackElevationPage,
+  PrintSheetPage,
+  PrintViewport,
+  RackData,
+  RackDevicePlacement,
+  RackAccessory,
   TitleBlock,
   TitleBlockLayout,
   TemplatePreset,
@@ -36,6 +43,7 @@ import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForR
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector } from "./connectorTypes";
+import { inferRackHeightU, inferRackForm, shelfInnerWidthMm } from "./rackUtils";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
@@ -43,6 +51,7 @@ import { getTemplateById } from "./templateApi";
 import { syncDeviceWithTemplate, type SyncResult } from "./templateSync";
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
 import { computeCableSchedule } from "./cableSchedule";
+import { autoFillSheetForRack } from "./printSheetAutoFill";
 
 /** Fix UTF-8 → Windows-1252 double-encoding in string values (e.g. → becomes â†').
  *  Applied on import so old/corrupted saves display correctly. */
@@ -291,9 +300,10 @@ interface SchematicState {
   // Manual edge routing
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
+  deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
+  setDeviceContextMenu: (menu: { nodeId: string; screenX: number; screenY: number } | null) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
   roomContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
-  deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   stubLabelContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   portContextMenu: { nodeId: string; portId: string; screenX: number; screenY: number } | null;
 
@@ -467,6 +477,10 @@ interface SchematicState {
   showLineJumps: boolean;
   setShowLineJumps: (show: boolean) => void;
 
+  /** Rack: show connector-level face-plate detail (default off; advanced) */
+  showFacePlateDetail: boolean;
+  setShowFacePlateDetail: (show: boolean) => void;
+
   // Connection labels (#5, #61)
   /** @deprecated Use showCableIdLabels instead */
   showConnectionLabels: boolean;
@@ -506,6 +520,56 @@ interface SchematicState {
   cloudSavedAt: string | null;
   setCloudSchematicId: (id: string | null) => void;
   setCloudSavedAt: (ts: string | null) => void;
+
+  // Rack builder pages
+  pages: SchematicPage[];
+  /** "schematic" for the main signal flow, or a page ID for rack elevation pages */
+  activePage: string;
+  setActivePage: (pageId: string) => void;
+  addRackPage: (label: string) => string;
+  removeRackPage: (pageId: string) => void;
+  renameRackPage: (pageId: string, label: string) => void;
+  addRack: (pageId: string, rack: Omit<RackData, "id">) => string;
+  removeRack: (pageId: string, rackId: string) => void;
+  updateRack: (pageId: string, rackId: string, patch: Partial<RackData>) => void;
+  addRackPlacement: (pageId: string, placement: Omit<RackDevicePlacement, "id">) => string;
+  /** Drop a device into a rack, routing to direct/half/shelf-mount based on its physical
+   *  dimensions (see `inferRackForm`). Returns the resulting placement id, or null on
+   *  rejection (oversize device). */
+  addPlacementSmart: (
+    pageId: string,
+    rackId: string,
+    deviceNodeId: string,
+    uPosition: number,
+    face: "front" | "rear",
+  ) => { ok: true; placementId: string; shelfId?: string } | { ok: false; reason: "oversize" | "no-page" | "no-device" };
+  removeRackPlacement: (pageId: string, placementId: string) => void;
+  updateRackPlacement: (pageId: string, placementId: string, patch: Partial<RackDevicePlacement>) => void;
+  addRackAccessory: (pageId: string, accessory: Omit<RackAccessory, "id">) => string;
+  updateRackAccessory: (pageId: string, accessoryId: string, patch: Partial<RackAccessory>) => void;
+  removeRackAccessory: (pageId: string, accessoryId: string) => void;
+  /** Remove a shelf with its mounted devices, returning them to the unracked pool. */
+  removeRackAccessoryWithOccupants: (pageId: string, accessoryId: string) => void;
+  /** Mount a device on a shelf accessory (face/uPosition inherited from the shelf). */
+  addShelfMountedDevice: (pageId: string, shelfId: string, deviceNodeId: string) => string | null;
+  /** Check if a U range is available in a rack for placement */
+  isRackSlotAvailable: (pageId: string, rackId: string, uPosition: number, heightU: number, face: "front" | "rear", halfRackSide?: "left" | "right", excludePlacementId?: string, excludeAccessoryId?: string) => boolean;
+  /** Link a schematic room to a rack-builder rack (and update both sides atomically). */
+  linkRoomToRack: (roomId: string, pageId: string, rackId: string) => void;
+  /** Remove the link between a room and its rack. */
+  unlinkRoom: (roomId: string) => void;
+  // Print sheet page CRUD
+  addPrintSheetPage: (label?: string) => string;
+  removePrintSheetPage: (pageId: string) => void;
+  renamePrintSheetPage: (pageId: string, label: string) => void;
+  duplicateRackPage: (pageId: string) => string;
+  duplicatePrintSheetPage: (pageId: string) => string;
+  addViewport: (pageId: string, viewport: Omit<PrintViewport, "id">) => string;
+  updateViewport: (pageId: string, viewportId: string, patch: Partial<PrintViewport>) => void;
+  removeViewport: (pageId: string, viewportId: string) => void;
+  setPrintSheetPaper: (pageId: string, paperId: string, orientation: "landscape" | "portrait", customWidthIn?: number, customHeightIn?: number) => void;
+  /** Move a rack (and all its placements + accessories) from one rack-elevation page to another. */
+  moveRackToPage: (srcPageId: string, rackId: string, dstPageId: string) => void;
 
   // Local file handle (File System Access API — Chromium only, not persisted)
   fileHandle: FileSystemFileHandle | null;
@@ -550,6 +614,70 @@ function nextNoteId(): string {
   return `note-${++noteIdCounter}`;
 }
 
+let rackPageIdCounter = 0;
+function nextRackPageId(): string {
+  return `rackpage-${++rackPageIdCounter}`;
+}
+
+let rackIdCounter = 0;
+function nextRackId(): string {
+  return `rack-${++rackIdCounter}`;
+}
+
+let placementIdCounter = 0;
+function nextPlacementId(): string {
+  return `rp-${++placementIdCounter}`;
+}
+
+let accessoryIdCounter = 0;
+function nextAccessoryId(): string {
+  return `ra-${++accessoryIdCounter}`;
+}
+
+let printSheetIdCounter = 0;
+function nextPrintSheetId(): string {
+  return `printsheet-${++printSheetIdCounter}`;
+}
+
+let viewportIdCounter = 0;
+function nextViewportId(): string {
+  return `viewport-${++viewportIdCounter}`;
+}
+
+/** Apply fn to the rack-elevation page with the given id; leave other pages untouched. */
+function mapElevationPage(pages: SchematicPage[], pageId: string, fn: (p: RackElevationPage) => RackElevationPage): SchematicPage[] {
+  return pages.map((p) => (p.id === pageId && p.type === "rack-elevation") ? fn(p) : p);
+}
+
+/** Sync rack-related counters from pages data. */
+function syncRackCounters(pages: SchematicPage[]) {
+  for (const page of pages) {
+    const pm = page.id.match(/^rackpage-(\d+)$/);
+    if (pm) rackPageIdCounter = Math.max(rackPageIdCounter, Number(pm[1]));
+    if (page.type === "print-sheet") {
+      for (const vp of page.viewports) {
+        const vm = vp.id.match(/^viewport-(\d+)$/);
+        if (vm) viewportIdCounter = Math.max(viewportIdCounter, Number(vm[1]));
+        const sm = page.id.match(/^printsheet-(\d+)$/);
+        if (sm) printSheetIdCounter = Math.max(printSheetIdCounter, Number(sm[1]));
+      }
+      continue;
+    }
+    for (const rack of page.racks) {
+      const rm = rack.id.match(/^rack-(\d+)$/);
+      if (rm) rackIdCounter = Math.max(rackIdCounter, Number(rm[1]));
+    }
+    for (const p of page.placements) {
+      const pm2 = p.id.match(/^rp-(\d+)$/);
+      if (pm2) placementIdCounter = Math.max(placementIdCounter, Number(pm2[1]));
+    }
+    for (const a of page.accessories) {
+      const am = a.id.match(/^ra-(\d+)$/);
+      if (am) accessoryIdCounter = Math.max(accessoryIdCounter, Number(am[1]));
+    }
+  }
+}
+
 /** Sync counters so new IDs never collide with existing ones. */
 function syncCounters(nodes: SchematicNode[], edges: ConnectionEdge[]) {
   for (const n of nodes) {
@@ -573,6 +701,7 @@ const PASTE_GAP = 20;
 interface Snapshot {
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
+  pages: SchematicPage[];
   autoRoute?: boolean;
 }
 const MAX_HISTORY = 50;
@@ -588,7 +717,9 @@ export function setReconnectingEdgeId(id: string | null) {
   _reconnectingEdgeId = id;
 }
 
-function pushUndo(snapshot: Snapshot) {
+function pushUndo(partial: { nodes: SchematicNode[]; edges: ConnectionEdge[]; autoRoute?: boolean }) {
+  const pages = useSchematicStore?.getState?.()?.pages ?? [];
+  const snapshot: Snapshot = { ...partial, pages };
   undoStack.push(structuredClone(pendingUndoSnapshot ?? snapshot));
   pendingUndoSnapshot = null;
   if (undoStack.length > MAX_HISTORY) undoStack.shift();
@@ -904,9 +1035,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   categoryOrder: loadCategoryOrder(),
   routedEdges: {},
   routingDebugData: null,
+  deviceContextMenu: null,
+  setDeviceContextMenu: (menu) => set({ deviceContextMenu: menu }),
   edgeContextMenu: null,
   roomContextMenu: null,
-  deviceContextMenu: null,
   stubLabelContextMenu: null,
   portContextMenu: null,
   autoRoute: true,
@@ -963,6 +1095,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   labelCase: DEFAULT_LABEL_CASE,
   currency: "USD",
   showLineJumps: true,
+  showFacePlateDetail: false,
   showConnectionLabels: true,
   showCableIdLabels: true,
   showCustomLabels: true,
@@ -985,6 +1118,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   hiddenAdapterNodeIds: new Set(),
   hiddenVirtualEdgeIds: new Set(),
   virtualEdgeGradients: {},
+  pages: [],
+  activePage: "schematic",
 
   setHideAdapters: (hide) => {
     const state = get();
@@ -1312,6 +1447,32 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         return n;
       });
 
+    // Cascade-remove rack placements for deleted devices; clear room links for deleted rooms
+    const pages = state.pages.length > 0 && selectedNodeIds.size > 0
+      ? state.pages.map((page): SchematicPage => {
+          if (page.type !== "rack-elevation") return page;
+          return {
+            ...page,
+            placements: page.placements.filter((p) => !selectedNodeIds.has(p.deviceNodeId)),
+            racks: page.racks.map((r) =>
+              r.linkedRoomId && deletedRoomIds.has(r.linkedRoomId)
+                ? { ...r, linkedRoomId: undefined }
+                : r
+            ),
+          };
+        })
+      : state.pages;
+
+    // Notify user if rack placements were removed
+    if (pages !== state.pages) {
+      const elevPages = (ps: SchematicPage[]) => ps.filter((p): p is RackElevationPage => p.type === "rack-elevation");
+      const removedCount = elevPages(state.pages).reduce((sum, p) => sum + p.placements.length, 0) -
+        elevPages(pages).reduce((sum, p) => sum + p.placements.length, 0);
+      if (removedCount > 0) {
+        get().addToast(`Removed ${removedCount} rack placement${removedCount > 1 ? "s" : ""} for deleted device${selectedNodeIds.size > 1 ? "s" : ""}`, "info");
+      }
+    }
+
     // After deleting nodes/edges, waypoint node ids may be stale (indices shifted
     // or owning edges removed). Reconcile against the new canonical edges.
     const reconciledNodes = reconcileWaypointNodes(remainingNodes, edgesAfterSplice);
@@ -1332,6 +1493,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({
       nodes: renumberNodes(reconciledNodes),
       edges: edgesAfterSplice,
+      pages,
       ...(nextDistances !== state.roomDistances ? { roomDistances: nextDistances } : {}),
     });
     get().saveToLocalStorage();
@@ -1974,15 +2136,45 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   updateRoom: (nodeId, data) => {
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
-    set({
-      nodes: state.nodes.map((n) => {
-        if (n.id !== nodeId || n.type !== "room") return n;
-        // Preserve locked state when RoomEditor reconstructs data
-        const wasLocked = (n.data as import("./types").RoomData).locked;
-        const merged = wasLocked ? { ...data, locked: true } : data;
-        return { ...n, data: merged } as SchematicNode;
-      }),
+    const existingRoom = state.nodes.find((n) => n.id === nodeId && n.type === "room");
+    const existingData = existingRoom?.data as import("./types").RoomData | undefined;
+    const prevLinkedRackPageId = existingData?.linkedRackPageId;
+    const prevLinkedRackId = existingData?.linkedRackId;
+    const newLinkedRackPageId = data.linkedRackPageId;
+    const newLinkedRackId = data.linkedRackId;
+    const linkChanged = newLinkedRackPageId !== prevLinkedRackPageId || newLinkedRackId !== prevLinkedRackId;
+
+    const updatedNodes = state.nodes.map((n) => {
+      if (n.id !== nodeId || n.type !== "room") return n;
+      const wasLocked = (n.data as import("./types").RoomData).locked;
+      const merged = wasLocked ? { ...data, locked: true } : data;
+      return { ...n, data: merged } as SchematicNode;
     });
+
+    // Update rack backpointers atomically when link changes
+    let updatedPages = state.pages;
+    if (linkChanged) {
+      updatedPages = state.pages.map((p): SchematicPage => {
+        if (p.type !== "rack-elevation") return p;
+        // Set new rack's linkedRoomId
+        if (newLinkedRackPageId && newLinkedRackId && p.id === newLinkedRackPageId) {
+          return { ...p, racks: p.racks.map((r) => {
+            // Clear any previous link this rack had to a different room
+            if (r.id === newLinkedRackId) return { ...r, linkedRoomId: nodeId };
+            // Clear other racks on this page if they were linked to the same room
+            if (r.linkedRoomId === nodeId) return { ...r, linkedRoomId: undefined };
+            return r;
+          })};
+        }
+        // Clear old rack's linkedRoomId
+        if (prevLinkedRackPageId && prevLinkedRackId && p.id === prevLinkedRackPageId) {
+          return { ...p, racks: p.racks.map((r) => r.id === prevLinkedRackId ? { ...r, linkedRoomId: undefined } : r) };
+        }
+        return p;
+      });
+    }
+
+    set({ nodes: updatedNodes, pages: updatedPages });
     get().saveToLocalStorage();
   },
 
@@ -2173,7 +2365,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setPendingUndoSnapshot: () => {
     const state = get();
-    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges });
+    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages });
   },
 
   clearPendingUndoSnapshot: () => {
@@ -2191,10 +2383,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const prev = undoStack.pop();
     if (!prev) return;
     const state = get();
-    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, autoRoute: state.autoRoute }));
+    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
     const edges = prev.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof prev.edges;
     const restoreAutoRoute = prev.autoRoute !== undefined ? { autoRoute: prev.autoRoute } : {};
-    set({ nodes: prev.nodes, edges, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: prev.nodes, edges, pages: prev.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -2202,10 +2394,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const next = redoStack.pop();
     if (!next) return;
     const state = get();
-    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, autoRoute: state.autoRoute }));
+    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
     const edges = next.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof next.edges;
     const restoreAutoRoute = next.autoRoute !== undefined ? { autoRoute: next.autoRoute } : {};
-    set({ nodes: next.nodes, edges, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: next.nodes, edges, pages: next.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -2781,6 +2973,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setShowFacePlateDetail: (show) => {
+    set({ showFacePlateDetail: show });
+    get().saveToLocalStorage();
+  },
+
   setShowConnectionLabels: (show) => {
     set({ showConnectionLabels: show, showCableIdLabels: show });
     get().saveToLocalStorage();
@@ -2908,6 +3105,612 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
   },
 
+  // ── Rack builder actions ──────────────────────────────────────────
+
+  setActivePage: (pageId) => {
+    set({ activePage: pageId });
+  },
+
+  addRackPage: (label) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextRackPageId();
+    const page: RackElevationPage = { id, label, type: "rack-elevation", racks: [], placements: [], accessories: [] };
+    set({ pages: [...state.pages, page], activePage: id, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  removeRackPage: (pageId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const pages = state.pages.filter((p) => p.id !== pageId);
+    const activePage = state.activePage === pageId ? "schematic" : state.activePage;
+    set({ pages, activePage, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  renameRackPage: (pageId, label) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({ pages: state.pages.map((p) => p.id === pageId ? { ...p, label } : p), undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  addRack: (pageId, rackData) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextRackId();
+    const rack: RackData = { ...rackData, id };
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, racks: [...p.racks, rack] })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  removeRack: (pageId, rackId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    // Find the rack's linked room before removing, so we can clear the backpointer
+    const srcPage = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    const linkedRoomId = srcPage?.racks.find((r) => r.id === rackId)?.linkedRoomId;
+    const updatedPages = mapElevationPage(state.pages, pageId, (p) => ({
+      ...p,
+      racks: p.racks.filter((r) => r.id !== rackId),
+      placements: p.placements.filter((pl) => pl.rackId !== rackId),
+      accessories: p.accessories.filter((a) => a.rackId !== rackId),
+    }));
+    set({ pages: updatedPages, undoSize: undoStack.length, redoSize: 0 });
+    // Clear the backpointer on the linked room node
+    if (linkedRoomId) {
+      set({
+        nodes: get().nodes.map((n) =>
+          n.id === linkedRoomId && n.type === "room"
+            ? { ...n, data: { ...n.data, linkedRackPageId: undefined, linkedRackId: undefined } }
+            : n
+        ),
+      });
+    }
+    get().saveToLocalStorage();
+  },
+
+  updateRack: (pageId, rackId, patch) => {
+    const state = get();
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({
+        ...p,
+        racks: p.racks.map((r) => r.id === rackId ? { ...r, ...patch } : r),
+      })),
+    });
+    get().saveToLocalStorage();
+  },
+
+  addRackPlacement: (pageId, placementData) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextPlacementId();
+    const placement: RackDevicePlacement = { ...placementData, id };
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, placements: [...p.placements, placement] })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  addPlacementSmart: (pageId, rackId, deviceNodeId, uPosition, face) => {
+    const state = get();
+    const page = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    if (!page) return { ok: false, reason: "no-page" };
+    const rack = page.racks.find((r) => r.id === rackId);
+    if (!rack) return { ok: false, reason: "no-page" };
+    const device = state.nodes.find((n) => n.id === deviceNodeId)?.data as DeviceData | undefined;
+    if (!device) return { ok: false, reason: "no-device" };
+
+    const form = inferRackForm(device);
+
+    if (form === "oversize") {
+      return { ok: false, reason: "oversize" };
+    }
+
+    if (form === "shelf-only") {
+      // Atomic shelf + placement: one undo entry covers both.
+      pushUndo({ nodes: state.nodes, edges: state.edges });
+      const shelfId = nextAccessoryId();
+      const placementId = nextPlacementId();
+      const innerWMm = shelfInnerWidthMm();
+      const shelf: RackAccessory = {
+        id: shelfId,
+        rackId,
+        type: "shelf",
+        uPosition,
+        heightU: 1,
+        face,
+      };
+      const newW = device.widthMm ?? innerWMm;
+      // Center on the shelf when there's room; otherwise pin to the left rail.
+      const centeredX = Math.max(0, (innerWMm - newW) / 2);
+      const placement: RackDevicePlacement = {
+        id: placementId,
+        rackId,
+        deviceNodeId,
+        uPosition,
+        face,
+        mountedOnShelfId: shelfId,
+        shelfOffsetMm: { x: centeredX, y: 0 },
+      };
+      set({
+        pages: mapElevationPage(state.pages, pageId, (p) => ({
+          ...p,
+          accessories: [...p.accessories, shelf],
+          placements: [...p.placements, placement],
+        })),
+        undoSize: undoStack.length, redoSize: 0,
+      });
+      get().saveToLocalStorage();
+      return { ok: true, placementId, shelfId };
+    }
+
+    if (form === "half") {
+      // Default to left side; flip to right if left half at this U is occupied.
+      const leftTaken = page.placements.some((p) =>
+        p.rackId === rackId && p.face === face && !p.mountedOnShelfId
+        && p.halfRackSide === "left"
+        && p.uPosition === uPosition
+      );
+      const halfRackSide: "left" | "right" = leftTaken ? "right" : "left";
+      pushUndo({ nodes: state.nodes, edges: state.edges });
+      const id = nextPlacementId();
+      const placement: RackDevicePlacement = { id, rackId, deviceNodeId, uPosition, face, halfRackSide };
+      set({
+        pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, placements: [...p.placements, placement] })),
+        undoSize: undoStack.length, redoSize: 0,
+      });
+      get().saveToLocalStorage();
+      return { ok: true, placementId: id };
+    }
+
+    // full / unknown — direct placement, current behavior
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextPlacementId();
+    const placement: RackDevicePlacement = { id, rackId, deviceNodeId, uPosition, face };
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, placements: [...p.placements, placement] })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+    return { ok: true, placementId: id };
+  },
+
+  removeRackPlacement: (pageId, placementId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, placements: p.placements.filter((pl) => pl.id !== placementId) })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+  },
+
+  updateRackPlacement: (pageId, placementId, patch) => {
+    const state = get();
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({
+        ...p,
+        placements: p.placements.map((pl) => pl.id === placementId ? { ...pl, ...patch } : pl),
+      })),
+    });
+    get().saveToLocalStorage();
+  },
+
+  addRackAccessory: (pageId, accessoryData) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextAccessoryId();
+    const accessory: RackAccessory = { ...accessoryData, id };
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, accessories: [...p.accessories, accessory] })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  removeRackAccessory: (pageId, accessoryId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, accessories: p.accessories.filter((a) => a.id !== accessoryId) })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+  },
+
+  updateRackAccessory: (pageId, accessoryId, patch) => {
+    const state = get();
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({
+        ...p,
+        accessories: p.accessories.map((a) => a.id === accessoryId ? { ...a, ...patch } : a),
+      })),
+    });
+    get().saveToLocalStorage();
+  },
+
+  removeRackAccessoryWithOccupants: (pageId, accessoryId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({
+        ...p,
+        accessories: p.accessories.filter((a) => a.id !== accessoryId),
+        // Drop occupant placements — devices remain in the schematic, return to unracked pool
+        placements: p.placements.filter((pl) => pl.mountedOnShelfId !== accessoryId),
+      })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+  },
+
+  addShelfMountedDevice: (pageId, shelfId, deviceNodeId) => {
+    const state = get();
+    const page = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    if (!page) return null;
+    const shelf = page.accessories.find((a) => a.id === shelfId);
+    if (!shelf || shelf.type !== "shelf") return null;
+    const newDevice = state.nodes.find((n) => n.id === deviceNodeId)?.data as DeviceData | undefined;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextPlacementId();
+
+    // Auto-place: walk to the right of the rightmost existing occupant on the bottom row.
+    // If that pushes past the shelf, fall back to (0, 0) — the user can drag to reposition.
+    const innerWidthMm = (260 - 16) / (24 / 44.45); // mirrors shelfInnerWidthMm() — kept inline to avoid circular import
+    const newW = newDevice?.widthMm ?? innerWidthMm;
+    const newH = newDevice?.heightMm ?? 44.45;
+    const occupants = page.placements.filter((pl) => pl.mountedOnShelfId === shelfId);
+    let nextX = 0;
+    for (const occ of occupants) {
+      const dd = state.nodes.find((n) => n.id === occ.deviceNodeId)?.data as DeviceData | undefined;
+      if (!dd) continue;
+      const ow = occ.rotated ? (dd.heightMm ?? 44.45) : (dd.widthMm ?? innerWidthMm);
+      const oy = occ.shelfOffsetMm?.y ?? 0;
+      const oh = occ.rotated ? (dd.widthMm ?? innerWidthMm) : (dd.heightMm ?? 44.45);
+      // Only push past occupants whose y range overlaps [0, newH] (would block the new device on bottom row)
+      if (oy < newH && oy + oh > 0) {
+        const ox = occ.shelfOffsetMm?.x ?? 0;
+        nextX = Math.max(nextX, ox + ow + 4);
+      }
+    }
+    const fits = nextX + newW <= innerWidthMm + 0.5;
+    const offset = fits ? { x: nextX, y: 0 } : { x: 0, y: 0 };
+
+    const placement: RackDevicePlacement = {
+      id,
+      rackId: shelf.rackId,
+      deviceNodeId,
+      uPosition: shelf.uPosition,
+      face: shelf.face,
+      mountedOnShelfId: shelfId,
+      shelfOffsetMm: offset,
+    };
+    set({
+      pages: mapElevationPage(state.pages, pageId, (p) => ({ ...p, placements: [...p.placements, placement] })),
+      undoSize: undoStack.length, redoSize: 0,
+    });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  isRackSlotAvailable: (pageId, rackId, uPosition, heightU, face, halfRackSide, excludePlacementId, excludeAccessoryId) => {
+    const state = get();
+    const page = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    if (!page) return false;
+    const rack = page.racks.find((r) => r.id === rackId);
+    if (!rack) return false;
+
+    // Check bounds
+    if (uPosition < 1 || uPosition + heightU - 1 > rack.heightU) return false;
+
+    // Check against existing placements on this rack and face
+    for (const p of page.placements) {
+      if (p.rackId !== rackId || p.face !== face) continue;
+      if (excludePlacementId && p.id === excludePlacementId) continue;
+      // Shelf-mounted devices are passengers — the shelf already claims its U slots
+      if (p.mountedOnShelfId) continue;
+      const device = state.nodes.find((n) => n.id === p.deviceNodeId);
+      const deviceData = device?.data as DeviceData | undefined;
+      const deviceHeightU = deviceData ? inferRackHeightU(deviceData) : 1;
+      const pTop = p.uPosition + deviceHeightU - 1;
+      const newTop = uPosition + heightU - 1;
+      // Check U range overlap
+      if (p.uPosition <= newTop && uPosition <= pTop) {
+        // Ranges overlap — check width compatibility
+        if (!p.halfRackSide || !halfRackSide) return false; // either is full-width → blocked
+        if (p.halfRackSide === halfRackSide) return false;  // same side → blocked
+        // Different sides of half-rack → OK
+      }
+    }
+
+    // Check against accessories
+    for (const a of page.accessories) {
+      if (a.rackId !== rackId || a.face !== face) continue;
+      if (excludeAccessoryId && a.id === excludeAccessoryId) continue;
+      const aTop = a.uPosition + a.heightU - 1;
+      const newTop = uPosition + heightU - 1;
+      if (a.uPosition <= newTop && uPosition <= aTop) return false;
+    }
+
+    return true;
+  },
+
+  linkRoomToRack: (roomId, pageId, rackId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    // Find the room's current link so we can clear the old rack's backpointer
+    const roomNode = state.nodes.find((n) => n.id === roomId && n.type === "room");
+    const prevRackPageId = (roomNode?.data as { linkedRackPageId?: string }).linkedRackPageId;
+    const prevRackId = (roomNode?.data as { linkedRackId?: string }).linkedRackId;
+    // Find the target rack's current linked room so we can clear that room's link
+    const targetPage = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    const targetRack = targetPage?.racks.find((r) => r.id === rackId);
+    const prevLinkedRoomId = targetRack?.linkedRoomId;
+
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.type !== "rack-elevation") return p;
+      if (p.id === pageId) {
+        return { ...p, racks: p.racks.map((r) => r.id === rackId ? { ...r, linkedRoomId: roomId } : r) };
+      }
+      if (p.id === prevRackPageId) {
+        return { ...p, racks: p.racks.map((r) => r.id === prevRackId ? { ...r, linkedRoomId: undefined } : r) };
+      }
+      return p;
+    });
+
+    const updatedNodes = state.nodes.map((n): SchematicNode => {
+      // Set link on the target room
+      if (n.id === roomId) return { ...n, data: { ...n.data, linkedRackPageId: pageId, linkedRackId: rackId } } as SchematicNode;
+      // Clear link on the room that was previously linked to the target rack
+      if (prevLinkedRoomId && n.id === prevLinkedRoomId) {
+        return { ...n, data: { ...n.data, linkedRackPageId: undefined, linkedRackId: undefined } } as SchematicNode;
+      }
+      return n;
+    });
+
+    set({ pages: updatedPages, nodes: updatedNodes, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  unlinkRoom: (roomId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const roomNode = state.nodes.find((n) => n.id === roomId && n.type === "room");
+    const prevRackPageId = (roomNode?.data as { linkedRackPageId?: string }).linkedRackPageId;
+    const prevRackId = (roomNode?.data as { linkedRackId?: string }).linkedRackId;
+
+    const updatedPages = prevRackPageId
+      ? mapElevationPage(state.pages, prevRackPageId, (p) => ({
+          ...p,
+          racks: p.racks.map((r) => r.id === prevRackId ? { ...r, linkedRoomId: undefined } : r),
+        }))
+      : state.pages;
+
+    const updatedNodes = state.nodes.map((n): SchematicNode =>
+      n.id === roomId ? { ...n, data: { ...n.data, linkedRackPageId: undefined, linkedRackId: undefined } } as SchematicNode : n
+    );
+
+    set({ pages: updatedPages, nodes: updatedNodes, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  addPrintSheetPage: (label) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextPrintSheetId();
+    const pageLabel = label ?? `Sheet ${state.pages.filter((p) => p.type === "print-sheet").length + 1}`;
+    const page: PrintSheetPage = {
+      id,
+      label: pageLabel,
+      type: "print-sheet",
+      paperId: state.printPaperId ?? "letter",
+      orientation: state.printOrientation ?? "landscape",
+      viewports: [],
+      showTitleBlock: true,
+    };
+
+    // H9: auto-fill with first rack if any exist
+    const firstElevPage = state.pages.find((p): p is RackElevationPage => p.type === "rack-elevation" && p.racks.length > 0);
+    if (firstElevPage) {
+      const firstRack = firstElevPage.racks[0];
+      const proposals = autoFillSheetForRack(page, firstRack, firstElevPage);
+      for (const vp of proposals) {
+        page.viewports.push({ ...vp, id: nextViewportId() });
+      }
+    }
+
+    set({ pages: [...state.pages, page], activePage: id, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  removePrintSheetPage: (pageId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const pages = state.pages.filter((p) => p.id !== pageId);
+    const activePage = state.activePage === pageId ? "schematic" : state.activePage;
+    set({ pages, activePage, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  renamePrintSheetPage: (pageId, label) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({ pages: state.pages.map((p) => p.id === pageId ? { ...p, label } : p), undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  duplicateRackPage: (pageId) => {
+    const state = get();
+    const src = state.pages.find((p) => p.id === pageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    if (!src) return "";
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newPageId = nextRackPageId();
+    // Remap rack IDs so placements + accessories reference the new copies
+    const rackIdMap = new Map<string, string>();
+    const newRacks: RackData[] = src.racks.map((r) => {
+      const nid = nextRackId();
+      rackIdMap.set(r.id, nid);
+      // Don't copy room link — it's 1:1 and the original still owns it
+      const { linkedRoomId: _dropped, ...rest } = r;
+      return { ...rest, id: nid };
+    });
+    const newPlacements = src.placements.map((pl) => ({
+      ...pl,
+      id: nextPlacementId(),
+      rackId: rackIdMap.get(pl.rackId) ?? pl.rackId,
+    }));
+    const newAccessories = src.accessories.map((a) => ({
+      ...a,
+      id: nextAccessoryId(),
+      rackId: rackIdMap.get(a.rackId) ?? a.rackId,
+    }));
+    const newPage: RackElevationPage = {
+      id: newPageId,
+      label: `${src.label} (copy)`,
+      type: "rack-elevation",
+      racks: newRacks,
+      placements: newPlacements,
+      accessories: newAccessories,
+    };
+    // Insert immediately after the source
+    const idx = state.pages.findIndex((p) => p.id === pageId);
+    const pages = [...state.pages.slice(0, idx + 1), newPage, ...state.pages.slice(idx + 1)];
+    set({ pages, activePage: newPageId, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+    return newPageId;
+  },
+
+  duplicatePrintSheetPage: (pageId) => {
+    const state = get();
+    const src = state.pages.find((p) => p.id === pageId && p.type === "print-sheet") as PrintSheetPage | undefined;
+    if (!src) return "";
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newPageId = nextPrintSheetId();
+    const newPage: PrintSheetPage = {
+      ...src,
+      id: newPageId,
+      label: `${src.label} (copy)`,
+      viewports: src.viewports.map((vp) => ({ ...vp, id: nextViewportId() })),
+    };
+    const idx = state.pages.findIndex((p) => p.id === pageId);
+    const pages = [...state.pages.slice(0, idx + 1), newPage, ...state.pages.slice(idx + 1)];
+    set({ pages, activePage: newPageId, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+    return newPageId;
+  },
+
+  addViewport: (pageId, viewportData) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = nextViewportId();
+    const viewport: PrintViewport = { showStats: true, ...viewportData, id };
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.id !== pageId || p.type !== "print-sheet") return p;
+      return { ...p, viewports: [...p.viewports, viewport] };
+    });
+    set({ pages: updatedPages, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  updateViewport: (pageId, viewportId, patch) => {
+    const state = get();
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.id !== pageId || p.type !== "print-sheet") return p;
+      return { ...p, viewports: p.viewports.map((v) => v.id === viewportId ? { ...v, ...patch } : v) };
+    });
+    set({ pages: updatedPages });
+    get().saveToLocalStorage();
+  },
+
+  removeViewport: (pageId, viewportId) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.id !== pageId || p.type !== "print-sheet") return p;
+      return { ...p, viewports: p.viewports.filter((v) => v.id !== viewportId) };
+    });
+    set({ pages: updatedPages, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
+  setPrintSheetPaper: (pageId, paperId, orientation, customWidthIn, customHeightIn) => {
+    const state = get();
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.id !== pageId || p.type !== "print-sheet") return p;
+      return { ...p, paperId, orientation, customWidthIn, customHeightIn };
+    });
+    set({ pages: updatedPages });
+    get().saveToLocalStorage();
+  },
+
+  moveRackToPage: (srcPageId, rackId, dstPageId) => {
+    const state = get();
+    const srcPage = state.pages.find((p) => p.id === srcPageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    const dstPage = state.pages.find((p) => p.id === dstPageId && p.type === "rack-elevation") as RackElevationPage | undefined;
+    if (!srcPage || !dstPage) return;
+    const rack = srcPage.racks.find((r) => r.id === rackId);
+    if (!rack) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const rackPlacements = srcPage.placements.filter((p) => p.rackId === rackId);
+    const rackAccessories = srcPage.accessories.filter((a) => a.rackId === rackId);
+
+    const updatedPages = state.pages.map((p): SchematicPage => {
+      if (p.type === "print-sheet") {
+        // Rewrite viewport refs that point to the moved rack
+        return {
+          ...p,
+          viewports: p.viewports.map((v) =>
+            v.rackRefPageId === srcPageId && v.rackRefId === rackId
+              ? { ...v, rackRefPageId: dstPageId }
+              : v
+          ),
+        };
+      }
+      if (p.id === srcPageId) {
+        return {
+          ...p,
+          racks: p.racks.filter((r) => r.id !== rackId),
+          placements: p.placements.filter((pl) => pl.rackId !== rackId),
+          accessories: p.accessories.filter((a) => a.rackId !== rackId),
+        };
+      }
+      if (p.id === dstPageId) {
+        return {
+          ...p,
+          racks: [...p.racks, rack],
+          placements: [...p.placements, ...rackPlacements],
+          accessories: [...p.accessories, ...rackAccessories],
+        };
+      }
+      return p;
+    });
+
+    // Update the linked room's linkedRackPageId to point to the new page
+    const updatedNodes = rack.linkedRoomId
+      ? state.nodes.map((n): SchematicNode =>
+          n.id === rack.linkedRoomId
+            ? { ...n, data: { ...n.data, linkedRackPageId: dstPageId } } as SchematicNode
+            : n
+        )
+      : state.nodes;
+
+    set({ pages: updatedPages, nodes: updatedNodes, undoSize: undoStack.length, redoSize: 0 });
+    get().saveToLocalStorage();
+  },
+
   saveToLocalStorage: () => {
     if (!hydrated) return;
     const state = get();
@@ -2944,6 +3747,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       currency: state.currency !== "USD" ? state.currency : undefined,
       panMode: state.panMode !== "select-first" ? state.panMode : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
+      showFacePlateDetail: state.showFacePlateDetail ? true : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
       cableIdGap: state.cableIdGap !== 4 ? state.cableIdGap : undefined,
@@ -2966,6 +3770,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyColumns: state.colorKeyColumns !== 1 ? state.colorKeyColumns : undefined,
       colorKeyPage: state.colorKeyPage !== "all" ? state.colorKeyPage : undefined,
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
+      pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
@@ -3033,6 +3838,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             currency: data.currency ?? "USD",
             panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
             showLineJumps: data.showLineJumps ?? true,
+            showFacePlateDetail: data.showFacePlateDetail ?? false,
             autoRoute: data.autoRoute ?? true,
             edgeHitboxSize: data.edgeHitboxSize ?? 10,
             showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
@@ -3056,11 +3862,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             colorKeyColumns: data.colorKeyColumns ?? 1,
             colorKeyPage: data.colorKeyPage ?? "all",
             colorKeyOverrides: data.colorKeyOverrides ?? undefined,
+            pages: data.pages ?? [],
             cableCosts: data.cableCosts ?? undefined,
             roomDistances: data.roomDistances ?? undefined,
             distanceSettings: data.distanceSettings ?? undefined,
             loadSeq: get().loadSeq + 1,
           });
+          if (data.pages?.length) syncRackCounters(data.pages);
           hydrated = true;
           get().saveToLocalStorage();
         });
@@ -3108,6 +3916,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         currency: data.currency ?? "USD",
         panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
         showLineJumps: data.showLineJumps ?? true,
+        showFacePlateDetail: data.showFacePlateDetail ?? false,
         showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
         showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
         showCustomLabels: data.showCustomLabels ?? true,
@@ -3131,6 +3940,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         colorKeyColumns: data.colorKeyColumns ?? 1,
         colorKeyPage: data.colorKeyPage ?? "all",
         colorKeyOverrides: data.colorKeyOverrides ?? undefined,
+        pages: data.pages ?? [],
         cableCosts: data.cableCosts ?? undefined,
         roomDistances: data.roomDistances ?? undefined,
         distanceSettings: data.distanceSettings ?? undefined,
@@ -3139,6 +3949,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cloudSavedAt: parsed.cloudSavedAt ?? null,
         loadSeq: get().loadSeq + 1,
       });
+      if (data.pages?.length) syncRackCounters(data.pages);
       hydrated = true;
       return true;
     } catch {
@@ -3183,6 +3994,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       currency: state.currency !== "USD" ? state.currency : undefined,
       panMode: state.panMode !== "select-first" ? state.panMode : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
+      showFacePlateDetail: state.showFacePlateDetail ? true : undefined,
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
       cableIdGap: state.cableIdGap !== 4 ? state.cableIdGap : undefined,
@@ -3205,6 +4017,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyColumns: state.colorKeyColumns !== 1 ? state.colorKeyColumns : undefined,
       colorKeyPage: state.colorKeyPage !== "all" ? state.colorKeyPage : undefined,
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
+      pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
@@ -3274,6 +4087,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       currency: data.currency ?? "USD",
       panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
       showLineJumps: data.showLineJumps ?? true,
+      showFacePlateDetail: data.showFacePlateDetail ?? false,
       showCableIdLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
       showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
       showCustomLabels: data.showCustomLabels ?? true,
@@ -3296,6 +4110,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyColumns: data.colorKeyColumns ?? 1,
       colorKeyPage: data.colorKeyPage ?? "all",
       colorKeyOverrides: data.colorKeyOverrides ?? undefined,
+      pages: data.pages ?? [],
+      activePage: "schematic",
       cableCosts: data.cableCosts ?? undefined,
       roomDistances: data.roomDistances ?? undefined,
       distanceSettings: data.distanceSettings ?? undefined,
@@ -3305,6 +4121,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       fileHandle: null,
       loadSeq: get().loadSeq + 1,
     });
+    if (data.pages?.length) syncRackCounters(data.pages);
     saveCategoryOrder(data.categoryOrder ?? null);
     get().saveToLocalStorage();
   },
@@ -3385,6 +4202,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         libraryActiveTab: "devices" as "devices" | "owned",
         undoSize: 0,
         redoSize: 0,
+        pages: [],
+        activePage: "schematic",
         loadSeq: get().loadSeq + 1,
       });
     }

@@ -460,6 +460,27 @@ export default function MenuBar() {
     );
   };
 
+  const doExportRackPdf = async () => {
+    const { exportRackPdf } = await import("../rackPdf");
+    const state = useSchematicStore.getState();
+    const rackPages = state.pages.filter((p) => p.type === "rack-elevation");
+    if (rackPages.length === 0) {
+      alert("No rack pages to export. Create a rack page first via the page tabs.");
+      return;
+    }
+    await exportRackPdf({
+      pages: state.pages,
+      nodes: state.nodes,
+      schematicName: state.schematicName,
+      titleBlock: state.titleBlock,
+    });
+  };
+
+  const doExportPrintSheets = async () => {
+    const { runPrintSheetExport } = await import("../printSheetExport");
+    await runPrintSheetExport();
+  };
+
   // ─── Name editing ──────────────────────────────────────
 
   const commitName = () => {
@@ -585,6 +606,8 @@ export default function MenuBar() {
       { type: "item", label: "Export as SVG", onClick: doExportSvg },
       { type: "item", label: "Export as DXF", onClick: doExportDxf },
       { type: "item", label: "Export as PDF", onClick: doExportPdf },
+      { type: "item", label: "Export Rack PDF", onClick: doExportRackPdf },
+      { type: "item", label: "Export Print Sheets", onClick: doExportPrintSheets },
       { type: "separator" },
       { type: "item", label: "Title Block...", onClick: () => setShowTitleBlockDialog(true) },
     ],

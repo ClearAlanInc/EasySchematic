@@ -239,6 +239,9 @@ export interface DeviceData {
   depthMm?: number;
   /** Device weight in kilograms — reserved for future rack management */
   weightKg?: number;
+  /** Optional rack-form override — when set, bypasses the size heuristic in `inferRackForm`.
+   *  Use for edge cases (e.g., desktop unit with optional rack ears, oddly-sized half-rack gear). */
+  rackForm?: "full" | "half" | "shelf-only";
   /** Adapter visibility override — only meaningful for deviceType "adapter" */
   adapterVisibility?: "default" | "force-show" | "force-hide";
   /** User-customizable auxiliary data rows. Each row carries its own slot (header vs
@@ -247,6 +250,8 @@ export interface DeviceData {
   /** Search terms used to find this device in the library; editable per-placement so
    *  improved terms can ride the "save as template" submission flow. */
   searchTerms?: string[];
+  /** Custom face-plate connector layout (overrides auto-layout) */
+  facePlateLayout?: FacePlateLayout;
 }
 
 /** One row of auxiliary data shown on a device node. */
@@ -256,6 +261,20 @@ export interface AuxRow {
   /** Whether the row renders above the ports (header) or below them (footer).
    *  Defaults to "footer" when omitted. */
   position?: "header" | "footer";
+}
+
+export interface FacePlateLayout {
+  positions: Record<string, { x: number; y: number }>;
+  labels?: FacePlateLabel[];
+  /** Custom device label position and size (defaults to top-center) */
+  deviceLabel?: { x: number; y: number; fontSize?: number };
+}
+
+export interface FacePlateLabel {
+  id: string;
+  text: string;
+  x: number; // 0-100 percentage
+  y: number; // 0-100 percentage
 }
 
 export type DeviceNode = Node<DeviceData, "device">;
@@ -269,6 +288,8 @@ export interface RoomData {
   labelSize?: number;
   locked?: boolean;
   isEquipmentRack?: boolean;
+  linkedRackPageId?: string;
+  linkedRackId?: string;
 }
 
 export type RoomNode = Node<RoomData, "room">;
@@ -408,11 +429,13 @@ export interface DeviceTemplate {
   poeBudgetW?: number;           // PoE budget in watts (switches/PSEs supplying PoE)
   poeDrawW?: number;             // PoE draw in watts (PDs consuming PoE — cameras, APs, etc.)
   unitCost?: number;             // MSRP / default unit cost in dollars
-  heightMm?: number;             // Physical height in millimeters — reserved for future rack management
-  widthMm?: number;              // Physical width in millimeters — reserved for future rack management
-  depthMm?: number;              // Physical depth in millimeters — reserved for future rack management
-  weightKg?: number;             // Device weight in kilograms — reserved for future rack management
+  heightMm?: number;             // Physical height in millimeters
+  widthMm?: number;              // Physical width in millimeters
+  depthMm?: number;              // Physical depth in millimeters
+  weightKg?: number;             // Device weight in kilograms
+  rackForm?: "full" | "half" | "shelf-only"; // Optional override for the size-based rack-form heuristic
   auxiliaryData?: AuxRow[];      // Aux rows shown on the node (each row carries its own header/footer slot)
+  facePlateLayout?: FacePlateLayout; // Custom face-plate connector positions
 }
 
 export interface CustomTemplateGroup {
@@ -490,6 +513,124 @@ export interface TitleBlockLayout {
   heightIn: number;
 }
 
+// ── Rack Builder Types ──────────────────────────────────────────────
+
+export type RackType = "floor-19" | "wall-mount" | "desktop" | "open-2post" | "open-4post";
+
+export const RACK_TYPE_LABELS: Record<RackType, string> = {
+  "floor-19": "19\" Floor Standing",
+  "wall-mount": "Wall Mount",
+  "desktop": "Desktop / Tabletop",
+  "open-2post": "Open Frame (2-Post)",
+  "open-4post": "Open Frame (4-Post)",
+};
+
+export interface RackData {
+  id: string;
+  label: string;
+  rackType: RackType;
+  /** Rack height in rack units (e.g. 42, 25, 12) */
+  heightU: number;
+  /** Rack depth in mm (600, 800, 1000, 1200) */
+  depthMm: number;
+  /** Width class — 19" standard or half-rack */
+  widthClass: "19in" | "half";
+  /** Position on the rack page canvas */
+  position: { x: number; y: number };
+  linkedRoomId?: string;
+}
+
+export interface RackDevicePlacement {
+  id: string;
+  rackId: string;
+  /** Links to the device's node ID in the schematic */
+  deviceNodeId: string;
+  /** Bottom U position (1-based, bottom-up numbering) */
+  uPosition: number;
+  /** Which face of the rack the device is mounted on */
+  face: "front" | "rear";
+  /** For half-rack-width devices mounted in a 19" rack */
+  halfRackSide?: "left" | "right";
+  /** When set, this device sits on the shelf accessory with that ID; uPosition/face are
+   *  inherited from the shelf and `halfRackSide` is ignored. */
+  mountedOnShelfId?: string;
+  /** Only meaningful when mountedOnShelfId is set: device is laid on its side
+   *  (90° rotation around the depth axis). Width and height swap when rendered. */
+  rotated?: boolean;
+  /** Only meaningful when mountedOnShelfId is set: free-form position on the shelf,
+   *  in mm. `x` is offset from the shelf's left inner-rail; `y` is height above the
+   *  shelf surface (for stacking). Default {x:0, y:0} when undefined. */
+  shelfOffsetMm?: { x: number; y: number };
+}
+
+/** A front + rear pair whose summed depth exceeds the rack's internal depth at overlapping U positions. */
+export interface RackDepthConflict {
+  aId: string;
+  bId: string;
+  uOverlapStart: number;
+  uOverlapEnd: number;
+  depthOverhangMm: number;
+}
+
+export type RackAccessoryType = "blank-panel" | "vent-panel" | "shelf" | "drawer" | "cable-manager" | "fan-unit";
+
+export const RACK_ACCESSORY_LABELS: Record<RackAccessoryType, string> = {
+  "blank-panel": "Blank Panel",
+  "vent-panel": "Vent Panel",
+  "shelf": "Shelf",
+  "drawer": "Drawer",
+  "cable-manager": "Cable Manager",
+  "fan-unit": "Fan Unit",
+};
+
+export interface RackAccessory {
+  id: string;
+  rackId: string;
+  type: RackAccessoryType;
+  uPosition: number;
+  heightU: number;
+  face: "front" | "rear";
+  label?: string;
+  /** Usable depth for shelf-mounted gear in mm (only meaningful when type === "shelf").
+   *  Defaults to ~60% of rack.depthMm when unset. */
+  shelfDepthMm?: number;
+}
+
+export interface RackElevationPage {
+  id: string;
+  label: string;
+  type: "rack-elevation";
+  racks: RackData[];
+  placements: RackDevicePlacement[];
+  accessories: RackAccessory[];
+}
+
+export interface PrintViewport {
+  id: string;
+  kind: "rack-front" | "rack-rear" | "rack-side";
+  rackRefPageId: string;
+  rackRefId: string;
+  positionMm: { x: number; y: number };
+  sizeMm: { w: number; h: number };
+  scale?: number;
+  showLabel?: boolean;
+  showStats?: boolean;
+}
+
+export interface PrintSheetPage {
+  id: string;
+  label: string;
+  type: "print-sheet";
+  paperId: string;
+  orientation: "landscape" | "portrait";
+  customWidthIn?: number;
+  customHeightIn?: number;
+  viewports: PrintViewport[];
+  showTitleBlock: boolean;
+}
+
+export type SchematicPage = RackElevationPage | PrintSheetPage;
+
 export interface SchematicFile {
   version: number;
   name: string;
@@ -566,6 +707,10 @@ export interface SchematicFile {
   colorKeyColumns?: number;
   colorKeyPage?: "first" | "last" | "all";
   colorKeyOverrides?: Partial<Record<SignalType, boolean>>;
+  /** Rack elevation pages */
+  pages?: SchematicPage[];
+  /** Show connector-level face-plate detail in rack views (default off; advanced) */
+  showFacePlateDetail?: boolean;
   /** Cable unit costs keyed by "cableType|signalType|cableLength" */
   cableCosts?: Record<string, number>;
   /** Force-case device/port/slot labels on write (normal = leave as-typed) */

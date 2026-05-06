@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSchematicStore } from "../store";
 import { DEFAULT_DISTANCE_SETTINGS } from "../types";
-import type { DistanceSettings, RoomData, RoomNode, SchematicNode } from "../types";
+import type { DistanceSettings, RackElevationPage, RoomData, RoomNode, SchematicNode } from "../types";
 import { getTopLevelRoomId, isTopLevelRoom, listTopLevelRooms, pairKey } from "../roomDistance";
 
 const BORDER_STYLES: { value: RoomData["borderStyle"]; label: string }[] = [
@@ -20,6 +20,8 @@ const PRESET_COLORS = [
 export default function RoomEditor() {
   const editingNodeId = useSchematicStore((s) => s.editingNodeId);
   const nodes = useSchematicStore((s) => s.nodes);
+  const allPages = useSchematicStore((s) => s.pages);
+  const pages = useMemo(() => allPages.filter((p): p is RackElevationPage => p.type === "rack-elevation"), [allPages]);
   const updateRoom = useSchematicStore((s) => s.updateRoom);
   const toggleRoomLock = useSchematicStore((s) => s.toggleRoomLock);
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
@@ -36,6 +38,8 @@ export default function RoomEditor() {
   const [labelSize, setLabelSize] = useState(12);
   const [locked, setLocked] = useState(false);
   const [isEquipmentRack, setIsEquipmentRack] = useState(false);
+  const [linkedRackPageId, setLinkedRackPageId] = useState<string>("");
+  const [linkedRackId, setLinkedRackId] = useState<string>("");
 
   /* eslint-disable react-hooks/set-state-in-effect -- syncing props to local editor state */
   useEffect(() => {
@@ -47,8 +51,12 @@ export default function RoomEditor() {
     setLabelSize(node.data.labelSize ?? 12);
     setLocked(node.data.locked ?? false);
     setIsEquipmentRack(node.data.isEquipmentRack ?? false);
+    setLinkedRackPageId(node.data.linkedRackPageId ?? "");
+    setLinkedRackId(node.data.linkedRackId ?? "");
   }, [node]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  const selectedPage = pages.find((p) => p.id === linkedRackPageId);
 
   const close = useCallback(() => setEditingNodeId(null), [setEditingNodeId]);
 
@@ -61,10 +69,11 @@ export default function RoomEditor() {
       ...(borderStyle && borderStyle !== "dashed" ? { borderStyle } : {}),
       ...(labelSize !== 12 ? { labelSize } : {}),
       ...(isEquipmentRack ? { isEquipmentRack: true } : {}),
+      ...(isEquipmentRack && linkedRackPageId && linkedRackId ? { linkedRackPageId, linkedRackId } : {}),
     };
     updateRoom(editingNodeId, data);
     close();
-  }, [editingNodeId, label, color, borderColor, borderStyle, labelSize, isEquipmentRack, updateRoom, close]);
+  }, [editingNodeId, label, color, borderColor, borderStyle, labelSize, isEquipmentRack, linkedRackPageId, linkedRackId, updateRoom, close]);
 
   if (!editingNodeId || !node) return null;
 
@@ -123,22 +132,47 @@ export default function RoomEditor() {
             </button>
           </div>
 
-          {/* Equipment Rack — only for nested rooms */}
-          {node.parentId && (
-            <div>
-              <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
-                Equipment Rack
+          {/* Equipment Rack */}
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+              Equipment Rack
+            </label>
+            <button
+              onClick={() => { setIsEquipmentRack(!isEquipmentRack); if (isEquipmentRack) { setLinkedRackPageId(""); setLinkedRackId(""); } }}
+              className={`px-3 py-1 text-xs rounded border cursor-pointer transition-colors ${
+                isEquipmentRack
+                  ? "bg-blue-50 border-blue-400 text-blue-700"
+                  : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)] hover:text-[var(--color-text-heading)]"
+              }`}
+            >
+              {isEquipmentRack ? "Yes" : "No"}
+            </button>
+          </div>
+
+          {/* Rack link picker — visible when isEquipmentRack */}
+          {isEquipmentRack && pages.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                Linked Rack
               </label>
-              <button
-                onClick={() => setIsEquipmentRack(!isEquipmentRack)}
-                className={`px-3 py-1 text-xs rounded border cursor-pointer transition-colors ${
-                  isEquipmentRack
-                    ? "bg-blue-50 border-blue-400 text-blue-700"
-                    : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)] hover:text-[var(--color-text-heading)]"
-                }`}
+              <select
+                className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                value={linkedRackPageId}
+                onChange={(e) => { setLinkedRackPageId(e.target.value); setLinkedRackId(""); }}
               >
-                {isEquipmentRack ? "Yes" : "No"}
-              </button>
+                <option value="">— Page —</option>
+                {pages.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              {selectedPage && (
+                <select
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                  value={linkedRackId}
+                  onChange={(e) => setLinkedRackId(e.target.value)}
+                >
+                  <option value="">— Rack —</option>
+                  {selectedPage.racks.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+                </select>
+              )}
             </div>
           )}
 
