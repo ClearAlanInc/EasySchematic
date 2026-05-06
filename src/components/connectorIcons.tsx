@@ -885,6 +885,7 @@ const GENERIC_SPEC: ConnectorSpec = {
 // ══════════════════════════════════════════════════════════════════
 
 /** Get the spec for a connector type */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getConnectorSpec(connectorType?: ConnectorType): ConnectorSpec {
   if (!connectorType || connectorType === "none") return GENERIC_SPEC;
   return CONNECTOR_SPECS[connectorType] ?? GENERIC_SPEC;

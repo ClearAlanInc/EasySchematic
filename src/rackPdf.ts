@@ -19,7 +19,7 @@ import {
   PX_PER_MM as RACK_PX_PER_MM,
 } from "./rackUtils";
 import { computeRackStats, formatStatsLine } from "./rackStats";
-import { wrapLabel } from "./components/RackFaceSVG";
+import { wrapLabel } from "./components/rackFaceConstants";
 
 // SVG-px constants — must mirror RackFaceSVG.tsx exactly so the PDF and the
 // sheet view share the same coordinate system (within `s` mm-per-svg-px scale).

@@ -42,14 +42,14 @@ export default function MenuSubmenu({ label, children, minWidth = 160 }: Props) 
 
   const openNow = () => {
     cancelClose();
+    // Reset ready synchronously on open so the panel hides until the layout
+    // effect re-measures — prevents a flash at the previous open's position.
+    setPos((p) => ({ ...p, ready: false }));
     setOpen(true);
   };
 
   useLayoutEffect(() => {
-    if (!open || !triggerRef.current || !submenuRef.current) {
-      setPos((p) => ({ ...p, ready: false }));
-      return;
-    }
+    if (!open || !triggerRef.current || !submenuRef.current) return;
     const trigger = triggerRef.current.getBoundingClientRect();
     const sub = submenuRef.current.getBoundingClientRect();
     const m = VIEWPORT_MARGIN;
@@ -74,6 +74,9 @@ export default function MenuSubmenu({ label, children, minWidth = 160 }: Props) 
       }
     }
 
+    // Measure-then-position pattern: we have to read DOM rects first, then
+    // commit the resolved coordinates as state so the panel rerenders in place.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPos({ x, y, maxHeight, ready: true });
   }, [open]);
 

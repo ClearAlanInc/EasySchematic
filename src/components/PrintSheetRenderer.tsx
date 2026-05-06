@@ -290,7 +290,7 @@ export default function PrintSheetRenderer({ page }: Props) {
   // ── Viewport interaction ─────────────────────────────────────────
   const [selectedVpIds, setSelectedVpIds] = useState<string[]>([]);
   const selectedVpIdsRef = useRef<string[]>([]);
-  selectedVpIdsRef.current = selectedVpIds;
+  useEffect(() => { selectedVpIdsRef.current = selectedVpIds; }, [selectedVpIds]);
 
   type DragState = {
     startClientX: number;
@@ -319,6 +319,10 @@ export default function PrintSheetRenderer({ page }: Props) {
   const [panning, setPanning] = useState<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null);
   const [snapGuides, setSnapGuides] = useState<SheetGuide[]>([]);
   const didMoveRef = useRef(false);
+  // State mirror of didMoveRef — used during render for cursor styling. The
+  // ref still drives synchronous handler logic; the state just rerenders so
+  // the cursor flips to "grabbing" when the user actually starts panning.
+  const [didMove, setDidMove] = useState(false);
 
   // Pixel→mm helpers (zoom-aware)
   const clientPxToMm = useCallback((dxClient: number, dyClient: number) => {
@@ -337,6 +341,7 @@ export default function PrintSheetRenderer({ page }: Props) {
     const willPan = e.button === 1 || spaceHeld || panMode === "pan-first";
     if (e.button === 1) e.preventDefault();
     didMoveRef.current = false;
+    setDidMove(false);
     setPanning({ startX: e.clientX, startY: e.clientY, startPan: { ...vpRef.current.pan } });
     if (!willPan) return;
   }, [spaceHeld, panMode]);
@@ -366,6 +371,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       if (v) starts[id] = { ...v.positionMm };
     }
     didMoveRef.current = false;
+    setDidMove(false);
     setPendingUndoSnapshot();
     setDragging({ startClientX: e.clientX, startClientY: e.clientY, starts });
   }, [page.viewports, setPendingUndoSnapshot]);
@@ -379,6 +385,7 @@ export default function PrintSheetRenderer({ page }: Props) {
     setSelectedVpIds([vp.id]);
     selectedVpIdsRef.current = [vp.id];
     didMoveRef.current = false;
+    setDidMove(false);
     setPendingUndoSnapshot();
     setResizing({
       kind: "single",
@@ -399,6 +406,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       if (v) starts[id] = vpRect(v);
     }
     didMoveRef.current = false;
+    setDidMove(false);
     setPendingUndoSnapshot();
     setResizing({
       kind: "group",
@@ -414,6 +422,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       const { dxMm, dyMm } = clientPxToMm(e.clientX - dragging.startClientX, e.clientY - dragging.startClientY);
       const ids = Object.keys(dragging.starts);
       if (Math.abs(e.clientX - dragging.startClientX) > 2 || Math.abs(e.clientY - dragging.startClientY) > 2) {
+        if (!didMoveRef.current) setDidMove(true);
         didMoveRef.current = true;
       }
 
@@ -446,7 +455,10 @@ export default function PrintSheetRenderer({ page }: Props) {
       }
     } else if (resizing) {
       const { dxMm, dyMm } = clientPxToMm(e.clientX - resizing.startClientX, e.clientY - resizing.startClientY);
-      if (Math.abs(dxMm) > 0.1 || Math.abs(dyMm) > 0.1) didMoveRef.current = true;
+      if (Math.abs(dxMm) > 0.1 || Math.abs(dyMm) > 0.1) {
+        if (!didMoveRef.current) setDidMove(true);
+        didMoveRef.current = true;
+      }
       const marginMm = PAGE_MARGIN_IN * IN_TO_MM;
       const pageWMm = pageWIn * IN_TO_MM;
       const pageHMm = pageHIn * IN_TO_MM;
@@ -509,7 +521,10 @@ export default function PrintSheetRenderer({ page }: Props) {
     } else if (panning) {
       const dx = e.clientX - panning.startX;
       const dy = e.clientY - panning.startY;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) didMoveRef.current = true;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        if (!didMoveRef.current) setDidMove(true);
+        didMoveRef.current = true;
+      }
       setViewport(vpRef.current.zoom, { x: panning.startPan.x + dx, y: panning.startPan.y + dy });
     }
   }, [dragging, resizing, panning, page.id, page.viewports, pageWIn, pageHIn, updateViewport, setViewport, clientPxToMm, vpRect]);
@@ -584,7 +599,7 @@ export default function PrintSheetRenderer({ page }: Props) {
     }
   }, [page.id, page.viewports, removeViewport, resetSelectionSize]);
 
-  const isPanning = panning !== null && (didMoveRef.current || spaceHeld || panMode === "pan-first");
+  const isPanning = panning !== null && (didMove || spaceHeld || panMode === "pan-first");
 
   return (
     <div className="flex-1 relative overflow-hidden">

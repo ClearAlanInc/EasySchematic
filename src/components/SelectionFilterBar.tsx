@@ -52,6 +52,8 @@ export default function SelectionFilterBar() {
     for (const e of state.edges) if (e.selected) edgeCount++;
     if (edgeCount > 0) out.edge = edgeCount;
     return out;
+    // selectionKey is the invalidation signal for this getState() snapshot
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionKey]);
 
   const edgeCount = counts.edge ?? 0;

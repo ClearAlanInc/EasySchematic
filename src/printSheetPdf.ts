@@ -113,7 +113,14 @@ async function drawTitleBlockMm(
         try {
           const img = new Image();
           img.src = tb.logo;
-          await new Promise<void>((resolve) => { img.naturalWidth > 0 ? resolve() : (img.onload = () => resolve(), img.onerror = () => resolve()); });
+          await new Promise<void>((resolve) => {
+            if (img.naturalWidth > 0) {
+              resolve();
+            } else {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }
+          });
           const natW = img.naturalWidth || cellW;
           const natH = img.naturalHeight || cellH;
           const aspect = natW / natH;

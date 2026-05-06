@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+
 import { useSchematicStore } from "../store";
 import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type LineStyle } from "../types";
 
@@ -21,8 +22,10 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
       .join("|"),
   );
 
+  // selectionKey is the invalidation signal for this getState() snapshot
   const selectedEdges = useMemo(
     () => useSchematicStore.getState().edges.filter((e) => e.selected),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectionKey],
   );
 
@@ -57,7 +60,7 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
     allOn: boolean,
     mixed: boolean,
   ) => {
-    const newValue = allOn && !mixed ? undefined : (true as true);
+    const newValue = allOn && !mixed ? undefined : (true as const);
     useSchematicStore.getState().batchPatchEdgeData(
       selectedEdges.map((e) => ({ edgeId: e.id, patch: { [field]: newValue } })),
     );

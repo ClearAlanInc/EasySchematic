@@ -1503,7 +1503,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
         setDropTarget(null);
       }
     }
-  }, [isPanning, inRackDrag, shelfDrag, clientToCanvas, page, isRackSlotAvailable, viewMode, deviceDataMap]);
+  }, [isPanning, inRackDrag, shelfDrag, clientToCanvas, page, isRackSlotAvailable, viewMode, deviceDataMap, activeFace, maxRackHeightU]);
 
   const onMouseUp = useCallback((e: MouseEvent) => {
     setIsPanning(false);
@@ -1576,7 +1576,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
       setInRackDrag(null);
       setDropTarget(null);
     }
-  }, [inRackDrag, shelfDrag, dropTarget, clientToCanvas, page, updateRackPlacement, removeRackPlacement, addRackPlacement, updateRackAccessory, viewMode, deviceDataMap, addToast]);
+  }, [inRackDrag, shelfDrag, dropTarget, clientToCanvas, page, updateRackPlacement, removeRackPlacement, addRackPlacement, updateRackAccessory, viewMode, deviceDataMap, addToast, maxRackHeightU]);
 
   // ── In-rack drag start (from DeviceBlock) ────────────────────────
 
@@ -1624,7 +1624,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
       initialOffsetMm: offset,
     };
     setSelectedPlacementId(placementId);
-  }, [viewMode, page, deviceDataMap, clientToCanvas]);
+  }, [viewMode, page, deviceDataMap, clientToCanvas, maxRackHeightU]);
 
   // ── Sidebar drag-and-drop (new placements) ───────────────────────
 
@@ -1674,7 +1674,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
     } else {
       setDropTarget(null);
     }
-  }, [page, clientToCanvas, isRackSlotAvailable, activeFace, viewMode, isPlacementBlocked, isRackRearBlocked, deviceDataMap]);
+  }, [page, clientToCanvas, isRackSlotAvailable, activeFace, viewMode, isPlacementBlocked, isRackRearBlocked, deviceDataMap, maxRackHeightU]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -1746,7 +1746,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
     setSlotContextMenu({ screenX: e.clientX, screenY: e.clientY, rackId: hit.rack.id, uPosition: hit.uPosition });
     setAccessoryContextMenu(null);
     setRackContextMenu(null);
-  }, [viewMode, clientToCanvas, page, activeFace, deviceDataMap, isRackRearBlocked]);
+  }, [viewMode, clientToCanvas, page, activeFace, deviceDataMap, isRackRearBlocked, maxRackHeightU]);
 
   const handleAddAccessory = useCallback((rackId: string, uPosition: number, type: import("../types").RackAccessoryType, heightU: number) => {
     const cleanH = Math.max(1, Math.min(20, Math.round(heightU || 1)));

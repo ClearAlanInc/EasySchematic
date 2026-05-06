@@ -483,7 +483,7 @@ export default function FacePlateEditor({ deviceData, onSave, onClose }: FacePla
     const map = new Map<string, (typeof deviceData.ports)[number]>();
     for (const p of deviceData.ports ?? []) map.set(p.id, p);
     return map;
-  }, [deviceData.ports]);
+  }, [deviceData]);
 
   const portIds = useMemo(() => (deviceData.ports ?? []).map((p) => p.id), [deviceData.ports]);
 

@@ -101,10 +101,6 @@ for (const node of migrated.nodes) {
     if (before === after) {
       noChange.push(`${data.label} (already current)`);
     } else {
-      const portChange =
-        result.preview.portsAdded.length +
-        result.preview.portsRemovedSafe.length +
-        result.preview.portsOrphanedWithEdges.length;
       const factual = result.preview.factualChanges.length;
       refreshed.push(
         `${data.label}  factual=${factual} ports(+${result.preview.portsAdded.length}/-${result.preview.portsRemovedSafe.length}/orphan=${result.preview.portsOrphanedWithEdges.length})`,
