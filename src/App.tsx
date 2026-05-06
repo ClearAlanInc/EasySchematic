@@ -227,8 +227,6 @@ function SchematicCanvas() {
     flushPendingSnapshot,
     reparentNode,
     reparentAllDevices,
-    undo,
-    redo,
     loadFromLocalStorage,
   } = useSchematicStore();
 
@@ -782,34 +780,9 @@ function SchematicCanvas() {
       } else if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         e.preventDefault();
         pasteClipboard();
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Z") {
-        e.preventDefault();
-        redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        undo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
-        e.preventDefault();
-        redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "b") {
-        e.preventDefault();
-        useSchematicStore.getState().toggleDebugEdges();
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "S") {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:save-as"));
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:save"));
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "o") {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:open"));
       } else if ((e.ctrlKey || e.metaKey) && e.key === "a") {
         e.preventDefault();
         useSchematicStore.getState().selectAll();
-      } else if (e.key === "F9") {
-        e.preventDefault();
-        const s = useSchematicStore.getState();
-        s.setPrintView(!s.printView);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -826,7 +799,7 @@ function SchematicCanvas() {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleBlur);
     };
-  }, [removeSelected, copySelected, pasteClipboard, undo, redo, clearClickConnect]);
+  }, [removeSelected, copySelected, pasteClipboard, clearClickConnect]);
 
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -1626,6 +1599,8 @@ export default function App() {
     return s.pages.find((p) => p.id === s.activePage)?.type ?? null;
   });
   const isSchematicActive = activePage === "schematic";
+  const undo = useSchematicStore((s) => s.undo);
+  const redo = useSchematicStore((s) => s.redo);
 
   // Handle /s/{token} URLs for shared schematics
   useEffect(() => {
@@ -1640,6 +1615,44 @@ export default function App() {
       });
     }
   }, []);
+
+  // Global keyboard shortcuts that should work on every page (schematic, rack, print sheet).
+  // Page-specific shortcuts (Delete, Copy/Paste, Ctrl+A) live in their respective renderers.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement).isContentEditable) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Z") {
+        e.preventDefault();
+        redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault();
+        redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "b") {
+        e.preventDefault();
+        useSchematicStore.getState().toggleDebugEdges();
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "S") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("easyschematic:save-as"));
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("easyschematic:save"));
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "o") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("easyschematic:open"));
+      } else if (e.key === "F9") {
+        e.preventDefault();
+        const s = useSchematicStore.getState();
+        s.setPrintView(!s.printView);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   return (
     <div className="flex flex-col h-full">
