@@ -721,6 +721,8 @@ function SideViewRack({
           const dy = surfaceY - dh - stackYMm * PX_PER_MM;
           const dx = (is2Post || shelf.face === "front") ? 4 : SIDE_VIEW_WIDTH - 4 - dDepth;
           const overflowsAbove = dh + stackYMm * PX_PER_MM > ah - 1;
+          const labelTrim = Math.max(3, Math.floor(dDepth / 5));
+          const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
           return (
             <g key={pl.id} style={{ opacity: isDragging ? 0.3 : 1 }}>
               <rect
@@ -735,6 +737,17 @@ function SideViewRack({
                 rx={1}
                 opacity={0.85}
               />
+              <text
+                x={dx + dDepth / 2}
+                y={dy + dh / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={Math.min(7, Math.max(4, dh * 0.5))}
+                fill="#fff"
+                style={{ pointerEvents: "none" }}
+              >
+                {lbl}
+              </text>
             </g>
           );
         }
@@ -758,9 +771,24 @@ function SideViewRack({
             }}
           >
             <rect x={x} y={y} width={deviceDepth} height={h} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke={isSelected ? "#2563eb" : "#333"} strokeWidth={isSelected ? 1.5 : 0.5} rx={1} opacity={0.85} />
-            <text x={x + deviceDepth / 2} y={y + h / 2} textAnchor="middle" dominantBaseline="central" fontSize={7} fill="#fff" style={{ pointerEvents: "none" }}>
-              {dd.label.length > 8 ? dd.label.slice(0, 7) + "…" : dd.label}
-            </text>
+            <clipPath id={`side-clip-${pl.id}`}><rect x={x} y={y} width={deviceDepth} height={h} rx={1} /></clipPath>
+            <g clipPath={`url(#side-clip-${pl.id})`}>
+              {(() => {
+                const fs = h > 20 ? 8 : 7;
+                const maxChars = Math.max(2, Math.floor(deviceDepth / (fs * 0.58)));
+                const maxLines = Math.max(1, Math.floor(h / (fs * 1.5)));
+                const lines = wrapLabel(dd.label, maxChars, Math.min(maxLines, 3));
+                const lineH = fs * 1.35;
+                const baseY = y + h / 2 - ((lines.length - 1) * lineH) / 2;
+                return (
+                  <text x={x + deviceDepth / 2} textAnchor="middle" fontSize={fs} fill="#fff" fontWeight={500} style={{ pointerEvents: "none" }}>
+                    {lines.map((line, i) => (
+                      <tspan key={i} x={x + deviceDepth / 2} y={baseY + i * lineH} dominantBaseline="central">{line}</tspan>
+                    ))}
+                  </text>
+                );
+              })()}
+            </g>
           </g>
         );
       })}

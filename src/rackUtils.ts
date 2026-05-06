@@ -305,24 +305,17 @@ export function shelfInnerWidthMm(): number {
 }
 
 /**
- * Can a new device fit alongside the existing occupants on this shelf?
- * Width: sum of widthMm (defaulting to inner width when missing) ≤ inner width.
- * Depth: the new device's depthMm (when known) must fit within shelf depth.
+ * Can a new device fit on this shelf? Depth-only gate — width is not capped here
+ * because auto-placement walks upward to a second row when the bottom row fills,
+ * and per-drag overlap is enforced by isShelfOffsetValid.
  */
 export function canFitOnShelf(
   shelf: RackAccessory,
-  occupants: RackDevicePlacement[],
+  _occupants: RackDevicePlacement[],
   newDevice: DeviceData,
   rack: RackData,
-  deviceDataMap: Map<string, DeviceData>,
+  _deviceDataMap: Map<string, DeviceData>,
 ): boolean {
-  const innerW = shelfInnerWidthMm();
-  const usedW = occupants.reduce((acc, p) => {
-    const dd = deviceDataMap.get(p.deviceNodeId);
-    return acc + (dd?.widthMm ?? innerW);
-  }, 0);
-  const newW = newDevice.widthMm ?? innerW;
-  if (usedW + newW > innerW + 0.5) return false;
   if (newDevice.depthMm != null && newDevice.depthMm > shelfDepthMm(shelf, rack) + 0.5) return false;
   return true;
 }

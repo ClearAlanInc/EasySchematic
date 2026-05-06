@@ -43,7 +43,7 @@ import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForR
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector } from "./connectorTypes";
-import { inferRackHeightU, inferRackForm, shelfInnerWidthMm } from "./rackUtils";
+import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
@@ -3369,27 +3369,40 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     pushUndo({ nodes: state.nodes, edges: state.edges });
     const id = nextPlacementId();
 
-    // Auto-place: walk to the right of the rightmost existing occupant on the bottom row.
-    // If that pushes past the shelf, fall back to (0, 0) — the user can drag to reposition.
-    const innerWidthMm = (260 - 16) / (24 / 44.45); // mirrors shelfInnerWidthMm() — kept inline to avoid circular import
+    // Auto-place: walk row by row from y=0 upward. On each row, push past occupants
+    // whose y range intersects [rowY, rowY + newH]. If the device fits horizontally
+    // there, drop it. Otherwise hop above the tallest occupant on that row and retry.
+    // Lets users keep stacking small devices when the bottom row is full.
+    const innerWidthMm = shelfInnerWidthMm();
     const newW = newDevice?.widthMm ?? innerWidthMm;
     const newH = newDevice?.heightMm ?? 44.45;
+    const GAP = 4;
+    const MAX_ROWS = 8;
     const occupants = page.placements.filter((pl) => pl.mountedOnShelfId === shelfId);
+    let rowY = 0;
     let nextX = 0;
-    for (const occ of occupants) {
-      const dd = state.nodes.find((n) => n.id === occ.deviceNodeId)?.data as DeviceData | undefined;
-      if (!dd) continue;
-      const ow = occ.rotated ? (dd.heightMm ?? 44.45) : (dd.widthMm ?? innerWidthMm);
-      const oy = occ.shelfOffsetMm?.y ?? 0;
-      const oh = occ.rotated ? (dd.widthMm ?? innerWidthMm) : (dd.heightMm ?? 44.45);
-      // Only push past occupants whose y range overlaps [0, newH] (would block the new device on bottom row)
-      if (oy < newH && oy + oh > 0) {
+    for (let attempt = 0; attempt < MAX_ROWS; attempt++) {
+      let attemptX = 0;
+      let rowCeiling = rowY;
+      for (const occ of occupants) {
+        const dd = state.nodes.find((n) => n.id === occ.deviceNodeId)?.data as DeviceData | undefined;
+        if (!dd) continue;
+        const { wMm: ow, hMm: oh } = shelfFootprintMm(occ, dd);
         const ox = occ.shelfOffsetMm?.x ?? 0;
-        nextX = Math.max(nextX, ox + ow + 4);
+        const oy = occ.shelfOffsetMm?.y ?? 0;
+        if (oy < rowY + newH && oy + oh > rowY) {
+          attemptX = Math.max(attemptX, ox + ow + GAP);
+          rowCeiling = Math.max(rowCeiling, oy + oh);
+        }
       }
+      if (attemptX + newW <= innerWidthMm + 0.5) {
+        nextX = attemptX;
+        break;
+      }
+      // Row full — hop above the tallest occupant and try again.
+      rowY = rowCeiling + GAP;
     }
-    const fits = nextX + newW <= innerWidthMm + 0.5;
-    const offset = fits ? { x: nextX, y: 0 } : { x: 0, y: 0 };
+    const offset = { x: nextX, y: rowY };
 
     const placement: RackDevicePlacement = {
       id,

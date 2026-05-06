@@ -84,13 +84,42 @@ export default function RackFaceSVG({
             const surfaceY = ay + ah - 0.5;
             const dy = surfaceY - dh - (pl.shelfOffsetMm?.y ?? 0) * PX_PER_MM;
             const dx = (is2Post || shelf.face === "front") ? 4 : SW - 4 - dDepth;
-            return <rect key={pl.id} x={dx} y={dy} width={dDepth} height={dh} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke="#333" strokeWidth={0.5} rx={1} opacity={0.85} />;
+            const labelTrim = Math.max(3, Math.floor(dDepth / 5));
+            const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+            return (
+              <g key={pl.id}>
+                <rect x={dx} y={dy} width={dDepth} height={dh} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke="#333" strokeWidth={0.5} rx={1} opacity={0.85} />
+                <text x={dx + dDepth / 2} y={dy + dh / 2} textAnchor="middle" dominantBaseline="central"
+                  fontSize={Math.min(7, Math.max(4, dh * 0.5))} fill="#fff" style={{ pointerEvents: "none" }}>
+                  {lbl}
+                </text>
+              </g>
+            );
           }
           const y = uToY(pl.uPosition + heightU - 1, rack.heightU);
           const h = heightU * PX_PER_U - 1;
           const deviceDepth = (dd.depthMm ?? rack.depthMm * 0.6) * depthScale;
           const x = (is2Post || pl.face === "front") ? 4 : SW - 4 - deviceDepth;
-          return <rect key={pl.id} x={x} y={y} width={deviceDepth} height={h} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke="#333" strokeWidth={0.5} opacity={0.85} />;
+          const fs = h > 20 ? 8 : 7;
+          const maxChars = Math.max(2, Math.floor(deviceDepth / (fs * 0.58)));
+          const maxLines = Math.max(1, Math.floor(h / (fs * 1.5)));
+          const lines = wrapLabel(dd.label, maxChars, Math.min(maxLines, 3));
+          const lineH = fs * 1.35;
+          const baseY = y + h / 2 - ((lines.length - 1) * lineH) / 2;
+          const clipId = `rfsvg-side-clip-${rack.id}-${pl.id}`;
+          return (
+            <g key={pl.id}>
+              <rect x={x} y={y} width={deviceDepth} height={h} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke="#333" strokeWidth={0.5} opacity={0.85} />
+              <clipPath id={clipId}><rect x={x} y={y} width={deviceDepth} height={h} /></clipPath>
+              <g clipPath={`url(#${clipId})`}>
+                <text x={x + deviceDepth / 2} textAnchor="middle" fontSize={fs} fill="#fff" fontWeight={500} style={{ pointerEvents: "none" }}>
+                  {lines.map((line, i) => (
+                    <tspan key={i} x={x + deviceDepth / 2} y={baseY + i * lineH} dominantBaseline="central">{line}</tspan>
+                  ))}
+                </text>
+              </g>
+            </g>
+          );
         })}
       </svg>
     );
