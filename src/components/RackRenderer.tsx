@@ -1819,7 +1819,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 bg-neutral-200 overflow-hidden outline-none"
+      className="relative flex-1 bg-neutral-200 overflow-hidden outline-none select-none"
       style={{ cursor }}
       tabIndex={0}
       onWheel={onWheel}
