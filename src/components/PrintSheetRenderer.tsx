@@ -154,6 +154,10 @@ export default function PrintSheetRenderer({ page }: Props) {
   const addViewport = useSchematicStore((s) => s.addViewport);
   const updateViewport = useSchematicStore((s) => s.updateViewport);
   const removeViewport = useSchematicStore((s) => s.removeViewport);
+  const setPendingUndoSnapshot = useSchematicStore((s) => s.setPendingUndoSnapshot);
+  const flushPendingSnapshot = useSchematicStore((s) => s.flushPendingSnapshot);
+  const clearPendingUndoSnapshot = useSchematicStore((s) => s.clearPendingUndoSnapshot);
+  const pushSnapshot = useSchematicStore((s) => s.pushSnapshot);
   const titleBlock = useSchematicStore((s) => s.titleBlock);
   const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   const panMode = useSchematicStore((s) => s.panMode);
@@ -361,8 +365,10 @@ export default function PrintSheetRenderer({ page }: Props) {
       const v = page.viewports.find((vv) => vv.id === id);
       if (v) starts[id] = { ...v.positionMm };
     }
+    didMoveRef.current = false;
+    setPendingUndoSnapshot();
     setDragging({ startClientX: e.clientX, startClientY: e.clientY, starts });
-  }, [page.viewports]);
+  }, [page.viewports, setPendingUndoSnapshot]);
 
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, vp: PrintViewport) => {
     e.stopPropagation();
@@ -372,6 +378,8 @@ export default function PrintSheetRenderer({ page }: Props) {
     const aspect = rack ? getNaturalAspect(rack, face) : vp.sizeMm.w / vp.sizeMm.h;
     setSelectedVpIds([vp.id]);
     selectedVpIdsRef.current = [vp.id];
+    didMoveRef.current = false;
+    setPendingUndoSnapshot();
     setResizing({
       kind: "single",
       vpId: vp.id,
@@ -381,7 +389,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       startSize: { ...vp.sizeMm },
       aspect,
     });
-  }, [elevationPages]);
+  }, [elevationPages, setPendingUndoSnapshot]);
 
   const handleGroupResizeMouseDown = useCallback((e: React.MouseEvent, groupRect: Rect) => {
     e.stopPropagation();
@@ -390,6 +398,8 @@ export default function PrintSheetRenderer({ page }: Props) {
       const v = page.viewports.find((vv) => vv.id === id);
       if (v) starts[id] = vpRect(v);
     }
+    didMoveRef.current = false;
+    setPendingUndoSnapshot();
     setResizing({
       kind: "group",
       startClientX: e.clientX,
@@ -397,7 +407,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       groupStart: { ...groupRect },
       starts,
     });
-  }, [page.viewports, vpRect]);
+  }, [page.viewports, vpRect, setPendingUndoSnapshot]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (dragging) {
@@ -436,6 +446,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       }
     } else if (resizing) {
       const { dxMm, dyMm } = clientPxToMm(e.clientX - resizing.startClientX, e.clientY - resizing.startClientY);
+      if (Math.abs(dxMm) > 0.1 || Math.abs(dyMm) > 0.1) didMoveRef.current = true;
       const marginMm = PAGE_MARGIN_IN * IN_TO_MM;
       const pageWMm = pageWIn * IN_TO_MM;
       const pageHMm = pageHIn * IN_TO_MM;
@@ -508,11 +519,15 @@ export default function PrintSheetRenderer({ page }: Props) {
       setSelectedVpIds([]);
       selectedVpIdsRef.current = [];
     }
+    if (dragging || resizing) {
+      if (didMoveRef.current) flushPendingSnapshot();
+      else clearPendingUndoSnapshot();
+    }
     setDragging(null);
     setResizing(null);
     setPanning(null);
     setSnapGuides([]);
-  }, [panning, panMode]);
+  }, [panning, panMode, dragging, resizing, flushPendingSnapshot, clearPendingUndoSnapshot]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -531,6 +546,8 @@ export default function PrintSheetRenderer({ page }: Props) {
   }, [page.id, pageWIn, pageHIn, pageWPx, pageHPx, addViewport]);
 
   const resetSelectionSize = useCallback(() => {
+    if (selectedVpIdsRef.current.length === 0) return;
+    pushSnapshot();
     for (const id of selectedVpIdsRef.current) {
       const v = page.viewports.find((vv) => vv.id === id);
       if (!v) continue;
@@ -542,7 +559,7 @@ export default function PrintSheetRenderer({ page }: Props) {
       // Keep height, snap width to natural aspect.
       updateViewport(page.id, id, { sizeMm: { w: v.sizeMm.h * aspect, h: v.sizeMm.h } });
     }
-  }, [page.viewports, page.id, elevationPages, updateViewport]);
+  }, [page.viewports, page.id, elevationPages, updateViewport, pushSnapshot]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.key === "Delete" || e.key === "Backspace") && selectedVpIdsRef.current.length > 0) {

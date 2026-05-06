@@ -3647,11 +3647,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setPrintSheetPaper: (pageId, paperId, orientation, customWidthIn, customHeightIn) => {
     const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
     const updatedPages = state.pages.map((p): SchematicPage => {
       if (p.id !== pageId || p.type !== "print-sheet") return p;
       return { ...p, paperId, orientation, customWidthIn, customHeightIn };
     });
-    set({ pages: updatedPages });
+    set({ pages: updatedPages, undoSize: undoStack.length, redoSize: 0 });
     get().saveToLocalStorage();
   },
 
