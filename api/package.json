@@ -9,6 +9,7 @@
     "seed:local": "npx tsx seed/seed.ts",
     "seed:sql": "npx tsx seed/seed.ts --sql-only",
     "seed:remote": "npx tsx seed/seed.ts --remote",
+    "sync:prod-templates": "npx tsx seed/sync-prod-templates.ts",
     "generate-fallback": "npx tsx seed/generate-fallback.ts"
   },
   "dependencies": {
