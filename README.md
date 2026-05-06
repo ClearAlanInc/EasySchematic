@@ -35,7 +35,7 @@
 - **Auto-numbering** — dropped devices auto-increment (Camera → Camera 1, Camera 2, …)
 - **Dark mode** — toggle light/dark themes from the menu bar; saved automatically, respects OS setting on first visit
 - **Mobile support** — mobile detection with hamburger menu and touch-friendly pan controls
-- **Physical dimensions** — height, width, depth (mm) and weight (kg) fields on devices
+- **Physical dimensions** — height, width, depth (mm) and weight (kg) fields on devices; drive rack auto-shelf classification, side-view depth conflicts, and per-rack stats
 - **Auxiliary data block** — up to 5 custom lines at the bottom of a device, either free text or bound to device properties (hostname, power, weight, port counts, etc.) via a `{{field}}` picker that keeps values in sync automatically
 - **Custom label expansion** — embed `{{cableId}}` and other tokens in device labels for inline cable references
 - **IO counts** — optional badges on devices showing connected/total ports per direction (View Options)
@@ -86,7 +86,7 @@
 - **Room styling** — right-click a room to set background color, border color, border style, and label size
 - **Space + drag** to pan (Vectorworks-style)
 - **Subrooms** — nested room containers for representing locations within locations (e.g., rack bays inside a control room)
-- **Equipment racks** — mark a room as an equipment rack via right-click for rack-style rendering
+- **Equipment-rack rooms** — mark a room as an equipment rack via right-click for rack-style rendering on the schematic (separate from the dedicated Rack Builder pages — see below)
 - **Shift+click toggle selection** — add/remove items from selection; Shift+drag for AutoCAD-style directional selection. Crossing (right-to-left) drag also selects connections whose routed paths cross the box.
 - **Selection filter bar** — appears at the bottom of the canvas when 2+ items are selected; chip per entity kind with click-to-solo / Ctrl+click-to-deselect. When connections are in the selection, an **Edit N connections…** button opens a bulk edit panel for label, line style, direct attach, and label visibility — applied in one undo step.
 
@@ -97,6 +97,42 @@ SDI · HDMI · NDI · Dante · AVB · Analog Audio · Speaker-Level · Bluetooth
 **Signal color panel** — collapsible right sidebar with per-signal color pickers. Custom colors are saved in schematic files and persist across sessions. Reset to defaults anytime.
 
 **View options** — hide connections by signal type, toggle device type labels, cable labels, and line jumps on/off
+
+### Rack Builder
+
+A dedicated rack elevation surface that lives alongside the signal flow. Devices are shared by reference — place a device on a rack page and it stays linked to the same node on the schematic, so connections, ports, and edits are always in sync.
+
+- **Multi-page workflow** — schematic, rack pages, and print sheets all live in the same file, switched via tabs at the bottom of the canvas
+- **Rack presets** — 42U / 25U / 16U floor racks, 12U / 6U wall mounts, 4U / 8U desktop racks, 45U / 12U open 2-post relay racks, 42U open 4-post — or build a custom rack from rack type + height + depth
+- **2-post and 4-post racks** — visual distinction with mounting holes (3 per U), inner pseudo-rails, dashed outline for open frame; 2-post rear placement blocked with explanation
+- **Drag-to-rack** — drop devices from the unracked sidebar onto rack U slots with snap-to-U placement and collision detection
+- **Half-rack support** — devices ≈220 mm wide auto-snap to left side; second half-rack lands on right; collisions detected
+- **Auto-shelf** — small non-rack-mountable devices (DI boxes, half-width DSPs, desktop gear) drop onto a slot and atomically create a 1U shelf with the device centered at natural width; oversize devices are rejected with a toast
+- **Per-template `rackForm` override** — `full` / `half` / `shelf-only` to bypass the size heuristic for edge cases (desktop unit with optional rack ears, etc.)
+- **Front / rear / side views** — front shows face plates with connector icons; rear shows striped occupancy ghosts for front-mounted gear; side view shows depth conflicts and shelf-mounted gear at real depth
+- **Accessories** — shelves, vent panels (with hatching), blank panels, drawers, cable managers, fan units; right-click an empty slot to add
+- **Face-plate editor** — drag connectors to custom positions on a device's front panel with snap-to-grid, multi-select with align (L/CX/R/T/CY/B) and distribute (H/V), custom labels with drag/resize, undo/redo, and reset to auto-layout
+- **59 connector types** rendered at mm-accurate dimensions with three zoom levels (dots → silhouettes → detailed icons with pin patterns and slot orientations)
+- **Linked rooms** — link a schematic room to a rack so an "Auto-populate" button can propose placements for every device in the room; rack header shows a click-to-jump link badge
+- **Cross-shelf drag** — shelf-mounted devices reposition along a shelf or jump across shelves with absolute canvas-to-mm tracking
+- **Snap guides** during shelf drag — gravity-snap to shelf floor or stack on top of another device
+- **Right-click context menus** for slot, device, accessory, and rack actions
+- **Cascading delete** — removing a device from the schematic clears its rack placement (with toast); deleting a rack frees its devices back to the unracked sidebar
+
+### Print Sheets
+
+Paper-based layout pages for composing rack viewports into a printable drawing.
+
+- **Paper sizes** — Letter, Tabloid, A3, A4, or custom dimensions in inches; landscape or portrait
+- **Drag rack viewports** onto the sheet — front, rear, or side view; same rack can appear multiple times
+- **Aspect-locked resize** by default; hold **Shift** to escape aspect lock and stretch freely
+- **Reset size** — press **R** to snap a viewport back to its natural width-for-height aspect
+- **Multi-select** — Shift+click, Ctrl+A, or marquee drag; group resize maintains relative position with uniform scale
+- **Alignment guides** — blue dashed lines snap viewports to other viewports and page margins (3 mm threshold)
+- **Title block, face label, stats line** below each viewport — italic face label, U used / U total, weight, power draw; typography matched pixel-for-pixel to the live rack page
+- **Vector PDF export** — full-fidelity rack drawings with mounting holes, occupancy ghosts (real diagonal stripe pattern), shelf occupants at correct offset and rotation, vent-panel hatching, side-view U gridlines, multi-line device labels, and U-height badges
+- **Inter Italic** font shipped (Latin subset, ~70 KB) so face labels render italic in PDF without depending on system fonts
+- **Pan and zoom** parity with the schematic — trackpad pinch, two-finger pan, middle-click drag, Space+drag
 
 ### Pack List & Reports
 
@@ -267,6 +303,9 @@ The installed app opens in its own window without browser chrome, works fully of
 | `Ctrl+Shift+S` | Save As |
 | `Shift+click` | Toggle item in selection |
 | `Shift+drag` | Directional toggle selection |
+| `R` (on a print sheet) | Reset selected rack viewports to natural aspect |
+| `Shift` while resizing a print-sheet viewport | Escape aspect lock |
+| Double-click rack label | Rename rack inline |
 
 ## Contributing
 

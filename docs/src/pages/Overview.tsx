@@ -142,7 +142,22 @@ export default function OverviewPage() {
           <strong>Subrooms</strong> — nested room containers for locations within locations
         </li>
         <li>
-          <strong>Equipment racks</strong> — mark rooms as equipment racks for rack-style rendering
+          <strong>Rack builder</strong> — dedicated rack elevation pages with 2-post / 4-post racks at standard heights, drag-to-rack with snap-to-U placement, half-rack support, accessories (shelves, vent panels, blank panels, drawers, cable managers), and front / rear / side views — see the <a href="/racks">Rack Builder guide</a>
+        </li>
+        <li>
+          <strong>Auto-shelf</strong> — small non-rack-mountable devices (DI boxes, half-width DSPs, desktop gear) drop onto a slot and auto-create a 1U shelf at natural width; oversize devices are rejected with a clear error
+        </li>
+        <li>
+          <strong>Face-plate editor</strong> — drag connectors to custom positions on a device&apos;s front panel with snap-to-grid, multi-select align / distribute, custom labels, and undo / redo. 59 connector types rendered at mm-accurate dimensions with three zoom levels
+        </li>
+        <li>
+          <strong>Room ↔ rack linking</strong> — link a schematic room to a rack so &quot;Auto-populate&quot; can propose placements for every device in the room; rack header shows a click-to-jump link badge
+        </li>
+        <li>
+          <strong>Print sheets</strong> — paper-sized layout pages (Letter, Tabloid, A3, A4, custom) for composing rack viewports into a printable drawing; multi-select group resize, alignment guides, vector PDF export — see the <a href="/print-sheets">Print Sheets guide</a>
+        </li>
+        <li>
+          <strong>Equipment-rack rooms</strong> — mark a schematic room as an equipment rack for rack-style rendering directly on the schematic (separate from the dedicated Rack Builder pages above)
         </li>
         <li>
           <strong>BOM cost tracking</strong> — unit cost fields on devices and cables for budgeting
@@ -157,7 +172,7 @@ export default function OverviewPage() {
           <strong>Offline cloud cache</strong> — cloud schematics cached to IndexedDB for offline access
         </li>
         <li>
-          <strong>Physical dimensions</strong> — device height, width, depth (mm) and weight (kg)
+          <strong>Physical dimensions</strong> — device height, width, depth (mm) and weight (kg) drive rack auto-shelf classification, side-view depth conflicts, and per-rack stats (U used, total weight, power)
         </li>
         <li>
           <strong>Hostname</strong> — per-device hostname field feeding into the network report

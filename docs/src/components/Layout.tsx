@@ -11,6 +11,8 @@ const navItems = [
     { hash: "connections", label: "Connections" },
     { hash: "connection-routing", label: "Connection Routing" },
     { hash: "rooms-and-grouping", label: "Rooms & Grouping" },
+    { hash: "racks", label: "Rack Builder" },
+    { hash: "print-sheets", label: "Print Sheets" },
     { hash: "notes", label: "Notes & Annotations" },
     { hash: "device-library", label: "Device Library" },
   ]},

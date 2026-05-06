@@ -55,6 +55,31 @@ export default function GettingStartedPage() {
         </tbody>
       </table>
 
+      <h2>Pages</h2>
+      <p>
+        A schematic file can hold multiple pages, shown as tabs at the bottom of the canvas:
+      </p>
+      <ul>
+        <li>
+          <strong>Schematic</strong> — the signal flow diagram (always present, always first)
+        </li>
+        <li>
+          <strong>Rack pages</strong> — drag-to-rack elevation drawings with snap-to-U placement,
+          front / rear / side views, and accessories. Add via the <strong>+</strong> button at the
+          right end of the tab bar. See the <a href="/racks">Rack Builder guide</a>.
+        </li>
+        <li>
+          <strong>Print sheets</strong> — paper-sized layout pages for composing rack viewports
+          into a printable drawing with vector PDF export. Add via the <strong>📄+</strong> button.
+          See <a href="/print-sheets">Print Sheets</a>.
+        </li>
+      </ul>
+      <p>
+        Right-click a tab to rename, duplicate, or delete the page. Devices are shared by reference
+        across pages — placing a device on a rack doesn&apos;t duplicate it; the rack page just
+        references the schematic device by ID. Edit it in either place and both stay in sync.
+      </p>
+
       <h2>Dark mode</h2>
       <p>
         Click the <strong>sun/moon icon</strong> in the right side of the menu bar to toggle between light and dark

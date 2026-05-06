@@ -16,6 +16,8 @@ import PrintingPage from "./pages/Printing";
 import PackListPage from "./pages/PackList";
 import ApiPage from "./pages/Api";
 import SelfHostingPage from "./pages/SelfHosting";
+import RacksPage from "./pages/Racks";
+import PrintSheetsPage from "./pages/PrintSheets";
 
 const routes: Record<string, { title: string; component: React.FC }> = {
   "": { title: "Overview", component: OverviewPage },
@@ -25,6 +27,8 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   connections: { title: "Connections", component: ConnectionsPage },
   "connection-routing": { title: "Connection Routing", component: EdgeRoutingPage },
   "rooms-and-grouping": { title: "Rooms & Grouping", component: RoomsAndGroupingPage },
+  racks: { title: "Rack Builder", component: RacksPage },
+  "print-sheets": { title: "Print Sheets", component: PrintSheetsPage },
   notes: { title: "Notes & Annotations", component: NotesPage },
   "device-library": { title: "Device Library", component: DeviceLibraryPage },
   "pack-list": { title: "Pack List & Reports", component: PackListPage },

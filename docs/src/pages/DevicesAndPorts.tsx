@@ -338,6 +338,46 @@ export default function DevicesAndPortsPage() {
         Set these in the device editor under the dimensions fields. This data is stored per
         device and included in device templates.
       </p>
+      <p>
+        Dimensions drive several features in the <a href="/racks">Rack Builder</a>:
+      </p>
+      <ul>
+        <li>
+          <strong>Auto-classification</strong> — a heuristic looks at width and height to decide
+          whether a device is full-rack (≈482 mm panel), half-rack (≈220 mm), shelf-only (small
+          desktop gear), or oversize (won&apos;t fit a 19&quot; rack). Drop a small device on an
+          empty slot and EasySchematic creates a 1U shelf and centers it at natural width.
+        </li>
+        <li>
+          <strong>Side-view depth conflicts</strong> surface when a deeper device extends past the
+          rack&apos;s depth or collides with rear-mounted gear.
+        </li>
+        <li>
+          <strong>Per-rack stats</strong> — the rack page sums U used, total weight, and power draw
+          across placed devices.
+        </li>
+      </ul>
+      <p>
+        For edge cases the size heuristic gets wrong (desktop unit with optional rack ears,
+        oddly-sized half-rack gear, etc.), set an explicit <strong>rackForm</strong> on the device
+        or template — values are <code>full</code>, <code>half</code>, or <code>shelf-only</code>.
+      </p>
+
+      <h2>Face-plate editor</h2>
+      <p>
+        EasySchematic renders each device&apos;s front panel with real connector icons in the
+        <a href="/racks"> rack view</a>. Right-click a device on a rack and choose{" "}
+        <strong>Edit Face-Plate</strong> to fine-tune the layout — drag ports to custom positions,
+        snap-to-grid, multi-select for align / distribute, add custom labels, and reset to
+        auto-layout if you go off the rails.
+      </p>
+      <p>
+        59 connector types are drawn at real-world millimeter dimensions from manufacturer specs,
+        with three levels of detail: dots when zoomed out, silhouettes at mid-zoom, and detailed
+        icons (pin patterns, slot orientations, blade arrangements) when zoomed in close.
+        Custom layouts persist with the device or template — set them once and reuse the layout
+        every time the device is placed.
+      </p>
 
       <h2>Auxiliary data</h2>
       <p>

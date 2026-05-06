@@ -89,8 +89,38 @@ export default function RoomsAndGroupingPage() {
       <p>
         Mark a room as an <strong>equipment rack</strong> via the right-click context menu
         or the Room Properties editor. Rack-flagged rooms render with rack-style visuals
-        and are treated as equipment containers in reports.
+        on the schematic and are treated as equipment containers in reports.
       </p>
+      <p>
+        For dedicated rack elevation drawings — drag-to-rack with snap-to-U, front / rear / side
+        views, accessories, face-plate editing, and PDF export — use the dedicated{" "}
+        <a href="/racks">Rack Builder</a> on its own page tab. The two features are complementary:
+        equipment-rack rooms organize devices by physical container on the schematic, while rack
+        pages produce the elevation deliverable.
+      </p>
+
+      <h2>Linking a room to a rack</h2>
+      <p>
+        A room on the schematic can be linked to a rack on a rack page so the rack knows which
+        devices belong in it. Open the Room Properties editor (right-click → <strong>Edit
+        Properties</strong>) and pick a target rack from the <strong>Linked Rack</strong> dropdown.
+      </p>
+      <p>Once linked:</p>
+      <ul>
+        <li>
+          The rack header on the rack page shows a <strong>link badge</strong> with the room name —
+          click it to jump back to the room on the schematic.
+        </li>
+        <li>
+          The rack page sidebar groups unracked devices by linked room. An{" "}
+          <strong>Auto-populate</strong> button proposes placements for every device in the linked
+          room in one go.
+        </li>
+        <li>
+          Devices that don&apos;t live in any linked room land in an <strong>Other</strong> group at
+          the bottom of the sidebar.
+        </li>
+      </ul>
 
       <h2>Snap guides</h2>
       <p>

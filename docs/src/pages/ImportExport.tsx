@@ -45,6 +45,8 @@ export default function ImportExportPage() {
         <li>Schematic name</li>
         <li>All devices, rooms, and notes</li>
         <li>All connections (with signal type metadata)</li>
+        <li>All <a href="/racks">rack pages</a> — racks, device placements (referenced by ID, not duplicated), and accessories</li>
+        <li>All <a href="/print-sheets">print sheets</a> — paper size, orientation, and rack viewports</li>
         <li>Custom templates (if any)</li>
         <li>Signal color customizations (if any)</li>
         <li>Print settings (paper size, orientation, scale)</li>

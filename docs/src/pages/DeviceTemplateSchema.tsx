@@ -89,8 +89,10 @@ export default function DeviceTemplateSchemaPage() {
         </thead>
         <tbody>
           <tr><td><code>category</code></td><td>string</td><td>Auto-derived from <code>deviceType</code> if omitted</td></tr>
-          <tr><td><code>heightMm</code> / <code>widthMm</code> / <code>depthMm</code></td><td>number</td><td>Physical dimensions in millimeters</td></tr>
-          <tr><td><code>weightKg</code></td><td>number</td><td>Weight in kilograms</td></tr>
+          <tr><td><code>heightMm</code> / <code>widthMm</code> / <code>depthMm</code></td><td>number</td><td>Physical dimensions in millimeters. Drive rack auto-classification, side-view depth conflicts, and rack stats — see <a href="/racks">Rack Builder</a></td></tr>
+          <tr><td><code>weightKg</code></td><td>number</td><td>Weight in kilograms; rolls up into per-rack total weight stats</td></tr>
+          <tr><td><code>rackForm</code></td><td>string</td><td>Rack-form override — <code>"full"</code>, <code>"half"</code>, or <code>"shelf-only"</code>. Bypasses the size heuristic for edge cases like desktop units with optional rack ears</td></tr>
+          <tr><td><code>facePlateLayout</code></td><td>object</td><td>Custom face-plate connector layout (set via the Face-Plate Editor in-app); persists with the template so future placements inherit it</td></tr>
           <tr><td><code>powerDrawW</code></td><td>number</td><td>Max power consumption in watts</td></tr>
           <tr><td><code>powerCapacityW</code></td><td>number</td><td>For power distros: total capacity in watts</td></tr>
           <tr><td><code>poeBudgetW</code></td><td>number</td><td>For PoE switches: total PoE budget in watts</td></tr>
