@@ -49,7 +49,6 @@ import PageTabs from "./components/PageTabs";
 import RackPage from "./components/RackPage";
 import PrintSheetPage from "./components/PrintSheetPage";
 import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, type GuideLine } from "./snapUtils";
-import { STUB_W_EST, STUB_H_EST } from "./stubPlacement";
 import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
 import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
@@ -1165,19 +1164,16 @@ function SchematicCanvas() {
         return;
       }
 
-      const snap = computeSnap(draggedNode as SchematicNode, state.nodes);
+      const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+        useShortNames: state.useShortNames,
+        wrapDeviceLabels: state.wrapDeviceLabels,
+      });
       setSnapGuides(snap.guides);
 
-      // Stub labels snap their CENTER to the grid, so the side handle's Y aligns
-      // with the connected device's port Y (which is on the 20px grid).
-      let snappedX = snap.x;
-      let snappedY = snap.y;
-      if (draggedNode.type === "stub-label") {
-        const w = (draggedNode as SchematicNode).measured?.width ?? STUB_W_EST;
-        const h = (draggedNode as SchematicNode).measured?.height ?? STUB_H_EST;
-        snappedX = Math.round((snap.x + w / 2) / GRID_SIZE) * GRID_SIZE - w / 2;
-        snappedY = Math.round((snap.y + h / 2) / GRID_SIZE) * GRID_SIZE - h / 2;
-      }
+      // For stub labels, computeSnap already prefers port-snap and falls back to
+      // center-grid-snap internally, so we use its result verbatim.
+      const snappedX = snap.x;
+      const snappedY = snap.y;
 
       // Apply snapped position if it differs
       if (snappedX !== draggedNode.position.x || snappedY !== draggedNode.position.y) {
@@ -1230,17 +1226,14 @@ function SchematicCanvas() {
         return;
       }
 
-      // Apply final snap so the node lands on the aligned position
-      const snap = computeSnap(draggedNode as SchematicNode, state.nodes);
+      // Apply final snap so the node lands on the aligned position. For stubs,
+      // computeSnap already handles port-priority + center-grid fallback.
+      const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+        useShortNames: state.useShortNames,
+        wrapDeviceLabels: state.wrapDeviceLabels,
+      });
       let finalX = snap.x;
       let finalY = snap.y;
-      // Stub labels snap their CENTER to the grid (matches onNodeDrag).
-      if (draggedNode.type === "stub-label") {
-        const w = (draggedNode as SchematicNode).measured?.width ?? STUB_W_EST;
-        const h = (draggedNode as SchematicNode).measured?.height ?? STUB_H_EST;
-        finalX = Math.round((snap.x + w / 2) / GRID_SIZE) * GRID_SIZE - w / 2;
-        finalY = Math.round((snap.y + h / 2) / GRID_SIZE) * GRID_SIZE - h / 2;
-      }
 
       // Enforce minimum spacing so stubs don't land inside neighbor obstacle rects
       // Speculatively reparent so enforcement works when dragging into a room

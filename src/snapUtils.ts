@@ -1,12 +1,29 @@
 import type { DeviceData, SchematicNode } from "./types";
+import { portSide } from "./types";
 
 import { GRID_SIZE } from "./store";
-import { totalAuxHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "./auxiliaryData";
+import { totalAuxHeight, headerBandHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "./auxiliaryData";
+import { resolveDeviceLabel } from "./displayName";
+import { STUB_GAP as STUB_PORT_GAP, STUB_W_EST, STUB_H_EST } from "./stubPlacement";
 
 // Must be >= half the grid size so alignment snapping works with grid-snapped positions.
 // React Flow's snapToGrid moves nodes in GRID_SIZE increments, so we need to catch
 // candidates within one grid step.
 const SNAP_THRESHOLD = GRID_SIZE;
+
+// Proximity gating for the alignment engine. In a sparse canvas, two devices on
+// opposite sides of the screen still snap (they fit inside MAX_SNAP_DISTANCE).
+// In a crowded one, only the K nearest neighbors are considered, killing the
+// noise of far-away edges accidentally lining up.
+const MAX_SNAP_DISTANCE = 800;
+const NEAREST_K_DEVICE = 8;
+const NEAREST_K_STUB = 12;
+
+export interface DisplayDefaults {
+  useShortNames: boolean;
+  wrapDeviceLabels: boolean;
+}
+const DEFAULT_DISPLAY: DisplayDefaults = { useShortNames: false, wrapDeviceLabels: false };
 
 export interface GuideLine {
   orientation: "h" | "v";
@@ -58,165 +75,471 @@ function nodeRect(node: SchematicNode): Rect {
   };
 }
 
-/** Get absolute position offset for a node's parent chain. */
-function getParentOffset(
+/** Get absolute offset of a node's immediate parent (or {0,0} for top-level). */
+function parentOffsetFromMap(
   node: SchematicNode,
-  allNodes: SchematicNode[],
+  nodeMap: Map<string, SchematicNode>,
 ): { dx: number; dy: number } {
   if (!node.parentId) return { dx: 0, dy: 0 };
-  const parent = allNodes.find((n) => n.id === node.parentId);
+  const parent = nodeMap.get(node.parentId);
   if (!parent) return { dx: 0, dy: 0 };
   return { dx: parent.position.x, dy: parent.position.y };
 }
 
-function offsetRect(r: Rect, dx: number, dy: number): Rect {
+/** Walk full parent chain to compute absolute world position. */
+function absoluteNodePos(
+  node: SchematicNode,
+  nodeMap: Map<string, SchematicNode>,
+): { x: number; y: number } {
+  let x = node.position.x;
+  let y = node.position.y;
+  let parentId = node.parentId;
+  while (parentId) {
+    const parent = nodeMap.get(parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    parentId = parent.parentId;
+  }
+  return { x, y };
+}
+
+/** Node rect in absolute world coords. Single allocation per call (parent
+ *  chain walk inlined; intermediate nodeRect/absoluteNodePos avoided). */
+function absRect(node: SchematicNode, nodeMap: Map<string, SchematicNode>): Rect {
+  const w = node.measured?.width ?? (node.width as number) ?? (node.style?.width as number) ?? (node.type === "room" ? 400 : 180);
+  const h = node.measured?.height ?? (node.height as number) ?? (node.style?.height as number) ?? (node.type === "room" ? 300 : estimateDeviceHeight(node));
+  let nx = node.position.x;
+  let ny = node.position.y;
+  let pid = node.parentId;
+  while (pid) {
+    const p = nodeMap.get(pid);
+    if (!p) break;
+    nx += p.position.x;
+    ny += p.position.y;
+    pid = p.parentId;
+  }
   return {
-    left: r.left + dx,
-    right: r.right + dx,
-    top: r.top + dy,
-    bottom: r.bottom + dy,
-    centerX: r.centerX + dx,
-    centerY: r.centerY + dy,
+    left: nx,
+    right: nx + w,
+    top: ny,
+    bottom: ny + h,
+    centerX: nx + w / 2,
+    centerY: ny + h / 2,
   };
 }
 
-interface XCandidate {
-  delta: number;
-  alignX: number; // relative coordinate for the guide
-  anchorAbsRect: Rect; // anchor rect in absolute flow-space
+/** Bbox-to-bbox squared distance. 0 if rects overlap. We compare distances to
+ *  squared thresholds, which avoids one Math.hypot per candidate. */
+function bboxDistSq(a: Rect, b: Rect): number {
+  const dx = Math.max(0, Math.max(a.left - b.right, b.left - a.right));
+  const dy = Math.max(0, Math.max(a.top - b.bottom, b.top - a.bottom));
+  return dx * dx + dy * dy;
 }
 
-interface YCandidate {
-  delta: number;
-  alignY: number;
-  anchorAbsRect: Rect;
+/** In-place insertion into a top-K buffer sorted ascending by dist. K is small
+ *  (≤ ~12), so linear bubble-up is fine and avoids any transient allocations
+ *  (no splice, no sort, no slice). */
+function insertTopK(rects: Rect[], dists: number[], k: number, r: Rect, d: number): void {
+  const len = dists.length;
+  let i: number;
+  if (len < k) {
+    rects.push(r);
+    dists.push(d);
+    i = len;
+  } else {
+    if (d >= dists[k - 1]) return;
+    rects[k - 1] = r;
+    dists[k - 1] = d;
+    i = k - 1;
+  }
+  while (i > 0 && dists[i - 1] > dists[i]) {
+    const tr = rects[i]; rects[i] = rects[i - 1]; rects[i - 1] = tr;
+    const td = dists[i]; dists[i] = dists[i - 1]; dists[i - 1] = td;
+    i--;
+  }
 }
+
+/** Same as insertTopK, but also tracks the source node alongside each rect.
+ *  Used by the stub-snap path which needs to enumerate ports of survivors. */
+function insertTopKWithNode(
+  nodes: SchematicNode[],
+  rects: Rect[],
+  dists: number[],
+  k: number,
+  n: SchematicNode,
+  r: Rect,
+  d: number,
+): void {
+  const len = dists.length;
+  let i: number;
+  if (len < k) {
+    nodes.push(n);
+    rects.push(r);
+    dists.push(d);
+    i = len;
+  } else {
+    if (d >= dists[k - 1]) return;
+    nodes[k - 1] = n;
+    rects[k - 1] = r;
+    dists[k - 1] = d;
+    i = k - 1;
+  }
+  while (i > 0 && dists[i - 1] > dists[i]) {
+    const tn = nodes[i]; nodes[i] = nodes[i - 1]; nodes[i - 1] = tn;
+    const tr = rects[i]; rects[i] = rects[i - 1]; rects[i - 1] = tr;
+    const td = dists[i]; dists[i] = dists[i - 1]; dists[i - 1] = td;
+    i--;
+  }
+}
+
+export interface PortPosition {
+  portId: string;
+  side: "left" | "right";
+  /** Absolute world-space X (the device edge the port lives on). */
+  absX: number;
+  /** Absolute world-space Y (vertical center of the port row). */
+  absY: number;
+}
+
+/**
+ * Absolute world-space positions of every port on a device. Mirrors the math
+ * in DeviceNode's render: 1px border + headerBand + 9px pad + portIdx*20 + 10px
+ * (half row), with portIdx counted within each side. Port handles already sit
+ * on the 20px grid when the device does.
+ */
+export function getPortAbsolutePositions(
+  device: SchematicNode,
+  nodeMap: Map<string, SchematicNode>,
+  displayDefaults: DisplayDefaults = DEFAULT_DISPLAY,
+): PortPosition[] {
+  if (device.type !== "device") return [];
+  const dd = device.data as DeviceData;
+  const ports = dd.ports ?? [];
+  const resolved = resolveDeviceLabel(dd, displayDefaults);
+  const labelZone = resolved.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
+  const headerBand = headerBandHeight(dd.auxiliaryData, labelZone);
+  const deviceAbs = absoluteNodePos(device, nodeMap);
+  const deviceW = (device.measured?.width as number | undefined) ?? 180;
+  const sideIdx: Record<"left" | "right", number> = { left: 0, right: 0 };
+  const out: PortPosition[] = [];
+  for (const port of ports) {
+    const side = portSide(port);
+    const idx = sideIdx[side]++;
+    const absY = deviceAbs.y + 1 + headerBand + 9 + idx * 20 + 10;
+    const absX = side === "right" ? deviceAbs.x + deviceW : deviceAbs.x;
+    out.push({ portId: port.id, side, absX, absY });
+  }
+  return out;
+}
+
+type CandidateKind = "edge" | "center" | "port" | "stub";
+
+interface AxisCandidate {
+  /** How much to shift dragged.position to land on this alignment. */
+  delta: number;
+  /** Absolute world coord where the visual guide line should be drawn. */
+  guideAbsPos: number;
+  /** Absolute rect of the anchor (used to compute the guide line's cross-axis extent). */
+  anchorAbsRect: Rect;
+  kind: CandidateKind;
+}
+
+/**
+ * Pick the best candidate within SNAP_THRESHOLD. Among candidates within
+ * threshold, port-snap wins over edge/center/stub snap so stubs prefer the
+ * port they conceptually belong to over a coincidental device-edge alignment.
+ */
+function pickBest(candidates: AxisCandidate[]): AxisCandidate | null {
+  let best: AxisCandidate | null = null;
+  for (const c of candidates) {
+    if (Math.abs(c.delta) > SNAP_THRESHOLD) continue;
+    if (!best) {
+      best = c;
+      continue;
+    }
+    const cIsPort = c.kind === "port";
+    const bestIsPort = best.kind === "port";
+    if (cIsPort && !bestIsPort) {
+      best = c;
+    } else if (!cIsPort && bestIsPort) {
+      // keep best
+    } else if (Math.abs(c.delta) < Math.abs(best.delta)) {
+      best = c;
+    }
+  }
+  return best;
+}
+
+// Squared form of MAX_SNAP_DISTANCE so we can compare against bboxDistSq
+// without a sqrt in the hot loop.
+const MAX_SNAP_DISTANCE_SQ = MAX_SNAP_DISTANCE * MAX_SNAP_DISTANCE;
 
 export function computeSnap(
   draggedNode: SchematicNode,
   allNodes: SchematicNode[],
+  displayDefaults: DisplayDefaults = DEFAULT_DISPLAY,
 ): SnapResult {
-  const dragged = nodeRect(draggedNode);
-  const dw = dragged.right - dragged.left;
-  const dh = dragged.bottom - dragged.top;
+  // Build nodeMap with a for-loop (skips the intermediate tuple array that
+  // `new Map(allNodes.map(...))` would allocate).
+  const nodeMap = new Map<string, SchematicNode>();
+  for (const n of allNodes) nodeMap.set(n.id, n);
 
+  if (draggedNode.type === "stub-label") {
+    return computeStubSnap(draggedNode, allNodes, nodeMap, displayDefaults);
+  }
+
+  // Generic path: rooms snap to other rooms; devices snap to cross-room peers
+  // (proximity-gated) plus their own parent room's edges.
+  const draggedAbs = absRect(draggedNode, nodeMap);
+  const dw = draggedAbs.right - draggedAbs.left;
+  const dh = draggedAbs.bottom - draggedAbs.top;
   const isDraggedRoom = draggedNode.type === "room";
-  const others = allNodes.filter((n) => {
-    if (n.id === draggedNode.id) return false;
-    // Rooms snap to other rooms
-    if (isDraggedRoom) return n.type === "room";
-    // Devices snap to other devices (same parent) and top-level rooms
-    return true;
-  });
+  const draggedParentId = draggedNode.parentId;
 
-  const xCandidates: XCandidate[] = [];
-  const yCandidates: YCandidate[] = [];
+  // Single pass: filter, compute absRect for survivors, run top-K via in-place
+  // bubble-insert. No transient {node, rect} or {c, dist} wrappers.
+  const topRects: Rect[] = [];
+  const topDistsSq: number[] = [];
 
-  for (const other of others) {
-    // Same-parent check for device-to-device snapping; skip for room targets
-    if (other.type !== "room" && other.parentId !== draggedNode.parentId) continue;
-
-    // For room targets when dragging a child device, compute delta in the
-    // dragged node's coordinate space (relative to its parent)
-    const isRoomTarget = other.type === "room" && !isDraggedRoom;
-    let r: Rect;
-    if (isRoomTarget && draggedNode.parentId) {
-      // Convert room's absolute coords to the parent-relative space of the dragged device
-      const parentOff = getParentOffset(draggedNode, allNodes);
-      r = offsetRect(nodeRect(other), -parentOff.dx, -parentOff.dy);
-    } else {
-      r = nodeRect(other);
+  for (const n of allNodes) {
+    if (n.id === draggedNode.id) continue;
+    if (isDraggedRoom) {
+      if (n.type !== "room") continue;
+    } else if (n.type === "room") {
+      // Child devices only align to their own parent room; top-level devices
+      // see every room (placement-time alignment).
+      if (draggedParentId && n.id !== draggedParentId) continue;
     }
-    const absOffset = getParentOffset(other, allNodes);
-    const absR = offsetRect(nodeRect(other), absOffset.dx, absOffset.dy);
+    // else: device or other type — cross-room alignment allowed.
 
-    // X-axis snaps (produce vertical guide lines)
-    xCandidates.push({ delta: r.left - dragged.left, alignX: r.left, anchorAbsRect: absR });
-    xCandidates.push({ delta: r.right - dragged.right, alignX: r.right, anchorAbsRect: absR });
-    xCandidates.push({ delta: r.centerX - dragged.centerX, alignX: r.centerX, anchorAbsRect: absR });
-    xCandidates.push({ delta: r.right - dragged.left, alignX: r.right, anchorAbsRect: absR });
-    xCandidates.push({ delta: r.left - dragged.right, alignX: r.left, anchorAbsRect: absR });
-
-    // Y-axis snaps (produce horizontal guide lines)
-    yCandidates.push({ delta: r.top - dragged.top, alignY: r.top, anchorAbsRect: absR });
-    yCandidates.push({ delta: r.bottom - dragged.bottom, alignY: r.bottom, anchorAbsRect: absR });
-    yCandidates.push({ delta: r.centerY - dragged.centerY, alignY: r.centerY, anchorAbsRect: absR });
-    yCandidates.push({ delta: r.bottom - dragged.top, alignY: r.bottom, anchorAbsRect: absR });
-    yCandidates.push({ delta: r.top - dragged.bottom, alignY: r.top, anchorAbsRect: absR });
+    const r = absRect(n, nodeMap);
+    const dSq = bboxDistSq(draggedAbs, r);
+    if (dSq > MAX_SNAP_DISTANCE_SQ) continue;
+    insertTopK(topRects, topDistsSq, NEAREST_K_DEVICE, r, dSq);
   }
 
-  // Find best X delta
-  let bestXDelta: number | null = null;
-  for (const c of xCandidates) {
-    if (Math.abs(c.delta) > SNAP_THRESHOLD) continue;
-    if (bestXDelta === null || Math.abs(c.delta) < Math.abs(bestXDelta)) {
-      bestXDelta = c.delta;
-    }
+  const xCands: AxisCandidate[] = [];
+  const yCands: AxisCandidate[] = [];
+  for (let i = 0; i < topRects.length; i++) {
+    pushBoxCandidates(xCands, yCands, draggedAbs, topRects[i], "edge", "center");
   }
 
-  // Find best Y delta
-  let bestYDelta: number | null = null;
-  for (const c of yCandidates) {
-    if (Math.abs(c.delta) > SNAP_THRESHOLD) continue;
-    if (bestYDelta === null || Math.abs(c.delta) < Math.abs(bestYDelta)) {
-      bestYDelta = c.delta;
-    }
-  }
+  return finalizeSnap(draggedNode, draggedAbs, dw, dh, xCands, yCands, nodeMap);
+}
 
-  const snappedX = bestXDelta !== null ? dragged.left + bestXDelta : dragged.left;
-  const snappedY = bestYDelta !== null ? dragged.top + bestYDelta : dragged.top;
+/** Push the 5 X-axis + 5 Y-axis edge/center alignment candidates for one
+ *  target rect against the dragged rect. Inlining this kept the hot loop
+ *  in computeSnap manageable. */
+function pushBoxCandidates(
+  xCands: AxisCandidate[],
+  yCands: AxisCandidate[],
+  draggedAbs: Rect,
+  r: Rect,
+  edgeKind: CandidateKind,
+  centerKind: CandidateKind,
+): void {
+  xCands.push({ delta: r.left - draggedAbs.left, guideAbsPos: r.left, anchorAbsRect: r, kind: edgeKind });
+  xCands.push({ delta: r.right - draggedAbs.right, guideAbsPos: r.right, anchorAbsRect: r, kind: edgeKind });
+  xCands.push({ delta: r.centerX - draggedAbs.centerX, guideAbsPos: r.centerX, anchorAbsRect: r, kind: centerKind });
+  xCands.push({ delta: r.right - draggedAbs.left, guideAbsPos: r.right, anchorAbsRect: r, kind: edgeKind });
+  xCands.push({ delta: r.left - draggedAbs.right, guideAbsPos: r.left, anchorAbsRect: r, kind: edgeKind });
+  yCands.push({ delta: r.top - draggedAbs.top, guideAbsPos: r.top, anchorAbsRect: r, kind: edgeKind });
+  yCands.push({ delta: r.bottom - draggedAbs.bottom, guideAbsPos: r.bottom, anchorAbsRect: r, kind: edgeKind });
+  yCands.push({ delta: r.centerY - draggedAbs.centerY, guideAbsPos: r.centerY, anchorAbsRect: r, kind: centerKind });
+  yCands.push({ delta: r.bottom - draggedAbs.top, guideAbsPos: r.bottom, anchorAbsRect: r, kind: edgeKind });
+  yCands.push({ delta: r.top - draggedAbs.bottom, guideAbsPos: r.top, anchorAbsRect: r, kind: edgeKind });
+}
 
-  // Compute absolute position of snapped dragged node
-  const dragOffset = getParentOffset(draggedNode, allNodes);
-  const snappedAbs: Rect = {
-    left: snappedX + dragOffset.dx,
-    right: snappedX + dw + dragOffset.dx,
-    top: snappedY + dragOffset.dy,
-    bottom: snappedY + dh + dragOffset.dy,
-    centerX: snappedX + dw / 2 + dragOffset.dx,
-    centerY: snappedY + dh / 2 + dragOffset.dy,
+/**
+ * Stub labels snap to (1) ports of nearby devices (primary), (2) edges/centers of
+ * nearby other stubs (so vertical columns of stubs align), (3) center-snapped grid
+ * as a fallback. Device-edge alignment is intentionally absent — stubs care about
+ * ports, not bounding boxes.
+ */
+function computeStubSnap(
+  stubNode: SchematicNode,
+  allNodes: SchematicNode[],
+  nodeMap: Map<string, SchematicNode>,
+  displayDefaults: DisplayDefaults,
+): SnapResult {
+  const stubW = (stubNode.measured?.width as number | undefined) ?? STUB_W_EST;
+  const stubH = (stubNode.measured?.height as number | undefined) ?? STUB_H_EST;
+  const stubAbsXY = absoluteNodePos(stubNode, nodeMap);
+  const stubAbs: Rect = {
+    left: stubAbsXY.x,
+    right: stubAbsXY.x + stubW,
+    top: stubAbsXY.y,
+    bottom: stubAbsXY.y + stubH,
+    centerX: stubAbsXY.x + stubW / 2,
+    centerY: stubAbsXY.y + stubH / 2,
   };
 
+  const xCands: AxisCandidate[] = [];
+  const yCands: AxisCandidate[] = [];
+
+  // 1. Port targets on nearby devices — single-pass top-K, no wrappers.
+  const deviceTopRects: Rect[] = [];
+  const deviceTopDistsSq: number[] = [];
+  const deviceTopNodes: SchematicNode[] = [];
+  for (const n of allNodes) {
+    if (n.type !== "device") continue;
+    const r = absRect(n, nodeMap);
+    const dSq = bboxDistSq(stubAbs, r);
+    if (dSq > MAX_SNAP_DISTANCE_SQ) continue;
+    // Custom inline insertion that also tracks the underlying node (we need it
+    // to enumerate ports for survivors).
+    insertTopKWithNode(deviceTopNodes, deviceTopRects, deviceTopDistsSq, NEAREST_K_STUB, n, r, dSq);
+  }
+  for (let i = 0; i < deviceTopNodes.length; i++) {
+    const ports = getPortAbsolutePositions(deviceTopNodes[i], nodeMap, displayDefaults);
+    const tRect = deviceTopRects[i];
+    for (const p of ports) {
+      yCands.push({
+        delta: p.absY - stubAbs.centerY,
+        guideAbsPos: p.absY,
+        anchorAbsRect: tRect,
+        kind: "port",
+      });
+      const targetCenterX =
+        p.side === "right"
+          ? p.absX + STUB_PORT_GAP + stubW / 2
+          : p.absX - STUB_PORT_GAP - stubW / 2;
+      xCands.push({
+        delta: targetCenterX - stubAbs.centerX,
+        guideAbsPos: p.absX,
+        anchorAbsRect: tRect,
+        kind: "port",
+      });
+    }
+  }
+
+  // 2. Other-stub alignment (column / row of stubs).
+  const stubTopRects: Rect[] = [];
+  const stubTopDistsSq: number[] = [];
+  for (const n of allNodes) {
+    if (n.type !== "stub-label" || n.id === stubNode.id) continue;
+    const r = absRect(n, nodeMap);
+    const dSq = bboxDistSq(stubAbs, r);
+    if (dSq > MAX_SNAP_DISTANCE_SQ) continue;
+    insertTopK(stubTopRects, stubTopDistsSq, NEAREST_K_STUB, r, dSq);
+  }
+  for (let i = 0; i < stubTopRects.length; i++) {
+    const r = stubTopRects[i];
+    xCands.push({ delta: r.left - stubAbs.left, guideAbsPos: r.left, anchorAbsRect: r, kind: "stub" });
+    xCands.push({ delta: r.right - stubAbs.right, guideAbsPos: r.right, anchorAbsRect: r, kind: "stub" });
+    xCands.push({ delta: r.centerX - stubAbs.centerX, guideAbsPos: r.centerX, anchorAbsRect: r, kind: "stub" });
+    yCands.push({ delta: r.top - stubAbs.top, guideAbsPos: r.top, anchorAbsRect: r, kind: "stub" });
+    yCands.push({ delta: r.bottom - stubAbs.bottom, guideAbsPos: r.bottom, anchorAbsRect: r, kind: "stub" });
+    yCands.push({ delta: r.centerY - stubAbs.centerY, guideAbsPos: r.centerY, anchorAbsRect: r, kind: "stub" });
+  }
+
+  // Pick best (port-priority) per axis. If nothing fires, fall back to
+  // grid-snapping the stub's CENTER (so the side handle's Y stays on the grid).
+  const bestX = pickBest(xCands);
+  const bestY = pickBest(yCands);
+
+  const dragOff = parentOffsetFromMap(stubNode, nodeMap);
+
+  let absSnappedLeft: number;
+  let absSnappedTop: number;
+  if (bestX) {
+    absSnappedLeft = stubAbs.left + bestX.delta;
+  } else {
+    absSnappedLeft = Math.round(stubAbs.centerX / GRID_SIZE) * GRID_SIZE - stubW / 2;
+  }
+  if (bestY) {
+    absSnappedTop = stubAbs.top + bestY.delta;
+  } else {
+    absSnappedTop = Math.round(stubAbs.centerY / GRID_SIZE) * GRID_SIZE - stubH / 2;
+  }
+
+  const snappedAbs: Rect = {
+    left: absSnappedLeft,
+    right: absSnappedLeft + stubW,
+    top: absSnappedTop,
+    bottom: absSnappedTop + stubH,
+    centerX: absSnappedLeft + stubW / 2,
+    centerY: absSnappedTop + stubH / 2,
+  };
+
+  const guides = collectGuides(snappedAbs, bestX, bestY, xCands, yCands);
+
+  return {
+    x: absSnappedLeft - dragOff.dx,
+    y: absSnappedTop - dragOff.dy,
+    guides,
+  };
+}
+
+/** Shared finalization: pick best per axis, build guides, return parent-relative position. */
+function finalizeSnap(
+  draggedNode: SchematicNode,
+  draggedAbs: Rect,
+  dw: number,
+  dh: number,
+  xCands: AxisCandidate[],
+  yCands: AxisCandidate[],
+  nodeMap: Map<string, SchematicNode>,
+): SnapResult {
+  const bestX = pickBest(xCands);
+  const bestY = pickBest(yCands);
+
+  const dragOff = parentOffsetFromMap(draggedNode, nodeMap);
+  const absSnappedLeft = bestX ? draggedAbs.left + bestX.delta : draggedAbs.left;
+  const absSnappedTop = bestY ? draggedAbs.top + bestY.delta : draggedAbs.top;
+
+  const snappedAbs: Rect = {
+    left: absSnappedLeft,
+    right: absSnappedLeft + dw,
+    top: absSnappedTop,
+    bottom: absSnappedTop + dh,
+    centerX: absSnappedLeft + dw / 2,
+    centerY: absSnappedTop + dh / 2,
+  };
+
+  const guides = collectGuides(snappedAbs, bestX, bestY, xCands, yCands);
+
+  return {
+    x: absSnappedLeft - dragOff.dx,
+    y: absSnappedTop - dragOff.dy,
+    guides,
+  };
+}
+
+function collectGuides(
+  snappedAbs: Rect,
+  bestX: AxisCandidate | null,
+  bestY: AxisCandidate | null,
+  xCands: AxisCandidate[],
+  yCands: AxisCandidate[],
+): GuideLine[] {
   const guides: GuideLine[] = [];
-
-  // Collect X guides — use absolute coordinates
-  if (bestXDelta !== null) {
-    const matching = xCandidates.filter(
-      (c) => Math.abs(c.delta - bestXDelta!) < 0.5,
-    );
+  if (bestX) {
     const seen = new Set<number>();
-    for (const m of matching) {
-      // Convert the relative alignX to absolute
-      const absAlignX = m.alignX + dragOffset.dx;
-      const key = Math.round(absAlignX * 10);
+    for (const c of xCands) {
+      if (Math.abs(c.delta - bestX.delta) > 0.5) continue;
+      const key = Math.round(c.guideAbsPos * 10);
       if (seen.has(key)) continue;
       seen.add(key);
-
-      const from = Math.min(m.anchorAbsRect.top, snappedAbs.top);
-      const to = Math.max(m.anchorAbsRect.bottom, snappedAbs.bottom);
-      guides.push({ orientation: "v", pos: absAlignX, from, to });
+      const from = Math.min(c.anchorAbsRect.top, snappedAbs.top);
+      const to = Math.max(c.anchorAbsRect.bottom, snappedAbs.bottom);
+      guides.push({ orientation: "v", pos: c.guideAbsPos, from, to });
     }
   }
-
-  // Collect Y guides — use absolute coordinates
-  if (bestYDelta !== null) {
-    const matching = yCandidates.filter(
-      (c) => Math.abs(c.delta - bestYDelta!) < 0.5,
-    );
+  if (bestY) {
     const seen = new Set<number>();
-    for (const m of matching) {
-      const absAlignY = m.alignY + dragOffset.dy;
-      const key = Math.round(absAlignY * 10);
+    for (const c of yCands) {
+      if (Math.abs(c.delta - bestY.delta) > 0.5) continue;
+      const key = Math.round(c.guideAbsPos * 10);
       if (seen.has(key)) continue;
       seen.add(key);
-
-      const from = Math.min(m.anchorAbsRect.left, snappedAbs.left);
-      const to = Math.max(m.anchorAbsRect.right, snappedAbs.right);
-      guides.push({ orientation: "h", pos: absAlignY, from, to });
+      const from = Math.min(c.anchorAbsRect.left, snappedAbs.left);
+      const to = Math.max(c.anchorAbsRect.right, snappedAbs.right);
+      guides.push({ orientation: "h", pos: c.guideAbsPos, from, to });
     }
   }
-
-  return { x: snappedX, y: snappedY, guides };
+  return guides;
 }
 
 // ---------- Resize snap ----------

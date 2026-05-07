@@ -46,6 +46,23 @@ interface Candidate {
   pageLine?: "edge" | "center";
 }
 
+/** Proximity gating: only the K nearest rects (by bbox distance) become snap targets. */
+const NEAREST_K_SHEET = 8;
+
+function bboxDistance(a: Rect, b: Rect): number {
+  const dx = Math.max(0, Math.max(a.x - (b.x + b.w), b.x - (a.x + a.w)));
+  const dy = Math.max(0, Math.max(a.y - (b.y + b.h), b.y - (a.y + a.h)));
+  return Math.hypot(dx, dy);
+}
+
+function nearestRects(moving: Rect, others: Rect[], k: number): Rect[] {
+  return others
+    .map((r) => ({ r, d: bboxDistance(moving, r) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, k)
+    .map((x) => x.r);
+}
+
 /**
  * Compute snap during drag. Returns the snapped (x, y) for `movingRect`'s top-left
  * plus the visible guide lines.
@@ -64,11 +81,13 @@ export function computeDragSnap(
   const ay = { top: m.y, bottom: m.y + m.h, centerY: m.y + m.h / 2 };
 
   // Build candidate target lines for x-axis: each other rect's left/right/centerX,
-  // plus page margins and page center.
+  // plus page margins and page center. Proximity-gated so a crowded sheet only
+  // considers the closest neighbors instead of producing alignment noise.
   const xCands: Candidate[] = [];
   const yCands: Candidate[] = [];
 
-  for (const other of otherRects) {
+  const nearby = nearestRects(movingRect, otherRects, NEAREST_K_SHEET);
+  for (const other of nearby) {
     const ox = { left: other.x, right: other.x + other.w, centerX: other.x + other.w / 2 };
     const oy = { top: other.y, bottom: other.y + other.h, centerY: other.y + other.h / 2 };
     // x-axis matches: try every (movingAnchor, otherAnchor) pair on the x axis.
@@ -172,7 +191,8 @@ export function computeResizeSnap(
   const xTargets: Candidate[] = [];
   const yTargets: Candidate[] = [];
 
-  for (const other of otherRects) {
+  const nearby = nearestRects(movingRect, otherRects, NEAREST_K_SHEET);
+  for (const other of nearby) {
     const ox = [other.x, other.x + other.w, other.x + other.w / 2];
     const oy = [other.y, other.y + other.h, other.y + other.h / 2];
     for (const t of ox) {

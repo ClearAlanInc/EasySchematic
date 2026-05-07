@@ -1,14 +1,13 @@
 import { memo, useMemo, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { StubLabelNode as StubLabelNodeType, StubLabelData, ConnectionEdge, SchematicNode, DeviceData } from "../types";
-import { SIGNAL_COLORS, portSide } from "../types";
+import type { StubLabelNode as StubLabelNodeType, StubLabelData, ConnectionEdge, SchematicNode } from "../types";
+import { SIGNAL_COLORS } from "../types";
 import { useSchematicStore, GRID_SIZE } from "../store";
 import { resolvePortLabel } from "../packList";
 import { computePageGrid } from "../printPageGrid";
 import { getPaperSize } from "../printConfig";
-import { headerBandHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "../auxiliaryData";
 import { STUB_GAP } from "../stubPlacement";
-import { resolveDeviceLabel } from "../displayName";
+import { getPortAbsolutePositions } from "../snapUtils";
 
 /** Find the connecting edge: source-side stub is the TARGET of an edge from a device;
  *  target-side stub is the SOURCE of an edge to a device. */
@@ -136,30 +135,21 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const device = state.nodes.find((n) => n.id === deviceId);
       if (!device || device.type !== "device") return;
 
-      const ports = (device.data as DeviceData).ports ?? [];
       const baseHandleId = (deviceHandleId ?? "").replace(/-(in|out)$/, "");
-      const port = ports.find((p) => p.id === baseHandleId);
-      if (!port) return;
-
-      const side = portSide(port);
-      const sameSide = ports.filter((p) => portSide(p) === side);
-      const portIdx = sameSide.findIndex((p) => p.id === port.id);
-      if (portIdx < 0) return;
-
-      // Real port Y inside the device, matching DeviceNode's render math:
-      // 1px border + headerBand + 9px pad + portIdx*20 + 10px (half row).
-      const dd = device.data as DeviceData;
-      const resolved = resolveDeviceLabel(dd, { useShortNames: state.useShortNames, wrapDeviceLabels: state.wrapDeviceLabels });
-      const labelZone = resolved.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
-      const headerBand = headerBandHeight(dd.auxiliaryData, labelZone);
-      const portYInDevice = 1 + headerBand + 9 + portIdx * 20 + 10;
-
       const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));
+      const portPositions = getPortAbsolutePositions(device, nodeMap, {
+        useShortNames: state.useShortNames,
+        wrapDeviceLabels: state.wrapDeviceLabels,
+      });
+      const portPos = portPositions.find((p) => p.portId === baseHandleId);
+      if (!portPos) return;
+
+      const side = portPos.side;
       const deviceAbs = absolutePos(device, nodeMap);
       const deviceW = (device.measured?.width as number | undefined) ?? 180;
       const deviceRight = deviceAbs.x + deviceW;
-      const portAbsX = side === "right" ? deviceRight : deviceAbs.x;
-      const portAbsY = deviceAbs.y + portYInDevice;
+      const portAbsX = portPos.absX;
+      const portAbsY = portPos.absY;
 
       // Center Y on the (grid-snapped) port Y; port handles are already on the 20px grid
       // when the device sits on the grid — the snap is just a safety rail.
