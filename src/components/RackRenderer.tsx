@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type WheelEvent, type MouseEvent } from "react";
 import { useSchematicStore } from "../store";
 import type { RackData, RackDevicePlacement, RackAccessory, RackDepthConflict, DeviceData, RackElevationPage } from "../types";
+import { resolveDeviceLabel, type SchematicDisplayDefaults } from "../displayName";
 import { RACK_ACCESSORY_LABELS, RACK_TYPE_LABELS } from "../types";
 import {
   inferRackHeightU,
@@ -231,13 +232,15 @@ interface DeviceBlockProps {
   isDragging: boolean;
   zoom: number;
   showFacePlateDetail: boolean;
+  schematicDefaults: SchematicDisplayDefaults;
   onSelect: (id: string) => void;
   onDragStart: (placementId: string, e: React.MouseEvent) => void;
   onContextMenu: (e: React.MouseEvent, placement: RackDevicePlacement) => void;
 }
 
-function DeviceBlock({ placement, rack, deviceData, isSelected, isDragging, zoom, showFacePlateDetail, onSelect, onDragStart, onContextMenu }: DeviceBlockProps) {
-  const label = deviceData.label;
+function DeviceBlock({ placement, rack, deviceData, isSelected, isDragging, zoom, showFacePlateDetail, schematicDefaults, onSelect, onDragStart, onContextMenu }: DeviceBlockProps) {
+  const resolved = resolveDeviceLabel(deviceData, schematicDefaults);
+  const label = resolved.text;
   const heightU = inferRackHeightU(deviceData);
   const color = deviceData.headerColor ?? deviceData.color;
   const y = uToY(placement.uPosition + heightU - 1, rack.heightU);
@@ -308,7 +311,8 @@ function DeviceBlock({ placement, rack, deviceData, isSelected, isDragging, zoom
           );
         }
         const maxChars = Math.min(isHalf ? 14 : 36, Math.floor(w / (fs * 0.58)));
-        const maxLines = showConn ? 1 : Math.max(1, Math.floor(h / (fs * 1.5)));
+        const wrapAllowed = resolved.wrap && !showConn;
+        const maxLines = wrapAllowed ? Math.max(1, Math.floor(h / (fs * 1.5))) : 1;
         const lines = wrapLabel(label, maxChars, Math.min(maxLines, 3));
         const lineH = fs * 1.35;
         const baseY = showConn
@@ -411,6 +415,7 @@ function AccessoryBlock({
   draggingOccupantPreview,
   crossShelfPreview,
   snapGuides,
+  schematicDefaults,
 }: {
   accessory: RackAccessory;
   rack: RackData;
@@ -430,6 +435,7 @@ function AccessoryBlock({
     wMm: number; hMm: number; rotated: boolean; label: string; color: string;
   } | null;
   snapGuides: ShelfSnapGuides | null;
+  schematicDefaults: SchematicDisplayDefaults;
 }) {
   const y = uToY(accessory.uPosition + accessory.heightU - 1, rack.heightU);
   const h = accessory.heightU * PX_PER_U - 1;
@@ -481,8 +487,9 @@ function AccessoryBlock({
           const overflowsAbove = hPx + offset.y * PX_PER_MM > h - 1;
           // Rotated labels use hPx as the effective display width (text rotates with the device)
           const effectiveWidthPx = p.rotated ? hPx : wPx;
+          const resolved = resolveDeviceLabel(dd, schematicDefaults);
           const labelTrim = Math.max(4, Math.floor(effectiveWidthPx / 5));
-          const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+          const lbl = resolved.text.length > labelTrim ? resolved.text.slice(0, Math.max(1, labelTrim - 1)) + "…" : resolved.text;
           const previewInvalid = isOccDragging && draggingOccupantPreview && !draggingOccupantPreview.valid;
           return (
             <g
@@ -641,6 +648,7 @@ function SideViewRack({
   onSelect,
   onDragStart,
   onContextMenu,
+  schematicDefaults,
 }: {
   rack: RackData;
   placements: RackDevicePlacement[];
@@ -653,6 +661,7 @@ function SideViewRack({
   onSelect: (id: string) => void;
   onDragStart: (placementId: string, e: React.MouseEvent) => void;
   onContextMenu: (e: React.MouseEvent, placement: RackDevicePlacement) => void;
+  schematicDefaults: SchematicDisplayDefaults;
 }) {
   const totalH = rack.heightU * PX_PER_U;
   const is2Post = rack.rackType === "open-2post";
@@ -721,8 +730,9 @@ function SideViewRack({
           const dy = surfaceY - dh - stackYMm * PX_PER_MM;
           const dx = (is2Post || shelf.face === "front") ? 4 : SIDE_VIEW_WIDTH - 4 - dDepth;
           const overflowsAbove = dh + stackYMm * PX_PER_MM > ah - 1;
+          const resolvedShelf = resolveDeviceLabel(dd, schematicDefaults);
           const labelTrim = Math.max(3, Math.floor(dDepth / 5));
-          const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+          const lbl = resolvedShelf.text.length > labelTrim ? resolvedShelf.text.slice(0, Math.max(1, labelTrim - 1)) + "…" : resolvedShelf.text;
           return (
             <g key={pl.id} style={{ opacity: isDragging ? 0.3 : 1 }}>
               <rect
@@ -774,10 +784,11 @@ function SideViewRack({
             <clipPath id={`side-clip-${pl.id}`}><rect x={x} y={y} width={deviceDepth} height={h} rx={1} /></clipPath>
             <g clipPath={`url(#side-clip-${pl.id})`}>
               {(() => {
+                const resolvedSide = resolveDeviceLabel(dd, schematicDefaults);
                 const fs = h > 20 ? 8 : 7;
                 const maxChars = Math.max(2, Math.floor(deviceDepth / (fs * 0.58)));
-                const maxLines = Math.max(1, Math.floor(h / (fs * 1.5)));
-                const lines = wrapLabel(dd.label, maxChars, Math.min(maxLines, 3));
+                const maxLines = resolvedSide.wrap ? Math.max(1, Math.floor(h / (fs * 1.5))) : 1;
+                const lines = wrapLabel(resolvedSide.text, maxChars, Math.min(maxLines, 3));
                 const lineH = fs * 1.35;
                 const baseY = y + h / 2 - ((lines.length - 1) * lineH) / 2;
                 return (
@@ -1269,6 +1280,12 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
   const updateRackAccessory = useSchematicStore((s) => s.updateRackAccessory);
   const removeRack = useSchematicStore((s) => s.removeRack);
   const setActivePage = useSchematicStore((s) => s.setActivePage);
+  const useShortNames = useSchematicStore((s) => s.useShortNames);
+  const wrapDeviceLabels = useSchematicStore((s) => s.wrapDeviceLabels);
+  const schematicDefaults = useMemo<SchematicDisplayDefaults>(
+    () => ({ useShortNames, wrapDeviceLabels }),
+    [useShortNames, wrapDeviceLabels],
+  );
   // Edit Rack dialog (opened from rack-context menu)
   const [editRackTarget, setEditRackTarget] = useState<RackData | null>(null);
 
@@ -1904,6 +1921,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
                     onSelect={setSelectedPlacementId}
                     onDragStart={onPlacementDragStart}
                     onContextMenu={handleDeviceContextMenu}
+                    schematicDefaults={schematicDefaults}
                   />
                   <text x={sideW / 2} y={totalH + 28} textAnchor="middle" fontSize={9} fill="#444">{statsLine}</text>
                 </g>
@@ -2016,6 +2034,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
                       };
                     })()}
                     snapGuides={shelfDrag?.targetShelfId === a.id ? shelfDrag.guides : null}
+                    schematicDefaults={schematicDefaults}
                     onOccupantContextMenu={(e, pl) => {
                       const dd = deviceDataMap.get(pl.deviceNodeId);
                       if (!dd) return;
@@ -2042,6 +2061,7 @@ export default function RackRenderer({ page }: { page: RackElevationPage }) {
                       onDragStart={onPlacementDragStart}
                       onContextMenu={handleDeviceContextMenu}
                       showFacePlateDetail={showFacePlateDetail}
+                      schematicDefaults={schematicDefaults}
                     />
                   );
                 })}

@@ -6,8 +6,9 @@ import { useSchematicStore, GRID_SIZE } from "../store";
 import { resolvePortLabel } from "../packList";
 import { computePageGrid } from "../printPageGrid";
 import { getPaperSize } from "../printConfig";
-import { headerBandHeight } from "../auxiliaryData";
+import { headerBandHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "../auxiliaryData";
 import { STUB_GAP } from "../stubPlacement";
+import { resolveDeviceLabel } from "../displayName";
 
 /** Find the connecting edge: source-side stub is the TARGET of an edge from a device;
  *  target-side stub is the SOURCE of an edge to a device. */
@@ -147,7 +148,10 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
 
       // Real port Y inside the device, matching DeviceNode's render math:
       // 1px border + headerBand + 9px pad + portIdx*20 + 10px (half row).
-      const headerBand = headerBandHeight((device.data as DeviceData).auxiliaryData);
+      const dd = device.data as DeviceData;
+      const resolved = resolveDeviceLabel(dd, { useShortNames: state.useShortNames, wrapDeviceLabels: state.wrapDeviceLabels });
+      const labelZone = resolved.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
+      const headerBand = headerBandHeight(dd.auxiliaryData, labelZone);
       const portYInDevice = 1 + headerBand + 9 + portIdx * 20 + 10;
 
       const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));

@@ -5,6 +5,7 @@ import { RACK_TYPE_LABELS } from "../types";
 import { inferRackHeightU } from "../rackUtils";
 import { aggregateRackStats, computeRackStats, formatStatsLine } from "../rackStats";
 import { getDevicesInRoom } from "../rackLink";
+import { resolveDeviceLabel } from "../displayName";
 
 /** Shared drag state — set by sidebar, read by RackRenderer during dragOver.
  *  (dataTransfer.getData is blocked during dragover for security; this fallback
@@ -22,6 +23,7 @@ export default function RackSidebar({ page }: RackSidebarProps) {
   const updateRack = useSchematicStore((s) => s.updateRack);
   const moveRackToPage = useSchematicStore((s) => s.moveRackToPage);
   const allPagesForMove = useSchematicStore((s) => s.pages);
+  const useShortNames = useSchematicStore((s) => s.useShortNames);
   const otherElevationPages = useMemo(() =>
     allPagesForMove.filter((p): p is RackElevationPage => p.type === "rack-elevation" && p.id !== page.id),
     [allPagesForMove, page.id],
@@ -205,12 +207,14 @@ export default function RackSidebar({ page }: RackSidebarProps) {
             if (!q) return true;
             const data = node.data as DeviceData;
             return data.label.toLowerCase().includes(q)
+              || (data.shortName?.toLowerCase().includes(q) ?? false)
               || (data.manufacturer?.toLowerCase().includes(q) ?? false)
               || (data.modelNumber?.toLowerCase().includes(q) ?? false)
               || data.deviceType.toLowerCase().includes(q);
           };
           const renderDevice = (node: typeof unrackedDevices[number]) => {
             const data = node.data as DeviceData;
+            const resolved = resolveDeviceLabel(data, { useShortNames, wrapDeviceLabels: false });
             const heightU = inferRackHeightU(data);
             const needsShelf = data.heightMm == null;
             return (
@@ -220,9 +224,9 @@ export default function RackSidebar({ page }: RackSidebarProps) {
                 draggable
                 onDragStart={(e) => handleDragStart(e, node.id, heightU)}
                 onDragEnd={handleDragEnd}
-                title={needsShelf ? "No height set — drop on a shelf accessory" : data.label}
+                title={needsShelf ? `No height set — drop on a shelf accessory · ${data.label}` : data.label}
               >
-                <span className="truncate">{data.label}</span>
+                <span className="truncate">{resolved.text}</span>
                 <span className="text-neutral-400 ml-1 shrink-0">
                   {needsShelf ? <span className="text-amber-600" title="needs shelf">⬚</span> : `${heightU}U`}
                 </span>

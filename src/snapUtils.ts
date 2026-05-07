@@ -1,7 +1,7 @@
 import type { DeviceData, SchematicNode } from "./types";
 
 import { GRID_SIZE } from "./store";
-import { totalAuxHeight } from "./auxiliaryData";
+import { totalAuxHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "./auxiliaryData";
 
 // Must be >= half the grid size so alignment snapping works with grid-snapped positions.
 // React Flow's snapToGrid moves nodes in GRID_SIZE increments, so we need to catch
@@ -39,7 +39,10 @@ function estimateDeviceHeight(node: SchematicNode): number {
   const portRows = Math.max(left, right) + bidirs;
   // Base: 1px border + 40px header band (min) + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20.
   // totalAuxHeight adds (a) header band surplus above the 40-px baseline and (b) footer block height.
-  return 60 + portRows * 20 + totalAuxHeight(data.auxiliaryData);
+  // Per-instance wrapLabel override is honored here; schematic-wide default is not threaded — React Flow's
+  // measured height supersedes this estimate after the first render.
+  const labelZone = data.wrapLabel ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
+  return 60 + portRows * 20 + totalAuxHeight(data.auxiliaryData, labelZone);
 }
 
 function nodeRect(node: SchematicNode): Rect {

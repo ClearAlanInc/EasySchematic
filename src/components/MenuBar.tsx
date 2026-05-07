@@ -473,6 +473,7 @@ export default function MenuBar() {
       nodes: state.nodes,
       schematicName: state.schematicName,
       titleBlock: state.titleBlock,
+      schematicDefaults: { useShortNames: state.useShortNames, wrapDeviceLabels: state.wrapDeviceLabels },
     });
   };
 

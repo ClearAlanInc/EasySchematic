@@ -161,6 +161,8 @@ export default function PrintSheetRenderer({ page }: Props) {
   const titleBlock = useSchematicStore((s) => s.titleBlock);
   const titleBlockLayout = useSchematicStore((s) => s.titleBlockLayout);
   const panMode = useSchematicStore((s) => s.panMode);
+  const useShortNames = useSchematicStore((s) => s.useShortNames);
+  const wrapDeviceLabels = useSchematicStore((s) => s.wrapDeviceLabels);
 
   const deviceDataMap = useMemo(() => {
     const m = new Map<string, DeviceData>();
@@ -669,6 +671,7 @@ export default function PrintSheetRenderer({ page }: Props) {
                       face={face}
                       widthPx={wPx}
                       heightPx={hPx}
+                      schematicDefaults={{ useShortNames, wrapDeviceLabels }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-neutral-100 border border-neutral-300 text-neutral-400 text-xs">

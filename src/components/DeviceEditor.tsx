@@ -91,6 +91,10 @@ export default function DeviceEditor() {
   const node = nodes.find((n) => n.id === editingNodeId && n.type === "device") as DeviceNode | undefined;
 
   const [label, setLabel] = useState("");
+  const [shortName, setShortName] = useState("");
+  /** Tri-state per-instance toggle: undefined = inherit schematic default. */
+  const [useShortName, setUseShortName] = useState<boolean | undefined>(undefined);
+  const [wrapLabel, setWrapLabelState] = useState<boolean | undefined>(undefined);
   const [hostname, setHostname] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [manufacturer, setManufacturer] = useState("");
@@ -168,6 +172,9 @@ export default function DeviceEditor() {
       ? getBundledTemplates().find((t) => t.id === node.data.templateId)
       : undefined;
     setLabel(node.data.label);
+    setShortName(node.data.shortName ?? "");
+    setUseShortName(node.data.useShortName);
+    setWrapLabelState(node.data.wrapLabel);
     setHostname(node.data.hostname ?? "");
     setDeviceType(node.data.deviceType);
     setManufacturer(node.data.manufacturer ?? "");
@@ -257,6 +264,9 @@ export default function DeviceEditor() {
     const existing = node?.data;
     const data: DeviceData = {
       label: label.trim() || "Untitled",
+      ...(shortName.trim() ? { shortName: shortName.trim() } : {}),
+      ...(useShortName !== undefined ? { useShortName } : {}),
+      ...(wrapLabel !== undefined ? { wrapLabel } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
       deviceType: deviceType.trim() || "custom",
       ports: finalPorts,
@@ -299,7 +309,7 @@ export default function DeviceEditor() {
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
+  }, [editingNodeId, ports, label, shortName, useShortName, wrapLabel, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -326,6 +336,7 @@ export default function DeviceEditor() {
       id: `custom-${Date.now()}`,
       deviceType: deviceType.trim() || "custom",
       label: label.trim() || "Custom Device",
+      ...(shortName.trim() ? { shortName: shortName.trim() } : {}),
       ports: finalPorts,
       ...(color ? { color } : {}),
       ...(category.trim() ? { category: category.trim() } : {}),
@@ -361,7 +372,7 @@ export default function DeviceEditor() {
       ...(trimmedAux.some((r) => r.text.trim()) ? { auxiliaryData: trimmedAux } : {}),
       ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     });
-  }, [ports, label, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw]);
+  }, [ports, label, shortName, hostname, addCustomTemplate, node, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw]);
 
   const handleUpdateUserTemplate = useCallback(() => {
     if (!node?.data.templateId) return;
@@ -378,6 +389,7 @@ export default function DeviceEditor() {
       id: node.data.templateId,
       deviceType: deviceType.trim() || "custom",
       label: label.trim() || "Custom Device",
+      ...(shortName.trim() ? { shortName: shortName.trim() } : {}),
       ports: finalPorts,
       ...(color ? { color } : {}),
       ...(category.trim() ? { category: category.trim() } : {}),
@@ -412,7 +424,7 @@ export default function DeviceEditor() {
       ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     });
     handleSave();
-  }, [node, ports, label, hostname, updateCustomTemplate, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw, handleSave]);
+  }, [node, ports, label, shortName, hostname, updateCustomTemplate, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, deviceType, color, manufacturer, modelNumber, referenceUrl, category, auxiliaryData, searchTermsRaw, handleSave]);
 
   const handleSubmitToCommunity = useCallback(async () => {
     const finalPorts: Port[] = ports
@@ -433,6 +445,7 @@ export default function DeviceEditor() {
 
     const draftData: Record<string, unknown> = {
       label: label.trim() || "Custom Device",
+      ...(shortName.trim() ? { shortName: shortName.trim() } : {}),
       deviceType: dt,
       ports: finalPorts,
       ...(color ? { color } : {}),
@@ -483,7 +496,7 @@ export default function DeviceEditor() {
     } catch (e) {
       console.error("Failed to create draft:", e);
     }
-  }, [ports, label, deviceType, color, node, hostname, poeBudgetW, poeDrawW, unitCost, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, thermalBtuh, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData, searchTermsRaw]);
+  }, [ports, label, shortName, deviceType, color, node, hostname, poeBudgetW, poeDrawW, unitCost, manufacturer, modelNumber, referenceUrl, category, powerDrawW, powerCapacityW, voltage, thermalBtuh, heightMm, widthMm, depthMm, weightKg, isVenueProvided, auxiliaryData, searchTermsRaw]);
 
   const handleSaveAsPreset = useCallback(() => {
     if (!editingNodeId || !node?.data.templateId) return;
@@ -543,6 +556,7 @@ export default function DeviceEditor() {
     // For user templates, also revert all editable metadata fields
     if (customTemplates.some((t) => t.id === templateId)) {
       setLabel(tpl.label ?? "");
+      setShortName(tpl.shortName ?? "");
       setManufacturer(tpl.manufacturer ?? "");
       setModelNumber(tpl.modelNumber ?? "");
       setReferenceUrl(tpl.referenceUrl ?? "");
@@ -771,6 +785,49 @@ export default function DeviceEditor() {
                 </div>
               )}
             </Field>
+            <Field label="Short Name">
+              <input
+                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1.5 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500"
+                value={shortName}
+                onChange={(e) => setShortName(e.target.value)}
+                placeholder="e.g. HDC-5500"
+              />
+            </Field>
+            <div className="col-span-2 flex flex-wrap gap-x-4 gap-y-1 -mt-1">
+              {(() => {
+                const hasCompact = !!(shortName.trim() || modelNumber.trim());
+                const fallbackLabel = !shortName.trim() && modelNumber.trim() ? ` — falls back to model number "${modelNumber.trim()}"` : "";
+                return (
+                  <label
+                    className={`flex items-center gap-1.5 text-[11px] ${hasCompact ? "text-[var(--color-text)] cursor-pointer" : "text-[var(--color-text-muted)] opacity-60 cursor-not-allowed"}`}
+                    title={hasCompact
+                      ? `Use the short name on this device${fallbackLabel}. Leave unchecked to inherit the schematic-wide default.`
+                      : "Set a Short Name (or Model Number) above to enable this toggle."}
+                  >
+                    <input
+                      type="checkbox"
+                      disabled={!hasCompact}
+                      checked={useShortName === true}
+                      ref={(el) => { if (el) el.indeterminate = useShortName === undefined; }}
+                      onChange={(e) => setUseShortName(e.target.checked ? true : (useShortName === undefined ? false : undefined))}
+                    />
+                    Use short name {useShortName === undefined && hasCompact && <span className="text-[var(--color-text-muted)]">(inherit)</span>}
+                  </label>
+                );
+              })()}
+              <label
+                className="flex items-center gap-1.5 text-[11px] text-[var(--color-text)] cursor-pointer"
+                title="Wrap the device label across two lines on this device. Leave unchecked to inherit the schematic-wide default."
+              >
+                <input
+                  type="checkbox"
+                  checked={wrapLabel === true}
+                  ref={(el) => { if (el) el.indeterminate = wrapLabel === undefined; }}
+                  onChange={(e) => setWrapLabelState(e.target.checked ? true : (wrapLabel === undefined ? false : undefined))}
+                />
+                Wrap label {wrapLabel === undefined && <span className="text-[var(--color-text-muted)]">(inherit)</span>}
+              </label>
+            </div>
             <Field label="Device Type">
               <input
                 className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1.5 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500"

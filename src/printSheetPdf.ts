@@ -25,6 +25,7 @@ export interface PrintSheetPdfOptions {
   nodes: SchematicNode[];
   schematicName: string;
   titleBlock?: TitleBlock;
+  schematicDefaults?: import("./displayName").SchematicDisplayDefaults;
 }
 
 /** Draw the full title block grid (mirrors pdfExport.ts drawTitleBlock, but in mm units). */
@@ -205,9 +206,9 @@ export async function exportPrintSheetPdf(opts: PrintSheetPdfOptions): Promise<v
       // Rack face — face label is drawn below the viewport (not above the frame).
       // Pass the full viewport rect so drawElevation/drawSideView can fit-with-aspect.
       if (vp.kind === "rack-front") {
-        drawElevation(doc, rack, srcPage.placements, srcPage.accessories, deviceDataMap, "front", pos.x, pos.y, size.w, size.h, false);
+        drawElevation(doc, rack, srcPage.placements, srcPage.accessories, deviceDataMap, "front", pos.x, pos.y, size.w, size.h, false, opts.schematicDefaults);
       } else if (vp.kind === "rack-rear") {
-        drawElevation(doc, rack, srcPage.placements, srcPage.accessories, deviceDataMap, "rear", pos.x, pos.y, size.w, size.h, false);
+        drawElevation(doc, rack, srcPage.placements, srcPage.accessories, deviceDataMap, "rear", pos.x, pos.y, size.w, size.h, false, opts.schematicDefaults);
       } else if (vp.kind === "rack-side") {
         drawSideView(doc, rack, srcPage.placements, srcPage.accessories, deviceDataMap, pos.x, pos.y, size.w, size.h, false);
       }

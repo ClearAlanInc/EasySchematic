@@ -95,6 +95,10 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setStubLabelShowRoom = useSchematicStore((s) => s.setStubLabelShowRoom);
   const stubLabelPageMode = useSchematicStore((s) => s.stubLabelPageMode);
   const setStubLabelPageMode = useSchematicStore((s) => s.setStubLabelPageMode);
+  const useShortNames = useSchematicStore((s) => s.useShortNames);
+  const setUseShortNames = useSchematicStore((s) => s.setUseShortNames);
+  const wrapDeviceLabels = useSchematicStore((s) => s.wrapDeviceLabels);
+  const setWrapDeviceLabels = useSchematicStore((s) => s.setWrapDeviceLabels);
   const [autoRoutePref, setAutoRoutePref] = useState(
     () => localStorage.getItem(AUTOROUTE_PREF_KEY) ?? "ask",
   );
@@ -337,6 +341,30 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 </div>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
                   Display style for device, port, slot, and card labels on the canvas and in exports. Doesn't modify your data — switch back to As-typed any time to see original casing.
+                </p>
+                <div className="flex items-center justify-between py-1 mt-2">
+                  <span className="text-xs text-[var(--color-text)]">Use short device names</span>
+                  <input
+                    type="checkbox"
+                    checked={useShortNames}
+                    onChange={(e) => setUseShortNames(e.target.checked)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Render device labels using a more compact identifier when available — curated short name first, then model number, falling back to the full label. Per-device override available in the device editor.
+                </p>
+                <div className="flex items-center justify-between py-1 mt-2">
+                  <span className="text-xs text-[var(--color-text)]">Wrap device labels</span>
+                  <input
+                    type="checkbox"
+                    checked={wrapDeviceLabels}
+                    onChange={(e) => setWrapDeviceLabels(e.target.checked)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Allow long device labels to wrap onto a second line on the schematic and rack views, instead of truncating with an ellipsis.
                 </p>
               </div>
 

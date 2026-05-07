@@ -193,6 +193,15 @@ export interface InstalledSlot {
 export interface DeviceData {
   [key: string]: unknown;
   label: string;
+  /** Short alternative name (e.g. "HDC-5500" instead of "Sony HDC-5500 Studio Camera").
+   *  Initialized from template.shortName at placement; editable per-instance. */
+  shortName?: string;
+  /** Per-instance override for using shortName on this device.
+   *  undefined = inherit SchematicFile.useShortNames (which itself defaults false). */
+  useShortName?: boolean;
+  /** Per-instance override for wrapping the device label across multiple lines.
+   *  undefined = inherit SchematicFile.wrapDeviceLabels. */
+  wrapLabel?: boolean;
   hostname?: string;
   deviceType: string;
   ports: Port[];
@@ -411,6 +420,9 @@ export interface DeviceTemplate {
   deviceType: string;
   category?: string;
   label: string;
+  /** Optional short name (e.g. model number without manufacturer prefix). When the
+   *  schematic's "use short names" setting is on, this is shown instead of label. */
+  shortName?: string;
   hostname?: string;
   ports: Port[];
   color?: string;
@@ -729,6 +741,12 @@ export interface SchematicFile {
   stubLabelShowRoom?: boolean;
   /** When to show "Pg N" on stub labels: always | only when ends are on different pages | never */
   stubLabelPageMode?: StubLabelPageMode;
+  /** Render device labels using their shortName when available. New files default true;
+   *  loaded files where this is undefined fall back to false (preserve legacy layout). */
+  useShortNames?: boolean;
+  /** Wrap long device labels across two lines instead of truncating with ellipsis.
+   *  New files default true; undefined on loaded files = legacy single-line truncate. */
+  wrapDeviceLabels?: boolean;
 }
 
 export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";

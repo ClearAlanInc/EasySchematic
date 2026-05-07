@@ -901,14 +901,15 @@ app.post("/submissions/:id/approve", async (c) => {
 
     await db
       .prepare(
-        `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, unit_cost, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
-         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
+        `INSERT INTO templates (id, version, device_type, category, label, short_name, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, unit_cost, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order, submitted_by, approved_at, approved_by, approved_schema_version, needs_review, needs_review_reason)
+         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 0, NULL)`,
       )
       .bind(
         templateRow.id,
         templateRow.device_type,
         templateRow.category,
         templateRow.label,
+        templateRow.short_name,
         templateRow.manufacturer,
         templateRow.model_number,
         templateRow.color,
@@ -944,7 +945,7 @@ app.post("/submissions/:id/approve", async (c) => {
     await db
       .prepare(
         `UPDATE templates
-         SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
+         SET device_type = ?, category = ?, label = ?, short_name = ?, manufacturer = ?, model_number = ?,
              color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
              power_draw_w = ?, power_capacity_w = ?, voltage = ?, thermal_btuh = ?, poe_budget_w = ?, poe_draw_w = ?, unit_cost = ?, is_venue_provided = ?,
              height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, auxiliary_data = ?, sort_order = ?,
@@ -957,6 +958,7 @@ app.post("/submissions/:id/approve", async (c) => {
         templateRow.device_type,
         templateRow.category,
         templateRow.label,
+        templateRow.short_name,
         templateRow.manufacturer,
         templateRow.model_number,
         templateRow.color,
@@ -1288,7 +1290,7 @@ app.get("/templates/search-terms", async (c) => {
 
 app.get("/templates/summary", async (c) => {
   const { results } = await c.env.easyschematic_db
-    .prepare("SELECT id, label, device_type, category, manufacturer, model_number, color, search_terms, ports, slots FROM templates WHERE flagged_for_deletion = 0 ORDER BY sort_order, label")
+    .prepare("SELECT id, label, short_name, device_type, category, manufacturer, model_number, color, search_terms, ports, slots FROM templates WHERE flagged_for_deletion = 0 ORDER BY sort_order, label")
     .all();
 
   const summaries = results.map((row) => rowToSummary(row as never));
@@ -1373,14 +1375,15 @@ app.post("/templates", async (c) => {
 
   await c.env.easyschematic_db
     .prepare(
-      `INSERT INTO templates (id, version, device_type, category, label, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order)
-     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, version, device_type, category, label, short_name, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order)
+     VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
       row.device_type,
       row.category,
       row.label,
+      row.short_name,
       row.manufacturer,
       row.model_number,
       row.color,
@@ -1444,7 +1447,7 @@ app.put("/templates/:id", async (c) => {
   await c.env.easyschematic_db
     .prepare(
       `UPDATE templates
-     SET device_type = ?, category = ?, label = ?, manufacturer = ?, model_number = ?,
+     SET device_type = ?, category = ?, label = ?, short_name = ?, manufacturer = ?, model_number = ?,
          color = ?, image_url = ?, reference_url = ?, search_terms = ?, ports = ?, slots = ?, slot_family = ?,
          power_draw_w = ?, power_capacity_w = ?, voltage = ?, thermal_btuh = ?, poe_budget_w = ?, poe_draw_w = ?, is_venue_provided = ?,
          height_mm = ?, width_mm = ?, depth_mm = ?, weight_kg = ?, auxiliary_data = ?, sort_order = ?,
@@ -1456,6 +1459,7 @@ app.put("/templates/:id", async (c) => {
       row.device_type,
       row.category,
       row.label,
+      row.short_name,
       row.manufacturer,
       row.model_number,
       row.color,

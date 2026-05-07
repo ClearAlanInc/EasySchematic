@@ -1007,6 +1007,7 @@ function SpreadsheetCell({
 interface DeviceReportRow {
   nodeId: string;
   label: string;
+  shortName: string;
   deviceType: string;
   manufacturer: string;
   model: string;
@@ -1053,6 +1054,7 @@ function computeDeviceReport(nodes: SchematicNode[], ownedGear: OwnedGearItem[])
     rows.push({
       nodeId: node.id,
       label: data.label,
+      shortName: data.shortName ?? "",
       deviceType: data.deviceType,
       manufacturer: data.manufacturer ?? "",
       model: data.model ?? data.label,
@@ -1068,10 +1070,11 @@ function computeDeviceReport(nodes: SchematicNode[], ownedGear: OwnedGearItem[])
   return rows;
 }
 
-type DeviceSortKey = "label" | "deviceType" | "manufacturer" | "model" | "modelNumber" | "room" | "portCount" | "unitCost" | "ownedCount" | "neededCount";
+type DeviceSortKey = "label" | "shortName" | "deviceType" | "manufacturer" | "model" | "modelNumber" | "room" | "portCount" | "unitCost" | "ownedCount" | "neededCount";
 
 const deviceColumns: SpreadsheetColumn<DeviceReportRow>[] = [
   { id: "label", header: "Device", getValue: (r) => r.label, editable: true, fillType: "deviceName" },
+  { id: "shortName", header: "Short Name", getValue: (r) => r.shortName, editable: true, fillType: "deviceName" },
   { id: "unitCost", header: "Unit Cost", getValue: (r) => r.unitCost > 0 ? r.unitCost.toFixed(2) : "", editable: true },
 ];
 
@@ -1094,6 +1097,7 @@ function DeviceReportTab() {
     return rows.filter(
       (r) =>
         r.label.toLowerCase().includes(q) ||
+        r.shortName.toLowerCase().includes(q) ||
         r.deviceType.toLowerCase().includes(q) ||
         r.manufacturer.toLowerCase().includes(q) ||
         r.model.toLowerCase().includes(q) ||
@@ -1140,6 +1144,9 @@ function DeviceReportTab() {
       if (columnId === "unitCost") {
         const parsed = parseFloat(value);
         patchDeviceData(row.nodeId, { unitCost: isNaN(parsed) || parsed <= 0 ? undefined : parsed });
+      } else if (columnId === "shortName") {
+        // Empty value clears the short name (allowed); label requires non-empty.
+        useSchematicStore.getState().updateDeviceShortName(row.nodeId, value);
       } else {
         if (!value.trim()) return;
         useSchematicStore.getState().updateDeviceLabel(row.nodeId, value.trim());
@@ -1151,18 +1158,24 @@ function DeviceReportTab() {
   const onBatchChange = useCallback(
     (changes: { rowIndex: number; columnId: string; value: string }[]) => {
       const labelChanges: { nodeId: string; label: string }[] = [];
+      const shortNameChanges: { nodeId: string; shortName: string }[] = [];
       for (const c of changes) {
         const row = sorted[c.rowIndex];
         if (!row) continue;
         if (c.columnId === "unitCost") {
           const parsed = parseFloat(c.value);
           patchDeviceData(row.nodeId, { unitCost: isNaN(parsed) || parsed <= 0 ? undefined : parsed });
+        } else if (c.columnId === "shortName") {
+          shortNameChanges.push({ nodeId: row.nodeId, shortName: c.value });
         } else {
           if (c.value.trim()) labelChanges.push({ nodeId: row.nodeId, label: c.value.trim() });
         }
       }
       if (labelChanges.length > 0) {
         useSchematicStore.getState().batchUpdateDeviceLabels(labelChanges);
+      }
+      if (shortNameChanges.length > 0) {
+        useSchematicStore.getState().batchUpdateDeviceShortNames(shortNameChanges);
       }
     },
     [sorted, patchDeviceData],
@@ -1178,6 +1191,7 @@ function DeviceReportTab() {
       const row = sorted[rowIndex];
       if (!row) return "";
       if (columnId === "unitCost") return row.unitCost > 0 ? row.unitCost.toFixed(2) : "";
+      if (columnId === "shortName") return row.shortName ?? "";
       return row.label ?? "";
     },
     [sorted],
@@ -1242,6 +1256,9 @@ function DeviceReportTab() {
             <tr>
               <th className={thClass} onClick={() => toggleSort("label")}>
                 Device{sortArrow("label")}
+              </th>
+              <th className={thClass} onClick={() => toggleSort("shortName")}>
+                Short Name{sortArrow("shortName")}
               </th>
               <th className={thClass} onClick={() => toggleSort("deviceType")}>
                 Type{sortArrow("deviceType")}
@@ -1353,6 +1370,41 @@ const DeviceRow = memo(function DeviceRow({
           <span className="text-[10px] px-1 select-none">{row.label}</span>
         </td>
       )}
+      {(() => {
+        const sn = spreadsheet.getCellProps(rowIndex, "shortName");
+        if (sn.isEditing) {
+          return (
+            <td className={`${tdClass} p-0.5`}>
+              <input
+                className="w-full bg-[var(--color-surface)] border border-blue-500 rounded px-1 py-0.5 text-xs outline-none"
+                value={spreadsheet.editValue}
+                onChange={(e) => spreadsheet.setEditValue(e.target.value)}
+                onBlur={() => spreadsheet.commitEdit(spreadsheet.editValue)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter") { e.preventDefault(); spreadsheet.commitEdit(spreadsheet.editValue); }
+                  else if (e.key === "Escape") { e.preventDefault(); spreadsheet.cancelEdit(); }
+                  else if (e.key === "Tab") { e.preventDefault(); spreadsheet.commitEdit(spreadsheet.editValue); }
+                }}
+                autoFocus
+                placeholder={row.modelNumber || ""}
+              />
+            </td>
+          );
+        }
+        return (
+          <td
+            className={`${tdClass} p-0.5 cursor-cell ${sn.isSelected ? "bg-blue-100 ring-1 ring-inset ring-blue-300" : ""}`}
+            onMouseDown={sn.onMouseDown}
+            onMouseEnter={sn.onMouseEnter}
+            onDoubleClick={sn.onDoubleClick}
+          >
+            <span className="text-[10px] px-1 select-none">
+              {row.shortName || (row.modelNumber ? <span className="text-[var(--color-text-muted)] italic">{row.modelNumber}</span> : "—")}
+            </span>
+          </td>
+        );
+      })()}
       <td className={tdClass}>{row.deviceType}</td>
       <td className={tdClass}>{row.manufacturer || "—"}</td>
       <td className={tdClass}>{row.model}</td>

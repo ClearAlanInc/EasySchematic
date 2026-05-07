@@ -5,6 +5,7 @@ interface TemplateOutput {
   deviceType: string;
   category: string;
   label: string;
+  shortName?: string;
   hostname?: string;
   manufacturer?: string;
   modelNumber?: string;
@@ -41,6 +42,7 @@ export interface TemplateRow {
   device_type: string;
   category: string;
   label: string;
+  short_name: string | null;
   hostname: string | null;
   manufacturer: string | null;
   model_number: string | null;
@@ -74,6 +76,7 @@ export interface TemplateRow {
 interface TemplateInput {
   id?: string;
   label: string;
+  shortName?: string;
   hostname?: string;
   deviceType: string;
   category: string;
@@ -108,6 +111,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
     device_type: input.deviceType,
     category: input.category,
     label: input.label,
+    short_name: input.shortName ?? null,
     hostname: input.hostname ?? null,
     manufacturer: input.manufacturer ?? null,
     model_number: input.modelNumber ?? null,
@@ -138,6 +142,7 @@ export function templateToRow(input: TemplateInput): Omit<TemplateRow, "version"
 export interface TemplateSummaryOutput {
   id: string;
   label: string;
+  shortName?: string;
   deviceType: string;
   category: string;
   manufacturer?: string;
@@ -155,6 +160,7 @@ export function rowToSummary(row: TemplateRow): TemplateSummaryOutput {
   return {
     id: row.id,
     label: row.label,
+    ...(row.short_name && { shortName: row.short_name }),
     deviceType: row.device_type,
     category: row.category,
     ...(row.manufacturer && { manufacturer: row.manufacturer }),
@@ -174,6 +180,7 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     deviceType: row.device_type,
     category: row.category,
     label: row.label,
+    ...(row.short_name && { shortName: row.short_name }),
     ...(row.hostname && { hostname: row.hostname }),
     ...(row.manufacturer && { manufacturer: row.manufacturer }),
     ...(row.model_number && { modelNumber: row.model_number }),

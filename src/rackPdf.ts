@@ -20,6 +20,7 @@ import {
 } from "./rackUtils";
 import { computeRackStats, formatStatsLine } from "./rackStats";
 import { wrapLabel } from "./components/rackFaceConstants";
+import { resolveDeviceLabel, type SchematicDisplayDefaults } from "./displayName";
 
 // SVG-px constants — must mirror RackFaceSVG.tsx exactly so the PDF and the
 // sheet view share the same coordinate system (within `s` mm-per-svg-px scale).
@@ -168,6 +169,7 @@ export function drawElevation(
   rectWMm: number,
   rectHMm: number,
   drawFaceLabel: boolean = true,
+  schematicDefaults: SchematicDisplayDefaults = {},
 ) {
   const is2Post = rack.rackType === "open-2post";
   const empty = face === "rear" && is2Post;
@@ -363,11 +365,12 @@ export function drawElevation(
     doc.rect(dx, dy, dw, dh, "FD");
 
     // Multi-line label — wrapLabel matches RackFaceSVG exactly.
+    const resolved = resolveDeviceLabel(dd, schematicDefaults);
     const fs_svg = h_svg > 20 ? 8 : 7;
     const fs_pt = fs_svg * ptPerSvg;
     const maxChars = Math.min(isHalf ? 14 : 36, Math.floor(w_svg / (fs_svg * 0.58)));
-    const maxLines = Math.max(1, Math.floor(h_svg / (fs_svg * 1.5)));
-    const lines = wrapLabel(dd.label, maxChars, maxLines);
+    const maxLines = resolved.wrap ? Math.max(1, Math.floor(h_svg / (fs_svg * 1.5))) : 1;
+    const lines = wrapLabel(resolved.text, maxChars, maxLines);
     const lineH_svg = fs_svg * 1.35;
     const baseY_svg = h_svg / 2 - ((lines.length - 1) * lineH_svg) / 2;
     doc.setFont("Inter", "bold");
@@ -420,8 +423,9 @@ export function drawElevation(
       doc.setFontSize(fs_pt);
       doc.setTextColor(255, 255, 255);
       const effectiveSvgPx = occ.rotated ? hSvgPx : wSvgPx;
+      const resolvedOcc = resolveDeviceLabel(dd, schematicDefaults);
       const labelTrim = Math.max(4, Math.floor(effectiveSvgPx / 5));
-      const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+      const lbl = resolvedOcc.text.length > labelTrim ? resolvedOcc.text.slice(0, Math.max(1, labelTrim - 1)) + "…" : resolvedOcc.text;
       const cx = xPdf + wPdf / 2;
       const cy = topY + hPdf / 2;
       if (occ.rotated) {
@@ -628,6 +632,8 @@ export interface RackPdfOptions {
   paperSize?: PaperSize;
   /** When set, restrict the export to these page IDs (otherwise all rack pages) */
   pageIds?: string[];
+  /** Schematic-wide short-name + wrap defaults; per-device fields override. */
+  schematicDefaults?: SchematicDisplayDefaults;
 }
 
 export async function exportRackPdf(opts: RackPdfOptions): Promise<void> {
@@ -672,8 +678,8 @@ export async function exportRackPdf(opts: RackPdfOptions): Promise<void> {
     const frontX = PAGE_MARGIN_MM;
     const rearX = PAGE_MARGIN_MM + halfW;
 
-    drawElevation(doc, rack, page.placements, page.accessories, deviceDataMap, "front", frontX, contentTopY + 4, halfW, topRowH);
-    drawElevation(doc, rack, page.placements, page.accessories, deviceDataMap, "rear", rearX, contentTopY + 4, halfW, topRowH);
+    drawElevation(doc, rack, page.placements, page.accessories, deviceDataMap, "front", frontX, contentTopY + 4, halfW, topRowH, true, opts.schematicDefaults);
+    drawElevation(doc, rack, page.placements, page.accessories, deviceDataMap, "rear", rearX, contentTopY + 4, halfW, topRowH, true, opts.schematicDefaults);
 
     const sideTop = contentTopY + topRowH + 12;
     const sideX = PAGE_MARGIN_MM;

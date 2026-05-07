@@ -15,10 +15,12 @@ import {
   auxRowHeight,
   headerBandHeight,
   HEADER_LABEL_ZONE_PX,
+  HEADER_LABEL_ZONE_2_PX,
   resolveAuxiliaryLine,
   rowsInSlot,
 } from "../auxiliaryData";
 import { transformLabelNow } from "../labelCaseUtils";
+import { resolveDeviceLabel, type SchematicDisplayDefaults } from "../displayName";
 
 /** Matches Tailwind `rounded-lg` on the canvas DeviceNode (8px = 0.083"). */
 const DEVICE_CORNER_RADIUS_IN = 8 / 96;
@@ -136,6 +138,7 @@ export function emitDevice(
   edges: ConnectionEdge[],
   signalColors: Partial<Record<SignalType, string>> | undefined,
   currency = "USD",
+  schematicDefaults: SchematicDisplayDefaults = {},
 ) {
   if (node.type !== "device") return;
   const internal = rfInstance.getInternalNode(node.id);
@@ -152,8 +155,10 @@ export function emitDevice(
   // Header band — merged name strip + header aux rows. Height is 20-multiple (min 40),
   // matching DeviceNode's headerBandHeight() so the DXF export tracks the canvas layout.
   const headerRows = rowsInSlot(data.auxiliaryData, "header");
-  const bandH = headerBandHeight(data.auxiliaryData);
-  const headerContent = HEADER_LABEL_ZONE_PX + headerRows.reduce((s, r) => s + auxRowHeight(r), 0);
+  const resolvedLabel = resolveDeviceLabel(data, schematicDefaults);
+  const labelZone = resolvedLabel.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
+  const bandH = headerBandHeight(data.auxiliaryData, labelZone);
+  const headerContent = labelZone + headerRows.reduce((s, r) => s + auxRowHeight(r), 0);
   const headerPad = bandH - headerContent;
   const headerPadTop = Math.floor(headerPad / 2);
   const headerRect = toDxfRect(ax, ay, w, bandH);
@@ -184,23 +189,24 @@ export function emitDevice(
   const labelAvailIn = rect.w - pxToIn(HEADER_PAD_PX * 2);
   const auxTextHeight = cssFontPxToDxfHeight(9);
 
-  // Device label — sits in a 20-px label zone at the top of the band (below pt pad).
+  // Device label — sits in the label zone at the top of the band (below pt pad).
   // Baseline near the bottom of the zone keeps the text visually inside the zone.
-  if (data.label) {
+  // DXF doesn't support multi-line wrap; even with wrap=on we emit a single (possibly truncated) line.
+  if (resolvedLabel.text) {
     const labelHeight = cssFontPxToDxfHeight(12);
-    const labelBaselineY = ay + headerPadTop + HEADER_LABEL_ZONE_PX - 4;
+    const labelBaselineY = ay + headerPadTop + labelZone - 4;
     writer.addText(
       CANONICAL_LAYERS.LABELS,
       pxToIn(ax + w / 2),
       -pxToIn(labelBaselineY),
-      truncateToWidth(transformLabelNow(data.label), labelAvailIn, labelHeight),
+      truncateToWidth(transformLabelNow(resolvedLabel.text), labelAvailIn, labelHeight),
       { height: labelHeight, align: "center" },
     );
   }
 
   // Header aux rows — flow directly below the label zone, inside the same band.
   {
-    let cursor = ay + headerPadTop + HEADER_LABEL_ZONE_PX;
+    let cursor = ay + headerPadTop + labelZone;
     for (const row of headerRows) {
       const rowH = auxRowHeight(row);
       if (row.text.trim()) {

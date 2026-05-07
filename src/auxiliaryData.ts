@@ -188,24 +188,29 @@ export function auxBlockHeight(rows: unknown): number {
 }
 
 /** Pixel height of the header "name + aux" band. Minimum 40 (bare name strip when no
- *  header aux rows). When aux rows are present the label zone (20) + content is padded
- *  up to the next 20-multiple, keeping the first port on the 20-px pathfinding grid. */
-export function headerBandHeight(rows: unknown): number {
+ *  header aux rows). When aux rows are present the label zone + content is padded
+ *  up to the next 20-multiple, keeping the first port on the 20-px pathfinding grid.
+ *
+ *  `labelZone` defaults to HEADER_LABEL_ZONE_PX (20, single-line). Pass HEADER_LABEL_ZONE_2_PX
+ *  (32, two-line) for wrapped device labels. */
+export function headerBandHeight(rows: unknown, labelZone: number = HEADER_LABEL_ZONE_PX): number {
   const trimmed = trimTrailingEmpty(normalizeAuxRows(rows)).filter((r) => rowPosition(r) === "header");
-  const content = HEADER_LABEL_ZONE_PX + trimmed.reduce((sum, r) => sum + auxRowHeight(r), 0);
+  const content = labelZone + trimmed.reduce((sum, r) => sum + auxRowHeight(r), 0);
   return Math.max(HEADER_BAND_MIN_PX, Math.ceil(content / 20) * 20);
 }
 
 /** Label zone height inside the header band — label text centers vertically here. */
 export const HEADER_LABEL_ZONE_PX = 20;
+/** Two-line label zone height for wrapped device labels (2 lines × 14px leading + 4px slack). */
+export const HEADER_LABEL_ZONE_2_PX = 32;
 /** Minimum header band height (preserves the no-aux 40-px strip look). */
 export const HEADER_BAND_MIN_PX = 40;
 
-/** Extra vertical space (vs the default 40-px name strip) contributed by aux rows —
- *  used by `estimateDeviceHeight`, which already accounts for the base 40 in its
- *  `60 + ports×20` baseline. Footer block height is additive as before. */
-export function totalAuxHeight(rows: unknown): number {
-  const headerExtra = headerBandHeight(rows) - HEADER_BAND_MIN_PX;
+/** Extra vertical space (vs the default 40-px name strip) contributed by aux rows + a
+ *  possibly-wrapped device label — used by `estimateDeviceHeight`, which already accounts
+ *  for the base 40 in its `60 + ports×20` baseline. Footer block height is additive as before. */
+export function totalAuxHeight(rows: unknown, labelZone: number = HEADER_LABEL_ZONE_PX): number {
+  const headerExtra = headerBandHeight(rows, labelZone) - HEADER_BAND_MIN_PX;
   return headerExtra + auxBlockHeight(rows);
 }
 

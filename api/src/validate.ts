@@ -7,6 +7,7 @@ interface SlotInput {
 
 interface TemplateInput {
   label: string;
+  shortName?: string;
   deviceType: string;
   category: string;
   manufacturer?: string;
@@ -76,6 +77,12 @@ export function validateTemplate(body: unknown): ValidationResult {
 
   const labelErr = checkString(obj.label, "label");
   if (labelErr) return { ok: false, error: labelErr };
+
+  // Short name — optional, allow short or empty
+  if (obj.shortName != null && obj.shortName !== "") {
+    const snErr = checkString(obj.shortName, "shortName", 100);
+    if (snErr) return { ok: false, error: snErr };
+  }
 
   const typeErr = checkString(obj.deviceType, "deviceType", 100);
   if (typeErr) return { ok: false, error: typeErr };
@@ -322,6 +329,7 @@ export function validateTemplate(body: unknown): ValidationResult {
     ok: true,
     data: {
       label: obj.label as string,
+      ...(obj.shortName != null && obj.shortName !== "" && { shortName: (obj.shortName as string).trim() }),
       deviceType: obj.deviceType as string,
       category: obj.category as string,
       ...(obj.manufacturer != null && { manufacturer: obj.manufacturer as string }),

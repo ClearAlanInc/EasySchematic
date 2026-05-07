@@ -7,6 +7,7 @@ export function scoreTemplate(template: DeviceTemplate, query: string): number {
   if (words.length === 0) return 0;
 
   const label = template.label.toLowerCase();
+  const shortName = template.shortName?.toLowerCase() ?? "";
   const deviceType = template.deviceType.toLowerCase().replace(/-/g, " ");
   const manufacturer = template.manufacturer?.toLowerCase() ?? "";
   const modelNumber = template.modelNumber?.toLowerCase() ?? "";
@@ -27,6 +28,13 @@ export function scoreTemplate(template: DeviceTemplate, query: string): number {
       // Bonus for word-boundary match (start of label or after space/punctuation)
       const idx = label.indexOf(word);
       const atBoundary = idx === 0 || /[\s(/-]/.test(label[idx - 1]);
+      bestWordScore = Math.max(bestWordScore, atBoundary ? 100 : 80);
+    }
+
+    // Short name match — same scoring as full label so curated short names are findable
+    if (shortName && shortName.includes(word)) {
+      const idx = shortName.indexOf(word);
+      const atBoundary = idx === 0 || /[\s(/-]/.test(shortName[idx - 1]);
       bestWordScore = Math.max(bestWordScore, atBoundary ? 100 : 80);
     }
 

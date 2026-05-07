@@ -9,9 +9,11 @@ import {
   rowsInSlot,
   headerBandHeight,
   HEADER_LABEL_ZONE_PX,
+  HEADER_LABEL_ZONE_2_PX,
 } from "../auxiliaryData";
 import type { AuxRow } from "../types";
 import { useDisplayLabel } from "../labelCaseUtils";
+import { resolveDeviceLabel } from "../displayName";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -34,6 +36,13 @@ function buildColumnItems(ports: Port[]): ColumnItem[] {
 function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) {
   const setEditingNodeId = useSchematicStore((s) => s.setEditingNodeId);
   const displayLabel = useDisplayLabel();
+  const useShortNames = useSchematicStore((s) => s.useShortNames);
+  const wrapDeviceLabels = useSchematicStore((s) => s.wrapDeviceLabels);
+  const resolvedLabel = useMemo(
+    () => resolveDeviceLabel(data, { useShortNames, wrapDeviceLabels }),
+    [data, useShortNames, wrapDeviceLabels],
+  );
+  const labelZone = resolvedLabel.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
   const hiddenPinSignalTypesStr = useSchematicStore((s) => s.hiddenPinSignalTypes);
   const isHiddenAdapter = useSchematicStore((s) => s.hiddenAdapterNodeIds.has(id));
   const isOverlapping = useSchematicStore((s) => s.overlapNodeId === id);
@@ -309,11 +318,22 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
    *  Keep the band-height formula in sync with `headerBandHeight()` in auxiliaryData.ts —
    *  snapUtils uses it to estimate device height before React Flow measures it. */
   function renderHeaderBand(rows: AuxRow[]) {
-    const bandH = headerBandHeight(data.auxiliaryData);
-    const content = HEADER_LABEL_ZONE_PX + rows.reduce((sum, r) => sum + auxRowHeight(r), 0);
+    const bandH = headerBandHeight(data.auxiliaryData, labelZone);
+    const content = labelZone + rows.reduce((sum, r) => sum + auxRowHeight(r), 0);
     const totalPad = bandH - content;
     const pt = Math.floor(totalPad / 2);
     const pb = totalPad - pt;
+    const labelStyle = resolvedLabel.wrap
+      ? {
+          display: "-webkit-box" as const,
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical" as const,
+          overflow: "hidden" as const,
+          wordBreak: "break-word" as const,
+          textAlign: "center" as const,
+          lineHeight: "14px",
+        }
+      : undefined;
     return (
       <div
         className="px-3 border-b border-[var(--color-border)] rounded-t-lg flex flex-col"
@@ -325,10 +345,18 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       >
         <div
           className="flex items-center justify-center"
-          style={{ height: HEADER_LABEL_ZONE_PX }}
+          style={{ height: labelZone }}
         >
-          <span className="text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight">
-            {displayLabel(data.label)}
+          <span
+            className={
+              resolvedLabel.wrap
+                ? "text-xs font-semibold text-[var(--color-text-heading)]"
+                : "text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight"
+            }
+            style={labelStyle}
+            title={displayLabel(resolvedLabel.text)}
+          >
+            {displayLabel(resolvedLabel.text)}
           </span>
         </div>
         {rows.map((row, i) => renderAuxRow(row, i))}

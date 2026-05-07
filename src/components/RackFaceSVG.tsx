@@ -5,6 +5,7 @@ import {
   PX_PER_U, RACK_WIDTH, RULER_WIDTH, RAIL_WIDTH, FULL_WIDTH, DEVICE_INSET, HALF_WIDTH,
   uToY, sideW, ACC_COLORS, wrapLabel,
 } from "./rackFaceConstants";
+import { resolveDeviceLabel, type SchematicDisplayDefaults } from "../displayName";
 
 export interface RackFaceSVGProps {
   rack: RackData;
@@ -14,6 +15,8 @@ export interface RackFaceSVGProps {
   face: "front" | "rear" | "side";
   widthPx: number;
   heightPx: number;
+  /** Schematic-wide short-name + wrap defaults; per-device DeviceData fields override. */
+  schematicDefaults?: SchematicDisplayDefaults;
 }
 
 /**
@@ -32,7 +35,9 @@ export default function RackFaceSVG({
   face,
   widthPx,
   heightPx,
+  schematicDefaults,
 }: RackFaceSVGProps) {
+  const defaults: SchematicDisplayDefaults = schematicDefaults ?? {};
   const totalH = rack.heightU * PX_PER_U;
   const is2Post = rack.rackType === "open-2post";
   const isOpen = is2Post || rack.rackType === "open-4post";
@@ -84,8 +89,9 @@ export default function RackFaceSVG({
             const surfaceY = ay + ah - 0.5;
             const dy = surfaceY - dh - (pl.shelfOffsetMm?.y ?? 0) * PX_PER_MM;
             const dx = (is2Post || shelf.face === "front") ? 4 : SW - 4 - dDepth;
+            const resolved = resolveDeviceLabel(dd, defaults);
             const labelTrim = Math.max(3, Math.floor(dDepth / 5));
-            const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+            const lbl = resolved.text.length > labelTrim ? resolved.text.slice(0, Math.max(1, labelTrim - 1)) + "…" : resolved.text;
             return (
               <g key={pl.id}>
                 <rect x={dx} y={dy} width={dDepth} height={dh} fill={dd.headerColor ?? dd.color ?? "#4a90d9"} stroke="#333" strokeWidth={0.5} rx={1} opacity={0.85} />
@@ -100,10 +106,11 @@ export default function RackFaceSVG({
           const h = heightU * PX_PER_U - 1;
           const deviceDepth = (dd.depthMm ?? rack.depthMm * 0.6) * depthScale;
           const x = (is2Post || pl.face === "front") ? 4 : SW - 4 - deviceDepth;
+          const resolved = resolveDeviceLabel(dd, defaults);
           const fs = h > 20 ? 8 : 7;
           const maxChars = Math.max(2, Math.floor(deviceDepth / (fs * 0.58)));
-          const maxLines = Math.max(1, Math.floor(h / (fs * 1.5)));
-          const lines = wrapLabel(dd.label, maxChars, Math.min(maxLines, 3));
+          const maxLines = resolved.wrap ? Math.max(1, Math.floor(h / (fs * 1.5))) : 1;
+          const lines = wrapLabel(resolved.text, maxChars, Math.min(maxLines, 3));
           const lineH = fs * 1.35;
           const baseY = y + h / 2 - ((lines.length - 1) * lineH) / 2;
           const clipId = `rfsvg-side-clip-${rack.id}-${pl.id}`;
@@ -235,8 +242,9 @@ export default function RackFaceSVG({
                 const xPx = DEVICE_INSET + offset.x * PX_PER_MM;
                 const topY = surfaceY - hPx - offset.y * PX_PER_MM;
                 const effectiveWidthPx = p.rotated ? hPx : wPx;
+                const resolved = resolveDeviceLabel(dd, defaults);
                 const labelTrim = Math.max(4, Math.floor(effectiveWidthPx / 5));
-                const lbl = dd.label.length > labelTrim ? dd.label.slice(0, Math.max(1, labelTrim - 1)) + "…" : dd.label;
+                const lbl = resolved.text.length > labelTrim ? resolved.text.slice(0, Math.max(1, labelTrim - 1)) + "…" : resolved.text;
                 return (
                   <g key={p.id}>
                     <rect x={xPx} y={topY} width={wPx} height={hPx}
@@ -268,9 +276,11 @@ export default function RackFaceSVG({
         const isHalf = !!p.halfRackSide;
         const w = isHalf ? HALF_WIDTH : FULL_WIDTH;
         const x = DEVICE_INSET + (isHalf && p.halfRackSide === "right" ? HALF_WIDTH + 2 : 0);
+        const resolved = resolveDeviceLabel(dd, defaults);
         const fs = h > 20 ? 8 : 7;
         const maxChars = Math.min(isHalf ? 14 : 36, Math.floor(w / (fs * 0.58)));
-        const lines = wrapLabel(dd.label, maxChars, Math.max(1, Math.floor(h / (fs * 1.5))));
+        const maxLines = resolved.wrap ? Math.max(1, Math.floor(h / (fs * 1.5))) : 1;
+        const lines = wrapLabel(resolved.text, maxChars, maxLines);
         const lineH = fs * 1.35;
         const baseY = y + h / 2 - ((lines.length - 1) * lineH) / 2;
         return (

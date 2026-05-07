@@ -212,6 +212,8 @@ interface SchematicState {
   isValidConnection: (connection: Connection) => boolean;
   updateDeviceLabel: (nodeId: string, label: string) => void;
   batchUpdateDeviceLabels: (changes: { nodeId: string; label: string }[]) => void;
+  updateDeviceShortName: (nodeId: string, shortName: string) => void;
+  batchUpdateDeviceShortNames: (changes: { nodeId: string; shortName: string }[]) => void;
   updateDevice: (nodeId: string, data: DeviceData) => void;
   /** Patch device data without clearing baseLabel (for spreadsheet edits). */
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
@@ -507,6 +509,10 @@ interface SchematicState {
   setStubLabelShowRoom: (show: boolean) => void;
   stubLabelPageMode: StubLabelPageMode;
   setStubLabelPageMode: (mode: StubLabelPageMode) => void;
+  useShortNames: boolean;
+  setUseShortNames: (use: boolean) => void;
+  wrapDeviceLabels: boolean;
+  setWrapDeviceLabels: (wrap: boolean) => void;
   patchStubLabelData: (nodeId: string, patch: Partial<import("./types").StubLabelData>) => void;
   cableIdMap: Record<string, string>;
   recomputeCableIds: () => void;
@@ -1110,6 +1116,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
   stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
   stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
+  useShortNames: false,
+  wrapDeviceLabels: false,
   cableIdMap: {},
   cloudSchematicId: null,
   cloudSavedAt: null,
@@ -1343,6 +1351,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         color,
         baseLabel: template.label,
         model: template.label,
+        ...(template.shortName ? { shortName: template.shortName } : {}),
         ...(template.id ? { templateId: template.id } : {}),
         ...(template.version ? { templateVersion: template.version } : {}),
         ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
@@ -1779,6 +1788,40 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         if (label === undefined) return n;
         return { ...n, data: { ...n.data, label, baseLabel: undefined } } as DeviceNode;
       })),
+    });
+    get().saveToLocalStorage();
+  },
+
+  updateDeviceShortName: (nodeId, shortName) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const trimmed = shortName.trim();
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.id !== nodeId || n.type !== "device") return n;
+        const next = { ...n.data } as DeviceData;
+        if (trimmed) next.shortName = trimmed;
+        else delete next.shortName;
+        return { ...n, data: next } as DeviceNode;
+      }),
+    });
+    get().saveToLocalStorage();
+  },
+
+  batchUpdateDeviceShortNames: (changes) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const changeMap = new Map(changes.map((c) => [c.nodeId, c.shortName.trim()]));
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.type !== "device") return n;
+        const v = changeMap.get(n.id);
+        if (v === undefined) return n;
+        const next = { ...n.data } as DeviceData;
+        if (v) next.shortName = v;
+        else delete next.shortName;
+        return { ...n, data: next } as DeviceNode;
+      }),
     });
     get().saveToLocalStorage();
   },
@@ -2697,6 +2740,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         color,
         baseLabel: template.label,
         model: template.label,
+        ...(template.shortName ? { shortName: template.shortName } : {}),
         ...(template.id ? { templateId: template.id } : {}),
         ...(template.version ? { templateVersion: template.version } : {}),
         ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
@@ -3037,6 +3081,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setStubLabelPageMode: (mode) => {
     set({ stubLabelPageMode: mode });
+    get().saveToLocalStorage();
+  },
+
+  setUseShortNames: (use) => {
+    set({ useShortNames: use });
+    get().saveToLocalStorage();
+  },
+
+  setWrapDeviceLabels: (wrap) => {
+    set({ wrapDeviceLabels: wrap });
     get().saveToLocalStorage();
   },
 
@@ -3778,6 +3832,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
       stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
+      useShortNames: state.useShortNames || undefined,
+      wrapDeviceLabels: state.wrapDeviceLabels || undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
       edgeHitboxSize: state.edgeHitboxSize !== 10 ? state.edgeHitboxSize : undefined,
@@ -3872,6 +3928,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
             stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
             stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
+            useShortNames: data.useShortNames ?? false,
+            wrapDeviceLabels: data.wrapDeviceLabels ?? false,
             hideAdapters: data.hideAdapters ?? false,
             categoryOrder: data.categoryOrder ?? null,
             showOwnedGearPane: data.showOwnedGearPane ?? false,
@@ -3948,6 +4006,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
         stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
+        useShortNames: data.useShortNames ?? false,
+        wrapDeviceLabels: data.wrapDeviceLabels ?? false,
         hideAdapters: data.hideAdapters ?? false,
         autoRoute: data.autoRoute ?? true,
         edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -4025,6 +4085,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
       stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
+      useShortNames: state.useShortNames || undefined,
+      wrapDeviceLabels: state.wrapDeviceLabels || undefined,
       hideAdapters: state.hideAdapters || undefined,
       autoRoute: state.autoRoute === false ? false : undefined,
       edgeHitboxSize: state.edgeHitboxSize !== 10 ? state.edgeHitboxSize : undefined,
@@ -4118,6 +4180,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       customLabelMode: data.customLabelMode ?? "endpoint",
       stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
       stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
+      useShortNames: data.useShortNames ?? false,
+      wrapDeviceLabels: data.wrapDeviceLabels ?? false,
       hideAdapters: data.hideAdapters ?? false,
       autoRoute: data.autoRoute ?? true,
       edgeHitboxSize: data.edgeHitboxSize ?? 10,
@@ -4214,6 +4278,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
         stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
+        useShortNames: true,
+        wrapDeviceLabels: true,
         autoRoute: true,
         edgeHitboxSize: 10,
         panMode: DEFAULT_PAN_MODE,
