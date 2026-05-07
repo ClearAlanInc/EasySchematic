@@ -14,7 +14,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
 
-export const CURRENT_SCHEMA_VERSION = 32;
+export const CURRENT_SCHEMA_VERSION = 33;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -378,7 +378,53 @@ const migrations: Record<number, Migration> = {
     data.version = 32;
     return data;
   },
+  32: (data) => {
+    // v32 → v33: normalize edge handles to match the current bidirectional convention.
+    // Bidirectional ports render two handles (`${id}-in` / `${id}-out`); unidirectional
+    // ports render one (`${id}`). Template syncs that flip a port's direction preserve
+    // the port id (so edges don't dangle) but leave the edge's handle id stale, so
+    // React Flow logs "Couldn't create edge for target handle id" warnings. This walks
+    // every edge and rewrites its sourceHandle / targetHandle to the right form.
+    if (Array.isArray(data.edges) && Array.isArray(data.nodes)) {
+      normalizeEdgeHandles(data);
+    }
+    data.version = 33;
+    return data;
+  },
 };
+
+// ---------- v32 → v33 helpers ----------
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function normalizeEdgeHandles(data: any): void {
+  const nodeMap = new Map<string, any>(data.nodes.map((n: any) => [n.id, n]));
+
+  const fix = (
+    nodeId: string | undefined,
+    handle: string | undefined,
+    end: "source" | "target",
+  ): string | undefined => {
+    if (!nodeId || !handle) return handle;
+    const node = nodeMap.get(nodeId);
+    if (!node || node.type !== "device") return handle;
+    const ports: any[] = node.data?.ports ?? [];
+    const baseId = handle.replace(/-(in|out)$/, "");
+    const port = ports.find((p) => p.id === baseId);
+    if (!port) return handle;
+    if (port.direction === "bidirectional") {
+      return end === "source" ? `${baseId}-out` : `${baseId}-in`;
+    }
+    return baseId;
+  };
+
+  for (const edge of data.edges) {
+    const newSource = fix(edge.source, edge.sourceHandle, "source");
+    const newTarget = fix(edge.target, edge.targetHandle, "target");
+    if (newSource !== edge.sourceHandle) edge.sourceHandle = newSource;
+    if (newTarget !== edge.targetHandle) edge.targetHandle = newTarget;
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ---------- v31 → v32 helpers ----------
 
