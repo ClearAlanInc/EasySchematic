@@ -90,6 +90,32 @@ export default function ConnectionsPage() {
         <li>Right-click a trunk connection to set a <strong>cable label</strong></li>
       </ul>
 
+      <h2>Multi-connect ports</h2>
+      <p>
+        By default, each port accepts <strong>one connection</strong>. Some signals don't work that way in real life —
+        an SRT decoder can listen for many sender streams on a single UDP port, a wireless mic receiver pairs with
+        multiple transmitters, and a streaming encoder can broadcast one feed to many destinations. For these cases,
+        a port can be marked <strong>multi-connect</strong> to allow N connections to or from a single port.
+      </p>
+      <ul>
+        <li>
+          Toggle multi-connect per port in the <strong>device editor</strong> — look for the
+          <strong> M</strong> badge on each port row (next to the multicable <strong>T</strong> toggle)
+        </li>
+        <li>
+          New ports default to multi-connect when their signal type is <strong>SRT</strong> or <strong>Custom</strong>,
+          or when their connector type is <strong>Wireless</strong>
+        </li>
+        <li>
+          Multi-connect handles show an <strong>amber hover ring</strong> and crosshair cursor so you know you can
+          pull additional threads from a port that already has connections attached
+        </li>
+        <li>
+          Each connection still appears as its own line on the canvas and its own row in the cable schedule —
+          multi-connect only relaxes the connection-count rule
+        </li>
+      </ul>
+
       <h2>Adapters</h2>
       <p>
         When you connect ports with incompatible signal types or different connector types, EasySchematic

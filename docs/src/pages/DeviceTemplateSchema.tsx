@@ -177,6 +177,21 @@ export default function DeviceTemplateSchemaPage() {
   }
 }`}</code></pre>
 
+      <h3><code>multiConnect</code> — accept multiple connections per port</h3>
+      <p>
+        By default, each port allows one connection. Set <code>multiConnect: true</code> to let a port hold many —
+        useful for SRT receivers/encoders, wireless mic receivers, or any logical signal where fan-in or fan-out
+        is the norm. Auto-defaults to <code>true</code> when a new port is created with signal type
+        <code> srt</code> or <code> custom</code>, or with connector type <code>wireless</code>.
+      </p>
+      <pre><code>{`{
+  "label": "SRT Source",
+  "signalType": "srt",
+  "connectorType": "none",
+  "direction": "input",
+  "multiConnect": true
+}`}</code></pre>
+
       <h2>Port direction values</h2>
       <ul>
         <li><code>input</code> — accepts signal flowing in</li>
