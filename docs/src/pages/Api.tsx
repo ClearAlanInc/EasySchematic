@@ -38,7 +38,7 @@ export default function ApiPage() {
         <li><code>signalType</code> — one of: <code>sdi</code>, <code>hdmi</code>, <code>ndi</code>, <code>dante</code>,
           {" "}<code>analog-audio</code>, <code>aes</code>, <code>dmx</code>, <code>madi</code>, <code>usb</code>, <code>ethernet</code>, <code>fiber</code>,
           {" "}<code>displayport</code>, <code>hdbaset</code>, <code>srt</code>, <code>genlock</code>, <code>gpio</code>,
-          {" "}<code>rs422</code>, <code>serial</code>, <code>thunderbolt</code>, <code>composite</code>, <code>vga</code>,
+          {" "}<code>rs422</code>, <code>serial</code>, <code>thunderbolt</code>, <code>composite</code>, <code>component-video</code>, <code>vga</code>,
           {" "}<code>power</code>, <code>power-l1</code>, <code>power-l2</code>, <code>power-l3</code>, <code>power-neutral</code>, <code>power-ground</code>,
           {" "}<code>midi</code>, <code>tally</code>, <code>spdif</code>, <code>adat</code>,
           {" "}<code>ultranet</code>, <code>aes50</code>, <code>stageconnect</code>, <code>wordclock</code>, <code>aes67</code>,

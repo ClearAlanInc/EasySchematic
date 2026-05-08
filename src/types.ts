@@ -1050,7 +1050,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
 
 /** Signal types organized by functional group (for searchable dropdowns) */
 export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
-  "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "s-video", "vga"],
+  "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "component-video", "s-video", "vga"],
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
   "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink", "extron-exp", "pots", "blu-link"],
   "Network": ["ethernet", "fiber"],
