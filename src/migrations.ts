@@ -14,7 +14,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
 
-export const CURRENT_SCHEMA_VERSION = 33;
+export const CURRENT_SCHEMA_VERSION = 34;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -389,6 +389,24 @@ const migrations: Record<number, Migration> = {
       normalizeEdgeHandles(data);
     }
     data.version = 33;
+    return data;
+  },
+  33: (data) => {
+    // v33 → v34: stamp placed=true on every existing stub-label node. The auto-place
+    // effect in StubLabelNode used to fire on every mount and snap Y back to the
+    // device port, clobbering any position the user had dragged the stub to. The
+    // effect now bails when data.placed is true; legacy stubs are flipped wholesale
+    // here so user-dragged positions survive the upgrade. New stubs created post-
+    // upgrade get auto-placed once and then flipped true by the effect itself.
+    if (Array.isArray(data.nodes)) {
+      for (const n of data.nodes) {
+        if (n?.type === "stub-label") {
+          n.data ??= {};
+          n.data.placed = true;
+        }
+      }
+    }
+    data.version = 34;
     return data;
   },
 };

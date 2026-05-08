@@ -350,6 +350,11 @@ export interface StubLabelData {
   showRoom?: boolean;
   /** When/whether to append page number (per-stub override; falls back to global setting) */
   pageMode?: StubLabelPageMode;
+  /** True once one-shot auto-placement has aligned this stub with its port. Skips the
+   *  align-Y / clear-overlap pass on every subsequent mount so user-dragged positions
+   *  survive page refresh. New stubs from convertEdgeToStubs get auto-placed once and
+   *  flipped to true; legacy stubs are flipped true wholesale by the v33→v34 migration. */
+  placed?: boolean;
 }
 
 export type StubLabelNode = Node<StubLabelData, "stub-label">;

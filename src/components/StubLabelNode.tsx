@@ -109,11 +109,13 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
   const effectiveShowRoom = data.showRoom ?? showRoomGlobal;
   const effectivePageMode = data.pageMode ?? pageModeGlobal;
 
-  // Auto-place: once after mount, when React Flow has measured the box, correct the
-  // stub's position so its center aligns with the connected device's actual port Y and
-  // its box edge clears the device. Polls via rAF (without subscribing to the store)
+  // Auto-place: once per stub (lifetime, not per mount), align Y with the connected
+  // device's actual port Y and ensure the box edge clears the device. Result is sticky
+  // via data.placed — subsequent mounts (incl. page refresh) bail so user-dragged
+  // positions don't get clobbered. Polls via rAF (without subscribing to the store)
   // so a setState here doesn't cascade through Zustand selectors and re-fire the effect.
   useEffect(() => {
+    if (data.placed) return;
     let cancelled = false;
     let raf = 0;
     const tryPlace = () => {
@@ -174,18 +176,23 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const handleNeedsFix = currentHandle !== desiredHandle;
 
       const yOff = Math.abs(stubCurAbs.y - desiredAbsY) > 0.5;
-      if (!overlapsX && !yOff && !handleNeedsFix) return;
+      const posChanges = overlapsX || yOff;
 
       const parent = stub.parentId ? nodeMap.get(stub.parentId) : null;
       const parentAbs = parent ? absolutePos(parent, nodeMap) : { x: 0, y: 0 };
       const newRelX = desiredAbsX - parentAbs.x;
       const newRelY = desiredAbsY - parentAbs.y;
 
-      const newNodes = (overlapsX || yOff)
-        ? state.nodes.map((n) =>
-            n.id === id ? { ...n, position: { x: newRelX, y: newRelY } } : n,
-          )
-        : state.nodes;
+      // Always stamp data.placed = true so the next mount skips this work entirely,
+      // even when no correction was needed. That's what protects the user's drag
+      // position across page refresh.
+      const newNodes: SchematicNode[] = state.nodes.map((n) => {
+        if (n.id !== id || n.type !== "stub-label") return n;
+        const stamped: StubLabelData = { ...n.data, placed: true };
+        return posChanges
+          ? { ...n, position: { x: newRelX, y: newRelY }, data: stamped }
+          : { ...n, data: stamped };
+      });
       const newEdges = handleNeedsFix
         ? state.edges.map((e) => {
             if (e.id !== ownEdge.id) return e;
@@ -196,13 +203,14 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
         : state.edges;
 
       useSchematicStore.setState({ nodes: newNodes, edges: newEdges });
+      useSchematicStore.getState().saveToLocalStorage();
     };
     raf = requestAnimationFrame(tryPlace);
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
     };
-  }, [id, data.side]);
+  }, [id, data.side, data.placed]);
 
   const text = useMemo(() => {
     if (!labelStr) return "?";
