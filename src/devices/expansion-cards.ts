@@ -683,4 +683,21 @@ export const templates: DeviceTemplate[] = [
     ],
     ports: [],
   },
+
+  // Active Accessory Adapters (plug into a host's accessory port and add wireless / control I/O)
+  {
+    id: "zoom-bta1",
+    deviceType: "expansion-card",
+    slotFamily: "zoom-bta-port",
+    label: "Zoom BTA-1 Bluetooth Adapter",
+    manufacturer: "Zoom",
+    modelNumber: "BTA-1",
+    referenceUrl: "https://zoomcorp.com/en/us/accessories/power-accessories/BTA-1/",
+    searchTerms: ["zoom", "bta-1", "bluetooth", "timecode", "wireless", "remote", "f6", "ultrasync"],
+    unitCost: 40,
+    ports: [
+      port("Bluetooth Control", "bluetooth", "bidirectional", "wireless"),
+      port("Wireless Timecode", "timecode", "input", "wireless"),
+    ],
+  },
 ];

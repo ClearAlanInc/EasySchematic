@@ -177,6 +177,10 @@ export interface SlotDefinition {
   label: string;               // "Slot 1", "VFC Slot A"
   slotFamily: string;           // e.g. "disguise-vfc", "yamaha-my"
   defaultCardId?: string;       // pre-populated when placed on canvas
+  /** When true, an empty instance of this slot is hidden on the canvas node.
+   *  Default false — preserves the existing "(empty)" rendering for active expansion slots.
+   *  Set true on storage-media slots (SD card bays etc.) where empty rows would be visual noise. */
+  hideWhenEmpty?: boolean;
 }
 
 export interface InstalledSlot {
@@ -189,6 +193,9 @@ export interface InstalledSlot {
   cardManufacturer?: string;
   cardModelNumber?: string;
   cardUnitCost?: number;
+  /** Denormalized from SlotDefinition.hideWhenEmpty so the canvas renderer doesn't have
+   *  to walk the template tree on every paint. */
+  hideWhenEmpty?: boolean;
   portIds: string[];            // tracks which ports in device.ports belong to this slot
 }
 

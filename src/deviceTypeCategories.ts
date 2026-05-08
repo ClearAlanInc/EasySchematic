@@ -84,6 +84,7 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "network-router": "Networking",
   "nas": "Storage",
   "external-storage": "Storage",
+  "storage-media": "Storage Media",
   "lighting-processor": "Lighting",
   "network-wifi": "Networking",
   "access-point": "Networking",

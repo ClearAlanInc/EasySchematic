@@ -104,6 +104,7 @@ export const CATEGORY_ORDER_DEFAULT: string[] = [
   "Audio Expansion",
   "Expansion Cards",
   "Storage",
+  "Storage Media",
   "Infrastructure",
   "Intercom",
   "Monitoring",
@@ -787,10 +788,12 @@ function processTemplateSlots(
         label: slotDef.label,
         slotFamily: slotDef.slotFamily,
         ...(parentSlotId ? { parentSlotId } : {}),
+        ...(slotDef.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
         cardTemplateId: cardTpl.id,
         cardLabel: cardTpl.label,
         cardManufacturer: cardTpl.manufacturer,
         cardModelNumber: cardTpl.modelNumber,
+        cardUnitCost: cardTpl.unitCost,
         portIds: cardPorts.map((p) => p.id),
       };
       installedSlots.push(slot);
@@ -807,6 +810,7 @@ function processTemplateSlots(
         label: slotDef.label,
         slotFamily: slotDef.slotFamily,
         ...(parentSlotId ? { parentSlotId } : {}),
+        ...(slotDef.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
         portIds: [],
       });
     }
@@ -1998,10 +2002,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         label: oldSlot.label,
         slotFamily: oldSlot.slotFamily,
         ...(oldSlot.parentSlotId ? { parentSlotId: oldSlot.parentSlotId } : {}),
+        ...(oldSlot.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
         cardTemplateId: cardTpl.id,
         cardLabel: cardTpl.label,
         cardManufacturer: cardTpl.manufacturer,
         cardModelNumber: cardTpl.modelNumber,
+        cardUnitCost: cardTpl.unitCost,
         portIds: cardPorts.map((p) => p.id),
       };
 
@@ -2017,6 +2023,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         label: oldSlot.label,
         slotFamily: oldSlot.slotFamily,
         ...(oldSlot.parentSlotId ? { parentSlotId: oldSlot.parentSlotId } : {}),
+        ...(oldSlot.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
         portIds: [],
       };
     }

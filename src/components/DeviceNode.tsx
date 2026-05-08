@@ -474,10 +474,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         )
       )}
 
-      {/* Empty Expansion Slots */}
-      {data.slots?.some((s) => !s.cardTemplateId) && (
+      {/* Empty Expansion Slots — hidden when slot.hideWhenEmpty (storage media etc.) */}
+      {data.slots?.some((s) => !s.cardTemplateId && !s.hideWhenEmpty) && (
         <div>
-          {data.slots.filter((s) => !s.cardTemplateId).map((slot) => (
+          {data.slots.filter((s) => !s.cardTemplateId && !s.hideWhenEmpty).map((slot) => (
             <div key={slot.slotId} className="flex justify-center items-center h-5 mx-1">
               <span className="text-[9px] text-[var(--color-text-muted)] opacity-40 truncate text-center italic">
                 {displayLabel(slot.label)} (empty)

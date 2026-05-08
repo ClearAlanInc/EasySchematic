@@ -80,6 +80,7 @@ const CATEGORIES = {
   "cloud-service": "Cloud Services",
   "power-mixer": "Powered Mixers",
   "nas": "Storage", "external-storage": "Storage",
+  "storage-media": "Storage Media",
   "audio-meter": "Monitoring", "video-scope": "Monitoring",
   "conference-system": "Audio", "di-box": "Audio", "display": "Displays",
 };
