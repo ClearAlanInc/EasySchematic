@@ -60,7 +60,7 @@ const CATEGORIES = {
   "amplifier": "Amplifiers",
   "ndi-encoder": "Networking", "ndi-decoder": "Networking", "network-switch": "Networking",
   "streaming-encoder": "Networking", "av-over-ip": "Networking", "network-router": "Networking", "network-wifi": "Networking",
-  "kvm-extender": "KVM / Extenders", "hdbaset-extender": "KVM / Extenders",
+  "kvm-extender": "KVM / Extenders", "usb-extender": "KVM / Extenders", "hdbaset-extender": "KVM / Extenders",
   "wireless-video": "Wireless", "antenna": "Wireless", "antenna-distribution": "Wireless",
   "access-point": "Networking",
   "intercom": "Intercom", "intercom-transceiver": "Intercom",

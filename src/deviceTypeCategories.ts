@@ -45,6 +45,7 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "streaming-encoder": "Networking",
   "av-over-ip": "Networking",
   "kvm-extender": "KVM / Extenders",
+  "usb-extender": "KVM / Extenders",
   "hdbaset-extender": "KVM / Extenders",
   "wireless-video": "Wireless",
   "intercom": "Intercom",
