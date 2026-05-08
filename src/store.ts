@@ -4289,7 +4289,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
         stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
-        useShortNames: true,
+        useShortNames: false,
         wrapDeviceLabels: true,
         autoRoute: true,
         edgeHitboxSize: 10,

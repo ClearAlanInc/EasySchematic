@@ -755,8 +755,8 @@ export interface SchematicFile {
   stubLabelShowRoom?: boolean;
   /** When to show "Pg N" on stub labels: always | only when ends are on different pages | never */
   stubLabelPageMode?: StubLabelPageMode;
-  /** Render device labels using their shortName when available. New files default true;
-   *  loaded files where this is undefined fall back to false (preserve legacy layout). */
+  /** Render device labels using their shortName when available. Defaults false;
+   *  user opt-in via Preferences. */
   useShortNames?: boolean;
   /** Wrap long device labels across two lines instead of truncating with ellipsis.
    *  New files default true; undefined on loaded files = legacy single-line truncate. */
