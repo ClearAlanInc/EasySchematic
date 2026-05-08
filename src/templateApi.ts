@@ -10,16 +10,28 @@ export function getBundledTemplates(): DeviceTemplate[] {
   return fallbackData as DeviceTemplate[];
 }
 
+/** Bundled templates as a floor under whatever the API returned. Used so a freshly-added
+ *  card in src/devices/* shows up in slot pickers and lookups even before its row lands
+ *  in D1. D1 wins on ID conflict (lets prod overrides shadow bundled defaults). */
+function effectiveTemplates(): DeviceTemplate[] {
+  const bundled = fallbackData as DeviceTemplate[];
+  if (!cached) return bundled;
+  const cachedIds = new Set(cached.map((t) => t.id).filter((id): id is string => !!id));
+  const bundledFloor = bundled.filter((t) => t.id && !cachedIds.has(t.id));
+  return [...cached, ...bundledFloor];
+}
+
 /** Look up a card template by ID from cached API data, bundled fallback, or caller-supplied extras (user's custom templates). */
 export function getTemplateById(id: string, extra: DeviceTemplate[] = []): DeviceTemplate | undefined {
-  const source = cached ?? fallbackData as DeviceTemplate[];
-  return source.find((t) => t.id === id) ?? extra.find((t) => t.id === id);
+  return effectiveTemplates().find((t) => t.id === id) ?? extra.find((t) => t.id === id);
 }
 
 /** Return all card templates that belong to a given slot family, merging bundled and caller-supplied extras. */
 export function getCardsByFamily(family: string, extra: DeviceTemplate[] = []): DeviceTemplate[] {
-  const source = cached ?? (fallbackData as DeviceTemplate[]);
-  return [...source.filter((t) => t.slotFamily === family), ...extra.filter((t) => t.slotFamily === family)];
+  return [
+    ...effectiveTemplates().filter((t) => t.slotFamily === family),
+    ...extra.filter((t) => t.slotFamily === family),
+  ];
 }
 
 // ==================== AUTH & DRAFTS ====================
@@ -261,11 +273,11 @@ export async function createSubmission(
 }
 
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {
-  if (cached) return cached;
+  if (cached) return effectiveTemplates();
 
   const res = await fetch(`${API_URL}/templates`);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = (await res.json()) as DeviceTemplate[];
   cached = data;
-  return data;
+  return effectiveTemplates();
 }
