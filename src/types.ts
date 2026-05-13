@@ -17,6 +17,7 @@ export type ConnectorType =
   | "d-tap" | "v-mount" | "f-connector"
   | "lemo-2pin" | "lemo-4pin" | "lemo-5pin"
   | "wireless"
+  | "solder-cup" | "punch-down-110" | "punch-down-66" | "krone-idc" | "d-hole-insert"
   | "none" | "other";
 
 export interface PortNetworkConfig {
@@ -963,6 +964,11 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "v-mount": "V-Mount",
   "f-connector": "F-Connector",
   wireless: "Wireless",
+  "solder-cup": "Solder Cup",
+  "punch-down-110": "Punch-down (110)",
+  "punch-down-66": "Punch-down (66)",
+  "krone-idc": "Krone IDC",
+  "d-hole-insert": "D-Hole Insert",
   none: "None",
   other: "Other",
 };
@@ -1070,7 +1076,7 @@ export const CONNECTOR_GROUPS: Record<string, ConnectorType[]> = {
   "D-Sub / Serial": ["db9", "db15", "db25", "db37", "db7w2", "lemo-5pin"],
   "Power": ["iec", "iec-c5", "iec-c7", "iec-c15", "iec-c20", "powercon", "powercon-true1", "edison", "barrel", "l5-20", "l6-20", "l6-30", "l21-30", "cam-lok", "socapex", "pcie-6pin", "lemo-2pin", "lemo-4pin"],
   "Speaker": ["speakon", "banana", "binding-post", "binding-post-banana"],
-  "Terminal": ["phoenix", "terminal-block", "multipin"],
+  "Terminal": ["phoenix", "terminal-block", "multipin", "solder-cup", "punch-down-110", "punch-down-66", "krone-idc"],
   "RF": ["reverse-tnc", "sma"],
-  "Other": ["wireless", "digilink", "none", "other"],
+  "Other": ["wireless", "digilink", "d-hole-insert", "none", "other"],
 };

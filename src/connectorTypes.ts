@@ -110,7 +110,10 @@ export const CONNECTOR_ACCEPTS: Partial<Record<ConnectorType, ConnectorAcceptanc
 };
 
 /** Bare-wire connectors (no physical connector — cable goes straight in) are compatible with anything */
-export const BARE_WIRE_CONNECTORS: Set<ConnectorType> = new Set(["phoenix", "terminal-block"]);
+export const BARE_WIRE_CONNECTORS: Set<ConnectorType> = new Set([
+  "phoenix", "terminal-block",
+  "solder-cup", "punch-down-110", "punch-down-66", "krone-idc",
+]);
 
 /** Signal pairs that physically share a connector and are interchangeable when both ports use it.
  *  Thunderbolt ports are USB-C and carry USB; a plain USB-C cable works between them. */
@@ -229,6 +232,11 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "lemo-2pin": "LEMO 2-pin",
   "lemo-4pin": "LEMO 4-pin",
   "lemo-5pin": "LEMO 5-pin",
+  "solder-cup": "Bare Wire",
+  "punch-down-110": "Bulk Cable",
+  "punch-down-66": "Bulk Cable",
+  "krone-idc": "Bulk Cable",
+  "d-hole-insert": "",
   none: "",
   other: "Other",
 };

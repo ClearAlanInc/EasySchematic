@@ -989,7 +989,7 @@ export default function DeviceEditor() {
             setHiddenPorts={setHiddenPorts}
           />
 
-          {deviceType !== "patch-panel" && (
+          {(deviceType !== "patch-panel" || bidir.length > 0) && (
             <PortSection
               title="Bidirectional"
               direction="bidirectional"
