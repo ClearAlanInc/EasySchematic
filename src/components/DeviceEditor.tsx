@@ -4,6 +4,7 @@ import {
   SIGNAL_LABELS,
   SIGNAL_COLORS,
   CONNECTOR_LABELS,
+  CONNECTOR_GROUPS,
   type SignalType,
   type ConnectorType,
   type Gender,
@@ -36,6 +37,29 @@ const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
 const ALL_CONNECTOR_TYPES = (Object.keys(CONNECTOR_LABELS) as ConnectorType[]).sort(
   (a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]),
 );
+
+/** Grouped connector dropdown order — preserves CONNECTOR_GROUPS ordering, alphabetizes within each
+ *  group, and sweeps any connector missing from CONNECTOR_GROUPS into "Other" so a new ConnectorType
+ *  never silently disappears from the dropdown. */
+const CONNECTOR_GROUP_ENTRIES: Array<[string, ConnectorType[]]> = (() => {
+  const groups = Object.entries(CONNECTOR_GROUPS).map(
+    ([name, list]) => [name, [...list].sort((a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]))] as [string, ConnectorType[]],
+  );
+  const grouped = new Set<ConnectorType>(groups.flatMap(([, list]) => list));
+  const orphans = ALL_CONNECTOR_TYPES.filter((c) => !grouped.has(c));
+  if (orphans.length > 0) {
+    const otherIdx = groups.findIndex(([name]) => name === "Other");
+    if (otherIdx >= 0) {
+      groups[otherIdx] = [
+        "Other",
+        [...groups[otherIdx][1], ...orphans].sort((a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b])),
+      ];
+    } else {
+      groups.push(["Other", orphans.sort((a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]))]);
+    }
+  }
+  return groups;
+})();
 
 interface PortDraft {
   id: string;
@@ -2158,10 +2182,14 @@ function PortRow({
           onChange={(e) => onUpdate({ connectorType: e.target.value as ConnectorType })}
           title="Connector type"
         >
-          {ALL_CONNECTOR_TYPES.map((c) => (
-            <option key={c} value={c}>
-              {CONNECTOR_LABELS[c]}
-            </option>
+          {CONNECTOR_GROUP_ENTRIES.map(([groupName, types]) => (
+            <optgroup key={groupName} label={groupName}>
+              {types.map((c) => (
+                <option key={c} value={c}>
+                  {CONNECTOR_LABELS[c]}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
 
