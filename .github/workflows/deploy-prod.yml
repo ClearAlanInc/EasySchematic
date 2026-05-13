@@ -1,15 +1,24 @@
-name: Deploy
+name: Deploy prod
+
+# Manual promotion to production. Trigger from the Actions tab; optionally
+# pass a specific SHA to promote (defaults to current master HEAD).
+# This is the 5-second friction step that breaks the "I'll just push it" reflex.
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA to promote (defaults to master HEAD)"
+        required: false
+        default: ""
 
 jobs:
-  deploy:
+  deploy-prod:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.sha || github.sha }}
 
       - uses: actions/setup-node@v6
         with:

@@ -34,6 +34,7 @@ import IncompatibleConnectionDialog from "./components/IncompatibleConnectionDia
 import MobileGate from "./components/MobileGate";
 import ToastContainer from "./components/ToastContainer";
 import PendingSubmissionBanner from "./components/PendingSubmissionBanner";
+import BetaBanner from "./components/BetaBanner";
 import PortContextMenu from "./components/PortContextMenu";
 import RoutingDebugOverlay from "./components/RoutingDebugOverlay";
 import RoutingTuningPanel from "./components/RoutingTuningPanel";
@@ -1652,6 +1653,7 @@ export default function App() {
       <div data-print-hide>
         <MenuBar />
       </div>
+      <BetaBanner />
       <DemoBanner />
       <PendingSubmissionBanner />
       {printView && isSchematicActive && <PrintViewBar />}

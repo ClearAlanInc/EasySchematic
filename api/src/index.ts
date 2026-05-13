@@ -14,6 +14,7 @@ app.use(
     origin: [
       "https://easyschematic.live",
       "https://www.easyschematic.live",
+      "https://beta.easyschematic.live",
       "https://devices.easyschematic.live",
       "http://localhost:4173",
       "http://localhost:5173",
@@ -72,6 +73,7 @@ function getClientIP(c: { req: { header: (name: string) => string | undefined } 
 const ALLOWED_ORIGINS = [
   "https://easyschematic.live",
   "https://www.easyschematic.live",
+  "https://beta.easyschematic.live",
   "https://devices.easyschematic.live",
   "http://localhost:4173",
   "http://localhost:5173",
