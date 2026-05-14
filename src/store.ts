@@ -2533,7 +2533,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const updates = new Map<string, { parentId: string | undefined; position: { x: number; y: number } }>();
 
     for (const node of state.nodes) {
-      if (node.type === "room") continue;
+      // Waypoints belong to edges, not rooms — reparenting them turns their
+      // .position into relative-to-room coords, which downstream sync code
+      // mistakes for absolute and corrupts manualWaypoints.
+      if (node.type === "room" || node.type === "waypoint") continue;
 
       const absPos = getAbsolutePosition(node.id, nodeMap);
       const nodeW = node.measured?.width ?? 180;

@@ -91,13 +91,31 @@ export function syncEdgesFromWaypointNodes(
   edges: ConnectionEdge[],
   nodes: SchematicNode[],
 ): ConnectionEdge[] {
+  // manualWaypoints are absolute coords. If a waypoint somehow ended up with a
+  // parentId (e.g. an older reparentAllDevices call swept it under a room),
+  // walking the parent chain gives us the absolute position to write back.
+  const nodeMap = new Map(nodes.map((nn) => [nn.id, nn] as const));
+  const absPos = (n: SchematicNode): { x: number; y: number } => {
+    let x = n.position.x;
+    let y = n.position.y;
+    let p: string | undefined = n.parentId;
+    while (p) {
+      const parent = nodeMap.get(p);
+      if (!parent) break;
+      x += parent.position.x;
+      y += parent.position.y;
+      p = parent.parentId;
+    }
+    return { x, y };
+  };
   // Group waypoint nodes by edgeId, sorted by index
   const byEdge = new Map<string, { x: number; y: number; index: number }[]>();
   for (const n of nodes) {
     if (n.type !== "waypoint") continue;
     const data = n.data as WaypointNode["data"];
+    const { x, y } = absPos(n);
     const list = byEdge.get(data.edgeId) ?? [];
-    list.push({ x: n.position.x, y: n.position.y, index: data.index });
+    list.push({ x, y, index: data.index });
     byEdge.set(data.edgeId, list);
   }
 

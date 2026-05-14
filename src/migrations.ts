@@ -14,7 +14,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
 
-export const CURRENT_SCHEMA_VERSION = 35;
+export const CURRENT_SCHEMA_VERSION = 36;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -398,6 +398,17 @@ const migrations: Record<number, Migration> = {
     data.version = 35;
     return data;
   },
+  35: (data) => {
+    // v35 → v36: rescue waypoint nodes that an older reparentAllDevices swept
+    // under a room. Those waypoints have parentId set and position relative to
+    // the room, which syncEdgesFromWaypointNodes wrote back into manualWaypoints
+    // as if they were absolute — producing spaghetti routes.
+    if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
+      healOrphanedWaypoints(data);
+    }
+    data.version = 36;
+    return data;
+  },
 
   33: (data) => {
     // v33 → v34: stamp placed=true on every existing stub-label node. The auto-place
@@ -418,6 +429,60 @@ const migrations: Record<number, Migration> = {
     return data;
   },
 };
+
+// ---------- v35 → v36 helpers ----------
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function healOrphanedWaypoints(data: any): void {
+  const nodeMap = new Map<string, any>(data.nodes.map((n: any) => [n.id, n]));
+  const absPos = (n: any): { x: number; y: number } => {
+    let x = n.position?.x ?? 0;
+    let y = n.position?.y ?? 0;
+    let p = n.parentId;
+    while (p) {
+      const parent = nodeMap.get(p);
+      if (!parent) break;
+      x += parent.position?.x ?? 0;
+      y += parent.position?.y ?? 0;
+      p = parent.parentId;
+    }
+    return { x, y };
+  };
+
+  // Step 1: any waypoint with a parentId — recover its absolute position
+  // and unparent it. Other top-level types could in principle be similarly
+  // miscreparented, but stub-labels/notes/annotations *intentionally* live
+  // inside rooms, so we only normalize waypoints here.
+  for (const n of data.nodes) {
+    if (n?.type !== "waypoint") continue;
+    if (!n.parentId) continue;
+    const { x, y } = absPos(n);
+    n.position = { x, y };
+    delete n.parentId;
+  }
+
+  // Step 2: rebuild edge.data.manualWaypoints from the now-absolute waypoint
+  // node positions, sorted by data.index. This overwrites any corrupted
+  // manualWaypoints the bad-sync pass had written.
+  const byEdge = new Map<string, { x: number; y: number; index: number }[]>();
+  for (const n of data.nodes) {
+    if (n?.type !== "waypoint") continue;
+    const edgeId = n.data?.edgeId;
+    const index = n.data?.index;
+    if (typeof edgeId !== "string" || typeof index !== "number") continue;
+    const list = byEdge.get(edgeId) ?? [];
+    list.push({ x: n.position.x, y: n.position.y, index });
+    byEdge.set(edgeId, list);
+  }
+  for (const edge of data.edges) {
+    const list = byEdge.get(edge.id);
+    if (!list || list.length === 0) continue;
+    list.sort((a, b) => a.index - b.index);
+    edge.data ??= {};
+    edge.data.manualWaypoints = list.map((p) => ({ x: p.x, y: p.y }));
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ---------- v32 → v33 helpers ----------
 
