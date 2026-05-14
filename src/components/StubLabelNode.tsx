@@ -239,12 +239,22 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       <Handle type={handleType} position={Position.Left} id="l" isConnectable={false} style={{ opacity: 0, width: 6, height: 6 }} />
       <div
         style={{
+          // Pin to STUB_H_EST so the box's geometric center (where handles sit
+          // via top:50%) actually lands at position.y + STUB_H_EST/2. Without
+          // this, sub-pixel rounding of `padding: 1.5px` and `lineHeight: 1`
+          // produced a ~13.5px box, putting the visual center 0.25px above
+          // where the auto-place math thinks it is, and the connection edge
+          // jogged a fraction of a pixel at the stub end.
+          boxSizing: "border-box",
+          height: 14,
+          display: "flex",
+          alignItems: "center",
           fontSize: 9,
           lineHeight: 1,
           fontFamily: "'Inter', system-ui, sans-serif",
           fontWeight: 500,
           whiteSpace: "nowrap",
-          padding: "1.5px 4px",
+          padding: "0 4px",
           borderRadius: 2,
           border: `1px solid ${selected ? "#1a73e8" : color}`,
           backgroundColor: "white",

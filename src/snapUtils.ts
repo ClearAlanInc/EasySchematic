@@ -318,8 +318,14 @@ export function computeSnap(
       // Child devices only align to their own parent room; top-level devices
       // see every room (placement-time alignment).
       if (draggedParentId && n.id !== draggedParentId) continue;
+    } else if (n.type === "stub-label" || n.type === "waypoint") {
+      // Stubs sit at sub-grid Y by design (centered on a port row); waypoints
+      // are router-positioned. Aligning a device to either pulls the device
+      // off the 20px grid, and snapNodesToGrid then yanks it back on the next
+      // reload — looking like the device "jumped."
+      continue;
     }
-    // else: device or other type — cross-room alignment allowed.
+    // else: device or other top-level type — cross-room alignment allowed.
 
     const r = absRect(n, nodeMap);
     const dSq = bboxDistSq(draggedAbs, r);
