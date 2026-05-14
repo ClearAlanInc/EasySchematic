@@ -8,11 +8,6 @@ function WaypointNodeComponent({ data, selected }: NodeProps<WaypointNodeType>) 
     const edge = s.edges.find((e) => e.id === data.edgeId);
     return edge?.selected === true;
   });
-  const printView = useSchematicStore((s) => s.printView);
-
-  // Print view doesn't show edit handles. Render nothing so waypoints don't
-  // sneak into the printed page or attract pointer events.
-  if (printView) return null;
 
   const visible = selected || edgeSelected;
 
@@ -23,8 +18,12 @@ function WaypointNodeComponent({ data, selected }: NodeProps<WaypointNodeType>) 
   const size = visible ? 10 : 6;
   const half = size / 2;
 
+  // data-print-hide makes the existing PDF export CSS hide handles only during
+  // actual capture (data-export-capturing). They stay visible/draggable in
+  // print view (F9) so users can fine-tune routing while seeing page bounds.
   return (
     <div
+      data-print-hide
       style={{
         width: size,
         height: size,
