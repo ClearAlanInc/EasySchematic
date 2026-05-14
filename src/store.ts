@@ -142,9 +142,13 @@ let hydrated = false;
 /** Grid size in px — must match snapGrid in App.tsx and Background gap */
 export const GRID_SIZE = 20;
 
-/** Snap all node positions to the grid. Mutates the array in place. */
+/** Snap all node positions to the grid. Mutates the array in place.
+ *  Stub labels are skipped — they store sub-grid Y to center the box on a
+ *  port row (box height ≈13–14px, half of which would round away). Snapping
+ *  them shifted the label down a few px on every load. */
 function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   for (const n of nodes) {
+    if (n.type === "stub-label") continue;
     n.position.x = Math.round(n.position.x / GRID_SIZE) * GRID_SIZE;
     n.position.y = Math.round(n.position.y / GRID_SIZE) * GRID_SIZE;
   }
