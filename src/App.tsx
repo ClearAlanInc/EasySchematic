@@ -868,15 +868,17 @@ function SchematicCanvas() {
                   n.id === device.id ? { ...n, position: { x: spacing.x, y: spacing.y } } : n,
                 ) as SchematicNode[],
               });
-              // Re-reparent so the device stays in its room after nudge
+              // Re-reparent so the device stays in its room after nudge.
+              // Walk the full parent chain — device may be inside a rack inside a room.
               let absX = spacing.x;
               let absY = spacing.y;
-              if (device.parentId) {
-                const parent = updated.nodes.find((n) => n.id === device.parentId);
-                if (parent) {
-                  absX += parent.position.x;
-                  absY += parent.position.y;
-                }
+              let pid: string | undefined = device.parentId as string | undefined;
+              while (pid) {
+                const parent = updated.nodes.find((n) => n.id === pid);
+                if (!parent) break;
+                absX += parent.position.x;
+                absY += parent.position.y;
+                pid = parent.parentId as string | undefined;
               }
               reparentNode(device.id, { x: absX, y: absY }, { skipUndo: true });
             }

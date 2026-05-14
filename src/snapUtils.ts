@@ -75,15 +75,23 @@ function nodeRect(node: SchematicNode): Rect {
   };
 }
 
-/** Get absolute offset of a node's immediate parent (or {0,0} for top-level). */
+/** Absolute canvas offset contributed by a node's parent chain ({0,0} if top-level).
+ *  Walks the full chain so nested parents (e.g. rack-in-room) compose correctly. */
 function parentOffsetFromMap(
   node: SchematicNode,
   nodeMap: Map<string, SchematicNode>,
 ): { dx: number; dy: number } {
-  if (!node.parentId) return { dx: 0, dy: 0 };
-  const parent = nodeMap.get(node.parentId);
-  if (!parent) return { dx: 0, dy: 0 };
-  return { dx: parent.position.x, dy: parent.position.y };
+  let dx = 0;
+  let dy = 0;
+  let parentId = node.parentId;
+  while (parentId) {
+    const parent = nodeMap.get(parentId);
+    if (!parent) break;
+    dx += parent.position.x;
+    dy += parent.position.y;
+    parentId = parent.parentId;
+  }
+  return { dx, dy };
 }
 
 /** Walk full parent chain to compute absolute world position. */

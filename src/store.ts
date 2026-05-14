@@ -1659,17 +1659,23 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const state = get();
     const selected = state.nodes.filter((n) => n.selected);
 
-    // Convert to absolute coordinates so alignment works across rooms
+    // Convert to absolute coordinates so alignment works across rooms.
+    // Walk the full parent chain — nodes may live inside a rack inside a room.
+    const nodeMap = new Map(state.nodes.map((n) => [n.id, n]));
     const parentOffsets = new Map<string, { dx: number; dy: number }>();
     const absSelected = selected.map((n) => {
-      if (!n.parentId) {
-        parentOffsets.set(n.id, { dx: 0, dy: 0 });
-        return n;
+      let dx = 0;
+      let dy = 0;
+      let pid: string | undefined = n.parentId;
+      while (pid) {
+        const parent = nodeMap.get(pid);
+        if (!parent) break;
+        dx += parent.position.x;
+        dy += parent.position.y;
+        pid = parent.parentId;
       }
-      const parent = state.nodes.find((p) => p.id === n.parentId);
-      const dx = parent?.position.x ?? 0;
-      const dy = parent?.position.y ?? 0;
       parentOffsets.set(n.id, { dx, dy });
+      if (dx === 0 && dy === 0) return n;
       return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } };
     });
 
@@ -2848,12 +2854,21 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       return;
     }
 
-    // Compute absolute positions (accounting for room parents)
+    // Compute absolute positions, walking the full parent chain so devices
+    // inside a rack inside a room resolve correctly.
+    const adapterNodeMap = new Map(state.nodes.map((n) => [n.id, n]));
     const absPos = (node: SchematicNode): { x: number; y: number } => {
-      if (!node.parentId) return node.position;
-      const parent = state.nodes.find((n) => n.id === node.parentId);
-      if (!parent) return node.position;
-      return { x: node.position.x + parent.position.x, y: node.position.y + parent.position.y };
+      let x = node.position.x;
+      let y = node.position.y;
+      let pid: string | undefined = node.parentId;
+      while (pid) {
+        const parent = adapterNodeMap.get(pid);
+        if (!parent) break;
+        x += parent.position.x;
+        y += parent.position.y;
+        pid = parent.parentId;
+      }
+      return { x, y };
     };
 
     const srcAbs = absPos(sourceNode);
