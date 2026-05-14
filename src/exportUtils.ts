@@ -45,6 +45,14 @@ export async function exportImage(
   CSSStyleDeclaration.prototype.getPropertyValue = function (prop) {
     return origGetPropertyValue.call(this, prop) ?? '';
   };
+
+  // Force light-mode colors during capture — see [data-export-capturing] in index.css
+  document.documentElement.setAttribute("data-export-capturing", "");
+  // Let the style override flush before html-to-image reads computed styles
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
+
   let dataUrl: string;
   try {
     dataUrl = await toImage(viewportEl, {
@@ -60,6 +68,7 @@ export async function exportImage(
     });
   } finally {
     CSSStyleDeclaration.prototype.getPropertyValue = origGetPropertyValue;
+    document.documentElement.removeAttribute("data-export-capturing");
   }
 
   // Trigger download

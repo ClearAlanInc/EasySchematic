@@ -239,18 +239,18 @@ html, body, #root {
   stroke-width: 2;
 }
 
-/* ===== PDF capture: hide overlays during export ===== */
-[data-pdf-capturing] .react-flow__minimap,
-[data-pdf-capturing] .react-flow__controls,
-[data-pdf-capturing] .react-flow__background,
-[data-pdf-capturing] [data-print-hide],
-[data-pdf-capturing] .page-boundary-overlay {
+/* ===== Image/PDF capture: hide overlays during export ===== */
+[data-export-capturing] .react-flow__minimap,
+[data-export-capturing] .react-flow__controls,
+[data-export-capturing] .react-flow__background,
+[data-export-capturing] [data-print-hide],
+[data-export-capturing] .page-boundary-overlay {
   display: none !important;
 }
 
-/* Force light-mode colors during PDF capture so dark mode doesn't bleed
+/* Force light-mode colors during export capture so dark mode doesn't bleed
    into exported images (html-to-image captures computed styles) */
-[data-pdf-capturing] {
+[data-export-capturing] {
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-hover: #f3f4f6;

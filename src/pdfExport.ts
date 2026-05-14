@@ -678,7 +678,7 @@ export async function exportPdf(
   rfInstance.setEdges(edges.map((e) => ({ ...e, selected: false })));
 
   // Add capturing attribute to hide overlays
-  document.documentElement.setAttribute("data-pdf-capturing", "");
+  document.documentElement.setAttribute("data-export-capturing", "");
 
   // Content area dimensions in real pixels for capture
   // Use full page height (minus margins only) so nodes near the title block boundary
@@ -781,7 +781,7 @@ export async function exportPdf(
     doc.save(`${fileName}.pdf`);
   } finally {
     // Restore everything
-    document.documentElement.removeAttribute("data-pdf-capturing");
+    document.documentElement.removeAttribute("data-export-capturing");
     container.style.width = savedWidth;
     container.style.height = savedHeight;
     rfInstance.setViewport(savedViewport, { duration: 0 });
