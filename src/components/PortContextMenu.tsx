@@ -109,6 +109,59 @@ export default function PortContextMenu() {
     useSchematicStore.setState({ portContextMenu: null });
   }, [menu, updateNodeInternals]);
 
+  const convertAllToPassthrough = useCallback(() => {
+    if (!menu) return;
+    const state = useSchematicStore.getState();
+    const node = state.nodes.find((n) => n.id === menu.nodeId);
+    if (!node || node.type !== "device") return;
+    const data = node.data as DeviceData;
+
+    const consumed = new Set<string>();
+    const conversions: Array<{ inputPortId: string; outputPortId: string; newPort: Port }> = [];
+
+    for (const inputPort of data.ports) {
+      if (inputPort.direction !== "input" || consumed.has(inputPort.id)) continue;
+      const outputPort = data.ports.find(
+        (p) => p.direction === "output" && p.label === inputPort.label && !consumed.has(p.id),
+      );
+      if (!outputPort) continue;
+      consumed.add(inputPort.id);
+      consumed.add(outputPort.id);
+
+      const rearConnectorType = inputPort.connectorType;
+      const frontConnectorType = outputPort.connectorType;
+      const rearGender =
+        inputPort.gender ??
+        (rearConnectorType
+          ? resolvePortGender({ ...inputPort, connectorType: rearConnectorType, direction: "input" }) ?? undefined
+          : undefined);
+      const frontGender =
+        outputPort.gender ??
+        (frontConnectorType
+          ? resolvePortGender({ ...outputPort, connectorType: frontConnectorType, direction: "output" }) ?? undefined
+          : undefined);
+      const signalType = inputPort.signalType !== "custom" ? inputPort.signalType : outputPort.signalType;
+
+      const newPort: Port = {
+        id: `p${Date.now()}-conv-${conversions.length}`,
+        label: inputPort.label,
+        signalType,
+        direction: "passthrough",
+        ...(rearConnectorType ? { rearConnectorType } : {}),
+        ...(rearGender ? { rearGender } : {}),
+        ...(frontConnectorType ? { frontConnectorType } : {}),
+        ...(frontGender ? { frontGender } : {}),
+      };
+
+      conversions.push({ inputPortId: inputPort.id, outputPortId: outputPort.id, newPort });
+    }
+
+    if (conversions.length === 0) return;
+    state.convertAllPairsToPassthrough(menu.nodeId, conversions);
+    updateNodeInternals(menu.nodeId);
+    useSchematicStore.setState({ portContextMenu: null });
+  }, [menu, updateNodeInternals]);
+
   if (!menu) return null;
 
   const node = useSchematicStore.getState().nodes.find((n) => n.id === menu.nodeId);
@@ -131,6 +184,15 @@ export default function PortContextMenu() {
           (port.direction === "output" && p.direction === "input")),
     );
 
+  // "Convert all" is available when at least one convertible pair exists on the device.
+  const canConvertAll =
+    (data.deviceType === "patch-panel" || data.deviceType === "wall-plate") &&
+    data.ports.some(
+      (p) =>
+        p.direction === "input" &&
+        data.ports.some((q) => q.direction === "output" && q.label === p.label),
+    );
+
   return (
     <div
       ref={menuRef}
@@ -146,11 +208,14 @@ export default function PortContextMenu() {
     >
       <MenuItem label={flipLabel} onClick={flipPort} />
       <MenuItem label="Flip All Ports" onClick={flipAllPorts} />
+      {(canConvert || canConvertAll) && (
+        <div className="border-t border-gray-200 my-1" />
+      )}
       {canConvert && (
-        <>
-          <div className="border-t border-gray-200 my-1" />
-          <MenuItem label="Convert to Passthrough Circuit" onClick={convertToPassthrough} />
-        </>
+        <MenuItem label="Convert to Passthrough Circuit" onClick={convertToPassthrough} />
+      )}
+      {canConvertAll && (
+        <MenuItem label="Convert All Ports to Passthrough" onClick={convertAllToPassthrough} />
       )}
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Edit Device..." onClick={editDevice} />

@@ -220,6 +220,11 @@ interface SchematicState {
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
   /** Merge two paired ports into a single passthrough port and re-anchor their edges atomically. */
   convertPortsToPassthrough: (nodeId: string, inputPortId: string, outputPortId: string, newPort: import("./types").Port) => void;
+  /** Merge every input/output port pair on a device into passthrough ports in one atomic undo step. */
+  convertAllPairsToPassthrough: (
+    nodeId: string,
+    conversions: Array<{ inputPortId: string; outputPortId: string; newPort: import("./types").Port }>,
+  ) => void;
   /** Reconcile a placed device against the latest version of its source template. */
   syncDeviceFromTemplate: (nodeId: string) => SyncResult | null;
   /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
@@ -2018,6 +2023,59 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       }
       if (e.target === nodeId && (e.targetHandle === outputPortId || e.targetHandle === `${outputPortId}-in`)) {
         return { ...e, targetHandle: `${newPortId}-front` };
+      }
+      return e;
+    });
+
+    set({ nodes: newNodes, edges: newEdges });
+    get().saveToLocalStorage();
+  },
+
+  convertAllPairsToPassthrough: (nodeId, conversions) => {
+    if (conversions.length === 0) return;
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const inputToNew = new Map<string, string>();
+    const outputToNew = new Map<string, string>();
+    const newPortById = new Map<string, import("./types").Port>();
+    for (const c of conversions) {
+      inputToNew.set(c.inputPortId, c.newPort.id);
+      outputToNew.set(c.outputPortId, c.newPort.id);
+      newPortById.set(c.newPort.id, c.newPort);
+    }
+
+    const newNodes = state.nodes.map((n) => {
+      if (n.id !== nodeId || n.type !== "device") return n;
+      const data = n.data as DeviceData;
+      const newPorts: import("./types").Port[] = [];
+      for (const p of data.ports) {
+        if (inputToNew.has(p.id)) {
+          const replacement = newPortById.get(inputToNew.get(p.id)!);
+          if (replacement) newPorts.push(replacement);
+        } else if (outputToNew.has(p.id)) {
+          // skip — its pair's input port already emitted the replacement
+        } else {
+          newPorts.push(p);
+        }
+      }
+      return { ...n, data: { ...data, ports: newPorts } } as DeviceNode;
+    });
+
+    const newEdges = state.edges.map((e) => {
+      if (e.source === nodeId && e.sourceHandle) {
+        const bare = e.sourceHandle.replace(/-(in|out)$/, "");
+        const rearId = inputToNew.get(bare);
+        if (rearId) return { ...e, sourceHandle: `${rearId}-rear` };
+        const frontId = outputToNew.get(bare);
+        if (frontId) return { ...e, sourceHandle: `${frontId}-front` };
+      }
+      if (e.target === nodeId && e.targetHandle) {
+        const bare = e.targetHandle.replace(/-(in|out)$/, "");
+        const rearId = inputToNew.get(bare);
+        if (rearId) return { ...e, targetHandle: `${rearId}-rear` };
+        const frontId = outputToNew.get(bare);
+        if (frontId) return { ...e, targetHandle: `${frontId}-front` };
       }
       return e;
     });
