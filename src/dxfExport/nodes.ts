@@ -279,8 +279,8 @@ export function emitDevice(
 
   for (const hp of handles) {
     let portId = hp.id;
-    if (portId.endsWith("-in")) portId = portId.slice(0, -3);
-    else if (portId.endsWith("-out")) portId = portId.slice(0, -4);
+    if (portId.endsWith("-in") || portId.endsWith("-out")) portId = portId.replace(/-(in|out)$/, "");
+    else if (portId.endsWith("-rear") || portId.endsWith("-front")) portId = portId.replace(/-(rear|front)$/, "");
     const port = portMap.get(portId);
     if (!port) continue;
 

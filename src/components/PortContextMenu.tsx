@@ -1,9 +1,10 @@
 import { useEffect, useCallback } from "react";
 import { useUpdateNodeInternals } from "@xyflow/react";
 import { useSchematicStore } from "../store";
-import type { DeviceData } from "../types";
+import type { DeviceData, Port } from "../types";
 import { portSide } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
+import { resolvePortGender } from "../connectorTypes";
 
 export default function PortContextMenu() {
   const menu = useSchematicStore((s) => s.portContextMenu);
@@ -66,6 +67,48 @@ export default function PortContextMenu() {
     useSchematicStore.setState({ portContextMenu: null });
   }, [menu]);
 
+  const convertToPassthrough = useCallback(() => {
+    if (!menu) return;
+    const state = useSchematicStore.getState();
+    const node = state.nodes.find((n) => n.id === menu.nodeId);
+    if (!node || node.type !== "device") return;
+    const data = node.data as DeviceData;
+
+    const clickedPort = data.ports.find((p) => p.id === menu.portId);
+    if (!clickedPort) return;
+
+    const siblingDirection = clickedPort.direction === "input" ? "output" : "input";
+    const sibling = data.ports.find(
+      (p) => p.direction === siblingDirection && p.label === clickedPort.label,
+    );
+    if (!sibling) return;
+
+    const inputPort = clickedPort.direction === "input" ? clickedPort : sibling;
+    const outputPort = clickedPort.direction === "output" ? clickedPort : sibling;
+
+    const newPortId = `p${Date.now()}-conv`;
+    const rearConnectorType = inputPort.connectorType;
+    const frontConnectorType = outputPort.connectorType;
+    const rearGender = inputPort.gender ?? (rearConnectorType ? resolvePortGender({ ...inputPort, connectorType: rearConnectorType, direction: "input" }) ?? undefined : undefined);
+    const frontGender = outputPort.gender ?? (frontConnectorType ? resolvePortGender({ ...outputPort, connectorType: frontConnectorType, direction: "output" }) ?? undefined : undefined);
+    const signalType = inputPort.signalType !== "custom" ? inputPort.signalType : outputPort.signalType;
+
+    const newPort: Port = {
+      id: newPortId,
+      label: clickedPort.label,
+      signalType,
+      direction: "passthrough",
+      ...(rearConnectorType ? { rearConnectorType } : {}),
+      ...(rearGender ? { rearGender } : {}),
+      ...(frontConnectorType ? { frontConnectorType } : {}),
+      ...(frontGender ? { frontGender } : {}),
+    };
+
+    state.convertPortsToPassthrough(menu.nodeId, inputPort.id, outputPort.id, newPort);
+    updateNodeInternals(menu.nodeId);
+    useSchematicStore.setState({ portContextMenu: null });
+  }, [menu, updateNodeInternals]);
+
   if (!menu) return null;
 
   const node = useSchematicStore.getState().nodes.find((n) => n.id === menu.nodeId);
@@ -76,6 +119,17 @@ export default function PortContextMenu() {
 
   const side = portSide(port);
   const flipLabel = side === "left" ? "Flip to Right" : "Flip to Left";
+
+  // Show "Convert to passthrough" only for paired input/output ports on patch-panel or wall-plate devices.
+  const canConvert =
+    (port.direction === "input" || port.direction === "output") &&
+    (data.deviceType === "patch-panel" || data.deviceType === "wall-plate") &&
+    data.ports.some(
+      (p) =>
+        p.label === port.label &&
+        ((port.direction === "input" && p.direction === "output") ||
+          (port.direction === "output" && p.direction === "input")),
+    );
 
   return (
     <div
@@ -92,6 +146,12 @@ export default function PortContextMenu() {
     >
       <MenuItem label={flipLabel} onClick={flipPort} />
       <MenuItem label="Flip All Ports" onClick={flipAllPorts} />
+      {canConvert && (
+        <>
+          <div className="border-t border-gray-200 my-1" />
+          <MenuItem label="Convert to Passthrough Circuit" onClick={convertToPassthrough} />
+        </>
+      )}
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Edit Device..." onClick={editDevice} />
     </div>

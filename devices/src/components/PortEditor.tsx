@@ -15,6 +15,8 @@ interface PortEditorProps {
 
 export default function PortEditor({ ports, onChange, deviceType }: PortEditorProps) {
   const isPatchPanel = deviceType === "patch-panel";
+  const isWallPlate = deviceType === "wall-plate";
+  const supportsPassthrough = isPatchPanel || isWallPlate;
   const [bulkOpen, setBulkOpen] = useState<PortDirection | null>(null);
   const [bulkPrefix, setBulkPrefix] = useState("IN");
   const [bulkStart, setBulkStart] = useState(1);
@@ -34,12 +36,13 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
     input: ports.filter((p) => p.direction === "input"),
     output: ports.filter((p) => p.direction === "output"),
     bidirectional: ports.filter((p) => p.direction === "bidirectional"),
+    passthrough: ports.filter((p) => p.direction === "passthrough"),
   };
 
   // Flat ordered list for shift-click range selection
   const orderedIds = useMemo(
-    () => [...grouped.input, ...grouped.output, ...grouped.bidirectional].map((p) => p.id),
-    [grouped.input, grouped.output, grouped.bidirectional],
+    () => [...grouped.input, ...grouped.output, ...grouped.bidirectional, ...grouped.passthrough].map((p) => p.id),
+    [grouped.input, grouped.output, grouped.bidirectional, grouped.passthrough],
   );
 
   const handlePortClick = useCallback((portId: string, e: React.MouseEvent) => {
@@ -120,8 +123,18 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
 
   const addPort = (direction: PortDirection) => {
     const id = crypto.randomUUID().slice(0, 8);
-    const dirLabel = direction === "input" ? "IN" : direction === "output" ? "OUT" : "IO";
+    const dirLabel = direction === "input" ? "IN" : direction === "output" ? "OUT" : direction === "passthrough" ? "Port" : "IO";
     const count = grouped[direction].length + 1;
+    if (direction === "passthrough") {
+      insertAtTop(direction, [{
+        id,
+        label: `${dirLabel} ${count}`,
+        signalType: "custom" as SignalType,
+        direction,
+        inheritsSignal: true,
+      }]);
+      return;
+    }
     const signalType: SignalType = "sdi";
     const connectorType = DEFAULT_CONNECTOR[signalType];
     insertAtTop(direction, [{
@@ -317,6 +330,7 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
                 <option value="input">Input</option>
                 <option value="output">Output</option>
                 <option value="bidirectional">Bidirectional</option>
+                {supportsPassthrough && <option value="passthrough">Passthrough</option>}
               </select>
             </label>
             <button onClick={deleteSelected} className="px-3 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition-colors">Delete Selected</button>
@@ -327,6 +341,7 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
       {renderSection("input", isPatchPanel ? "Rear" : "Inputs")}
       {renderSection("output", isPatchPanel ? "Front" : "Outputs")}
       {!isPatchPanel && renderSection("bidirectional", "Bidirectional")}
+      {supportsPassthrough && renderSection("passthrough", "Passthrough Circuits")}
     </div>
   );
 }

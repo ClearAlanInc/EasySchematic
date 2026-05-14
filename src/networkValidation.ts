@@ -153,7 +153,7 @@ export interface ReachableDhcpServer {
 function resolvePort(node: SchematicNode | undefined, handleId: string | null | undefined) {
   if (!handleId || !node || node.type !== "device") return undefined;
   const data = node.data as DeviceData;
-  const portId = handleId.replace(/-(in|out)$/, "");
+  const portId = handleId.replace(/-(in|out|rear|front)$/, "");
   return data.ports.find((p) => p.id === portId);
 }
 

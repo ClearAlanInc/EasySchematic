@@ -160,7 +160,7 @@ export function computePoeBudget(nodes: SchematicNode[], edges: ConnectionEdge[]
       const connectedNode = nodeMap.get(connectedNodeId);
       if (!connectedNode || connectedNode.type !== "device") continue;
       const connData = connectedNode.data as DeviceData;
-      const portId = connectedHandle.replace(/-(in|out)$/, "");
+      const portId = connectedHandle.replace(/-(in|out|rear|front)$/, "");
       const port = connData.ports.find((p) => p.id === portId);
       if (port?.poeDrawW) loadW += port.poeDrawW;
     }

@@ -137,7 +137,7 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const device = state.nodes.find((n) => n.id === deviceId);
       if (!device || device.type !== "device") return;
 
-      const baseHandleId = (deviceHandleId ?? "").replace(/-(in|out)$/, "");
+      const baseHandleId = (deviceHandleId ?? "").replace(/-(in|out|rear|front)$/, "");
       const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));
       const portPositions = getPortAbsolutePositions(device, nodeMap, {
         useShortNames: state.useShortNames,

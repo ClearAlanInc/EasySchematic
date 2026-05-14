@@ -162,12 +162,20 @@ export function validateTemplate(body: unknown): ValidationResult {
     if (!port || typeof port !== "object") {
       return { ok: false, error: `ports[${i}] must be an object` };
     }
-    for (const field of ["id", "label", "signalType", "direction"] as const) {
+    for (const field of ["id", "label", "direction"] as const) {
       const err = checkString(port[field], `ports[${i}].${field}`, 100);
       if (err) return { ok: false, error: err };
     }
+    // signalType is required unless direction is "passthrough" (inheritsSignal)
+    if (port.direction !== "passthrough") {
+      const err = checkString(port.signalType, `ports[${i}].signalType`, 100);
+      if (err) return { ok: false, error: err };
+    } else if (port.signalType != null) {
+      const err = checkString(port.signalType, `ports[${i}].signalType`, 100);
+      if (err) return { ok: false, error: err };
+    }
     // Optional port string fields
-    for (const field of ["connectorType", "section"] as const) {
+    for (const field of ["connectorType", "section", "rearConnectorType", "frontConnectorType", "normalledTo", "normalling"] as const) {
       if (port[field] != null) {
         const err = checkString(port[field], `ports[${i}].${field}`, 100);
         if (err) return { ok: false, error: err };
@@ -176,6 +184,17 @@ export function validateTemplate(body: unknown): ValidationResult {
     // Connector gender — optional, "male" or "female"
     if (port.gender != null && port.gender !== "male" && port.gender !== "female") {
       return { ok: false, error: `ports[${i}].gender must be 'male' or 'female'` };
+    }
+    // Rear/front gender — optional, "male" or "female"
+    if (port.rearGender != null && port.rearGender !== "male" && port.rearGender !== "female") {
+      return { ok: false, error: `ports[${i}].rearGender must be 'male' or 'female'` };
+    }
+    if (port.frontGender != null && port.frontGender !== "male" && port.frontGender !== "female") {
+      return { ok: false, error: `ports[${i}].frontGender must be 'male' or 'female'` };
+    }
+    // inheritsSignal — optional boolean
+    if (port.inheritsSignal != null && typeof port.inheritsSignal !== "boolean") {
+      return { ok: false, error: `ports[${i}].inheritsSignal must be a boolean` };
     }
     // Multi-connect — optional boolean
     if (port.multiConnect != null && typeof port.multiConnect !== "boolean") {

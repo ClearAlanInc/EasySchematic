@@ -139,7 +139,7 @@ export const LINE_STYLE_DASHARRAY: Record<LineStyle, string | undefined> = {
   "dash-dot": "8 4 2 4",
 };
 
-export type PortDirection = "input" | "output" | "bidirectional";
+export type PortDirection = "input" | "output" | "bidirectional" | "passthrough";
 
 export type Gender = "male" | "female";
 
@@ -148,10 +148,26 @@ export interface Port {
   label: string;
   signalType: SignalType;
   direction: PortDirection;
+  /** When true, this port's effective signal type is inherited from the connected edge at
+   *  runtime (via effectiveSignalType). Used for passthrough ports where the signal is not
+   *  fixed at design time. signalType is stored as "custom" as a placeholder. */
+  inheritsSignal?: boolean;
   section?: string;
   connectorType?: ConnectorType;
   /** Connector gender override. Omit to derive from connector + direction convention. */
   gender?: Gender;
+  /** For passthrough ports: rear-face connector type (the field-termination side). */
+  rearConnectorType?: ConnectorType;
+  /** For passthrough ports: rear-face gender override. */
+  rearGender?: Gender;
+  /** For passthrough ports: front-face connector type (the patch side). */
+  frontConnectorType?: ConnectorType;
+  /** For passthrough ports: front-face gender override. */
+  frontGender?: Gender;
+  /** ID of another passthrough port in the same device that this port is normalled to. */
+  normalledTo?: string;
+  /** Normalling type. Only meaningful when normalledTo is set. */
+  normalling?: "full" | "half" | "none";
   capabilities?: PortCapabilities;
   networkConfig?: PortNetworkConfig;
   addressable?: boolean;
@@ -977,7 +993,8 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
 export function portSide(p: Port): "left" | "right" {
   if (p.direction === "input") return p.flipped ? "right" : "left";
   if (p.direction === "output") return p.flipped ? "left" : "right";
-  return p.flipped ? "right" : "left"; // bidirectional: flipped swaps default side when collapsed
+  // bidirectional and passthrough: default left; flipped swaps side
+  return p.flipped ? "right" : "left";
 }
 
 export const SIGNAL_LABELS: Record<SignalType, string> = {

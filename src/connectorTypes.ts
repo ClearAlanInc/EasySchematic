@@ -1,4 +1,4 @@
-import type { ConnectorType, DeviceTemplate, Gender, Port, SignalType } from "./types";
+import type { ConnectorType, ConnectionEdge, DeviceTemplate, Gender, Port, SignalType } from "./types";
 
 /** Default connector type inferred from signal type — used for migration and new ports */
 export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
@@ -409,6 +409,55 @@ export function resolvePortGender(port: Port | undefined): Gender | undefined {
   if (typeof entry === "string") return entry;
   // Bidirectional ports fall back to the input convention.
   return port.direction === "output" ? entry.output : entry.input;
+}
+
+/**
+ * Returns the effective signal type for a port.
+ *
+ * For ports with `inheritsSignal: true`, the signal type is derived from connected edges
+ * rather than the stored `signalType` placeholder ("custom"). The `side` parameter controls
+ * which face of a passthrough port to look at:
+ *   - "rear"      → only edges whose handle ends in "-rear"
+ *   - "front"     → only edges whose handle ends in "-front"
+ *   - undefined   → rear first, then front, then any match (deterministic preference)
+ *
+ * For all other ports, `port.signalType` is returned directly.
+ */
+export function effectiveSignalType(
+  port: Port,
+  nodeId: string,
+  edges: ConnectionEdge[],
+  side?: "rear" | "front",
+): SignalType {
+  if (!port.inheritsSignal) return port.signalType;
+
+  const portHandle = port.id;
+
+  const matchesHandle = (handle: string | null | undefined, suffix: string): boolean =>
+    handle === `${portHandle}-${suffix}`;
+
+  const edgeForSuffix = (suffix: string): ConnectionEdge | undefined =>
+    edges.find(
+      (e) =>
+        (e.source === nodeId && matchesHandle(e.sourceHandle, suffix)) ||
+        (e.target === nodeId && matchesHandle(e.targetHandle, suffix)),
+    );
+
+  if (side !== undefined) {
+    return edgeForSuffix(side)?.data?.signalType ?? port.signalType;
+  }
+
+  // Deterministic preference: rear → front → any handle match → stored placeholder
+  return (
+    edgeForSuffix("rear")?.data?.signalType ??
+    edgeForSuffix("front")?.data?.signalType ??
+    edges.find(
+      (e) =>
+        (e.source === nodeId && (e.sourceHandle === portHandle || e.sourceHandle?.startsWith(`${portHandle}-`))) ||
+        (e.target === nodeId && (e.targetHandle === portHandle || e.targetHandle?.startsWith(`${portHandle}-`))),
+    )?.data?.signalType ??
+    port.signalType
+  );
 }
 
 /** Signal types that can have network configuration */

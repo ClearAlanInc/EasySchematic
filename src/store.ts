@@ -42,7 +42,7 @@ import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
-import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, effectiveSignalType } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
@@ -218,6 +218,8 @@ interface SchematicState {
   updateDevice: (nodeId: string, data: DeviceData) => void;
   /** Patch device data without clearing baseLabel (for spreadsheet edits). */
   patchDeviceData: (nodeId: string, patch: Partial<DeviceData>) => void;
+  /** Merge two paired ports into a single passthrough port and re-anchor their edges atomically. */
+  convertPortsToPassthrough: (nodeId: string, inputPortId: string, outputPortId: string, newPort: import("./types").Port) => void;
   /** Reconcile a placed device against the latest version of its source template. */
   syncDeviceFromTemplate: (nodeId: string) => SyncResult | null;
   /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
@@ -950,8 +952,9 @@ function getPortFromHandle(
   // Direct match first
   const direct = ports.find((p) => p.id === handleId);
   if (direct) return direct;
-  // Bidirectional handles use "{portId}-in" / "{portId}-out" suffixes
-  const baseId = handleId.replace(/-(in|out)$/, "");
+  // Bidirectional handles: "{portId}-in" / "{portId}-out"
+  // Passthrough handles:   "{portId}-rear" / "{portId}-front"
+  const baseId = handleId.replace(/-(in|out|rear|front)$/, "");
   return ports.find((p) => p.id === baseId);
 }
 
@@ -1701,6 +1704,71 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     );
 
     if (!sourcePort || !targetPort) return false;
+
+    // ── Passthrough port handling ────────────────────────────────────────
+    const srcIsPassthrough = sourcePort.direction === "passthrough";
+    const tgtIsPassthrough = targetPort.direction === "passthrough";
+
+    if (srcIsPassthrough || tgtIsPassthrough) {
+      // Detect which face of each passthrough port this connection uses
+      const srcSide = connection.sourceHandle?.endsWith("-rear") ? "rear"
+        : connection.sourceHandle?.endsWith("-front") ? "front"
+        : undefined;
+      const tgtSide = connection.targetHandle?.endsWith("-rear") ? "rear"
+        : connection.targetHandle?.endsWith("-front") ? "front"
+        : undefined;
+
+      // Block same-device connections unless both handles are "-front" on a patch-panel
+      // (that's a patch cable connecting two front-face jacks on the same panel)
+      if (connection.source === connection.target) {
+        const srcNode = state.nodes.find((n) => n.id === connection.source);
+        const isFrontToFront = srcSide === "front" && tgtSide === "front";
+        const isPatchPanel = (srcNode as DeviceNode | undefined)?.data?.deviceType === "patch-panel";
+        if (!isFrontToFront || !isPatchPanel) return false;
+      }
+
+      // Resolve the effective connector type for each side
+      const srcConnector = srcIsPassthrough
+        ? (srcSide === "rear" ? sourcePort.rearConnectorType : srcSide === "front" ? sourcePort.frontConnectorType : sourcePort.connectorType)
+        : sourcePort.connectorType;
+      const tgtConnector = tgtIsPassthrough
+        ? (tgtSide === "rear" ? targetPort.rearConnectorType : tgtSide === "front" ? targetPort.frontConnectorType : targetPort.connectorType)
+        : targetPort.connectorType;
+
+      // Connector compatibility (bare-wire always passes)
+      if (!areConnectorsCompatible(srcConnector ?? sourcePort.connectorType, tgtConnector ?? targetPort.connectorType)) return false;
+
+      // Signal-type check: if either port inherits its signal from edges we can't know it
+      // at connection time, so we accept anything. Otherwise use effectiveSignalType.
+      const srcSignal = effectiveSignalType(sourcePort, connection.source, state.edges, srcIsPassthrough ? srcSide : undefined);
+      const tgtSignal = effectiveSignalType(targetPort, connection.target, state.edges, tgtIsPassthrough ? tgtSide : undefined);
+      const srcInherits = sourcePort.inheritsSignal && srcSignal === sourcePort.signalType;
+      const tgtInherits = targetPort.inheritsSignal && tgtSignal === targetPort.signalType;
+      if (!srcInherits && !tgtInherits && srcSignal !== tgtSignal) {
+        const netBypass = NETWORK_SIGNAL_TYPES.has(srcSignal) && NETWORK_SIGNAL_TYPES.has(tgtSignal);
+        const bareBypass = BARE_WIRE_CONNECTORS.has(srcConnector ?? "none" as never) ||
+          BARE_WIRE_CONNECTORS.has(tgtConnector ?? "none" as never);
+        if (!netBypass && !bareBypass) return false;
+      }
+
+      // Duplicate-handle guard (same as non-passthrough below)
+      if (!sourcePort.multiConnect) {
+        const dup = state.edges.some(
+          (e) => e.id !== _reconnectingEdgeId && e.source === connection.source && e.sourceHandle === connection.sourceHandle,
+        );
+        if (dup) return false;
+      }
+      if (!targetPort.multiConnect) {
+        const dup = state.edges.some(
+          (e) => e.id !== _reconnectingEdgeId && e.target === connection.target && e.targetHandle === connection.targetHandle,
+        );
+        if (dup) return false;
+      }
+
+      return true;
+    }
+    // ── End passthrough handling ─────────────────────────────────────────
+
     // Network signal types (ethernet, dante, etc.) can connect in any direction
     const networkBypass = NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) && NETWORK_SIGNAL_TYPES.has(targetPort.signalType);
     // Bare-wire connectors (phoenix/terminal-block) bypass signal type checks — if you're
@@ -1746,7 +1814,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     // For bidirectional ports, block the opposite side if one side is already connected
     if (sourcePort.direction === "bidirectional" && connection.sourceHandle) {
-      const baseId = connection.sourceHandle.replace(/-(in|out)$/, "");
+      const baseId = connection.sourceHandle.replace(/-(in|out|rear|front)$/, "");
       const otherHandle = connection.sourceHandle.endsWith("-out")
         ? `${baseId}-in`
         : `${baseId}-out`;
@@ -1758,7 +1826,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (otherConnected) return false;
     }
     if (targetPort.direction === "bidirectional" && connection.targetHandle) {
-      const baseId = connection.targetHandle.replace(/-(in|out)$/, "");
+      const baseId = connection.targetHandle.replace(/-(in|out|rear|front)$/, "");
       const otherHandle = connection.targetHandle.endsWith("-in")
         ? `${baseId}-out`
         : `${baseId}-in`;
@@ -1853,8 +1921,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         edges: state.edges.filter((e) => {
           const srcHandle = e.sourceHandle ?? "";
           const tgtHandle = e.targetHandle ?? "";
-          if (e.source === nodeId && removedPortIds.has(srcHandle.replace(/-(in|out)$/, ""))) return false;
-          if (e.target === nodeId && removedPortIds.has(tgtHandle.replace(/-(in|out)$/, ""))) return false;
+          if (e.source === nodeId && removedPortIds.has(srcHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
+          if (e.target === nodeId && removedPortIds.has(tgtHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
           return true;
         }),
       });
@@ -1875,10 +1943,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       // Check if this edge connects to the updated device
       let portOnThisDevice: Port | undefined;
       if (e.source === nodeId) {
-        const portId = e.sourceHandle?.replace(/-(in|out)$/, "") ?? "";
+        const portId = e.sourceHandle?.replace(/-(in|out|rear|front)$/, "") ?? "";
         portOnThisDevice = newPortMap.get(portId);
       } else if (e.target === nodeId) {
-        const portId = e.targetHandle?.replace(/-(in|out)$/, "") ?? "";
+        const portId = e.targetHandle?.replace(/-(in|out|rear|front)$/, "") ?? "";
         portOnThisDevice = newPortMap.get(portId);
       }
       if (!portOnThisDevice) return e;
@@ -1917,6 +1985,44 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         return { ...n, data: { ...n.data, ...patch } } as DeviceNode;
       }),
     });
+    get().saveToLocalStorage();
+  },
+
+  convertPortsToPassthrough: (nodeId, inputPortId, outputPortId, newPort) => {
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const removedIds = new Set([inputPortId, outputPortId]);
+    const newNodes = state.nodes.map((n) => {
+      if (n.id !== nodeId || n.type !== "device") return n;
+      const data = n.data as DeviceData;
+      const insertAt = data.ports.findIndex((p) => removedIds.has(p.id));
+      const newPorts = [
+        ...data.ports.slice(0, insertAt).filter((p) => !removedIds.has(p.id)),
+        newPort,
+        ...data.ports.slice(insertAt).filter((p) => !removedIds.has(p.id)),
+      ];
+      return { ...n, data: { ...data, ports: newPorts } } as DeviceNode;
+    });
+
+    const newPortId = newPort.id;
+    const newEdges = state.edges.map((e) => {
+      if (e.source === nodeId && (e.sourceHandle === inputPortId || e.sourceHandle === `${inputPortId}-out`)) {
+        return { ...e, sourceHandle: `${newPortId}-rear` };
+      }
+      if (e.target === nodeId && (e.targetHandle === inputPortId || e.targetHandle === `${inputPortId}-in`)) {
+        return { ...e, targetHandle: `${newPortId}-rear` };
+      }
+      if (e.source === nodeId && (e.sourceHandle === outputPortId || e.sourceHandle === `${outputPortId}-out`)) {
+        return { ...e, sourceHandle: `${newPortId}-front` };
+      }
+      if (e.target === nodeId && (e.targetHandle === outputPortId || e.targetHandle === `${outputPortId}-in`)) {
+        return { ...e, targetHandle: `${newPortId}-front` };
+      }
+      return e;
+    });
+
+    set({ nodes: newNodes, edges: newEdges });
     get().saveToLocalStorage();
   },
 
@@ -1973,8 +2079,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           const tgtHandle = e.targetHandle ?? "";
           if (e.source === nodeId && allOldPortIds.has(srcHandle)) return false;
           if (e.target === nodeId && allOldPortIds.has(tgtHandle)) return false;
-          if (e.source === nodeId && allOldPortIds.has(srcHandle.replace(/-(in|out)$/, ""))) return false;
-          if (e.target === nodeId && allOldPortIds.has(tgtHandle.replace(/-(in|out)$/, ""))) return false;
+          if (e.source === nodeId && allOldPortIds.has(srcHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
+          if (e.target === nodeId && allOldPortIds.has(tgtHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
           return true;
         })
       : state.edges;
@@ -2126,8 +2232,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           const tgtHandle = e.targetHandle ?? "";
           if (e.source === nodeId && removedPortIds.has(srcHandle)) return false;
           if (e.target === nodeId && removedPortIds.has(tgtHandle)) return false;
-          if (e.source === nodeId && removedPortIds.has(srcHandle.replace(/-(in|out)$/, ""))) return false;
-          if (e.target === nodeId && removedPortIds.has(tgtHandle.replace(/-(in|out)$/, ""))) return false;
+          if (e.source === nodeId && removedPortIds.has(srcHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
+          if (e.target === nodeId && removedPortIds.has(tgtHandle.replace(/-(in|out|rear|front)$/, ""))) return false;
           return true;
         })
       : state.edges;
@@ -4371,7 +4477,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const findPort = (deviceNode: typeof state.nodes[number] | undefined, handleId: string | null | undefined) => {
       if (!deviceNode || !handleId || deviceNode.type !== "device") return null;
       const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
-      const baseId = handleId.replace(/-(in|out)$/, "");
+      const baseId = handleId.replace(/-(in|out|rear|front)$/, "");
       const p = ports.find((pp) => pp.id === baseId);
       if (!p) return null;
       const side: "left" | "right" =

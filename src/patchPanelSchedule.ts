@@ -6,7 +6,7 @@ import type {
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
 import { computeCableSchedule, type CableScheduleDistanceContext } from "./cableSchedule";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
-import { resolvePortGender } from "./connectorTypes";
+import { effectiveSignalType, resolvePortGender } from "./connectorTypes";
 import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
@@ -16,13 +16,14 @@ export interface PatchPanelScheduleRow {
   panelId: string;
   /** Synthesized row id: `${panelId}:${portId}`. */
   rowId: string;
-  /** Matching edge id if the port is connected. */
+  /** Matching edge id if the port is connected. Passthrough rows may have two edges;
+   *  this holds the rear edge id (or front if only front is connected). */
   edgeId: string;
   panel: string;
   panelRoom: string;
-  /** "Rear" for input, "Front" for output, "Both" for bidirectional (rare). */
+  /** "Rear" for input, "Front" for output, "Both" for bidirectional, "Passthrough" for passthrough circuits. */
   face: string;
-  /** Numeric sort key: face priority (Rear=0, Front=1) * 10000 + position index. */
+  /** Numeric sort key: face priority (Rear=0, Front=1, Passthrough=2) * 10000 + position index. */
   _sortKey: number;
   /** Port label (e.g. "Port 12"). */
   position: string;
@@ -39,9 +40,86 @@ export interface PatchPanelScheduleRow {
   /** Estimated cable length derived from room-to-room distance + slack (#146). */
   computedLength: string;
   multicableLabel: string;
+
+  // ── Passthrough-only fields (populated when face === "Passthrough") ──────────
+  /** Rear-face connector label. */
+  rearConnector?: string;
+  /** Rear-face gender. */
+  rearGender?: string;
+  rearRemoteDevice?: string;
+  rearRemotePort?: string;
+  rearRemoteRoom?: string;
+  rearCableId?: string;
+  rearCableType?: string;
+  rearCableLength?: string;
+  rearComputedLength?: string;
+  /** Front-face connector label. */
+  frontConnector?: string;
+  /** Front-face gender. */
+  frontGender?: string;
+  frontRemoteDevice?: string;
+  frontRemotePort?: string;
+  frontRemoteRoom?: string;
+  frontCableId?: string;
+  frontCableType?: string;
+  frontCableLength?: string;
+  frontComputedLength?: string;
+  /** Normalling type. Always "None" in v1 — field reserved for future use. */
+  normalling?: string;
 }
 
 const EMPTY = "—";
+
+interface SideInfo {
+  edgeId: string;
+  remoteDevice: string;
+  remotePort: string;
+  remoteRoom: string;
+  cableId: string;
+  cableType: string;
+  cableLength: string;
+  computedLength: string;
+}
+
+/** Resolve remote-device info for one side of a passthrough port (rear or front). */
+function resolveSide(
+  nodeId: string,
+  portId: string,
+  side: "rear" | "front",
+  edges: ConnectionEdge[],
+  nodes: SchematicNode[],
+  cableByEdge: Map<string, { cableId: string; cableType: string; cableLength: string; computedLength?: string }>,
+): SideInfo {
+  const handleSuffix = `${portId}-${side}`;
+  const edge = edges.find(
+    (e) =>
+      (e.source === nodeId && e.sourceHandle === handleSuffix) ||
+      (e.target === nodeId && e.targetHandle === handleSuffix),
+  );
+  if (!edge) {
+    return { edgeId: "", remoteDevice: EMPTY, remotePort: EMPTY, remoteRoom: EMPTY, cableId: "", cableType: "", cableLength: "", computedLength: "" };
+  }
+  const isSource = edge.source === nodeId;
+  const remoteNodeId = isSource ? edge.target : edge.source;
+  const remoteHandle = isSource ? edge.targetHandle : edge.sourceHandle;
+  const remoteNode = nodes.find((n) => n.id === remoteNodeId);
+  const remoteDevice = remoteNode?.type === "device"
+    ? transformLabelNow((remoteNode.data as DeviceData).label || "Unnamed")
+    : "Unknown";
+  const remotePort = remoteNode ? resolvePortLabel(remoteNode, remoteHandle) : "";
+  const remoteRoom = remoteNode ? getRoomLabel(nodes, remoteNode.parentId) : "Unknown";
+  const cableRow = cableByEdge.get(edge.id);
+  return {
+    edgeId: edge.id,
+    remoteDevice,
+    remotePort,
+    remoteRoom,
+    cableId: cableRow?.cableId ?? "",
+    cableType: cableRow?.cableType ?? "",
+    cableLength: cableRow?.cableLength ?? (edge.data?.cableLength as string | undefined) ?? "",
+    computedLength: cableRow?.computedLength ?? "",
+  };
+}
 
 /** Build a per-port row for every patch panel in the schematic. */
 export function computePatchPanelSchedule(
@@ -62,7 +140,7 @@ export function computePatchPanelSchedule(
   const edgeByPort = new Map<string, ConnectionEdge[]>();
   const key = (nodeId: string, handleId: string | null | undefined) => {
     if (!handleId) return undefined;
-    const portId = handleId.replace(/-(in|out)$/, "");
+    const portId = handleId.replace(/-(in|out|rear|front)$/, "");
     return `${nodeId}:${portId}`;
   };
   for (const e of edges) {
@@ -84,7 +162,7 @@ export function computePatchPanelSchedule(
   for (const node of nodes) {
     if (node.type !== "device") continue;
     const data = node.data as DeviceData;
-    if (data.deviceType !== "patch-panel") continue;
+    if (data.deviceType !== "patch-panel" && !data.ports.some((p) => p.direction === "passthrough")) continue;
 
     const panelLabel = transformLabelNow(data.label || "Unnamed Panel");
     const panelRoom = getRoomLabel(nodes, node.parentId);
@@ -95,6 +173,73 @@ export function computePatchPanelSchedule(
     data.ports.forEach((port, portIdx) => {
       if (hiddenPorts.has(port.id)) return;
 
+      // ── Passthrough circuit: one row with split rear/front columns ──────────
+      if (port.direction === "passthrough") {
+        const rear = resolveSide(node.id, port.id, "rear", edges, nodes, cableByEdge);
+        const front = resolveSide(node.id, port.id, "front", edges, nodes, cableByEdge);
+
+        const rearConnectorType = port.rearConnectorType ?? port.connectorType;
+        const frontConnectorType = port.frontConnectorType ?? port.connectorType;
+        const rearConnector = rearConnectorType ? (CONNECTOR_LABELS[rearConnectorType] ?? rearConnectorType) : EMPTY;
+        const frontConnector = frontConnectorType ? (CONNECTOR_LABELS[frontConnectorType] ?? frontConnectorType) : EMPTY;
+
+        // Gender: passthrough ports have per-face overrides
+        const rearG = port.rearGender ?? resolvePortGender({ ...port, connectorType: rearConnectorType, direction: "input" });
+        const frontG = port.frontGender ?? resolvePortGender({ ...port, connectorType: frontConnectorType, direction: "output" });
+        const rearGender = rearG === "male" ? "M" : rearG === "female" ? "F" : EMPTY;
+        const frontGender = frontG === "male" ? "M" : frontG === "female" ? "F" : EMPTY;
+
+        const resolvedSignal = effectiveSignalType(port, node.id, edges);
+        const signalType = SIGNAL_LABELS[resolvedSignal] ?? resolvedSignal;
+
+        const edgeId = rear.edgeId || front.edgeId;
+
+        rows.push({
+          panelId: node.id,
+          rowId: `${node.id}:${port.id}`,
+          edgeId,
+          panel: panelLabel,
+          panelRoom,
+          face: "Passthrough",
+          _sortKey: 2 * 10000 + portIdx,
+          position: transformLabelNow(port.label || `Port ${portIdx + 1}`),
+          // Legacy single-face fields — set to EMPTY for passthrough rows; use rear/front fields instead.
+          connector: EMPTY,
+          gender: EMPTY,
+          remoteDevice: EMPTY,
+          remotePort: EMPTY,
+          remoteRoom: EMPTY,
+          cableId: "",
+          cableType: "",
+          signalType,
+          cableLength: "",
+          computedLength: "",
+          multicableLabel: "",
+          // Passthrough split fields
+          rearConnector,
+          rearGender,
+          rearRemoteDevice: rear.remoteDevice,
+          rearRemotePort: rear.remotePort,
+          rearRemoteRoom: rear.remoteRoom,
+          rearCableId: rear.cableId,
+          rearCableType: rear.cableType,
+          rearCableLength: rear.cableLength,
+          rearComputedLength: rear.computedLength,
+          frontConnector,
+          frontGender,
+          frontRemoteDevice: front.remoteDevice,
+          frontRemotePort: front.remotePort,
+          frontRemoteRoom: front.remoteRoom,
+          frontCableId: front.cableId,
+          frontCableType: front.cableType,
+          frontCableLength: front.cableLength,
+          frontComputedLength: front.computedLength,
+          normalling: "None",
+        });
+        return;
+      }
+
+      // ── Legacy paired input/output ports (back-compat) ──────────────────────
       const face =
         port.direction === "input" ? "Rear"
         : port.direction === "output" ? "Front"
@@ -108,8 +253,6 @@ export function computePatchPanelSchedule(
       const gender = g === "male" ? "M" : g === "female" ? "F" : EMPTY;
 
       const edgeCandidates = edgeByPort.get(`${node.id}:${port.id}`) ?? [];
-      // Prefer an edge whose signal type matches this port, in case a port somehow has
-      // multiple edges after a migration.
       const edge = edgeCandidates[0];
 
       let edgeId = "";
@@ -144,18 +287,14 @@ export function computePatchPanelSchedule(
           computedLength = cableRow.computedLength ?? "";
           multicableLabel = cableRow.multicableLabel;
         } else {
-          // Fallback — edge exists but cable schedule excluded it (e.g. missing signal type).
           signalType = edge.data?.signalType
             ? (SIGNAL_LABELS[edge.data.signalType as keyof typeof SIGNAL_LABELS] ?? (edge.data.signalType as string))
             : "";
           cableLength = (edge.data?.cableLength as string | undefined) ?? "";
         }
 
-        // Resolve remote port gender-aware cable label already included via cable schedule.
         void resolvePort; // (kept to avoid unused import if gender computation moves)
       } else if (port.signalType) {
-        // Unconnected: leave most remote-side fields blank but carry the port's own
-        // signal type for display/filtering.
         signalType = SIGNAL_LABELS[port.signalType] ?? port.signalType;
       }
 
@@ -205,19 +344,40 @@ export function exportPatchPanelScheduleCsv(
   lines.push(`Generated ${new Date().toLocaleDateString()}`);
   lines.push("");
 
+  // Legacy columns (1-15) are unchanged from prior versions for back-compat.
+  // Passthrough columns (16-34) are appended; legacy rows leave them empty.
   lines.push(csvRow([
-    "Panel", "Panel Room", "Face", "Position", "Connector", "Gender",
-    "Remote Device", "Remote Port", "Remote Room",
-    "Cable ID", "Cable Type", "Signal", "Length", "Est. Length", "Snake",
+    "Panel", "Panel Room", "Face", "Position", "Signal",
+    "Connector", "M/F", "Remote Device", "Remote Port", "Remote Room", "Cable ID", "Cable Type", "Length", "Est. Length", "Snake",
+    "Rear Connector", "Rear M/F", "Rear Remote Device", "Rear Remote Port", "Rear Remote Room", "Rear Cable ID", "Rear Cable Type", "Rear Length", "Rear Est. Length",
+    "Front Connector", "Front M/F", "Front Remote Device", "Front Remote Port", "Front Remote Room", "Front Cable ID", "Front Cable Type", "Front Length", "Front Est. Length",
+    "Normalling",
   ]));
+
   for (const r of rows) {
-    lines.push(csvRow([
-      r.panel, r.panelRoom, r.face, r.position, r.connector, r.gender,
-      r.remoteDevice === EMPTY ? "" : r.remoteDevice,
-      r.remotePort === EMPTY ? "" : r.remotePort,
-      r.remoteRoom === EMPTY ? "" : r.remoteRoom,
-      r.cableId, r.cableType, r.signalType, r.cableLength, r.computedLength, r.multicableLabel,
-    ]));
+    if (r.face === "Passthrough") {
+      lines.push(csvRow([
+        r.panel, r.panelRoom, r.face, r.position, r.signalType,
+        // Legacy columns empty for passthrough rows
+        "", "", "", "", "", "", "", "", "", "",
+        r.rearConnector ?? "", r.rearGender ?? "", r.rearRemoteDevice ?? "", r.rearRemotePort ?? "", r.rearRemoteRoom ?? "", r.rearCableId ?? "", r.rearCableType ?? "", r.rearCableLength ?? "", r.rearComputedLength ?? "",
+        r.frontConnector ?? "", r.frontGender ?? "", r.frontRemoteDevice ?? "", r.frontRemotePort ?? "", r.frontRemoteRoom ?? "", r.frontCableId ?? "", r.frontCableType ?? "", r.frontCableLength ?? "", r.frontComputedLength ?? "",
+        r.normalling ?? "None",
+      ]));
+    } else {
+      lines.push(csvRow([
+        r.panel, r.panelRoom, r.face, r.position, r.signalType,
+        r.connector, r.gender,
+        r.remoteDevice === EMPTY ? "" : r.remoteDevice,
+        r.remotePort === EMPTY ? "" : r.remotePort,
+        r.remoteRoom === EMPTY ? "" : r.remoteRoom,
+        r.cableId, r.cableType, r.cableLength, r.computedLength, r.multicableLabel,
+        // Passthrough columns empty for legacy rows
+        "", "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "", "",
+        "",
+      ]));
+    }
   }
 
   const blob = new Blob([lines.join("\n")], { type: "text/csv" });

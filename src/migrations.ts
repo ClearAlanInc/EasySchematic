@@ -14,7 +14,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
 
-export const CURRENT_SCHEMA_VERSION = 34;
+export const CURRENT_SCHEMA_VERSION = 35;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -211,7 +211,7 @@ const migrations: Record<number, Migration> = {
       if (edge.data?.signalType !== "power") continue;
       const srcNode = (data.nodes ?? []).find((n: { id: string }) => n.id === edge.source);
       if (!srcNode?.data?.ports) continue;
-      const portId = edge.sourceHandle?.replace(/-(in|out)$/, "");
+      const portId = edge.sourceHandle?.replace(/-(in|out|rear|front)$/, "");
       const srcPort = srcNode.data.ports.find((p: { id: string }) => p.id === portId);
       if (srcPort && srcPort.signalType !== "power") {
         edge.data.signalType = srcPort.signalType;
@@ -391,6 +391,14 @@ const migrations: Record<number, Migration> = {
     data.version = 33;
     return data;
   },
+  34: (data) => {
+    // v34 → v35: no-op — introduces passthrough port direction + normalling fields.
+    // Existing patch panel ports keep their input/output directions; passthrough is opt-in
+    // for new templates only. No data transform needed.
+    data.version = 35;
+    return data;
+  },
+
   33: (data) => {
     // v33 → v34: stamp placed=true on every existing stub-label node. The auto-place
     // effect in StubLabelNode used to fire on every mount and snap Y back to the
@@ -426,7 +434,7 @@ function normalizeEdgeHandles(data: any): void {
     const node = nodeMap.get(nodeId);
     if (!node || node.type !== "device") return handle;
     const ports: any[] = node.data?.ports ?? [];
-    const baseId = handle.replace(/-(in|out)$/, "");
+    const baseId = handle.replace(/-(in|out|rear|front)$/, "");
     const port = ports.find((p) => p.id === baseId);
     if (!port) return handle;
     if (port.direction === "bidirectional") {
@@ -497,7 +505,7 @@ function migrateStubsToNodes(data: any): void {
     if (!deviceNode || !handleId) return null;
     const ports = deviceNode.data?.ports ?? [];
     // Strip "-in"/"-out" suffix used for bidirectional handles
-    const baseId = handleId.replace(/-(in|out)$/, "");
+    const baseId = handleId.replace(/-(in|out|rear|front)$/, "");
     const idx = ports.findIndex((p: any) => p.id === baseId);
     if (idx < 0) return null;
     const port = ports[idx];

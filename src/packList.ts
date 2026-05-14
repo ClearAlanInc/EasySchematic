@@ -205,7 +205,7 @@ export function resolvePortLabel(
   if (!handleId || node.type !== "device") return "";
   const data = node.data as DeviceData;
   // Strip -in/-out suffix from bidirectional handles
-  const portId = handleId.replace(/-(in|out)$/, "");
+  const portId = handleId.replace(/-(in|out|rear|front)$/, "");
   const port = data.ports.find((p) => p.id === portId);
   return transformLabelNow(port?.label ?? handleId);
 }
@@ -216,7 +216,7 @@ export function resolvePort(
 ) {
   if (!handleId || !node || node.type !== "device") return undefined;
   const data = node.data as DeviceData;
-  const portId = handleId.replace(/-(in|out)$/, "");
+  const portId = handleId.replace(/-(in|out|rear|front)$/, "");
   return data.ports.find((p) => p.id === portId);
 }
 

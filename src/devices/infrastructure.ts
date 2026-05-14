@@ -1,4 +1,4 @@
-import { port, camLokSet, patchPanelPorts } from "./_helpers";
+import { port, camLokSet, patchPanelCircuits, wallPlatePorts } from "./_helpers";
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
@@ -282,7 +282,7 @@ export const templates: DeviceTemplate[] = [
     label: "Patch Panel 12-Port",
     searchTerms: ["patch panel", "patch bay", "12 port", "rj45", "ethernet", "cat6"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "ethernet", 12),
+    ports: patchPanelCircuits("Port ", 12, { signalType: "ethernet", rearConnectorType: "rj45", frontConnectorType: "rj45" }),
   },
   {
     id: "c0a80101-00e9-4000-8000-000000000309",
@@ -290,7 +290,7 @@ export const templates: DeviceTemplate[] = [
     label: "Patch Panel 24-Port",
     searchTerms: ["patch panel", "patch bay", "24 port", "rj45", "ethernet", "cat6"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "ethernet", 24),
+    ports: patchPanelCircuits("Port ", 24, { signalType: "ethernet", rearConnectorType: "rj45", frontConnectorType: "rj45" }),
   },
   {
     id: "c0a80101-00ea-4000-8000-000000000310",
@@ -298,7 +298,7 @@ export const templates: DeviceTemplate[] = [
     label: "Patch Panel 48-Port",
     searchTerms: ["patch panel", "patch bay", "48 port", "rj45", "ethernet", "cat6"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "ethernet", 48),
+    ports: patchPanelCircuits("Port ", 48, { signalType: "ethernet", rearConnectorType: "rj45", frontConnectorType: "rj45" }),
   },
   {
     id: "c0a80101-00eb-4000-8000-000000000311",
@@ -306,7 +306,7 @@ export const templates: DeviceTemplate[] = [
     label: "BNC Patch Panel 12-Port",
     searchTerms: ["patch panel", "patch bay", "12 port", "bnc", "sdi", "video"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "sdi", 12),
+    ports: patchPanelCircuits("Port ", 12, { signalType: "sdi", rearConnectorType: "bnc", frontConnectorType: "bnc" }),
   },
   {
     id: "c0a80101-00ec-4000-8000-000000000312",
@@ -314,7 +314,7 @@ export const templates: DeviceTemplate[] = [
     label: "BNC Patch Panel 24-Port",
     searchTerms: ["patch panel", "patch bay", "24 port", "bnc", "sdi", "video"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "sdi", 24),
+    ports: patchPanelCircuits("Port ", 24, { signalType: "sdi", rearConnectorType: "bnc", frontConnectorType: "bnc" }),
   },
   {
     id: "c0a80101-00ed-4000-8000-000000000313",
@@ -322,8 +322,8 @@ export const templates: DeviceTemplate[] = [
     label: "XLR Patch Panel 12-Port",
     searchTerms: ["patch panel", "patch bay", "12 port", "xlr", "audio", "analog"],
     powerDrawW: 0,
-    // Both faces female — pro-audio convention for a generic XLR bay (uses M-F or F-F patch cables as needed).
-    ports: patchPanelPorts("Port", "analog-audio", 12, { gender: "female" }),
+    // Both faces female — pro-audio convention for a generic XLR bay.
+    ports: patchPanelCircuits("Port ", 12, { signalType: "analog-audio", rearConnectorType: "xlr-3", frontConnectorType: "xlr-3", rearGender: "female", frontGender: "female" }),
   },
   {
     id: "c0a80101-00ee-4000-8000-000000000314",
@@ -331,7 +331,7 @@ export const templates: DeviceTemplate[] = [
     label: "XLR Patch Panel 24-Port",
     searchTerms: ["patch panel", "patch bay", "24 port", "xlr", "audio", "analog"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 24, { gender: "female" }),
+    ports: patchPanelCircuits("Port ", 24, { signalType: "analog-audio", rearConnectorType: "xlr-3", frontConnectorType: "xlr-3", rearGender: "female", frontGender: "female" }),
   },
   {
     id: "c0a80101-00ef-4000-8000-000000000315",
@@ -339,7 +339,7 @@ export const templates: DeviceTemplate[] = [
     label: "Fiber Patch Panel 12-Port",
     searchTerms: ["patch panel", "patch bay", "12 port", "fiber", "lc", "optical"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "fiber", 12),
+    ports: patchPanelCircuits("Port ", 12, { signalType: "fiber", rearConnectorType: "lc", frontConnectorType: "lc" }),
   },
   {
     id: "c0a80101-00f0-4000-8000-000000000316",
@@ -347,7 +347,7 @@ export const templates: DeviceTemplate[] = [
     label: "Fiber Patch Panel 24-Port",
     searchTerms: ["patch panel", "patch bay", "24 port", "fiber", "lc", "optical"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "fiber", 24),
+    ports: patchPanelCircuits("Port ", 24, { signalType: "fiber", rearConnectorType: "lc", frontConnectorType: "lc" }),
   },
   {
     id: "c0a80101-0230-4000-8000-000000000711",
@@ -355,7 +355,7 @@ export const templates: DeviceTemplate[] = [
     label: "Patch Panel 32-Port",
     searchTerms: ["patch panel", "patch bay", "32 port", "rj45", "ethernet", "cat6", "networx"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "ethernet", 32),
+    ports: patchPanelCircuits("Port ", 32, { signalType: "ethernet", rearConnectorType: "rj45", frontConnectorType: "rj45" }),
   },
   {
     id: "c0a80101-0231-4000-8000-000000000712",
@@ -363,7 +363,7 @@ export const templates: DeviceTemplate[] = [
     label: "BNC Patch Panel 32-Port",
     searchTerms: ["patch panel", "patch bay", "32 port", "bnc", "sdi", "video"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "sdi", 32),
+    ports: patchPanelCircuits("Port ", 32, { signalType: "sdi", rearConnectorType: "bnc", frontConnectorType: "bnc" }),
   },
   {
     id: "c0a80101-0232-4000-8000-000000000713",
@@ -371,7 +371,7 @@ export const templates: DeviceTemplate[] = [
     label: "BNC Patch Panel 48-Port",
     searchTerms: ["patch panel", "patch bay", "48 port", "bnc", "sdi", "video"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "sdi", 48),
+    ports: patchPanelCircuits("Port ", 48, { signalType: "sdi", rearConnectorType: "bnc", frontConnectorType: "bnc" }),
   },
   {
     id: "c0a80101-0233-4000-8000-000000000714",
@@ -379,7 +379,7 @@ export const templates: DeviceTemplate[] = [
     label: "XLR Patch Panel 32-Port",
     searchTerms: ["patch panel", "patch bay", "32 port", "xlr", "audio", "analog"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 32, { gender: "female" }),
+    ports: patchPanelCircuits("Port ", 32, { signalType: "analog-audio", rearConnectorType: "xlr-3", frontConnectorType: "xlr-3", rearGender: "female", frontGender: "female" }),
   },
   {
     id: "c0a80101-0234-4000-8000-000000000715",
@@ -387,7 +387,7 @@ export const templates: DeviceTemplate[] = [
     label: "XLR Patch Panel 48-Port",
     searchTerms: ["patch panel", "patch bay", "48 port", "xlr", "audio", "analog"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 48, { gender: "female" }),
+    ports: patchPanelCircuits("Port ", 48, { signalType: "analog-audio", rearConnectorType: "xlr-3", frontConnectorType: "xlr-3", rearGender: "female", frontGender: "female" }),
   },
   {
     id: "c0a80101-0235-4000-8000-000000000716",
@@ -395,7 +395,7 @@ export const templates: DeviceTemplate[] = [
     label: "Fiber Patch Panel 32-Port",
     searchTerms: ["patch panel", "patch bay", "32 port", "fiber", "lc", "optical"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "fiber", 32),
+    ports: patchPanelCircuits("Port ", 32, { signalType: "fiber", rearConnectorType: "lc", frontConnectorType: "lc" }),
   },
   {
     id: "c0a80101-0236-4000-8000-000000000717",
@@ -403,7 +403,7 @@ export const templates: DeviceTemplate[] = [
     label: "Fiber Patch Panel 48-Port",
     searchTerms: ["patch panel", "patch bay", "48 port", "fiber", "lc", "optical"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "fiber", 48),
+    ports: patchPanelCircuits("Port ", 48, { signalType: "fiber", rearConnectorType: "lc", frontConnectorType: "lc" }),
   },
   {
     id: "c0a80101-0237-4000-8000-000000000718",
@@ -411,7 +411,7 @@ export const templates: DeviceTemplate[] = [
     label: "TRS Patch Bay 24-Point",
     searchTerms: ["patch bay", "patch panel", "24 point", "trs", "quarter inch", "audio", "tt", "bantam", "normalled"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 24, { connectorType: "trs-quarter" }),
+    ports: patchPanelCircuits("Port ", 24, { signalType: "analog-audio", rearConnectorType: "trs-quarter", frontConnectorType: "trs-quarter" }),
   },
   {
     id: "c0a80101-0238-4000-8000-000000000719",
@@ -419,7 +419,7 @@ export const templates: DeviceTemplate[] = [
     label: "TRS Patch Bay 48-Point",
     searchTerms: ["patch bay", "patch panel", "48 point", "trs", "quarter inch", "audio", "tt", "bantam", "normalled"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 48, { connectorType: "trs-quarter" }),
+    ports: patchPanelCircuits("Port ", 48, { signalType: "analog-audio", rearConnectorType: "trs-quarter", frontConnectorType: "trs-quarter" }),
   },
   {
     id: "c0a80101-0239-4000-8000-000000000720",
@@ -427,6 +427,63 @@ export const templates: DeviceTemplate[] = [
     label: "TRS Patch Bay 96-Point",
     searchTerms: ["patch bay", "patch panel", "96 point", "trs", "quarter inch", "audio", "tt", "bantam", "normalled"],
     powerDrawW: 0,
-    ports: patchPanelPorts("Port", "analog-audio", 96, { connectorType: "trs-quarter" }),
+    ports: patchPanelCircuits("Port ", 96, { signalType: "analog-audio", rearConnectorType: "trs-quarter", frontConnectorType: "trs-quarter" }),
+  },
+  // Wall Plates
+  {
+    id: "c0a80101-0240-4000-8000-000000000721",
+    deviceType: "wall-plate",
+    label: "Wall Plate 1-Port Keystone",
+    searchTerms: ["wall plate", "keystone", "1 port", "rj45", "ethernet", "cat6", "single gang"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 1, { signalType: "ethernet", frontConnectorType: "rj45" }),
+  },
+  {
+    id: "c0a80101-0241-4000-8000-000000000722",
+    deviceType: "wall-plate",
+    label: "Wall Plate 2-Port Keystone",
+    searchTerms: ["wall plate", "keystone", "2 port", "rj45", "ethernet", "cat6", "single gang", "dual"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 2, { signalType: "ethernet", frontConnectorType: "rj45" }),
+  },
+  {
+    id: "c0a80101-0242-4000-8000-000000000723",
+    deviceType: "wall-plate",
+    label: "Wall Plate 4-Port Keystone",
+    searchTerms: ["wall plate", "keystone", "4 port", "rj45", "ethernet", "cat6", "dual gang", "quad"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 4, { signalType: "ethernet", frontConnectorType: "rj45" }),
+  },
+  {
+    id: "c0a80101-0243-4000-8000-000000000724",
+    deviceType: "wall-plate",
+    label: "Wall Plate 1-Port BNC",
+    searchTerms: ["wall plate", "keystone", "1 port", "bnc", "sdi", "video", "single gang"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 1, { signalType: "sdi", frontConnectorType: "bnc" }),
+  },
+  {
+    id: "c0a80101-0244-4000-8000-000000000725",
+    deviceType: "wall-plate",
+    label: "Wall Plate 2-Port BNC",
+    searchTerms: ["wall plate", "keystone", "2 port", "bnc", "sdi", "video", "dual"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 2, { signalType: "sdi", frontConnectorType: "bnc" }),
+  },
+  {
+    id: "c0a80101-0245-4000-8000-000000000726",
+    deviceType: "wall-plate",
+    label: "Wall Plate 1-Port XLR",
+    searchTerms: ["wall plate", "xlr", "1 port", "audio", "analog", "single gang"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 1, { signalType: "analog-audio", frontConnectorType: "xlr-3" }),
+  },
+  {
+    id: "c0a80101-0246-4000-8000-000000000727",
+    deviceType: "wall-plate",
+    label: "Wall Plate 2-Port XLR",
+    searchTerms: ["wall plate", "xlr", "2 port", "audio", "analog", "dual gang"],
+    powerDrawW: 0,
+    ports: wallPlatePorts("Port ", 2, { signalType: "analog-audio", frontConnectorType: "xlr-3" }),
   },
 ];

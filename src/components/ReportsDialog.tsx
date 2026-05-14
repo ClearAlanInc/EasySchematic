@@ -1872,9 +1872,13 @@ function renderGroupedCableSchedule(
 // ─── Patch Panel Schedule Tab ──────────────────────────────────
 
 type PatchPanelSortKey =
-  | "panel" | "panelRoom" | "face" | "position" | "connector" | "gender"
+  | "panel" | "panelRoom" | "face" | "position" | "signalType"
+  | "connector" | "gender"
   | "remoteDevice" | "remotePort" | "remoteRoom"
-  | "cableId" | "cableType" | "signalType" | "cableLength" | "computedLength" | "multicableLabel";
+  | "cableId" | "cableType" | "cableLength" | "computedLength" | "multicableLabel"
+  | "rearConnector" | "rearGender" | "rearRemoteDevice" | "rearRemotePort" | "rearCableId" | "rearCableType" | "rearCableLength"
+  | "frontConnector" | "frontGender" | "frontRemoteDevice" | "frontRemotePort" | "frontCableId" | "frontCableType" | "frontCableLength"
+  | "normalling";
 
 type PatchPanelGroupBy = "" | "panel" | "panelRoom" | "signalType" | "face";
 
@@ -1907,16 +1911,26 @@ function PatchPanelScheduleTabInline() {
         r.panelRoom.toLowerCase().includes(q) ||
         r.face.toLowerCase().includes(q) ||
         r.position.toLowerCase().includes(q) ||
+        r.signalType.toLowerCase().includes(q) ||
         r.connector.toLowerCase().includes(q) ||
         r.remoteDevice.toLowerCase().includes(q) ||
         r.remotePort.toLowerCase().includes(q) ||
         r.remoteRoom.toLowerCase().includes(q) ||
         r.cableId.toLowerCase().includes(q) ||
         r.cableType.toLowerCase().includes(q) ||
-        r.signalType.toLowerCase().includes(q) ||
         r.cableLength.toLowerCase().includes(q) ||
         r.computedLength.toLowerCase().includes(q) ||
-        r.multicableLabel.toLowerCase().includes(q),
+        r.multicableLabel.toLowerCase().includes(q) ||
+        (r.rearConnector ?? "").toLowerCase().includes(q) ||
+        (r.rearRemoteDevice ?? "").toLowerCase().includes(q) ||
+        (r.rearRemotePort ?? "").toLowerCase().includes(q) ||
+        (r.rearRemoteRoom ?? "").toLowerCase().includes(q) ||
+        (r.rearCableId ?? "").toLowerCase().includes(q) ||
+        (r.frontConnector ?? "").toLowerCase().includes(q) ||
+        (r.frontRemoteDevice ?? "").toLowerCase().includes(q) ||
+        (r.frontRemotePort ?? "").toLowerCase().includes(q) ||
+        (r.frontRemoteRoom ?? "").toLowerCase().includes(q) ||
+        (r.frontCableId ?? "").toLowerCase().includes(q),
     );
   }, [rows, filter, hideUnconnected]);
 
@@ -2037,6 +2051,8 @@ function PatchPanelScheduleTabInline() {
             <th className={thClass} onClick={() => toggleSort("panelRoom")}>Panel Room{sortArrow("panelRoom")}</th>
             <th className={thClass} onClick={() => toggleSort("face")}>Face{sortArrow("face")}</th>
             <th className={thClass} onClick={() => toggleSort("position")}>Position{sortArrow("position")}</th>
+            <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
+            {/* Legacy (non-passthrough) columns */}
             <th className={thClass} onClick={() => toggleSort("connector")}>Connector{sortArrow("connector")}</th>
             <th className={thClass} onClick={() => toggleSort("gender")}>M/F{sortArrow("gender")}</th>
             <th className={thClass} onClick={() => toggleSort("remoteDevice")}>Remote Device{sortArrow("remoteDevice")}</th>
@@ -2044,10 +2060,29 @@ function PatchPanelScheduleTabInline() {
             <th className={thClass} onClick={() => toggleSort("remoteRoom")}>Remote Room{sortArrow("remoteRoom")}</th>
             <th className={thClass} onClick={() => toggleSort("cableId")}>Cable ID{sortArrow("cableId")}</th>
             <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
-            <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
             <th className={thClass} onClick={() => toggleSort("cableLength")}>Length{sortArrow("cableLength")}</th>
             <th className={thClass} onClick={() => toggleSort("computedLength")} title="Estimated length from room-to-room distance + slack">Est. Length{sortArrow("computedLength")}</th>
             <th className={thClass} onClick={() => toggleSort("multicableLabel")}>Snake{sortArrow("multicableLabel")}</th>
+            {/* Passthrough-only columns */}
+            <th className={thClass} onClick={() => toggleSort("rearConnector")}>Rear Connector{sortArrow("rearConnector")}</th>
+            <th className={thClass} onClick={() => toggleSort("rearGender")}>Rear M/F{sortArrow("rearGender")}</th>
+            <th className={thClass} onClick={() => toggleSort("rearRemoteDevice")}>Rear Remote Device{sortArrow("rearRemoteDevice")}</th>
+            <th className={thClass} onClick={() => toggleSort("rearRemotePort")}>Rear Remote Port{sortArrow("rearRemotePort")}</th>
+            <th className={thClass} title="Room of the rear-face remote device">Rear Remote Room</th>
+            <th className={thClass} onClick={() => toggleSort("rearCableId")}>Rear Cable ID{sortArrow("rearCableId")}</th>
+            <th className={thClass} onClick={() => toggleSort("rearCableType")}>Rear Cable Type{sortArrow("rearCableType")}</th>
+            <th className={thClass} onClick={() => toggleSort("rearCableLength")}>Rear Length{sortArrow("rearCableLength")}</th>
+            <th className={thClass} title="Estimated length from room-to-room distance + slack">Rear Est. Length</th>
+            <th className={thClass} onClick={() => toggleSort("frontConnector")}>Front Connector{sortArrow("frontConnector")}</th>
+            <th className={thClass} onClick={() => toggleSort("frontGender")}>Front M/F{sortArrow("frontGender")}</th>
+            <th className={thClass} onClick={() => toggleSort("frontRemoteDevice")}>Front Remote Device{sortArrow("frontRemoteDevice")}</th>
+            <th className={thClass} onClick={() => toggleSort("frontRemotePort")}>Front Remote Port{sortArrow("frontRemotePort")}</th>
+            <th className={thClass} title="Room of the front-face remote device">Front Remote Room</th>
+            <th className={thClass} onClick={() => toggleSort("frontCableId")}>Front Cable ID{sortArrow("frontCableId")}</th>
+            <th className={thClass} onClick={() => toggleSort("frontCableType")}>Front Cable Type{sortArrow("frontCableType")}</th>
+            <th className={thClass} onClick={() => toggleSort("frontCableLength")}>Front Length{sortArrow("frontCableLength")}</th>
+            <th className={thClass} title="Estimated length from room-to-room distance + slack">Front Est. Length</th>
+            <th className={thClass} onClick={() => toggleSort("normalling")}>Normalling{sortArrow("normalling")}</th>
           </tr>
         </thead>
         <tbody>
@@ -2056,7 +2091,7 @@ function PatchPanelScheduleTabInline() {
               {g.label && (
                 <tr>
                   <td
-                    colSpan={15}
+                    colSpan={34}
                     className="bg-[var(--color-surface)] text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] py-1 px-2"
                   >
                     {g.label}
@@ -2074,6 +2109,8 @@ function PatchPanelScheduleTabInline() {
                     <td className={tdClass}>{r.panelRoom}</td>
                     <td className={tdClass}>{r.face}</td>
                     <td className={tdClass}>{r.position}</td>
+                    <td className={tdClass}>{r.signalType || "—"}</td>
+                    {/* Legacy columns */}
                     <td className={tdClass}>{r.connector}</td>
                     <td className={tdClass}>{r.gender}</td>
                     <td className={tdClass}>{r.remoteDevice}</td>
@@ -2081,10 +2118,29 @@ function PatchPanelScheduleTabInline() {
                     <td className={tdClass}>{r.remoteRoom}</td>
                     <td className={tdClass}>{r.cableId || "—"}</td>
                     <td className={tdClass}>{r.cableType || "—"}</td>
-                    <td className={tdClass}>{r.signalType || "—"}</td>
                     <td className={tdClass}>{r.cableLength || "—"}</td>
                     <td className={`${tdClass} text-[var(--color-text-muted)]`}>{r.computedLength || "—"}</td>
                     <td className={tdClass}>{r.multicableLabel || "—"}</td>
+                    {/* Passthrough columns */}
+                    <td className={tdClass}>{r.rearConnector || "—"}</td>
+                    <td className={tdClass}>{r.rearGender || "—"}</td>
+                    <td className={tdClass}>{r.rearRemoteDevice || "—"}</td>
+                    <td className={tdClass}>{r.rearRemotePort || "—"}</td>
+                    <td className={tdClass}>{r.rearRemoteRoom || "—"}</td>
+                    <td className={tdClass}>{r.rearCableId || "—"}</td>
+                    <td className={tdClass}>{r.rearCableType || "—"}</td>
+                    <td className={tdClass}>{r.rearCableLength || "—"}</td>
+                    <td className={`${tdClass} text-[var(--color-text-muted)]`}>{r.rearComputedLength || "—"}</td>
+                    <td className={tdClass}>{r.frontConnector || "—"}</td>
+                    <td className={tdClass}>{r.frontGender || "—"}</td>
+                    <td className={tdClass}>{r.frontRemoteDevice || "—"}</td>
+                    <td className={tdClass}>{r.frontRemotePort || "—"}</td>
+                    <td className={tdClass}>{r.frontRemoteRoom || "—"}</td>
+                    <td className={tdClass}>{r.frontCableId || "—"}</td>
+                    <td className={tdClass}>{r.frontCableType || "—"}</td>
+                    <td className={tdClass}>{r.frontCableLength || "—"}</td>
+                    <td className={`${tdClass} text-[var(--color-text-muted)]`}>{r.frontComputedLength || "—"}</td>
+                    <td className={tdClass}>{r.normalling || "—"}</td>
                   </tr>
                 );
               })}

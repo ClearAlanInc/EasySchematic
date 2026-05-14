@@ -1016,8 +1016,8 @@ function SchematicCanvas() {
           const srcNode = state2.nodes.find((n) => n.id === srcNodeId);
           const tgtNode = state2.nodes.find((n) => n.id === tgtNodeId);
           if (srcNode?.type === "device" && tgtNode?.type === "device") {
-            const srcPortId = srcHandleId?.replace(/-(in|out)$/, "");
-            const tgtPortId = tgtHandleId?.replace(/-(in|out)$/, "");
+            const srcPortId = srcHandleId?.replace(/-(in|out|rear|front)$/, "");
+            const tgtPortId = tgtHandleId?.replace(/-(in|out|rear|front)$/, "");
             const srcPort = (srcNode.data as DeviceData).ports.find((p) => p.id === srcPortId);
             const tgtPort = (tgtNode.data as DeviceData).ports.find((p) => p.id === tgtPortId);
             if (srcPort && tgtPort) {

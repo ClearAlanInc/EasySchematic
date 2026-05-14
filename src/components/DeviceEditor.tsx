@@ -80,11 +80,26 @@ interface PortDraft {
   poeDrawW?: number;
   linkSpeed?: string;
   flipped?: boolean;
+  // Passthrough-only fields
+  rearConnectorType?: ConnectorType;
+  rearGender?: Gender;
+  frontConnectorType?: ConnectorType;
+  frontGender?: Gender;
+  inheritsSignal?: boolean;
 }
 
 function newPortDraft(direction: PortDirection): PortDraft {
   const signalType: SignalType = "sdi";
   const connectorType = DEFAULT_CONNECTOR[signalType];
+  if (direction === "passthrough") {
+    return {
+      id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      label: "",
+      signalType: "custom",
+      direction,
+      inheritsSignal: true,
+    };
+  }
   return {
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     label: "",
@@ -231,6 +246,11 @@ export default function DeviceEditor() {
         linkSpeed: p.linkSpeed,
         flipped: p.flipped,
         addressable: p.addressable,
+        rearConnectorType: p.rearConnectorType,
+        rearGender: p.rearGender,
+        frontConnectorType: p.frontConnectorType,
+        frontGender: p.frontGender,
+        inheritsSignal: p.inheritsSignal,
       })),
     );
     setShowAllPorts(node.data.showAllPorts ?? false);
@@ -770,6 +790,7 @@ export default function DeviceEditor() {
   const inputs = ports.filter((p) => p.direction === "input");
   const outputs = ports.filter((p) => p.direction === "output");
   const bidir = ports.filter((p) => p.direction === "bidirectional");
+  const passthroughPorts = ports.filter((p) => p.direction === "passthrough");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }} onKeyDownCapture={onCtrlEnter}>
@@ -1020,6 +1041,26 @@ export default function DeviceEditor() {
               deviceType={deviceType}
               ports={bidir}
               onAdd={() => addPort("bidirectional")}
+              onBulkAdd={bulkAddPorts}
+              onRemove={removePort}
+              onUpdate={updatePort}
+              draggedPortId={draggedPortId}
+              setDraggedPortId={setDraggedPortId}
+              dropTarget={dropTarget}
+              setDropTarget={setDropTarget}
+              onDragEnd={handleDragEnd}
+              hiddenPorts={hiddenPorts}
+              setHiddenPorts={setHiddenPorts}
+            />
+          )}
+
+          {(deviceType === "patch-panel" || deviceType === "wall-plate" || passthroughPorts.length > 0) && (
+            <PortSection
+              title="Passthrough Circuits"
+              direction="passthrough"
+              deviceType={deviceType}
+              ports={passthroughPorts}
+              onAdd={() => addPort("passthrough")}
               onBulkAdd={bulkAddPorts}
               onRemove={removePort}
               onUpdate={updatePort}
@@ -2158,43 +2199,65 @@ function PortRow({
           onKeyDown={(e) => e.stopPropagation()}
         />
 
-        <select
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer"
-          value={port.signalType}
-          onChange={(e) => {
-            const newSignal = e.target.value as SignalType;
-            onUpdate({
-              signalType: newSignal,
-              connectorType: DEFAULT_CONNECTOR[newSignal],
-            });
-          }}
-        >
-          {ALL_SIGNAL_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {SIGNAL_LABELS[t]}
-            </option>
-          ))}
-        </select>
+        {direction === "passthrough" ? (
+          <select
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer"
+            value={port.inheritsSignal ? "" : port.signalType}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "") {
+                onUpdate({ signalType: "custom", inheritsSignal: true });
+              } else {
+                onUpdate({ signalType: v as SignalType, inheritsSignal: undefined });
+              }
+            }}
+          >
+            <option value="">(inherits from connection)</option>
+            {ALL_SIGNAL_TYPES.map((t) => (
+              <option key={t} value={t}>{SIGNAL_LABELS[t]}</option>
+            ))}
+          </select>
+        ) : (
+          <select
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer"
+            value={port.signalType}
+            onChange={(e) => {
+              const newSignal = e.target.value as SignalType;
+              onUpdate({
+                signalType: newSignal,
+                connectorType: DEFAULT_CONNECTOR[newSignal],
+              });
+            }}
+          >
+            {ALL_SIGNAL_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {SIGNAL_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        )}
 
-        <select
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer max-w-[80px]"
-          value={port.connectorType ?? DEFAULT_CONNECTOR[port.signalType]}
-          onChange={(e) => onUpdate({ connectorType: e.target.value as ConnectorType })}
-          title="Connector type"
-        >
-          {CONNECTOR_GROUP_ENTRIES.map(([groupName, types]) => (
-            <optgroup key={groupName} label={groupName}>
-              {types.map((c) => (
-                <option key={c} value={c}>
-                  {CONNECTOR_LABELS[c]}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        {direction !== "passthrough" && (
+          <select
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer max-w-[80px]"
+            value={port.connectorType ?? DEFAULT_CONNECTOR[port.signalType]}
+            onChange={(e) => onUpdate({ connectorType: e.target.value as ConnectorType })}
+            title="Connector type"
+          >
+            {CONNECTOR_GROUP_ENTRIES.map(([groupName, types]) => (
+              <optgroup key={groupName} label={groupName}>
+                {types.map((c) => (
+                  <option key={c} value={c}>
+                    {CONNECTOR_LABELS[c]}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        )}
 
         {/* Connector gender — only shown for connectors where M/F genuinely varies */}
-        {(() => {
+        {direction !== "passthrough" && (() => {
           const ct = port.connectorType ?? DEFAULT_CONNECTOR[port.signalType];
           if (!CONNECTORS_WITH_GENDER_VARIATION.has(ct)) return null;
           const resolved = resolvePortGender({
@@ -2386,6 +2449,82 @@ function PortRow({
           >
             Done
           </button>
+        </div>
+      )}
+
+      {/* Passthrough rear/front connector block */}
+      {direction === "passthrough" && (
+        <div className="pl-6 pb-1 grid grid-cols-2 gap-x-4 gap-y-1">
+          <div>
+            <span className="block text-[9px] text-[var(--color-text-muted)] mb-0.5">Rear Connector</span>
+            <div className="flex items-center gap-1">
+              <select
+                className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer"
+                value={port.rearConnectorType ?? ""}
+                onChange={(e) => onUpdate({ rearConnectorType: e.target.value ? (e.target.value as ConnectorType) : undefined })}
+                title="Rear connector type"
+              >
+                <option value="">(unset)</option>
+                {CONNECTOR_GROUP_ENTRIES.map(([groupName, types]) => (
+                  <optgroup key={groupName} label={groupName}>
+                    {types.map((c) => (
+                      <option key={c} value={c}>{CONNECTOR_LABELS[c]}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {port.rearConnectorType && CONNECTORS_WITH_GENDER_VARIATION.has(port.rearConnectorType) && (
+                <select
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer shrink-0"
+                  value={port.rearGender ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    onUpdate({ rearGender: v === "" ? undefined : (v as Gender) });
+                  }}
+                  title="Rear gender"
+                >
+                  <option value="">—</option>
+                  <option value="male">M</option>
+                  <option value="female">F</option>
+                </select>
+              )}
+            </div>
+          </div>
+          <div>
+            <span className="block text-[9px] text-[var(--color-text-muted)] mb-0.5">Front Connector</span>
+            <div className="flex items-center gap-1">
+              <select
+                className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer"
+                value={port.frontConnectorType ?? ""}
+                onChange={(e) => onUpdate({ frontConnectorType: e.target.value ? (e.target.value as ConnectorType) : undefined })}
+                title="Front connector type"
+              >
+                <option value="">(unset)</option>
+                {CONNECTOR_GROUP_ENTRIES.map(([groupName, types]) => (
+                  <optgroup key={groupName} label={groupName}>
+                    {types.map((c) => (
+                      <option key={c} value={c}>{CONNECTOR_LABELS[c]}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {port.frontConnectorType && CONNECTORS_WITH_GENDER_VARIATION.has(port.frontConnectorType) && (
+                <select
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-1 text-[10px] text-[var(--color-text-heading)] outline-none focus:border-blue-500 cursor-pointer shrink-0"
+                  value={port.frontGender ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    onUpdate({ frontGender: v === "" ? undefined : (v as Gender) });
+                  }}
+                  title="Front gender"
+                >
+                  <option value="">—</option>
+                  <option value="male">M</option>
+                  <option value="female">F</option>
+                </select>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -2714,8 +2853,8 @@ function SlotEditSection({
         const connCount = edges.filter((e) => {
           if (e.source === nodeId && allPortIds.has(e.sourceHandle ?? "")) return true;
           if (e.target === nodeId && allPortIds.has(e.targetHandle ?? "")) return true;
-          if (e.source === nodeId && allPortIds.has((e.sourceHandle ?? "").replace(/-(in|out)$/, ""))) return true;
-          if (e.target === nodeId && allPortIds.has((e.targetHandle ?? "").replace(/-(in|out)$/, ""))) return true;
+          if (e.source === nodeId && allPortIds.has((e.sourceHandle ?? "").replace(/-(in|out|rear|front)$/, ""))) return true;
+          if (e.target === nodeId && allPortIds.has((e.targetHandle ?? "").replace(/-(in|out|rear|front)$/, ""))) return true;
           return false;
         }).length;
 

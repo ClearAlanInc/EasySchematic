@@ -74,6 +74,28 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     [connectedHandleStr],
   );
 
+  // Reactive signal-type map for edges connected to this node — drives passthrough port
+  // color/label when the port inherits its signal type from the connected edge. Serialized
+  // as "handleId:signalType" pairs so Zustand's shallow equality catches signal-type edits.
+  const connectedEdgeSignalsStr = useSchematicStore((s) => {
+    const parts: string[] = [];
+    for (const e of s.edges) {
+      if (!e.data?.signalType) continue;
+      if (e.source === id && e.sourceHandle) parts.push(`${e.sourceHandle}:${e.data.signalType}`);
+      if (e.target === id && e.targetHandle) parts.push(`${e.targetHandle}:${e.data.signalType}`);
+    }
+    return parts.sort().join(",");
+  });
+  const signalByHandle = useMemo<Map<string, string>>(() => {
+    const m = new Map<string, string>();
+    if (!connectedEdgeSignalsStr) return m;
+    for (const pair of connectedEdgeSignalsStr.split(",")) {
+      const colon = pair.lastIndexOf(":");
+      if (colon > 0) m.set(pair.slice(0, colon), pair.slice(colon + 1));
+    }
+    return m;
+  }, [connectedEdgeSignalsStr]);
+
   const visiblePorts = useMemo(() => {
     if (data.showAllPorts) {
       return hiddenPinSignalTypes
@@ -91,6 +113,8 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       if (hideUnconnectedPorts) {
         const connected = p.direction === "bidirectional"
           ? connectedHandles.has(`${p.id}-in`) || connectedHandles.has(`${p.id}-out`)
+          : p.direction === "passthrough"
+          ? connectedHandles.has(`${p.id}-rear`) || connectedHandles.has(`${p.id}-front`)
           : connectedHandles.has(p.id);
         if (!connected) return false;
       }
@@ -116,6 +140,8 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     for (const p of data.ports) {
       if (p.direction === "bidirectional") {
         if (connectedHandles.has(`${p.id}-in`) || connectedHandles.has(`${p.id}-out`)) connected++;
+      } else if (p.direction === "passthrough") {
+        if (connectedHandles.has(`${p.id}-rear`) || connectedHandles.has(`${p.id}-front`)) connected++;
       } else {
         if (connectedHandles.has(p.id)) connected++;
       }
@@ -135,13 +161,18 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   // Split ports by visual side (respects flip), not semantic direction.
   // When hideUnconnectedPorts is on, bidir ports with only one side connected
   // collapse into the appropriate column so the device gets smaller.
-  const { leftPorts, rightPorts, bidirectional, collapsedBidir } = useMemo(() => {
+  // Passthrough ports go into their own list — they render as full-width rows with
+  // two handles (rear-left, front-right), similar to bidirectional but spanning both sides.
+  const { leftPorts, rightPorts, bidirectional, passthroughPorts, collapsedBidir } = useMemo(() => {
     const collapsedBidir = new Map<string, "in" | "out">();
     const leftPorts: Port[] = [];
     const rightPorts: Port[] = [];
     const bidirectional: Port[] = [];
+    const passthroughPorts: Port[] = [];
     for (const p of visiblePorts) {
-      if (p.direction === "bidirectional") {
+      if (p.direction === "passthrough") {
+        passthroughPorts.push(p);
+      } else if (p.direction === "bidirectional") {
         if (hideUnconnectedPorts) {
           const inConn = connectedHandles.has(`${p.id}-in`);
           const outConn = connectedHandles.has(`${p.id}-out`);
@@ -163,7 +194,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         rightPorts.push(p);
       }
     }
-    return { leftPorts, rightPorts, bidirectional, collapsedBidir };
+    return { leftPorts, rightPorts, bidirectional, passthroughPorts, collapsedBidir };
   }, [visiblePorts, hideUnconnectedPorts, connectedHandles]);
 
   /** Get handle ID and type for a port in a column, accounting for collapsed bidir ports.
@@ -205,6 +236,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
 
   // Build bidirectional items with section support
   const bidirItems = useMemo(() => buildColumnItems(bidirectional), [bidirectional]);
+
+  // Build passthrough items. On patch panels, prepend Rear/Front column headers in the
+  // passthrough row header so the label row shows "Rear ← label → Front".
+  const passthroughItems = useMemo(
+    () => buildColumnItems(passthroughPorts),
+    [passthroughPorts],
+  );
 
   /** Render a port row for a column (left or right). */
   const renderColumnPort = (port: Port, side: "left" | "right") => {
@@ -249,6 +287,55 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     );
   };
 
+  /** Render a passthrough port as a full-width row with rear (left) and front (right) handles. */
+  const renderPassthroughPort = (port: Port) => {
+    const rearId = `${port.id}-rear`;
+    const frontId = `${port.id}-front`;
+    const rearConnected = connectedHandles.has(rearId);
+    const frontConnected = connectedHandles.has(frontId);
+    // For inheriting ports, pick up the connected edge's signal type reactively from
+    // signalByHandle (derived from connectedEdgeSignalsStr selector). Prefer rear side;
+    // fall back to front, then to the port's stored placeholder.
+    const resolvedSignal: string = port.inheritsSignal
+      ? (signalByHandle.get(rearId) ?? signalByHandle.get(frontId) ?? port.signalType)
+      : port.signalType;
+    const signalColor = SIGNAL_COLORS[resolvedSignal as keyof typeof SIGNAL_COLORS] ?? SIGNAL_COLORS.custom;
+    const signalLabel = SIGNAL_LABELS[resolvedSignal as keyof typeof SIGNAL_LABELS] ?? resolvedSignal;
+    return (
+      <div
+        key={port.id}
+        className="flex justify-between items-center relative h-5"
+        onContextMenu={(e) => openPortMenu(e, port)}
+      >
+        {/* Rear handle — left edge, source (ConnectionMode.Loose; isValidConnection enforces direction) */}
+        <Handle
+          type="source"
+          position={Position.Left}
+          id={rearId}
+          data-connected={rearConnected || undefined}
+          className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
+          style={{ background: signalColor, top: "50%" }}
+        />
+        <span
+          className="text-[10px] leading-5 truncate px-3 flex-1 text-center"
+          style={{ color: signalColor }}
+          title={`${displayLabel(port.label)} (${signalLabel}) — passthrough`}
+        >
+          ⇔ {displayLabel(port.label)}
+        </span>
+        {/* Front handle — right edge, source (same reasoning as rear) */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={frontId}
+          data-connected={frontConnected || undefined}
+          className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
+          style={{ background: signalColor, top: "50%" }}
+        />
+      </div>
+    );
+  };
+
   if (isHiddenAdapter) {
     // Render 1x1 invisible placeholder — keeps React Flow handle refs valid but
     // doesn't block device placement (RF re-measures this as ~1px)
@@ -260,6 +347,14 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               <span key={p.id}>
                 <Handle type="target" position={Position.Left} id={`${p.id}-in`} style={{ opacity: 0 }} />
                 <Handle type="source" position={Position.Right} id={`${p.id}-out`} style={{ opacity: 0 }} />
+              </span>
+            );
+          }
+          if (p.direction === "passthrough") {
+            return (
+              <span key={p.id}>
+                <Handle type="source" position={Position.Left} id={`${p.id}-rear`} style={{ opacity: 0 }} />
+                <Handle type="source" position={Position.Right} id={`${p.id}-front`} style={{ opacity: 0 }} />
               </span>
             );
           }
@@ -484,6 +579,33 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Passthrough Ports — one row per circuit, rear handle left, front handle right */}
+      {passthroughPorts.length > 0 && (
+        <div>
+          <div className="flex h-5">
+            <div className="flex-1 flex items-end pl-2">
+              <span className="text-[9px] text-[var(--color-text-muted)] truncate border-b border-[var(--color-border)]/30 w-full pb-0.5 mr-1">
+                Rear
+              </span>
+            </div>
+            <div className="flex-1 flex items-end pr-2 justify-end">
+              <span className="text-[9px] text-[var(--color-text-muted)] truncate text-right border-b border-[var(--color-border)]/30 w-full pb-0.5 ml-1">
+                Front
+              </span>
+            </div>
+          </div>
+          {passthroughItems.map((item, i) =>
+            item.type === "section" ? (
+              <div key={`psec-${i}`} className="flex justify-center items-end h-5 mx-1">
+                <span className="text-[9px] text-[var(--color-text-muted)] pb-0.5 truncate border-b border-[var(--color-border)]/30 w-full text-center">
+                  {item.name}
+                </span>
+              </div>
+            ) : renderPassthroughPort(item.port),
+          )}
         </div>
       )}
 
