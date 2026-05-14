@@ -467,6 +467,7 @@ function spawnWaypointNodes(data: any): void {
         type: "waypoint",
         position: { x: p.x, y: p.y },
         data: { edgeId: edge.id, index: i },
+        zIndex: 100,
       });
     }
   }

@@ -2,6 +2,12 @@ import type { ConnectionEdge, SchematicNode, WaypointNode } from "./types";
 
 const WP_PREFIX = "wp-";
 
+// React Flow elevates edges whose source/target nodes have a parentId (e.g.
+// devices inside rooms). Without an explicit zIndex, top-level waypoint nodes
+// end up under those elevated edges and become unclickable. 100 is well above
+// any edge z and below the 10000 used by edge labels.
+const WAYPOINT_Z_INDEX = 100;
+
 export function waypointNodeId(edgeId: string, index: number): string {
   return `${WP_PREFIX}${edgeId}-${index}`;
 }
@@ -43,7 +49,13 @@ export function reconcileWaypointNodes(
     let allMatch = true;
     for (const exp of expected) {
       const ex = existingWaypoints.get(exp.id);
-      if (!ex || ex.position.x !== exp.x || ex.position.y !== exp.y || ex.data.index !== exp.index) {
+      if (
+        !ex ||
+        ex.position.x !== exp.x ||
+        ex.position.y !== exp.y ||
+        ex.data.index !== exp.index ||
+        ex.zIndex !== WAYPOINT_Z_INDEX
+      ) {
         allMatch = false;
         break;
       }
@@ -59,6 +71,7 @@ export function reconcileWaypointNodes(
       type: "waypoint",
       position: { x: exp.x, y: exp.y },
       data: { edgeId: exp.edgeId, index: exp.index },
+      zIndex: WAYPOINT_Z_INDEX,
       ...(existing?.selected ? { selected: true } : {}),
     };
     return node;
