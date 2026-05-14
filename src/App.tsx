@@ -1262,6 +1262,12 @@ function SchematicCanvas() {
           n.id === draggedNode.id ? { ...n, position: { x: finalX, y: finalY } } : n,
         );
         useSchematicStore.setState({ nodes: updated as SchematicNode[], isDragging: false, overlapNodeId: null });
+        // Persist the snap-corrected position. onNodesChange already saved the
+        // grid-aligned drag position via its own saveToLocalStorage; without this
+        // explicit save, our correction (e.g. stub label centering on a sub-grid
+        // port row Y) lives only in memory and gets lost on next reload because
+        // reparentNode below early-returns when there's no parent change.
+        useSchematicStore.getState().saveToLocalStorage();
       } else {
         useSchematicStore.setState({ isDragging: false, overlapNodeId: null });
       }
