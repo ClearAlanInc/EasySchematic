@@ -23,6 +23,7 @@ import {
   type Rect,
 } from "./pathfinding";
 import { computePageGrid } from "./printPageGrid";
+import { STUB_W_EST } from "./stubPlacement";
 import {
   type Orientation,
   getPaperSize,
@@ -629,8 +630,10 @@ export function routeAllEdges(
     const tgtNode = nodeMap.get(edge.target);
     const srcPos = srcNode ? getAbsPos(srcNode, nodeMap) : { x: 0, y: 0 };
     const tgtPos = tgtNode ? getAbsPos(tgtNode, nodeMap) : { x: 0, y: 0 };
-    const srcCenterX = srcPos.x + (srcNode?.measured?.width ?? 180) / 2;
-    const tgtCenterX = tgtPos.x + (tgtNode?.measured?.width ?? 180) / 2;
+    const srcFallbackW = srcNode?.type === "stub-label" ? STUB_W_EST : 180;
+    const tgtFallbackW = tgtNode?.type === "stub-label" ? STUB_W_EST : 180;
+    const srcCenterX = srcPos.x + (srcNode?.measured?.width ?? srcFallbackW) / 2;
+    const tgtCenterX = tgtPos.x + (tgtNode?.measured?.width ?? tgtFallbackW) / 2;
 
     edgeEndpoints.push({
       edge,

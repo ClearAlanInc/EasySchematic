@@ -160,6 +160,26 @@ describe("buildObstacles", () => {
     expect(rects).toHaveLength(0);
   });
 
+  it("skips waypoint nodes — paths must pass through them, not detour around them", () => {
+    const nodes = [
+      { id: "n1", position: { x: 100, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },
+      { id: "wp-e1-0", position: { x: 300, y: 300 }, measured: { width: 10, height: 10 }, type: "waypoint" },
+    ];
+    const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
+    const { rects } = buildObstacles(nodes, [], getAbsPos);
+    expect(rects).toHaveLength(1);
+    expect(rects[0].nodeId).toBe("n1");
+  });
+
+  it("skips stub-label nodes", () => {
+    const nodes = [
+      { id: "s1", position: { x: 0, y: 0 }, measured: { width: 80, height: 14 }, type: "stub-label" },
+    ];
+    const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
+    const { rects } = buildObstacles(nodes, [], getAbsPos);
+    expect(rects).toHaveLength(0);
+  });
+
   it("excludes specified node IDs", () => {
     const nodes = [
       { id: "n1", position: { x: 100, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },

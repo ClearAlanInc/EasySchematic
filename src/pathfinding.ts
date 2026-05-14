@@ -103,7 +103,12 @@ export function buildObstacles(
   const rects: Rect[] = [];
   const pad = ROUTING_PARAMS.PAD * CELL_SIZE; // PAD is in grid cells
   for (const n of nodes) {
-    if (n.type === "room" || n.type === "note" || n.type === "stub-label") continue;
+    if (
+      n.type === "room" ||
+      n.type === "note" ||
+      n.type === "stub-label" ||
+      n.type === "waypoint"
+    ) continue;
     if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);
     const w = n.measured?.width ?? 180;
