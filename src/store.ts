@@ -12,6 +12,7 @@ import type {
   DeviceData,
   SchematicNode,
   ConnectionEdge,
+  ConnectionData,
   DeviceTemplate,
   OwnedGearItem,
   Port,
@@ -71,6 +72,15 @@ function repairMojibake(obj: unknown): unknown {
     return out;
   }
   return obj;
+}
+
+/** Resolve the rendered stroke color for a connection. Direct-attach always wins as gray;
+ *  otherwise per-connection `color` override beats the signal-type CSS variable. */
+function resolveEdgeStroke(data: ConnectionData | undefined): string {
+  if (!data) return "var(--color-custom)";
+  if (data.directAttach) return "#9ca3af";
+  if (data.color) return data.color;
+  return `var(--color-${data.signalType ?? "custom"})`;
 }
 
 const STORAGE_KEY = "easyschematic-autosave";
@@ -1303,19 +1313,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Check if either port is direct-attach (adapter plugs directly into device)
     const isDirectAttach = sourcePort?.directAttach || targetPort?.directAttach;
 
+    const newEdgeData: ConnectionData = {
+      signalType: sourcePort?.signalType ?? "custom",
+      ...(connectorMismatch ? { connectorMismatch: true } : {}),
+      ...(isDirectAttach ? { directAttach: true } : {}),
+    };
     const newEdge: ConnectionEdge = {
       id: nextEdgeId(),
       source: connection.source,
       target: connection.target,
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
-      data: {
-        signalType: sourcePort?.signalType ?? "custom",
-        ...(connectorMismatch ? { connectorMismatch: true } : {}),
-        ...(isDirectAttach ? { directAttach: true } : {}),
-      },
+      data: newEdgeData,
       style: {
-        stroke: isDirectAttach ? "#9ca3af" : `var(--color-${sourcePort?.signalType ?? "custom"})`,
+        stroke: resolveEdgeStroke(newEdgeData),
         strokeWidth: isDirectAttach ? 1 : 2,
       },
     };
@@ -1985,15 +1996,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (shouldBeDA === currentlyDA) return e;
 
       edgesChanged = true;
+      const nextData = {
+        ...e.data!,
+        directAttach: shouldBeDA || undefined,
+      };
       return {
         ...e,
-        data: {
-          ...e.data!,
-          directAttach: shouldBeDA || undefined,
-        },
+        data: nextData,
         style: {
           ...e.style,
-          stroke: shouldBeDA ? "#9ca3af" : `var(--color-${e.data?.signalType ?? "custom"})`,
+          stroke: resolveEdgeStroke(nextData),
           strokeWidth: shouldBeDA ? 1 : 2,
         },
       };
@@ -2837,19 +2849,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     if (!pending) return;
     pushUndo({ nodes: state.nodes, edges: state.edges });
 
+    const incompatibleData: ConnectionData = {
+      signalType: pending.sourcePort.signalType,
+      connectorMismatch: true,
+      allowIncompatible: true,
+    };
     const newEdge: ConnectionEdge = {
       id: nextEdgeId(),
       source: pending.connection.source,
       target: pending.connection.target,
       sourceHandle: pending.connection.sourceHandle,
       targetHandle: pending.connection.targetHandle,
-      data: {
-        signalType: pending.sourcePort.signalType,
-        connectorMismatch: true,
-        allowIncompatible: true,
-      },
+      data: incompatibleData,
       style: {
-        stroke: `var(--color-${pending.sourcePort.signalType})`,
+        stroke: resolveEdgeStroke(incompatibleData),
         strokeWidth: 2,
       },
     };
@@ -3002,19 +3015,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     if (adapterInput) {
       const inputHandle = adapterInput.direction === "bidirectional" ? `${adapterInput.id}-in` : adapterInput.id;
+      const inputData: ConnectionData = {
+        signalType: pending.sourcePort.signalType,
+        ...(!areConnectorsCompatible(pending.sourcePort.connectorType, adapterInput.connectorType) ? { connectorMismatch: true } : {}),
+        ...(adapterInput.directAttach ? { directAttach: true } : {}),
+      };
       newEdges.push({
         id: nextEdgeId(),
         source: pending.connection.source,
         target: adapterId,
         sourceHandle: pending.connection.sourceHandle,
         targetHandle: inputHandle,
-        data: {
-          signalType: pending.sourcePort.signalType,
-          ...(!areConnectorsCompatible(pending.sourcePort.connectorType, adapterInput.connectorType) ? { connectorMismatch: true } : {}),
-          ...(adapterInput.directAttach ? { directAttach: true } : {}),
-        },
+        data: inputData,
         style: {
-          stroke: adapterInput.directAttach ? "#9ca3af" : `var(--color-${pending.sourcePort.signalType})`,
+          stroke: resolveEdgeStroke(inputData),
           strokeWidth: adapterInput.directAttach ? 1 : 2,
         },
       });
@@ -3022,19 +3036,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     if (adapterOutput) {
       const outputHandle = adapterOutput.direction === "bidirectional" ? `${adapterOutput.id}-out` : adapterOutput.id;
+      const outputData: ConnectionData = {
+        signalType: pending.targetPort.signalType,
+        ...(!areConnectorsCompatible(adapterOutput.connectorType, pending.targetPort.connectorType) ? { connectorMismatch: true } : {}),
+        ...(adapterOutput.directAttach ? { directAttach: true } : {}),
+      };
       newEdges.push({
         id: nextEdgeId(),
         source: adapterId,
         target: pending.connection.target,
         sourceHandle: outputHandle,
         targetHandle: pending.connection.targetHandle,
-        data: {
-          signalType: pending.targetPort.signalType,
-          ...(!areConnectorsCompatible(adapterOutput.connectorType, pending.targetPort.connectorType) ? { connectorMismatch: true } : {}),
-          ...(adapterOutput.directAttach ? { directAttach: true } : {}),
-        },
+        data: outputData,
         style: {
-          stroke: adapterOutput.directAttach ? "#9ca3af" : `var(--color-${pending.targetPort.signalType})`,
+          stroke: resolveEdgeStroke(outputData),
           strokeWidth: adapterOutput.directAttach ? 1 : 2,
         },
       });
@@ -4522,6 +4537,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         for (const k of Object.keys(patch) as (keyof typeof patch)[]) {
           if (patch[k] === undefined) delete (merged as Record<string, unknown>)[k];
         }
+        const strokeAffectingKeys = ["color", "directAttach", "signalType"] as const;
+        const strokeAffected = strokeAffectingKeys.some((k) => k in patch);
+        if (strokeAffected) {
+          const strokeWidth = merged.directAttach ? 1 : 2;
+          return {
+            ...e,
+            data: merged,
+            style: { ...e.style, stroke: resolveEdgeStroke(merged), strokeWidth },
+          };
+        }
         return { ...e, data: merged };
       }),
     });
@@ -4754,6 +4779,17 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         const merged = { ...e.data!, ...patch };
         for (const k of Object.keys(patch) as (keyof typeof patch)[]) {
           if (patch[k] === undefined) delete (merged as Record<string, unknown>)[k];
+        }
+        // If the patch can affect the rendered stroke, recompute it.
+        const strokeAffectingKeys = ["color", "directAttach", "signalType"] as const;
+        const strokeAffected = strokeAffectingKeys.some((k) => k in patch);
+        if (strokeAffected) {
+          const strokeWidth = merged.directAttach ? 1 : 2;
+          return {
+            ...e,
+            data: merged,
+            style: { ...e.style, stroke: resolveEdgeStroke(merged), strokeWidth },
+          };
         }
         return { ...e, data: merged };
       }),

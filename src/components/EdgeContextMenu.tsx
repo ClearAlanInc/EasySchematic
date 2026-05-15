@@ -224,6 +224,17 @@ export default function EdgeContextMenu() {
   const [editingLabel, setEditingLabel] = useState<false | "label" | "multicable">(false);
   const [labelValue, setLabelValue] = useState("");
 
+  const setEdgeColor = useCallback((hex: string) => {
+    if (!menu) return;
+    useSchematicStore.getState().patchEdgeData(menu.edgeId, { color: hex });
+  }, [menu]);
+
+  const clearEdgeColor = useCallback(() => {
+    if (!menu) return;
+    useSchematicStore.getState().patchEdgeData(menu.edgeId, { color: undefined });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
   const { ref: menuRef, pos: menuPos } = useContextMenuPosition(
     menu?.screenX ?? 0,
     menu?.screenY ?? 0,
@@ -376,6 +387,8 @@ export default function EdgeContextMenu() {
   const currentLineStyle: LineStyle = (edge?.data?.lineStyle as LineStyle) ?? "solid";
   const hasMismatch = edge?.data?.connectorMismatch === true;
   const allowIncompatible = edge?.data?.allowIncompatible === true;
+  const isDirectAttach = edge?.data?.directAttach === true;
+  const customColor = (edge?.data?.color as string | undefined) ?? "";
 
   // Check if this is a trunk (multicable) edge
   const srcNode = store.nodes.find((n) => n.id === edge?.source);
@@ -516,6 +529,31 @@ export default function EdgeContextMenu() {
           label={adapterIsHidden ? "Show Adapter" : "Hide Adapter"}
           onClick={toggleAdapterVisibility}
         />
+      )}
+      {!isDirectAttach && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <div className="px-3 py-1.5 flex items-center gap-2">
+            <span className="text-xs text-gray-700 flex-1">Cable Color</span>
+            <input
+              type="color"
+              value={customColor || "#9ca3af"}
+              onChange={(e) => setEdgeColor(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-6 h-5 cursor-pointer border border-gray-300 rounded p-0.5 bg-white"
+              title={customColor ? `Override: ${customColor}` : "Pick a custom cable color"}
+            />
+            {customColor && (
+              <button
+                onClick={clearEdgeColor}
+                className="text-[10px] text-gray-500 hover:text-red-600 underline cursor-pointer"
+                title="Reset to signal-type color"
+              >
+                reset
+              </button>
+            )}
+          </div>
+        </>
       )}
       <div className="h-px bg-gray-200 my-1" />
       <MenuSubmenu label={`Line Style: ${LINE_STYLE_LABELS[currentLineStyle]}`} minWidth={180}>

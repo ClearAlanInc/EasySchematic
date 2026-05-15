@@ -17,7 +17,7 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
       .filter((e) => e.selected)
       .map(
         (e) =>
-          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${e.data?.hideCustomLabel ? "1" : "0"}:${String(e.data?.label ?? "")}`,
+          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${e.data?.hideCustomLabel ? "1" : "0"}:${String(e.data?.label ?? "")}:${String(e.data?.color ?? "")}`,
       )
       .join("|"),
   );
@@ -83,6 +83,25 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
   const clearLabel = () => {
     useSchematicStore.getState().batchPatchEdgeData(
       selectedEdges.map((e) => ({ edgeId: e.id, patch: { label: undefined } })),
+    );
+  };
+
+  // Color override — true when every selected edge has the same color set.
+  const colorValues = selectedEdges.map((e) => (e.data?.color as string | undefined) ?? "");
+  const allSameColor = colorValues.every((c) => c === colorValues[0]);
+  const sharedColor = allSameColor ? colorValues[0] : "";
+  // Hide the picker entirely if any selection is direct-attach (override would no-op).
+  const anyDirectAttach = selectedEdges.some((e) => e.data?.directAttach === true);
+
+  const applyColor = (hex: string) => {
+    useSchematicStore.getState().batchPatchEdgeData(
+      selectedEdges.map((e) => ({ edgeId: e.id, patch: { color: hex } })),
+    );
+  };
+
+  const clearColor = () => {
+    useSchematicStore.getState().batchPatchEdgeData(
+      selectedEdges.map((e) => ({ edgeId: e.id, patch: { color: undefined } })),
     );
   };
 
@@ -190,6 +209,35 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
           ))}
         </div>
       </section>
+
+      {/* Color override */}
+      {!anyDirectAttach && (
+        <section className="mb-3">
+          <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] mb-1.5">
+            Color{!allSameColor && <span className="ml-1 normal-case">(mixed)</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={sharedColor || "#9ca3af"}
+              onChange={(e) => applyColor(e.target.value)}
+              className="w-8 h-7 cursor-pointer border border-[var(--color-border)] rounded p-0.5 bg-white"
+              title={sharedColor ? `Override: ${sharedColor}` : "Pick a custom cable color"}
+            />
+            <span className="flex-1 text-[11px] text-[var(--color-text-muted)] truncate">
+              {sharedColor ? sharedColor : "Signal-type default"}
+            </span>
+            <button
+              onClick={clearColor}
+              disabled={selectedEdges.every((e) => !e.data?.color)}
+              className="px-2 py-0.5 text-[10px] text-[var(--color-text-muted)] hover:text-red-600 border border-[var(--color-border)] rounded hover:border-red-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              title="Reset to signal-type color"
+            >
+              Reset
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Options / toggles */}
       <section>

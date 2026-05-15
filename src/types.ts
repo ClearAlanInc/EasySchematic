@@ -441,6 +441,8 @@ export interface ConnectionData {
   directAttach?: boolean;
   /** Visual line style — solid (default), dashed, dotted, or dash-dot */
   lineStyle?: LineStyle;
+  /** Per-connection color override (CSS color). Falls back to signal-type color. Ignored for direct-attach. */
+  color?: string;
 }
 
 export type ConnectionEdge = Edge<ConnectionData>;
