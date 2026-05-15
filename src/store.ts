@@ -1610,12 +1610,21 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         deviceData.ports.forEach((oldPort: Port, i: number) => {
           portIdMap.set(oldPort.id, newPorts[i].id);
         });
+        const remappedHidden = deviceData.hiddenPorts?.length
+          ? deviceData.hiddenPorts
+              .map((id) => portIdMap.get(id) ?? id)
+              .filter((id) => newPorts.some((p) => p.id === id))
+          : undefined;
         return {
           ...n,
           id: newId,
           position: { x: n.position.x, y: n.position.y + yOffset },
           selected: true,
-          data: { ...deviceData, ports: newPorts },
+          data: {
+            ...deviceData,
+            ports: newPorts,
+            hiddenPorts: remappedHidden && remappedHidden.length > 0 ? remappedHidden : undefined,
+          },
         } as DeviceNode;
       }
       return {
