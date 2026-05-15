@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { createSubmission, fetchTemplateSummaries, type TemplateSummary } from "../api";
+import { createSubmission, updateSubmission, fetchTemplateSummaries, type TemplateSummary } from "../api";
 import DeviceForm, { type DeviceFormData } from "../components/DeviceForm";
 import { linkClick } from "../navigate";
 
@@ -7,16 +7,22 @@ interface Props {
   id?: string; // existing template ID for edit suggestions
   draftId?: string; // draft from main app cross-submission
   cloneId?: string; // existing template ID to clone as new device (from URL)
+  pendingSubmissionId?: string; // submission ID to edit (edit-pending mode)
 }
 
-export default function SubmitPage({ id, draftId, cloneId: initialCloneId }: Props) {
+export default function SubmitPage({ id, draftId, cloneId: initialCloneId, pendingSubmissionId }: Props) {
   const [success, setSuccess] = useState(false);
   const [cloneId, setCloneId] = useState(initialCloneId);
   const isEdit = !!id;
+  const isEditPending = !!pendingSubmissionId;
 
   const handleSubmit = async (data: DeviceFormData) => {
     const { submitterNote, ...templateData } = data;
-    await createSubmission(isEdit ? "update" : "create", templateData, id, submitterNote);
+    if (isEditPending && pendingSubmissionId) {
+      await updateSubmission(pendingSubmissionId, templateData, submitterNote);
+    } else {
+      await createSubmission(isEdit ? "update" : "create", templateData, id, submitterNote);
+    }
     setSuccess(true);
   };
 
@@ -28,9 +34,13 @@ export default function SubmitPage({ id, draftId, cloneId: initialCloneId }: Pro
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold mb-2">Submission received!</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          {isEditPending ? "Submission updated!" : "Submission received!"}
+        </h2>
         <p className="text-sm text-slate-500 mb-4">
-          Your {isEdit ? "edit suggestion" : "new device"} has been submitted for review. A moderator will review it shortly.
+          {isEditPending
+            ? "Your changes were saved. The submission is back in the review queue for a moderator."
+            : `Your ${isEdit ? "edit suggestion" : "new device"} has been submitted for review. A moderator will review it shortly.`}
         </p>
         <div className="flex items-center justify-center gap-3">
           <a href="/my-submissions" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">View my submissions</a>
@@ -41,29 +51,31 @@ export default function SubmitPage({ id, draftId, cloneId: initialCloneId }: Pro
     );
   }
 
+  const heading = isEditPending ? "Edit Pending Submission" : isEdit ? "Suggest Edit" : "Submit New Device";
+  const subheading = isEditPending
+    ? "Update your submission while it's still in the review queue. Saving will clear any moderator claim and place it back at the top of the queue."
+    : isEdit
+    ? "Propose changes to an existing device template. A moderator will review your suggestion."
+    : cloneId
+    ? "Cloned from an existing device. Modify what you need and submit as a new device."
+    : "Submit a new device template for the community library. A moderator will review it before it goes live.";
+
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-slate-900 mb-2">
-        {isEdit ? "Suggest Edit" : "Submit New Device"}
-      </h1>
-      <p className="text-sm text-slate-500 mb-6">
-        {isEdit
-          ? "Propose changes to an existing device template. A moderator will review your suggestion."
-          : cloneId
-          ? "Cloned from an existing device. Modify what you need and submit as a new device."
-          : "Submit a new device template for the community library. A moderator will review it before it goes live."}
-      </p>
+      <h1 className="text-2xl font-bold text-slate-900 mb-2">{heading}</h1>
+      <p className="text-sm text-slate-500 mb-6">{subheading}</p>
 
-      {!isEdit && <CloneSearch cloneId={cloneId} onSelect={setCloneId} />}
+      {!isEdit && !isEditPending && <CloneSearch cloneId={cloneId} onSelect={setCloneId} />}
 
       <DeviceForm
-        key={cloneId ?? "new"}
+        key={pendingSubmissionId ?? cloneId ?? "new"}
         id={id}
         draftId={draftId}
         cloneId={cloneId}
+        pendingSubmissionId={pendingSubmissionId}
         onSubmit={handleSubmit}
-        submitLabel="Submit for Review"
-        cancelHref={isEdit ? `/device/${id}` : "/"}
+        submitLabel={isEditPending ? "Save Changes" : "Submit for Review"}
+        cancelHref={isEditPending ? "/my-submissions" : isEdit ? `/device/${id}` : "/"}
       />
     </div>
   );

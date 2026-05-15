@@ -281,6 +281,31 @@ export async function createSubmission(
   return res.json();
 }
 
+export async function updateSubmission(
+  id: string,
+  data: Omit<DeviceTemplate, "id" | "version">,
+  submitterNote?: string,
+): Promise<Submission> {
+  const res = await fetch(`${API_URL}/submissions/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ data, ...(submitterNote && { submitterNote }) }),
+  });
+  if (res.status === 401) throw new Error("Not authenticated");
+  if (res.status === 403) throw new Error("Account suspended");
+  if (res.status === 404) throw new Error("Submission not found");
+  if (res.status === 409) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error || "Submission cannot be edited");
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err?.error || `Update failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function fetchMySubmissions(): Promise<Submission[]> {
   const res = await fetch(`${API_URL}/submissions/mine`, {
     credentials: "include",

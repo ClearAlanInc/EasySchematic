@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import type { Port, SlotDefinition, DeviceTemplate } from "../../../src/types";
-import { fetchTemplate, fetchSearchTerms, fetchTemplates, fetchDraft, fetchManufacturers } from "../api";
+import { fetchTemplate, fetchSearchTerms, fetchTemplates, fetchDraft, fetchManufacturers, fetchSubmission } from "../api";
 import { linkClick } from "../navigate";
 import PortEditor from "./PortEditor";
 import AutocompleteInput from "./AutocompleteInput";
@@ -43,6 +43,8 @@ interface DeviceFormProps {
   draftId?: string;
   /** Template ID to clone as a new device */
   cloneId?: string;
+  /** Pending submission ID — preload the form from the submission's data (edit-pending mode) */
+  pendingSubmissionId?: string;
   /** Called with validated data on submit */
   onSubmit: (data: DeviceFormData) => Promise<void>;
   /** Text for the submit button */
@@ -55,7 +57,7 @@ interface DeviceFormProps {
   footer?: ReactNode;
 }
 
-export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
+export default function DeviceForm({ id, draftId, cloneId, pendingSubmissionId, onSubmit, submitLabel = "Save", cancelHref, extraFields, footer }: DeviceFormProps) {
   const [label, setLabel] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [category, setCategory] = useState("");
@@ -79,7 +81,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
   const [weightKg, setWeightKg] = useState<string>("");
   const [isVenueProvided, setIsVenueProvided] = useState(false);
   const [submitterNote, setSubmitterNote] = useState("");
-  const [loading, setLoading] = useState(!!(id || cloneId));
+  const [loading, setLoading] = useState(!!(id || cloneId || pendingSubmissionId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -138,7 +140,46 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
   }, [id]);
 
   useEffect(() => {
-    if (!cloneId || id) return; // don't clone if editing an existing template
+    if (!pendingSubmissionId) return;
+    categoryAutoRef.current = false;
+    fetchSubmission(pendingSubmissionId)
+      .then((s) => {
+        const t = s.data;
+        setLabel(t.label ?? "");
+        setDeviceType(t.deviceType ?? "");
+        setCategory(t.category ?? "");
+        setManufacturer(t.manufacturer ?? "");
+        const m = t.modelNumber;
+        setModelNumber(m && m !== "undefined" ? m : "");
+        setReferenceUrl(t.referenceUrl ?? "");
+        setSearchTerms(t.searchTerms ?? []);
+        setColor(t.color ?? "");
+        setPorts(t.ports ?? []);
+        setSlots(t.slots ?? []);
+        setSlotFamily(t.slotFamily ?? "");
+        setPowerDrawW(t.powerDrawW != null ? String(t.powerDrawW) : "");
+        setPowerCapacityW(t.powerCapacityW != null ? String(t.powerCapacityW) : "");
+        setVoltage(t.voltage ?? "");
+        const thermal = (t as DeviceTemplate & { thermalBtuh?: number }).thermalBtuh;
+        setThermalBtuh(thermal != null ? String(thermal) : "");
+        setPoeBudgetW(t.poeBudgetW != null ? String(t.poeBudgetW) : "");
+        setPoeDrawW(t.poeDrawW != null ? String(t.poeDrawW) : "");
+        setHeightMm(t.heightMm != null ? String(t.heightMm) : "");
+        setWidthMm(t.widthMm != null ? String(t.widthMm) : "");
+        setDepthMm(t.depthMm != null ? String(t.depthMm) : "");
+        setWeightKg(t.weightKg != null ? String(t.weightKg) : "");
+        setIsVenueProvided((t as DeviceTemplate & { isVenueProvided?: boolean }).isVenueProvided ?? false);
+        // Preload submitter note. Strip any auto-prepended "Suggested device type:"
+        // line — it gets re-added on submit if customDeviceType is toggled.
+        const note = (s.submitterNote ?? "").replace(/^Suggested device type:.*\n?/m, "").trim();
+        setSubmitterNote(note);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [pendingSubmissionId]);
+
+  useEffect(() => {
+    if (!cloneId || id || pendingSubmissionId) return; // don't clone if editing an existing template or pending submission
     categoryAutoRef.current = false;
     fetchTemplate(cloneId)
       .then((t) => {
@@ -171,7 +212,7 @@ export default function DeviceForm({ id, draftId, cloneId, onSubmit, submitLabel
   }, [cloneId, id]);
 
   useEffect(() => {
-    if (!draftId || id) return; // don't load draft if editing an existing template
+    if (!draftId || id || pendingSubmissionId) return; // don't load draft if editing an existing template or pending submission
     setLoading(true);
     fetchDraft(draftId)
       .then((t: Record<string, unknown>) => {

@@ -18,7 +18,7 @@ import UserMenu from "./components/UserMenu";
 import { navigateTo, linkClick } from "./navigate";
 import { useTheme } from "./hooks/useTheme";
 
-function parseRoute(): { page: string; id?: string; draft?: string; clone?: string; auth?: string } {
+function parseRoute(): { page: string; id?: string; pendingId?: string; draft?: string; clone?: string; auth?: string } {
   const path = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const draft = params.get("draft") || undefined;
@@ -33,6 +33,7 @@ function parseRoute(): { page: string; id?: string; draft?: string; clone?: stri
   if (path === "/admin") return { page: "admin-activity", auth };
   if (path.startsWith("/device/")) return { page: "device", id: path.slice(8), auth };
   if (path === "/login") return { page: "login", auth };
+  if (path.startsWith("/submit/pending/")) return { page: "submit", pendingId: path.slice(16), auth };
   if (path.startsWith("/submit/")) return { page: "submit", id: path.slice(8), draft, clone, auth };
   if (path === "/submit") return { page: "submit", draft, clone, auth };
   if (path === "/my-submissions") return { page: "my-submissions", auth };
@@ -242,7 +243,7 @@ export default function App() {
         {route.page === "device" && route.id && <DeviceDetailPage id={route.id} currentUser={user} />}
         {route.page === "login" && <LoginPage />}
         {route.page === "submit" && (
-          authLoading ? null : user ? <SubmitPage id={route.id} draftId={route.draft} cloneId={route.clone} /> : <LoginRedirect />
+          authLoading ? null : user ? <SubmitPage id={route.id} draftId={route.draft} cloneId={route.clone} pendingSubmissionId={route.pendingId} /> : <LoginRedirect />
         )}
         {route.page === "my-submissions" && (
           authLoading ? null : user ? <MySubmissionsPage /> : <LoginRedirect />

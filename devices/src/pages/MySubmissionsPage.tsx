@@ -52,11 +52,22 @@ export default function MySubmissionsPage() {
                     Submitted {new Date(s.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                {s.templateId && (
-                  <a href={`/device/${s.templateId}`} onClick={linkClick} className="text-xs text-blue-600 hover:text-blue-800">
-                    View original
-                  </a>
-                )}
+                <div className="flex items-center gap-3 shrink-0">
+                  {s.status === "pending" && (
+                    <a
+                      href={`/submit/pending/${s.id}`}
+                      onClick={linkClick}
+                      className="text-xs px-2.5 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    >
+                      Edit
+                    </a>
+                  )}
+                  {s.templateId && (
+                    <a href={`/device/${s.templateId}`} onClick={linkClick} className="text-xs text-blue-600 hover:text-blue-800">
+                      View original
+                    </a>
+                  )}
+                </div>
               </div>
               {s.status === "rejected" && s.reviewerNote && (
                 <div className="mt-3 p-2 rounded bg-red-50 text-sm text-red-700">

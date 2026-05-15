@@ -848,6 +848,92 @@ app.get("/submissions/:id", async (c) => {
   return c.json(formatSubmission(submission));
 });
 
+// Owner-only edit of a pending submission. Lets contributors fix typos / add
+// info while their submission still sits in the review queue, instead of
+// waiting for approval/rejection and resubmitting.
+app.patch("/submissions/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  if (user.banned) return c.json({ error: "Account suspended" }, 403);
+
+  const id = c.req.param("id");
+  const db = c.env.easyschematic_db;
+
+  const row = await db.prepare("SELECT * FROM submissions WHERE id = ?").bind(id).first();
+  if (!row) return c.json({ error: "Submission not found" }, 404);
+
+  const submission = row as unknown as SubmissionRow;
+  if (submission.user_id !== user.id) return c.json({ error: "Not found" }, 404);
+  if (submission.status !== "pending") {
+    return c.json({ error: "Only pending submissions can be edited" }, 409);
+  }
+
+  const body = await c.req.json<{ data?: unknown; submitterNote?: string }>();
+
+  const validation = validateTemplate(body.data);
+  if (!validation.ok) return c.json({ error: validation.error }, 400);
+  const tpl = validation.data;
+
+  // Re-run duplicate detection for create actions if mfr/model is now set.
+  // Skip the current submission itself when checking pending dupes.
+  if (submission.action === "create" && tpl.manufacturer && tpl.modelNumber) {
+    const mfr = tpl.manufacturer.trim().toLowerCase();
+    const model = tpl.modelNumber.trim().toLowerCase();
+
+    const existingTemplate = await db
+      .prepare("SELECT id, label FROM templates WHERE lower(manufacturer) = ? AND lower(model_number) = ? LIMIT 1")
+      .bind(mfr, model)
+      .first<{ id: string; label: string }>();
+    if (existingTemplate) {
+      return c.json(
+        {
+          error: `A template for ${tpl.manufacturer} ${tpl.modelNumber} already exists in the community library. Submit an edit to that template instead.`,
+          existingTemplateId: existingTemplate.id,
+        },
+        409,
+      );
+    }
+
+    const pendingDup = await db
+      .prepare(
+        `SELECT s.id FROM submissions s
+         WHERE s.status = 'pending'
+           AND s.action = 'create'
+           AND s.id != ?
+           AND lower(json_extract(s.data, '$.manufacturer')) = ?
+           AND lower(json_extract(s.data, '$.modelNumber')) = ?
+         LIMIT 1`,
+      )
+      .bind(id, mfr, model)
+      .first<{ id: string }>();
+    if (pendingDup) {
+      return c.json(
+        {
+          error: `A pending submission for ${tpl.manufacturer} ${tpl.modelNumber} is already in the review queue.`,
+          existingSubmissionId: pendingDup.id,
+        },
+        409,
+      );
+    }
+  }
+
+  const submitterNote = body.submitterNote && typeof body.submitterNote === "string"
+    ? body.submitterNote.trim().slice(0, 1000) || null
+    : null;
+
+  // Clear any moderator claim — their pre-edit review is now stale, so the
+  // submission should look fresh in the queue.
+  await db
+    .prepare(
+      "UPDATE submissions SET data = ?, submitter_note = ?, claimed_by = NULL, claimed_at = NULL WHERE id = ?",
+    )
+    .bind(JSON.stringify(body.data), submitterNote, id)
+    .run();
+
+  const updated = await db.prepare("SELECT * FROM submissions WHERE id = ?").bind(id).first();
+  return c.json(formatSubmission(updated as unknown as SubmissionRow), 200, NO_CACHE_HEADERS);
+});
+
 // Soft-claim a submission while reviewing (advisory, not blocking)
 app.post("/submissions/:id/claim", async (c) => {
   const auth = requireModeratorOrToken(c);
