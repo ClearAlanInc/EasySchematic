@@ -1151,7 +1151,7 @@ function SchematicCanvas() {
   }, [setPendingUndoSnapshot]);
 
   const onNodeDrag = useCallback(
-    (_event: React.MouseEvent, draggedNode: Node) => {
+    (_event: React.MouseEvent, draggedNode: Node, draggedNodes: Node[]) => {
       const state = useSchematicStore.getState();
 
       // Waypoint nodes are simple: snap to grid, no overlap or reparent logic.
@@ -1173,12 +1173,29 @@ function SchematicCanvas() {
       });
       setSnapGuides(snap.guides);
 
-      // For stub labels, computeSnap already prefers port-snap and falls back to
-      // center-grid-snap internally, so we use its result verbatim.
+      // Group drag (#134): snap the anchor and apply that delta uniformly to
+      // every dragged node so relative spacing is preserved. Without this each
+      // node snaps independently and the group deforms (some land on ports,
+      // others on grid, cascading across draggedNodes).
+      const isGroupDrag = draggedNodes && draggedNodes.length > 1;
+      if (isGroupDrag) {
+        const dx = snap.x - draggedNode.position.x;
+        const dy = snap.y - draggedNode.position.y;
+        if (dx === 0 && dy === 0) return;
+        const draggedIds = new Set(draggedNodes.map((n) => n.id));
+        const updated = state.nodes.map((n) => {
+          if (!draggedIds.has(n.id)) return n;
+          // Skip nodes whose parent is also being dragged — they move via parent
+          if (n.parentId && draggedIds.has(n.parentId)) return n;
+          return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } };
+        });
+        useSchematicStore.setState({ nodes: updated as SchematicNode[] });
+        return;
+      }
+
+      // Single-node drag: existing snap + overlap-detect path.
       const snappedX = snap.x;
       const snappedY = snap.y;
-
-      // Apply snapped position if it differs
       if (snappedX !== draggedNode.position.x || snappedY !== draggedNode.position.y) {
         const snappedNode = { ...draggedNode, position: { x: snappedX, y: snappedY } } as SchematicNode;
         const updated = state.nodes.map((n) =>
@@ -1202,7 +1219,7 @@ function SchematicCanvas() {
   );
 
   const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, draggedNode: Node) => {
+    (_event: React.MouseEvent, draggedNode: Node, draggedNodes: Node[]) => {
       setSnapGuides([]);
 
       const state = useSchematicStore.getState();
@@ -1225,6 +1242,58 @@ function SchematicCanvas() {
         } else {
           useSchematicStore.setState({ isDragging: false, overlapNodeId: null });
         }
+        flushPendingSnapshot();
+        return;
+      }
+
+      // Group drag (#134): snap the anchor only and apply that delta uniformly
+      // to every dragged node so the group lands aligned without losing its
+      // relative spacing. enforceMinSpacing is skipped — it's a per-node
+      // correction that would re-introduce the cascade we're avoiding here.
+      const isGroupDrag = draggedNodes && draggedNodes.length > 1;
+      if (isGroupDrag) {
+        const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+          useShortNames: state.useShortNames,
+          wrapDeviceLabels: state.wrapDeviceLabels,
+        });
+        const dx = snap.x - draggedNode.position.x;
+        const dy = snap.y - draggedNode.position.y;
+        const draggedIds = new Set(draggedNodes.map((n) => n.id));
+        let updatedNodes: SchematicNode[] = state.nodes;
+        if (dx !== 0 || dy !== 0) {
+          updatedNodes = state.nodes.map((n) => {
+            if (!draggedIds.has(n.id)) return n;
+            if (n.parentId && draggedIds.has(n.parentId)) return n;
+            return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } };
+          }) as SchematicNode[];
+          useSchematicStore.setState({ nodes: updatedNodes, isDragging: false, overlapNodeId: null });
+          useSchematicStore.getState().saveToLocalStorage();
+        } else {
+          useSchematicStore.setState({ isDragging: false, overlapNodeId: null });
+        }
+
+        // Reparent each dragged node against its new absolute position. Skip
+        // nodes whose parent is also being dragged (they move with the parent).
+        const nodeById = new Map(updatedNodes.map((n) => [n.id, n]));
+        let anyRoomMoved = false;
+        for (const dn of draggedNodes) {
+          if (dn.parentId && draggedIds.has(dn.parentId as string)) continue;
+          const node = nodeById.get(dn.id);
+          if (!node) continue;
+          let absX = node.position.x;
+          let absY = node.position.y;
+          let parentId: string | undefined = node.parentId as string | undefined;
+          while (parentId) {
+            const parent = nodeById.get(parentId);
+            if (!parent) break;
+            absX += parent.position.x;
+            absY += parent.position.y;
+            parentId = parent.parentId as string | undefined;
+          }
+          reparentNode(dn.id, { x: absX, y: absY }, { skipUndo: true });
+          if (dn.type === "room") anyRoomMoved = true;
+        }
+        if (anyRoomMoved) reparentAllDevices({ skipUndo: true });
         flushPendingSnapshot();
         return;
       }
