@@ -221,7 +221,7 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
-  const [editingLabel, setEditingLabel] = useState<false | "label" | "multicable">(false);
+  const [editingLabel, setEditingLabel] = useState<false | "label" | "multicable" | "source" | "target">(false);
   const [labelValue, setLabelValue] = useState("");
 
   const setEdgeColor = useCallback((hex: string) => {
@@ -257,10 +257,30 @@ export default function EdgeContextMenu() {
     setEditingLabel("multicable");
   }, [menu]);
 
+  const setSourceEndLabel = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    setLabelValue((edge?.data?.sourceLabel as string) ?? "");
+    setEditingLabel("source");
+  }, [menu]);
+
+  const setTargetEndLabel = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    setLabelValue((edge?.data?.targetLabel as string) ?? "");
+    setEditingLabel("target");
+  }, [menu]);
+
   const commitLabel = useCallback(() => {
     if (!menu) return;
     const store = useSchematicStore.getState();
-    const field = editingLabel === "multicable" ? "multicableLabel" : "label";
+    const field =
+      editingLabel === "multicable" ? "multicableLabel"
+      : editingLabel === "source" ? "sourceLabel"
+      : editingLabel === "target" ? "targetLabel"
+      : "label";
     store.patchEdgeData(menu.edgeId, { [field]: labelValue.trim() || undefined });
     useSchematicStore.setState({ edgeContextMenu: null });
     setEditingLabel(false);
@@ -431,7 +451,10 @@ export default function EdgeContextMenu() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-xs text-gray-500 mb-1">
-          {editingLabel === "multicable" ? "Cable Label" : "Connection Label"}
+          {editingLabel === "multicable" ? "Cable Label"
+            : editingLabel === "source" ? "Source-end Label"
+            : editingLabel === "target" ? "Target-end Label"
+            : "Connection Label"}
         </div>
         <input
           className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
@@ -491,6 +514,8 @@ export default function EdgeContextMenu() {
       )}
       <div className="h-px bg-gray-200 my-1" />
       <MenuItem label="Set Label..." onClick={setConnectionLabel} />
+      <MenuItem label="Set Source-end Label..." onClick={setSourceEndLabel} />
+      <MenuItem label="Set Target-end Label..." onClick={setTargetEndLabel} />
       {isTrunkEdge && (
         <MenuItem label="Set Cable Label..." onClick={setCableLabel} />
       )}

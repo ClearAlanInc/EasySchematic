@@ -102,6 +102,15 @@ function OffsetEdgeComponent({
     const edge = s.edges.find((e) => e.id === id);
     return (edge?.data?.label as string) ?? "";
   });
+  // Per-end label overrides (#114)
+  const edgeSourceLabel = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    return (edge?.data?.sourceLabel as string) ?? "";
+  });
+  const edgeTargetLabel = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    return (edge?.data?.targetLabel as string) ?? "";
+  });
 
   // Cable ID label from pre-computed map
   const showCableIdLabels = useSchematicStore((s) => s.showCableIdLabels);
@@ -462,7 +471,11 @@ function OffsetEdgeComponent({
 
   // Determine which labels to show
   const showCableId = showCableIdLabels && !hideCableId && labelText && routeStr;
-  const showCustom = showCustomLabels && !hideCustomLabel && edgeLabel && routeStr;
+  // Resolve per-end text: per-end override → shared label → empty
+  const srcEndpointText = edgeSourceLabel || edgeLabel;
+  const tgtEndpointText = edgeTargetLabel || edgeLabel;
+  const hasAnyCustomText = !!(edgeLabel || edgeSourceLabel || edgeTargetLabel);
+  const showCustom = showCustomLabels && !hideCustomLabel && hasAnyCustomText && routeStr;
 
   // Calculate custom label endpoint offset (past cable ID badge if both visible at endpoints)
   const cableIdBadgeWidth = labelText ? estimateBadgeWidth(labelText, 9, 3) : 0;
@@ -502,20 +515,23 @@ function OffsetEdgeComponent({
   const customLabels = showCustom ? (
     customLabelMode === "endpoint" ? (
       <>
-        {makeEndpointLabel(true, customEndpointOffset, edgeLabel, customLabelStyle, "clbl-src",
+        {srcEndpointText && makeEndpointLabel(true, customEndpointOffset, srcEndpointText, customLabelStyle, "clbl-src",
           sourceX, sourceY, srcDx, srcDy)}
-        {makeEndpointLabel(false, customEndpointOffset, edgeLabel, customLabelStyle, "clbl-tgt",
+        {tgtEndpointText && makeEndpointLabel(false, customEndpointOffset, tgtEndpointText, customLabelStyle, "clbl-tgt",
           tgtLabelX, tgtLabelY, -tgtDx, -tgtDy)}
       </>
     ) : (
-      <div
-        style={{
-          ...customLabelStyle,
-          transform: `translate(-50%, -50%) translate(${clblMidPt.x}px, ${clblMidPt.y}px)`,
-        }}
-      >
-        {edgeLabel}
-      </div>
+      // Midpoint mode uses only the shared label. Per-end labels don't make sense at midpoint.
+      edgeLabel ? (
+        <div
+          style={{
+            ...customLabelStyle,
+            transform: `translate(-50%, -50%) translate(${clblMidPt.x}px, ${clblMidPt.y}px)`,
+          }}
+        >
+          {edgeLabel}
+        </div>
+      ) : null
     )
   ) : null;
 

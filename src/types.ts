@@ -400,6 +400,10 @@ export interface ConnectionData {
   multicableLabel?: string;
   /** User-defined label displayed on the connection line (#5) */
   label?: string;
+  /** Per-end label at the source side. Overrides `label` at the source endpoint. (#114) */
+  sourceLabel?: string;
+  /** Per-end label at the target side. Overrides `label` at the target endpoint. (#114) */
+  targetLabel?: string;
   /** When set, this edge is one half of a logical cable that has been split into two
    *  stub-leg edges connected via stub-label nodes. Both halves share the same id. */
   linkedConnectionId?: string;
