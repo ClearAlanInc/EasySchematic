@@ -86,6 +86,8 @@ If possible, export your schematic (File > Save as JSON) and attach it — this 
 - **Schema**: JSON files use versioned schemas with forward migrations in `src/migrations.ts`. Bumping the schema version requires a migration.
 - **Styling**: Tailwind CSS v4
 
+For a browsable reference of types, functions, and modules, see the **[Developer Reference](https://docs.easyschematic.live/dev/)** (auto-generated from the TypeScript source via TypeDoc). The curated public surface is defined in `src/devApi.ts` — anything re-exported there shows up in the reference. Regenerate locally with `npm run build:dev-reference` from the repo root.
+
 #### Terminology
 
 In code you'll see React Flow terms (`node`, `edge`, `handle`), but user-facing text and documentation should always use AV terminology:

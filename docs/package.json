@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "build-search-index": "node scripts/build-search-index.mjs",
-    "prebuild": "node scripts/build-search-index.mjs",
+    "build-dev-reference": "cd .. && npm run build:dev-reference",
+    "prebuild": "node scripts/build-search-index.mjs && npm run build-dev-reference",
     "predev": "node scripts/build-search-index.mjs"
   },
   "dependencies": {

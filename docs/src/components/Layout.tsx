@@ -84,6 +84,12 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           Device Database &rarr;
         </a>
         <a
+          href="/dev/"
+          className="block text-sm text-blue-600 hover:text-blue-800"
+        >
+          Developer Reference &rarr;
+        </a>
+        <a
           href="mailto:support@easyschematic.live"
           className="block text-sm text-blue-600 hover:text-blue-800"
         >

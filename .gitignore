@@ -46,6 +46,9 @@ api/seed/prod-templates.sql
 src/deviceLibrary.fallback.json
 docs/src/searchIndex.json
 
+# Generated developer API reference (TypeDoc → /dev/ on the docs site)
+docs/public/dev/
+
 # DB backups
 api/backup-*.sql
 backups/
