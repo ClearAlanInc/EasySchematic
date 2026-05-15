@@ -4,7 +4,8 @@
 //   - onNodeDrag/onNodeDragStop (App.tsx) to center-snap the box on the 20px grid
 //   - StubLabelNode.tsx re-exports the constants for cohesion
 
-export const STUB_GAP = 40;       // gap between device port and the stub box edge facing it
+export const STUB_GAP = 64;       // gap between device port and the stub box edge facing it
+                                  // (large enough for a midpoint cable-ID badge to fit between)
 export const STUB_W_EST = 80;     // estimated box width before React Flow has measured the DOM
 export const STUB_H_EST = 14;     // estimated box height (9px line-height + 1.5×2 padding + 1×2 border)
 

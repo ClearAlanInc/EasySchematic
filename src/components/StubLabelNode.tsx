@@ -137,13 +137,13 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const device = state.nodes.find((n) => n.id === deviceId);
       if (!device || device.type !== "device") return;
 
-      const baseHandleId = (deviceHandleId ?? "").replace(/-(in|out|rear|front)$/, "");
       const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));
       const portPositions = getPortAbsolutePositions(device, nodeMap, {
         useShortNames: state.useShortNames,
         wrapDeviceLabels: state.wrapDeviceLabels,
       });
-      const portPos = portPositions.find((p) => p.portId === baseHandleId);
+      // Match by full handle id so bidir / passthrough resolve to the right row+side.
+      const portPos = portPositions.find((p) => p.handleId === deviceHandleId);
       if (!portPos) return;
 
       const side = portPos.side;
@@ -186,23 +186,28 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       // Always stamp data.placed = true so the next mount skips this work entirely,
       // even when no correction was needed. That's what protects the user's drag
       // position across page refresh.
-      const newNodes: SchematicNode[] = state.nodes.map((n) => {
-        if (n.id !== id || n.type !== "stub-label") return n;
-        const stamped: StubLabelData = { ...n.data, placed: true };
-        return posChanges
-          ? { ...n, position: { x: newRelX, y: newRelY }, data: stamped }
-          : { ...n, data: stamped };
-      });
-      const newEdges = handleNeedsFix
-        ? state.edges.map((e) => {
-            if (e.id !== ownEdge.id) return e;
-            return data.side === "source"
-              ? { ...e, targetHandle: desiredHandle }
-              : { ...e, sourceHandle: desiredHandle };
-          })
-        : state.edges;
-
-      useSchematicStore.setState({ nodes: newNodes, edges: newEdges });
+      //
+      // Functional setState — when multiple stub effects fire in the same frame
+      // (e.g. on a freshly opened schematic), object-form setState reads `state`
+      // captured at the top of this rAF tick and would clobber updates landed
+      // between then and now.
+      useSchematicStore.setState((prev) => ({
+        nodes: prev.nodes.map((n) => {
+          if (n.id !== id || n.type !== "stub-label") return n;
+          const stamped: StubLabelData = { ...n.data, placed: true };
+          return posChanges
+            ? { ...n, position: { x: newRelX, y: newRelY }, data: stamped }
+            : { ...n, data: stamped };
+        }),
+        edges: handleNeedsFix
+          ? prev.edges.map((e) => {
+              if (e.id !== ownEdge.id) return e;
+              return data.side === "source"
+                ? { ...e, targetHandle: desiredHandle }
+                : { ...e, sourceHandle: desiredHandle };
+            })
+          : prev.edges,
+      }));
       useSchematicStore.getState().saveToLocalStorage();
     };
     raf = requestAnimationFrame(tryPlace);

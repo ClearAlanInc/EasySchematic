@@ -474,9 +474,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
            (min 40) so the first port below stays on the pathfinding grid. */}
       {renderHeaderBand(headerAuxRows)}
 
-      {/* Port area — 9px top padding aligns handle centers to the 20px grid.
-           Math: 1px (border) + headerBand(20-mult) + 9px (pad) + 10px (half row) ≡ 0 mod 20. */}
-      <div className="pt-[9px] pb-[9px]">
+      {/* Port area — 8px top padding lands handle centers on the 20px grid:
+           1px (outer top border) + headerBand(20-mult) + 1px (header border-b)
+           + 8px (pt) + 10px (half row) ≡ 0 mod 20.
+           The header's `border-b` adds 1px between the band and the port column,
+           which the `pt` value (8 not 9) compensates for. */}
+      <div className="pt-[8px] pb-[9px]">
       {/* Input/Output Ports — two independent columns */}
       {(leftPorts.length > 0 || rightPorts.length > 0) && (
         hasSections ? (

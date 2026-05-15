@@ -13,8 +13,10 @@
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
 import { defaultStubPlacement } from "./stubPlacement";
+import { getPortAbsolutePositions } from "./snapUtils";
+import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 36;
+export const CURRENT_SCHEMA_VERSION = 38;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -409,6 +411,37 @@ const migrations: Record<number, Migration> = {
     data.version = 36;
     return data;
   },
+  36: (data) => {
+    // v36 → v37: shift stub-label position.y +1 to match the (briefly-shipped)
+    // "port Y = device.y + 1 + headerBand + 1 + 9 + …" rendering where ports
+    // lived at gridY+1. v38 reverts the rendering (DeviceNode `pt-9` → `pt-8`)
+    // so ports are back on gridY; the v37 → v38 migration below cancels this
+    // shift. Kept here so v36 saves load through both steps with zero net shift.
+    if (Array.isArray(data.nodes)) {
+      for (const n of data.nodes) {
+        if (n?.type === "stub-label" && n.position && typeof n.position.y === "number") {
+          n.position.y = n.position.y + 1;
+        }
+      }
+    }
+    data.version = 37;
+    return data;
+  },
+  37: (data) => {
+    // v37 → v38: undo the v36 → v37 shift now that pt-8 in DeviceNode puts ports
+    // exactly on gridY again. Two-step round-trip for v36 saves nets out to zero;
+    // v37 saves (auto-saved by anyone running the v37 build with shifted stubs)
+    // get the correction here so reload heals them.
+    if (Array.isArray(data.nodes)) {
+      for (const n of data.nodes) {
+        if (n?.type === "stub-label" && n.position && typeof n.position.y === "number") {
+          n.position.y = n.position.y - 1;
+        }
+      }
+    }
+    data.version = 38;
+    return data;
+  },
 
   33: (data) => {
     // v33 → v34: stamp placed=true on every existing stub-label node. The auto-place
@@ -566,32 +599,37 @@ function migrateStubsToNodes(data: any): void {
     return { x, y };
   };
 
-  // Find a port on a device by handle id, return { side, indexInSide }.
-  const findPort = (deviceNode: any, handleId: string | undefined) => {
-    if (!deviceNode || !handleId) return null;
-    const ports = deviceNode.data?.ports ?? [];
-    // Strip "-in"/"-out" suffix used for bidirectional handles
-    const baseId = handleId.replace(/-(in|out|rear|front)$/, "");
-    const idx = ports.findIndex((p: any) => p.id === baseId);
-    if (idx < 0) return null;
-    const port = ports[idx];
-    // Side defaults: input on left, output on right (flipped reverses)
-    let side: "left" | "right";
-    if (port.direction === "input") side = port.flipped ? "right" : "left";
-    else if (port.direction === "output") side = port.flipped ? "left" : "right";
-    else side = port.flipped ? "right" : "left";
-    return { side, port };
-  };
+  // nodeMap typed as SchematicNode — the v30 device shape is structurally
+  // compatible with what getPortAbsolutePositions reads (data.ports / data.slots
+  // / data.deviceType / data.auxiliaryData all predate v31).
+  const schematicNodeMap = nodeMap as unknown as Map<string, SchematicNode>;
 
-  // Approximate handle absolute position. Devices are 180px wide; rough estimate is fine
-  // for picking which side of the stub label faces the device — React Flow re-measures on render.
-  const approxHandlePos = (deviceNode: any, handleId: string | undefined) => {
+  // Resolve a handle's absolute position by mirroring DeviceNode's render layout.
+  // Falls back to a device-center approximation if the handle id is unknown.
+  const handlePosFor = (
+    deviceNode: any,
+    handleId: string | undefined,
+  ): { x: number; y: number; side: "left" | "right" } => {
+    const positions = getPortAbsolutePositions(
+      deviceNode as SchematicNode,
+      schematicNodeMap,
+    );
+    const match = positions.find((p) => p.handleId === handleId);
+    if (match) return { x: match.absX, y: match.absY, side: match.side };
+    // Fallback for malformed handle ids.
     const dPos = absPos(deviceNode);
-    const portInfo = findPort(deviceNode, handleId);
     const w = deviceNode.measured?.width ?? deviceNode.width ?? 180;
     const h = deviceNode.measured?.height ?? deviceNode.height ?? 60;
-    const x = portInfo?.side === "right" ? dPos.x + w : dPos.x;
-    return { x, y: dPos.y + h / 2 };
+    const ports = deviceNode.data?.ports ?? [];
+    const baseId = (handleId ?? "").replace(/-(in|out|rear|front)$/, "");
+    const port = ports.find((p: any) => p.id === baseId);
+    let side: "left" | "right" = "right";
+    if (port) {
+      if (port.direction === "input") side = port.flipped ? "right" : "left";
+      else if (port.direction === "output") side = port.flipped ? "left" : "right";
+      else side = port.flipped ? "right" : "left";
+    }
+    return { x: side === "right" ? dPos.x + w : dPos.x, y: dPos.y + h / 2, side };
   };
 
   // Stubs always connect via left or right — top/bottom would produce visually awkward
@@ -630,10 +668,10 @@ function migrateStubsToNodes(data: any): void {
         ? crypto.randomUUID()
         : `link-${edge.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const srcHandlePos = approxHandlePos(srcDevice, edge.sourceHandle);
-    const tgtHandlePos = approxHandlePos(tgtDevice, edge.targetHandle);
-    const srcPortInfo = findPort(srcDevice, edge.sourceHandle);
-    const tgtPortInfo = findPort(tgtDevice, edge.targetHandle);
+    const srcHandle = handlePosFor(srcDevice, edge.sourceHandle);
+    const tgtHandle = handlePosFor(tgtDevice, edge.targetHandle);
+    const srcHandlePos = { x: srcHandle.x, y: srcHandle.y };
+    const tgtHandlePos = { x: tgtHandle.x, y: tgtHandle.y };
 
     let srcStubAbs: { x: number; y: number };
     let srcSide: "t" | "r" | "b" | "l";
@@ -642,7 +680,7 @@ function migrateStubsToNodes(data: any): void {
       srcStubAbs = { x: edge.data.stubSourceEnd.x, y: edge.data.stubSourceEnd.y };
       srcSide = pickStubSide(srcStubAbs, srcHandlePos);
     } else {
-      const place = defaultStubPlacement(srcHandlePos, srcPortInfo?.side ?? "right");
+      const place = defaultStubPlacement(srcHandlePos, srcHandle.side);
       srcStubAbs = place.pos;
       srcSide = place.handle;
     }
@@ -653,7 +691,7 @@ function migrateStubsToNodes(data: any): void {
       tgtStubAbs = { x: edge.data.stubTargetEnd.x, y: edge.data.stubTargetEnd.y };
       tgtSide = pickStubSide(tgtStubAbs, tgtHandlePos);
     } else {
-      const place = defaultStubPlacement(tgtHandlePos, tgtPortInfo?.side ?? "left");
+      const place = defaultStubPlacement(tgtHandlePos, tgtHandle.side);
       tgtStubAbs = place.pos;
       tgtSide = place.handle;
     }
@@ -670,26 +708,31 @@ function migrateStubsToNodes(data: any): void {
     const srcStubId = newStubId(edge.id, "src");
     const tgtStubId = newStubId(edge.id, "tgt");
 
-    const stubData = {
+    const baseStubData = {
       signalType: edge.data.signalType,
       linkedConnectionId,
       showPort: edge.data.stubLabelShowPort,
       pageMode: edge.data.stubLabelPageMode,
     };
+    // Stamp placed:true only when honoring a user-saved end position. For
+    // default-placed stubs, leave placed undefined so StubLabelNode's tryPlace
+    // can correct X-overlap after the real label width is measured.
+    const srcPlaced = !!edge.data.stubSourceEnd;
+    const tgtPlaced = !!edge.data.stubTargetEnd;
 
     newNodes.push({
       id: srcStubId,
       type: "stub-label",
       position: { x: srcStubAbs.x - srcParentAbs.x, y: srcStubAbs.y - srcParentAbs.y },
       ...(srcParentId ? { parentId: srcParentId } : {}),
-      data: { ...stubData, side: "source" },
+      data: { ...baseStubData, side: "source", ...(srcPlaced ? { placed: true } : {}) },
     });
     newNodes.push({
       id: tgtStubId,
       type: "stub-label",
       position: { x: tgtStubAbs.x - tgtParentAbs.x, y: tgtStubAbs.y - tgtParentAbs.y },
       ...(tgtParentId ? { parentId: tgtParentId } : {}),
-      data: { ...stubData, side: "target" },
+      data: { ...baseStubData, side: "target", ...(tgtPlaced ? { placed: true } : {}) },
     });
 
     // Carry-over edge data, dropping the stub-specific fields and keeping cable ID

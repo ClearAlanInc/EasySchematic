@@ -1,7 +1,7 @@
 import type { DeviceData, SchematicNode } from "./types";
 import { portSide } from "./types";
 
-import { GRID_SIZE } from "./store";
+import { GRID_SIZE } from "./gridConstants";
 import { totalAuxHeight, headerBandHeight, HEADER_LABEL_ZONE_PX, HEADER_LABEL_ZONE_2_PX } from "./auxiliaryData";
 import { resolveDeviceLabel } from "./displayName";
 import { STUB_GAP as STUB_PORT_GAP, STUB_W_EST, STUB_H_EST } from "./stubPlacement";
@@ -54,7 +54,9 @@ function estimateDeviceHeight(node: SchematicNode): number {
   const right = ports.filter((p) => p.direction !== "bidirectional" && (p.direction === "output" ? !p.flipped : !!p.flipped)).length;
   const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
   const portRows = Math.max(left, right) + bidirs;
-  // Base: 1px border + 40px header band (min) + 9px pad + rows×20 + 9px pad + 1px border = 60 + rows×20.
+  // Base: 1px top border + 40px header band (min) + 1px header border-b
+  //     + 8px port-area pt + rows×20 + 9px port-area pb + 1px bottom border
+  //     = 60 + rows×20.
   // totalAuxHeight adds (a) header band surplus above the 40-px baseline and (b) footer block height.
   // Per-instance wrapLabel override is honored here; schematic-wide default is not threaded — React Flow's
   // measured height supersedes this estimate after the first render.
@@ -202,6 +204,9 @@ function insertTopKWithNode(
 }
 
 export interface PortPosition {
+  /** Full React Flow handle id (e.g. "p1", "p1-in", "p1-rear"). */
+  handleId: string;
+  /** Base port id (the `id` field on the Port object). */
   portId: string;
   side: "left" | "right";
   /** Absolute world-space X (the device edge the port lives on). */
@@ -211,10 +216,24 @@ export interface PortPosition {
 }
 
 /**
- * Absolute world-space positions of every port on a device. Mirrors the math
- * in DeviceNode's render: 1px border + headerBand + 9px pad + portIdx*20 + 10px
- * (half row), with portIdx counted within each side. Port handles already sit
- * on the 20px grid when the device does.
+ * Absolute world-space positions of every connectable handle on a device.
+ *
+ * Must mirror DeviceNode's render order — otherwise stub labels (which depend
+ * on this for their port-Y alignment) land on the wrong row. Render layout:
+ *
+ *   [header band]
+ *   [port area: 9px top pad]
+ *     [L/R column block]
+ *       - sectioned: independent leftItems / rightItems columns
+ *       - non-sectioned: paired rows
+ *       - patch panels always prepend "Rear" (left) / "Front" (right) sections
+ *     [empty expansion slot rows]
+ *     [passthrough block: 1 header row + passthrough items]
+ *     [bidirectional block: bidirItems]
+ *   [9px bottom pad + footer aux]
+ *
+ * Every row is 20px (h-5). Bidirectional and passthrough ports expose two
+ * handles each (-in/-out, -rear/-front) on opposite sides of the same row.
  */
 export function getPortAbsolutePositions(
   device: SchematicNode,
@@ -227,17 +246,173 @@ export function getPortAbsolutePositions(
   const resolved = resolveDeviceLabel(dd, displayDefaults);
   const labelZone = resolved.wrap ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
   const headerBand = headerBandHeight(dd.auxiliaryData, labelZone);
-  const deviceAbs = absoluteNodePos(device, nodeMap);
-  const deviceW = (device.measured?.width as number | undefined) ?? 180;
-  const sideIdx: Record<"left" | "right", number> = { left: 0, right: 0 };
+  // Round to integer pixels — absoluteNodePos walks the parent chain summing
+  // positions, and any sub-pixel ancestor (older saves, room dragged to non-
+  // integer Y) propagates through everything emitted here. The downstream edge
+  // router rounds independently per handle, so a fractional pixel can land
+  // port and stub on adjacent integers and produce a 1-px jog at the endpoint.
+  const rawDeviceAbs = absoluteNodePos(device, nodeMap);
+  const deviceAbs = { x: Math.round(rawDeviceAbs.x), y: Math.round(rawDeviceAbs.y) };
+  const deviceW = Math.round((device.measured?.width as number | undefined) ?? 180);
   const out: PortPosition[] = [];
-  for (const port of ports) {
-    const side = portSide(port);
-    const idx = sideIdx[side]++;
-    const absY = deviceAbs.y + 1 + headerBand + 9 + idx * 20 + 10;
-    const absX = side === "right" ? deviceAbs.x + deviceW : deviceAbs.x;
-    out.push({ portId: port.id, side, absX, absY });
+
+  // Mirror DeviceNode's port partitioning (without the optional visibility
+  // filters — callers that need them can post-filter).
+  const leftPorts: typeof ports = [];
+  const rightPorts: typeof ports = [];
+  const bidirPorts: typeof ports = [];
+  const passthroughPorts: typeof ports = [];
+  for (const p of ports) {
+    if (p.direction === "passthrough") passthroughPorts.push(p);
+    else if (p.direction === "bidirectional") bidirPorts.push(p);
+    else if (portSide(p) === "left") leftPorts.push(p);
+    else rightPorts.push(p);
   }
+
+  const isPatchPanel = dd.deviceType === "patch-panel";
+
+  // Walk a column the way buildColumnItems does, yielding row indices for ports.
+  // Returns the column's total row count and a {portId -> row} map.
+  const walkColumn = (
+    columnPorts: typeof ports,
+    prefixSection: boolean,
+  ): { rows: Map<string, number>; height: number } => {
+    const rowsByPort = new Map<string, number>();
+    let row = prefixSection ? 1 : 0;
+    let lastSection: string | undefined;
+    for (const p of columnPorts) {
+      if (p.section && p.section !== lastSection) {
+        row++;
+        lastSection = p.section;
+      }
+      rowsByPort.set(p.id, row);
+      row++;
+    }
+    return { rows: rowsByPort, height: row };
+  };
+
+  const hasSectionedPorts =
+    leftPorts.some((p) => p.section) || rightPorts.some((p) => p.section);
+  const hasSections = hasSectionedPorts || (isPatchPanel && (leftPorts.length > 0 || rightPorts.length > 0));
+
+  // L/R port block
+  let lrBlockHeight = 0;
+  let leftRowByPort: Map<string, number>;
+  let rightRowByPort: Map<string, number>;
+  if (hasSections) {
+    const left = walkColumn(leftPorts, isPatchPanel && leftPorts.length > 0);
+    const right = walkColumn(rightPorts, isPatchPanel && rightPorts.length > 0);
+    leftRowByPort = left.rows;
+    rightRowByPort = right.rows;
+    lrBlockHeight = Math.max(left.height, right.height);
+  } else {
+    // Non-sectioned paired layout — leftPorts[i] and rightPorts[i] share row i.
+    leftRowByPort = new Map(leftPorts.map((p, i) => [p.id, i] as const));
+    rightRowByPort = new Map(rightPorts.map((p, i) => [p.id, i] as const));
+    lrBlockHeight =
+      (leftPorts.length === 0 && rightPorts.length === 0)
+        ? 0
+        : Math.max(leftPorts.length, rightPorts.length, 1);
+  }
+
+  // Empty-slot rows render between the L/R block and the passthrough block.
+  // Match DeviceNode.tsx: `data.slots.filter((s) => !s.cardTemplateId && !s.hideWhenEmpty)`.
+  const emptySlotsCount = (dd.slots ?? []).filter(
+    (s) => !s.cardTemplateId && !s.hideWhenEmpty,
+  ).length;
+  let cursor = lrBlockHeight + emptySlotsCount;
+
+  // Y of a port row's vertical center. Layers from device top:
+  //   1px top border + headerBand + 1px header border-b + 8px port-area pt
+  // For headerBand a 20-multiple, the row center lands on `device.y + 20k`,
+  // i.e. exactly on the 20-px routing grid. (The `pt-8` in DeviceNode.tsx is
+  // intentional — it compensates for the header band's `border-b` so ports
+  // remain grid-aligned; using `pt-9` would push every row off-grid by 1px.)
+  const PORT_AREA_TOP = 1 + headerBand + 1 + 8;
+  const rowCenterY = (row: number) => deviceAbs.y + PORT_AREA_TOP + row * 20 + 10;
+
+  // Passthrough block: one "Rear / Front" header row, then passthroughItems.
+  if (passthroughPorts.length > 0) {
+    cursor += 1; // header row
+    let lastSection: string | undefined;
+    for (const p of passthroughPorts) {
+      if (p.section && p.section !== lastSection) {
+        cursor++;
+        lastSection = p.section;
+      }
+      const absY = rowCenterY(cursor);
+      out.push({
+        handleId: `${p.id}-rear`,
+        portId: p.id,
+        side: "left",
+        absX: deviceAbs.x,
+        absY,
+      });
+      out.push({
+        handleId: `${p.id}-front`,
+        portId: p.id,
+        side: "right",
+        absX: deviceAbs.x + deviceW,
+        absY,
+      });
+      cursor++;
+    }
+  }
+
+  // Bidirectional block
+  if (bidirPorts.length > 0) {
+    let lastSection: string | undefined;
+    for (const p of bidirPorts) {
+      if (p.section && p.section !== lastSection) {
+        cursor++;
+        lastSection = p.section;
+      }
+      const absY = rowCenterY(cursor);
+      out.push({
+        handleId: `${p.id}-in`,
+        portId: p.id,
+        side: "left",
+        absX: deviceAbs.x,
+        absY,
+      });
+      out.push({
+        handleId: `${p.id}-out`,
+        portId: p.id,
+        side: "right",
+        absX: deviceAbs.x + deviceW,
+        absY,
+      });
+      cursor++;
+    }
+  }
+
+  // L/R single-handle ports — emit after computing layout for the L/R block,
+  // since their rows live in the maps built above.
+  for (const p of leftPorts) {
+    const row = leftRowByPort.get(p.id);
+    if (row === undefined) continue;
+    const absY = rowCenterY(row);
+    out.push({
+      handleId: p.id,
+      portId: p.id,
+      side: "left",
+      absX: deviceAbs.x,
+      absY,
+    });
+  }
+  for (const p of rightPorts) {
+    const row = rightRowByPort.get(p.id);
+    if (row === undefined) continue;
+    const absY = rowCenterY(row);
+    out.push({
+      handleId: p.id,
+      portId: p.id,
+      side: "right",
+      absX: deviceAbs.x + deviceW,
+      absY,
+    });
+  }
+
   return out;
 }
 
@@ -467,6 +642,13 @@ function computeStubSnap(
   } else {
     absSnappedTop = Math.round(stubAbs.centerY / GRID_SIZE) * GRID_SIZE - stubH / 2;
   }
+
+  // Defensive integer pixel rounding: deltas can be sub-pixel if either side
+  // came from a DOM measurement. The edge router rounds handle positions
+  // independently, so sub-pixel position.y can land port and stub handles on
+  // adjacent integers and produce a 1-px jog at the endpoint.
+  absSnappedLeft = Math.round(absSnappedLeft);
+  absSnappedTop = Math.round(absSnappedTop);
 
   const snappedAbs: Rect = {
     left: absSnappedLeft,

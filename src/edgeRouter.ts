@@ -143,24 +143,32 @@ function getHandlePositions(
   const bounds = internal.internals.handleBounds;
   const result: HandlePos[] = [];
 
-  for (const handle of bounds?.source ?? []) {
-    if (handle.id) {
-      result.push({
-        id: handle.id,
-        absX: Math.round(absX + handle.x + handle.width / 2),
-        absY: Math.round(absY + handle.y + handle.height / 2),
-      });
-    }
-  }
-  for (const handle of bounds?.target ?? []) {
-    if (handle.id) {
-      result.push({
-        id: handle.id,
-        absX: Math.round(absX + handle.x + handle.width / 2),
-        absY: Math.round(absY + handle.y + handle.height / 2),
-      });
-    }
-  }
+  // For stub-label nodes, the connecting handles (l/r) are vertically centered
+  // by design (top: 50% of a 14-px box). Computing from `node.measured.height`
+  // is exact; trusting DOM-measured handle bounds isn't — `getBoundingClientRect`
+  // can return sub-pixel values when CSS percentages mix with odd-pixel sizes
+  // or a parent transform isn't pixel-aligned, and rounding the port side and
+  // stub side independently to adjacent integers produces a 1-px jog at the
+  // edge endpoint. The device side keeps the DOM path so port reorders, ports
+  // with non-standard positioning, etc. still re-measure correctly.
+  const isStubLabel = internal.type === "stub-label";
+  const stubCenterY = isStubLabel
+    ? absY + ((internal.measured?.height as number | undefined) ?? 14) / 2
+    : 0;
+
+  const push = (handle: { id?: string | null; x: number; y: number; width: number; height: number }) => {
+    if (!handle.id) return;
+    const useStubCenter = isStubLabel && (handle.id === "l" || handle.id === "r");
+    const cy = useStubCenter ? stubCenterY : absY + handle.y + handle.height / 2;
+    result.push({
+      id: handle.id,
+      absX: Math.round(absX + handle.x + handle.width / 2),
+      absY: Math.round(cy),
+    });
+  };
+
+  for (const handle of bounds?.source ?? []) push(handle);
+  for (const handle of bounds?.target ?? []) push(handle);
   return result;
 }
 

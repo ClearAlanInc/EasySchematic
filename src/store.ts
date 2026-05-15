@@ -34,6 +34,7 @@ import type {
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
 import { defaultStubPlacement } from "./stubPlacement";
+import { getPortAbsolutePositions } from "./snapUtils";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_SHOW_ROOM, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
 import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
@@ -139,8 +140,12 @@ function resolveLabelCase(v: unknown): LabelCaseMode {
 /** Guard: don't persist empty state before initial load completes */
 let hydrated = false;
 
-/** Grid size in px — must match snapGrid in App.tsx and Background gap */
-export const GRID_SIZE = 20;
+// Re-exported from gridConstants so existing `import { GRID_SIZE } from "./store"`
+// call sites keep working. Utility modules that the store also depends on (e.g.
+// snapUtils) must import directly from "./gridConstants" — pulling it through
+// the store causes a TDZ error on first load because of the cycle.
+export { GRID_SIZE } from "./gridConstants";
+import { GRID_SIZE } from "./gridConstants";
 
 /** Snap all node positions to the grid. Mutates the array in place.
  *  Stub labels are skipped — they store sub-grid Y to center the box on a
@@ -4554,48 +4559,62 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       return { x, y };
     };
 
-    const findPort = (deviceNode: typeof state.nodes[number] | undefined, handleId: string | null | undefined) => {
-      if (!deviceNode || !handleId || deviceNode.type !== "device") return null;
-      const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
-      const baseId = handleId.replace(/-(in|out|rear|front)$/, "");
-      const p = ports.find((pp) => pp.id === baseId);
-      if (!p) return null;
-      const side: "left" | "right" =
-        p.direction === "input" ? (p.flipped ? "right" : "left")
-        : p.direction === "output" ? (p.flipped ? "left" : "right")
-        : (p.flipped ? "right" : "left");
-      return { side };
+    // Resolve the real handle position using the same render-mirroring math the
+    // stub-snap logic uses. Falls back to a device-edge approximation only when
+    // the handle can't be resolved (unknown port id), which shouldn't happen in
+    // practice since the edge already references the handle.
+    const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));
+    const displayDefaults = {
+      useShortNames: state.useShortNames,
+      wrapDeviceLabels: state.wrapDeviceLabels,
     };
-
-    const approxHandlePos = (deviceNode: typeof state.nodes[number], handleId: string | null | undefined) => {
+    const handlePosFor = (
+      deviceNode: typeof state.nodes[number],
+      handleId: string | null | undefined,
+    ): { x: number; y: number; side: "left" | "right" } => {
+      const positions = getPortAbsolutePositions(deviceNode, nodeMap, displayDefaults);
+      const match = positions.find((p) => p.handleId === handleId);
+      if (match) return { x: match.absX, y: match.absY, side: match.side };
+      // Fallback: device vertical center on the appropriate edge.
       const dPos = absPos(deviceNode);
-      const portInfo = findPort(deviceNode, handleId);
       const w = (deviceNode.measured?.width as number | undefined) ?? 180;
       const h = (deviceNode.measured?.height as number | undefined) ?? 60;
-      const x = portInfo?.side === "right" ? dPos.x + w : dPos.x;
-      return { x, y: dPos.y + h / 2 };
+      const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
+      const baseId = (handleId ?? "").replace(/-(in|out|rear|front)$/, "");
+      const port = ports.find((pp) => pp.id === baseId);
+      let side: "left" | "right" = "right";
+      if (port) {
+        if (port.direction === "input") side = port.flipped ? "right" : "left";
+        else if (port.direction === "output") side = port.flipped ? "left" : "right";
+        else side = port.flipped ? "right" : "left";
+      }
+      return { x: side === "right" ? dPos.x + w : dPos.x, y: dPos.y + h / 2, side };
     };
 
-    const srcHandlePos = approxHandlePos(srcDevice, edge.sourceHandle);
-    const tgtHandlePos = approxHandlePos(tgtDevice, edge.targetHandle);
-    const srcPortInfo = findPort(srcDevice, edge.sourceHandle);
-    const tgtPortInfo = findPort(tgtDevice, edge.targetHandle);
+    const srcHandle = handlePosFor(srcDevice, edge.sourceHandle);
+    const tgtHandle = handlePosFor(tgtDevice, edge.targetHandle);
 
-    const srcPlace = defaultStubPlacement(srcHandlePos, srcPortInfo?.side ?? "right");
-    const tgtPlace = defaultStubPlacement(tgtHandlePos, tgtPortInfo?.side ?? "left");
-    const srcStubAbs = srcPlace.pos;
-    const tgtStubAbs = tgtPlace.pos;
+    const srcPlace = defaultStubPlacement({ x: srcHandle.x, y: srcHandle.y }, srcHandle.side);
+    const tgtPlace = defaultStubPlacement({ x: tgtHandle.x, y: tgtHandle.y }, tgtHandle.side);
+    // Round to integer pixels — any sub-pixel from the parent-chain walk would
+    // make the edge router round port and stub handles to adjacent integers and
+    // produce a 1-px jog at the endpoint. The 14-px box height divided by 2 is
+    // an integer already, so this is just defending against deviceAbs drift.
+    const srcStubAbs = { x: Math.round(srcPlace.pos.x), y: Math.round(srcPlace.pos.y) };
+    const tgtStubAbs = { x: Math.round(tgtPlace.pos.x), y: Math.round(tgtPlace.pos.y) };
     const srcSide = srcPlace.handle;
     const tgtSide = tgtPlace.handle;
 
     const srcParentId = srcDevice.parentId;
     const tgtParentId = tgtDevice.parentId;
-    const srcParentAbs = srcParentId
+    const rawSrcParentAbs = srcParentId
       ? absPos(state.nodes.find((n) => n.id === srcParentId)!)
       : { x: 0, y: 0 };
-    const tgtParentAbs = tgtParentId
+    const rawTgtParentAbs = tgtParentId
       ? absPos(state.nodes.find((n) => n.id === tgtParentId)!)
       : { x: 0, y: 0 };
+    const srcParentAbs = { x: Math.round(rawSrcParentAbs.x), y: Math.round(rawSrcParentAbs.y) };
+    const tgtParentAbs = { x: Math.round(rawTgtParentAbs.x), y: Math.round(rawTgtParentAbs.y) };
 
     const linkedConnectionId =
       typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -4605,6 +4624,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const stubNodeIdTgt = `stub-${edge.id}-tgt`;
     const sigType = edge.data!.signalType;
 
+    // Don't stamp data.placed yet — the X above assumes STUB_W_EST (80px), but
+    // a wide cable label can produce a 200+ px box. tryPlace's overlap-correction
+    // pass needs to run once after React Flow measures the real width, especially
+    // for left-side stubs whose box extends back toward the device. Y is already
+    // correct (computed from the real port handle row), so tryPlace will only
+    // ever shift X here, not jump the stub.
     const srcStubNode: SchematicNode = {
       id: stubNodeIdSrc,
       type: "stub-label",
