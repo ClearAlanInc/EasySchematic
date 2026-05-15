@@ -34,16 +34,10 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const setShowCustomLabels = useSchematicStore((s) => s.setShowCustomLabels);
   const cableIdGap = useSchematicStore((s) => s.cableIdGap);
   const setCableIdGap = useSchematicStore((s) => s.setCableIdGap);
-  const customLabelGap = useSchematicStore((s) => s.customLabelGap);
-  const setCustomLabelGap = useSchematicStore((s) => s.setCustomLabelGap);
   const cableIdMidOffset = useSchematicStore((s) => s.cableIdMidOffset);
   const setCableIdMidOffset = useSchematicStore((s) => s.setCableIdMidOffset);
-  const customLabelMidOffset = useSchematicStore((s) => s.customLabelMidOffset);
-  const setCustomLabelMidOffset = useSchematicStore((s) => s.setCustomLabelMidOffset);
   const cableIdLabelMode = useSchematicStore((s) => s.cableIdLabelMode);
   const setCableIdLabelMode = useSchematicStore((s) => s.setCableIdLabelMode);
-  const customLabelMode = useSchematicStore((s) => s.customLabelMode);
-  const setCustomLabelMode = useSchematicStore((s) => s.setCustomLabelMode);
   const hideAdapters = useSchematicStore((s) => s.hideAdapters);
   const setHideAdapters = useSchematicStore((s) => s.setHideAdapters);
   const showAllSignalTypes = useSchematicStore((s) => s.showAllSignalTypes);
@@ -376,37 +370,6 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
           />
           <span className="text-[10px] text-[var(--color-text-muted)] w-5 text-right">
             {cableIdLabelMode === "endpoint" ? cableIdGap : cableIdMidOffset}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 px-1 py-0.5">
-          <span className="text-xs text-[var(--color-text)]">Custom label position</span>
-          <select
-            value={customLabelMode}
-            onChange={(e) => setCustomLabelMode(e.target.value as "endpoint" | "midpoint")}
-            className="text-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[var(--color-text)] cursor-pointer"
-          >
-            <option value="endpoint">At endpoints</option>
-            <option value="midpoint">At midpoint</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2 px-1 py-0.5">
-          <span className="text-xs text-[var(--color-text)]">
-            {customLabelMode === "endpoint" ? "Custom label spacing" : "Custom label offset"}
-          </span>
-          <input
-            type="range"
-            min={customLabelMode === "endpoint" ? 1 : -100}
-            max={customLabelMode === "endpoint" ? 40 : 100}
-            step={1}
-            value={customLabelMode === "endpoint" ? customLabelGap : customLabelMidOffset}
-            onChange={(e) => customLabelMode === "endpoint"
-              ? setCustomLabelGap(Number(e.target.value))
-              : setCustomLabelMidOffset(Number(e.target.value))
-            }
-            className="w-16 h-3 accent-blue-500 cursor-pointer"
-          />
-          <span className="text-[10px] text-[var(--color-text-muted)] w-5 text-right">
-            {customLabelMode === "endpoint" ? customLabelGap : customLabelMidOffset}
           </span>
         </div>
 

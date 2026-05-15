@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 38;
+export const CURRENT_SCHEMA_VERSION = 39;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -440,6 +440,48 @@ const migrations: Record<number, Migration> = {
       }
     }
     data.version = 38;
+    return data;
+  },
+  38: (data) => {
+    // v38 → v39: custom-label rework. `label` is now midpoint-only. Per-end labels
+    // live in `sourceLabel` / `targetLabel`. The customLabelMode / customLabelGap /
+    // customLabelMidOffset / hideCustomLabel knobs all go away — visibility is
+    // determined by whether each slot's text is non-empty.
+    const fileMode = data.customLabelMode === "midpoint" ? "midpoint" : "endpoint";
+    if (Array.isArray(data.edges)) {
+      for (const e of data.edges) {
+        const d = e?.data;
+        if (!d) continue;
+        const effMode = d.customLabelMode === "midpoint"
+          ? "midpoint"
+          : d.customLabelMode === "endpoint"
+            ? "endpoint"
+            : fileMode;
+        const labelText = typeof d.label === "string" ? d.label : "";
+        const wasHidden = d.hideCustomLabel === true;
+        if (wasHidden) {
+          // Preserve hidden state: drop the text. Users can re-enter to make visible.
+          delete d.label;
+          delete d.sourceLabel;
+          delete d.targetLabel;
+        } else if (labelText) {
+          if (effMode === "endpoint") {
+            if (!d.sourceLabel) d.sourceLabel = labelText;
+            if (!d.targetLabel) d.targetLabel = labelText;
+            delete d.label;
+          }
+          // midpoint mode: leave d.label as-is.
+        }
+        delete d.customLabelMode;
+        delete d.customLabelGap;
+        delete d.customLabelMidOffset;
+        delete d.hideCustomLabel;
+      }
+    }
+    delete data.customLabelMode;
+    delete data.customLabelGap;
+    delete data.customLabelMidOffset;
+    data.version = 39;
     return data;
   },
 

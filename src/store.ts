@@ -520,16 +520,10 @@ interface SchematicState {
   setShowCustomLabels: (show: boolean) => void;
   cableIdGap: number;
   setCableIdGap: (gap: number) => void;
-  customLabelGap: number;
-  setCustomLabelGap: (gap: number) => void;
   cableIdMidOffset: number;
   setCableIdMidOffset: (offset: number) => void;
-  customLabelMidOffset: number;
-  setCustomLabelMidOffset: (offset: number) => void;
   cableIdLabelMode: "endpoint" | "midpoint";
   setCableIdLabelMode: (mode: "endpoint" | "midpoint") => void;
-  customLabelMode: "endpoint" | "midpoint";
-  setCustomLabelMode: (mode: "endpoint" | "midpoint") => void;
   stubLabelShowPort: boolean;
   setStubLabelShowPort: (show: boolean) => void;
   stubLabelShowRoom: boolean;
@@ -1139,11 +1133,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   showCableIdLabels: true,
   showCustomLabels: true,
   cableIdGap: 4,
-  customLabelGap: 4,
   cableIdMidOffset: 0,
-  customLabelMidOffset: 0,
   cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
-  customLabelMode: "endpoint" as "endpoint" | "midpoint",
   stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
   stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
   stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
@@ -3270,28 +3261,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
-  setCustomLabelGap: (gap) => {
-    set({ customLabelGap: gap });
-    get().saveToLocalStorage();
-  },
-
   setCableIdMidOffset: (offset) => {
     set({ cableIdMidOffset: offset });
     get().saveToLocalStorage();
   },
 
-  setCustomLabelMidOffset: (offset) => {
-    set({ customLabelMidOffset: offset });
-    get().saveToLocalStorage();
-  },
-
   setCableIdLabelMode: (mode) => {
     set({ cableIdLabelMode: mode });
-    get().saveToLocalStorage();
-  },
-
-  setCustomLabelMode: (mode) => {
-    set({ customLabelMode: mode });
     get().saveToLocalStorage();
   },
 
@@ -4050,11 +4026,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
       cableIdGap: state.cableIdGap !== 4 ? state.cableIdGap : undefined,
-      customLabelGap: state.customLabelGap !== 4 ? state.customLabelGap : undefined,
       cableIdMidOffset: state.cableIdMidOffset !== 0 ? state.cableIdMidOffset : undefined,
-      customLabelMidOffset: state.customLabelMidOffset !== 0 ? state.customLabelMidOffset : undefined,
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
-      customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
       stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
@@ -4146,11 +4119,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
             showCustomLabels: data.showCustomLabels ?? true,
             cableIdGap: data.cableIdGap ?? 4,
-            customLabelGap: data.customLabelGap ?? 4,
             cableIdMidOffset: data.cableIdMidOffset ?? 0,
-            customLabelMidOffset: data.customLabelMidOffset ?? 0,
             cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
-            customLabelMode: data.customLabelMode ?? "endpoint",
             stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
             stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
             stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
@@ -4224,11 +4194,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
         showCustomLabels: data.showCustomLabels ?? true,
         cableIdGap: data.cableIdGap ?? 4,
-        customLabelGap: data.customLabelGap ?? 4,
         cableIdMidOffset: data.cableIdMidOffset ?? 0,
-        customLabelMidOffset: data.customLabelMidOffset ?? 0,
         cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
-        customLabelMode: data.customLabelMode ?? "endpoint",
         stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
         stubLabelShowRoom: data.stubLabelShowRoom ?? DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
@@ -4303,11 +4270,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showCableIdLabels: !state.showCableIdLabels ? false : undefined,
       showCustomLabels: !state.showCustomLabels ? false : undefined,
       cableIdGap: state.cableIdGap !== 4 ? state.cableIdGap : undefined,
-      customLabelGap: state.customLabelGap !== 4 ? state.customLabelGap : undefined,
       cableIdMidOffset: state.cableIdMidOffset !== 0 ? state.cableIdMidOffset : undefined,
-      customLabelMidOffset: state.customLabelMidOffset !== 0 ? state.customLabelMidOffset : undefined,
       cableIdLabelMode: state.cableIdLabelMode !== "endpoint" ? state.cableIdLabelMode : undefined,
-      customLabelMode: state.customLabelMode !== "endpoint" ? state.customLabelMode : undefined,
       stubLabelShowPort: state.stubLabelShowPort !== DEFAULT_STUB_LABEL_SHOW_PORT ? state.stubLabelShowPort : undefined,
       stubLabelShowRoom: state.stubLabelShowRoom !== DEFAULT_STUB_LABEL_SHOW_ROOM ? state.stubLabelShowRoom : undefined,
       stubLabelPageMode: state.stubLabelPageMode !== DEFAULT_STUB_LABEL_PAGE_MODE ? state.stubLabelPageMode : undefined,
@@ -4399,11 +4363,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       showConnectionLabels: data.showCableIdLabels ?? data.showConnectionLabels ?? true,
       showCustomLabels: data.showCustomLabels ?? true,
       cableIdGap: data.cableIdGap ?? 4,
-      customLabelGap: data.customLabelGap ?? 4,
       cableIdMidOffset: data.cableIdMidOffset ?? 0,
-      customLabelMidOffset: data.customLabelMidOffset ?? 0,
       cableIdLabelMode: data.cableIdLabelMode ?? "endpoint",
-      customLabelMode: data.customLabelMode ?? "endpoint",
       stubLabelShowPort: data.stubLabelShowPort ?? DEFAULT_STUB_LABEL_SHOW_PORT,
       stubLabelPageMode: data.stubLabelPageMode ?? DEFAULT_STUB_LABEL_PAGE_MODE,
       useShortNames: data.useShortNames ?? false,
@@ -4496,11 +4457,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         showCableIdLabels: true,
         showCustomLabels: true,
         cableIdGap: 4,
-        customLabelGap: 4,
         cableIdMidOffset: 0,
-        customLabelMidOffset: 0,
         cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
-        customLabelMode: "endpoint" as "endpoint" | "midpoint",
         stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
         stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
         stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,

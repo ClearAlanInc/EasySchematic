@@ -119,11 +119,7 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
       state.cableIdLabelMode, state.cableIdGap, state.cableIdMidOffset,
       trueColor,
     );
-    emitCustomLabel(
-      writer, edge, routed,
-      state.customLabelMode, state.customLabelGap, state.customLabelMidOffset,
-      trueColor,
-    );
+    emitCustomLabel(writer, edge, routed, trueColor);
   }
 
   // ─── Title block (if configured) ───────────────────────────────────

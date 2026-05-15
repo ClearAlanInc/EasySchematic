@@ -419,24 +419,16 @@ export interface ConnectionData {
   stubTargetWaypoints?: { x: number; y: number }[];
   /** Allow connection between incompatible connector types (#6) */
   allowIncompatible?: boolean;
-  /** @deprecated Use hideCableId + hideCustomLabel instead. Migrated in schema v25. */
+  /** @deprecated Use hideCableId instead. Migrated in schema v25. */
   hideLabel?: boolean;
   /** Per-edge: hide cable ID label (#61) */
   hideCableId?: boolean;
-  /** Per-edge: hide custom label (#61) */
-  hideCustomLabel?: boolean;
   /** Per-edge: cable ID endpoint spacing override in pixels (#61) */
   cableIdGap?: number;
-  /** Per-edge: custom label endpoint spacing override in pixels (#61) */
-  customLabelGap?: number;
   /** Per-edge: cable ID midpoint offset along path in pixels (#61) */
   cableIdMidOffset?: number;
-  /** Per-edge: custom label midpoint offset along path in pixels (#61) */
-  customLabelMidOffset?: number;
   /** Per-edge: cable ID label display mode override (#61) */
   cableIdLabelMode?: "endpoint" | "midpoint";
-  /** Per-edge: custom label display mode override (#61) */
-  customLabelMode?: "endpoint" | "midpoint";
   /** @deprecated v31+: moved to StubLabelData.showPort. */
   stubLabelShowPort?: boolean;
   /** @deprecated v31+: moved to StubLabelData.pageMode. */
@@ -728,16 +720,10 @@ export interface SchematicFile {
   showCustomLabels?: boolean;
   /** Cable ID endpoint spacing in pixels (#61) */
   cableIdGap?: number;
-  /** Custom label endpoint spacing in pixels (#61) */
-  customLabelGap?: number;
   /** Cable ID midpoint offset along path in pixels (#61) */
   cableIdMidOffset?: number;
-  /** Custom label midpoint offset along path in pixels (#61) */
-  customLabelMidOffset?: number;
   /** Cable ID label display mode — at endpoints or midpoint (#61) */
   cableIdLabelMode?: "endpoint" | "midpoint";
-  /** Custom label display mode — at endpoints or midpoint (#61) */
-  customLabelMode?: "endpoint" | "midpoint";
   /** Global toggle: when true, all adapters default to hidden on schematic */
   hideAdapters?: boolean;
   /** When false, edges use simple orthogonal L-shapes instead of A* routing */

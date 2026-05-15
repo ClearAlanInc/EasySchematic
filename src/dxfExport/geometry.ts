@@ -387,44 +387,50 @@ export function emitCableIdLabels(
   }
 }
 
-/** Emit custom label for an edge (if set). */
+/** Emit custom labels for an edge. Three independent slots: sourceLabel at
+ *  the source endpoint, label at the midpoint, targetLabel at the target
+ *  endpoint. Each slot renders iff its text is non-empty (#114). */
 export function emitCustomLabel(
   writer: DxfWriter,
   edge: ConnectionEdge,
   routed: RoutedEdge,
-  mode: "endpoint" | "midpoint",
-  globalGap: number,
-  globalMidOffset: number,
   trueColor: number,
 ) {
-  const label = edge.data?.label;
-  if (!label) return;
-  if (edge.data?.hideCustomLabel) return;
+  const sourceLabel = edge.data?.sourceLabel as string | undefined;
+  const midLabel = edge.data?.label as string | undefined;
+  const targetLabel = edge.data?.targetLabel as string | undefined;
+  if (!sourceLabel && !midLabel && !targetLabel) return;
 
   const height = cssFontPxToDxfHeight(10); // matches canvas 10pt custom label
-  const gap = edge.data?.customLabelGap ?? globalGap;
-  const midOffset = edge.data?.customLabelMidOffset ?? globalMidOffset;
+  const gap = 4; // matches canvas CUSTOM_LABEL_GAP
   const style: EntityStyle = { trueColor, linetype: "CONTINUOUS" };
-  const effectiveMode = edge.data?.customLabelMode ?? mode;
 
-  if (effectiveMode === "midpoint") {
-    const pos = findMidpointLabelPos(routed, midOffset);
+  if (sourceLabel) {
+    const pos = findEndpointLabelPos(routed, true, gap);
     writer.addMText(
       CANONICAL_LAYERS.LABELS,
       pxToIn(pos.x), -pxToIn(pos.y),
-      label,
+      sourceLabel,
       { height, attachment: 5, style, backgroundAci: 7, backgroundScale: 1.3 },
     );
-  } else {
-    for (const nearStart of [true, false]) {
-      const pos = findEndpointLabelPos(routed, nearStart, gap);
-      writer.addMText(
-        CANONICAL_LAYERS.LABELS,
-        pxToIn(pos.x), -pxToIn(pos.y),
-        label,
-        { height, attachment: 5, style, backgroundAci: 7, backgroundScale: 1.3 },
-      );
-    }
+  }
+  if (midLabel) {
+    const pos = findMidpointLabelPos(routed, 0);
+    writer.addMText(
+      CANONICAL_LAYERS.LABELS,
+      pxToIn(pos.x), -pxToIn(pos.y),
+      midLabel,
+      { height, attachment: 5, style, backgroundAci: 7, backgroundScale: 1.3 },
+    );
+  }
+  if (targetLabel) {
+    const pos = findEndpointLabelPos(routed, false, gap);
+    writer.addMText(
+      CANONICAL_LAYERS.LABELS,
+      pxToIn(pos.x), -pxToIn(pos.y),
+      targetLabel,
+      { height, attachment: 5, style, backgroundAci: 7, backgroundScale: 1.3 },
+    );
   }
 }
 

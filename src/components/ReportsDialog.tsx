@@ -1607,11 +1607,11 @@ function CableScheduleTabInline() {
         const changes = Array.from(selectedRows)
           .map((ri) => sorted[ri])
           .filter(Boolean)
-          .map((r) => ({ edgeId: r.edgeId, patch: { hideCableId: newValue, hideCustomLabel: newValue } as Partial<ConnectionData> }));
+          .map((r) => ({ edgeId: r.edgeId, patch: { hideCableId: newValue } as Partial<ConnectionData> }));
         if (changes.length > 0) batchPatchEdgeData(changes);
       } else {
         const row = sorted[rowIndex];
-        if (row) patchEdgeData(row.edgeId, { hideCableId: newValue, hideCustomLabel: newValue });
+        if (row) patchEdgeData(row.edgeId, { hideCableId: newValue });
       }
     },
     [sorted, spreadsheet.selectedCells, patchEdgeData, batchPatchEdgeData],

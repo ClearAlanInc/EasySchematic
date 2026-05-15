@@ -17,7 +17,7 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
       .filter((e) => e.selected)
       .map(
         (e) =>
-          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${e.data?.hideCustomLabel ? "1" : "0"}:${String(e.data?.label ?? "")}:${String(e.data?.color ?? "")}:${String(e.data?.sourceLabel ?? "")}:${String(e.data?.targetLabel ?? "")}`,
+          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${String(e.data?.sourceLabel ?? "")}:${String(e.data?.label ?? "")}:${String(e.data?.targetLabel ?? "")}:${String(e.data?.color ?? "")}`,
       )
       .join("|"),
   );
@@ -29,10 +29,8 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
     [selectionKey],
   );
 
-  const [labelMode, setLabelMode] = useState<"overwrite" | "append">("overwrite");
-  const [labelInput, setLabelInput] = useState("");
-  const [perEndOpen, setPerEndOpen] = useState(false);
   const [srcLabelInput, setSrcLabelInput] = useState("");
+  const [midLabelInput, setMidLabelInput] = useState("");
   const [tgtLabelInput, setTgtLabelInput] = useState("");
 
   const hasEdges = selectedEdges.length >= 2;
@@ -41,7 +39,7 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
   const allSameStyle = lineStyles.every((s) => s === lineStyles[0]);
   const consensusStyle: LineStyle | null = allSameStyle ? lineStyles[0] : null;
 
-  function boolState(field: "directAttach" | "hideCableId" | "hideCustomLabel") {
+  function boolState(field: "directAttach" | "hideCableId") {
     const vals = selectedEdges.map((e) => e.data?.[field] === true);
     const allOn = vals.every(Boolean);
     const anyOn = vals.some(Boolean);
@@ -49,7 +47,6 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
   }
   const directAttach = boolState("directAttach");
   const hideCableId = boolState("hideCableId");
-  const hideCustomLabel = boolState("hideCustomLabel");
 
   // --- Actions ---
   const applyLineStyle = (ls: LineStyle) => {
@@ -59,7 +56,7 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
   };
 
   const applyToggle = (
-    field: "directAttach" | "hideCableId" | "hideCustomLabel",
+    field: "directAttach" | "hideCableId",
     allOn: boolean,
     mixed: boolean,
   ) => {
@@ -69,52 +66,42 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
     );
   };
 
-  const applyLabel = () => {
-    const trimmed = labelInput.trim();
-    if (!trimmed) return;
-    useSchematicStore.getState().batchPatchEdgeData(
-      selectedEdges.map((e) => {
-        const existing = e.data?.label as string | undefined;
-        const label =
-          labelMode === "append" ? ((existing ?? "") + (existing ? " " : "") + trimmed) : trimmed;
-        return { edgeId: e.id, patch: { label } };
-      }),
-    );
-    setLabelInput("");
-  };
-
-  const clearLabel = () => {
-    useSchematicStore.getState().batchPatchEdgeData(
-      selectedEdges.map((e) => ({ edgeId: e.id, patch: { label: undefined } })),
-    );
-  };
-
-  const applyPerEndLabels = () => {
+  const applyLabels = () => {
     const src = srcLabelInput.trim();
+    const mid = midLabelInput.trim();
     const tgt = tgtLabelInput.trim();
+    if (!src && !mid && !tgt) return;
     useSchematicStore.getState().batchPatchEdgeData(
       selectedEdges.map((e) => ({
         edgeId: e.id,
-        patch: { sourceLabel: src || undefined, targetLabel: tgt || undefined },
+        patch: {
+          ...(src ? { sourceLabel: src } : {}),
+          ...(mid ? { label: mid } : {}),
+          ...(tgt ? { targetLabel: tgt } : {}),
+        },
       })),
     );
     setSrcLabelInput("");
+    setMidLabelInput("");
     setTgtLabelInput("");
   };
 
-  const clearPerEndLabels = () => {
+  const clearAllLabels = () => {
     useSchematicStore.getState().batchPatchEdgeData(
       selectedEdges.map((e) => ({
         edgeId: e.id,
-        patch: { sourceLabel: undefined, targetLabel: undefined },
+        patch: { sourceLabel: undefined, label: undefined, targetLabel: undefined },
       })),
     );
     setSrcLabelInput("");
+    setMidLabelInput("");
     setTgtLabelInput("");
   };
 
-  const anyPerEndSet = selectedEdges.some(
-    (e) => (e.data?.sourceLabel as string | undefined) || (e.data?.targetLabel as string | undefined),
+  const anyLabelSet = selectedEdges.some(
+    (e) => (e.data?.sourceLabel as string | undefined)
+      || (e.data?.label as string | undefined)
+      || (e.data?.targetLabel as string | undefined),
   );
 
   // Color override — true when every selected edge has the same color set.
@@ -161,96 +148,53 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
         </p>
       )}
 
-      {hasEdges && <>{/* Label */}
+      {hasEdges && <>{/* Labels */}
       <section className="mb-3">
         <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] mb-1.5">
-          Label
+          Labels
         </div>
-        <div className="flex gap-1 mb-1.5">
-          {(["overwrite", "append"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setLabelMode(mode)}
-              className={`flex-1 px-2 py-0.5 text-[10px] rounded border transition-colors cursor-pointer capitalize ${
-                labelMode === mode
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-blue-400"
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1">
+        <p className="text-[10px] text-[var(--color-text-muted)] leading-tight mb-1.5">
+          Each slot is visible when it has text. Leave blank to hide.
+        </p>
+        <div className="space-y-1">
           <input
-            className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
-            value={labelInput}
-            onChange={(e) => setLabelInput(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Enter") applyLabel();
-            }}
-            placeholder="Label text..."
+            className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
+            value={srcLabelInput}
+            onChange={(e) => setSrcLabelInput(e.target.value)}
+            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") applyLabels(); }}
+            placeholder="Source-end label…"
           />
+          <input
+            className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
+            value={midLabelInput}
+            onChange={(e) => setMidLabelInput(e.target.value)}
+            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") applyLabels(); }}
+            placeholder="Midpoint label…"
+          />
+          <input
+            className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
+            value={tgtLabelInput}
+            onChange={(e) => setTgtLabelInput(e.target.value)}
+            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") applyLabels(); }}
+            placeholder="Target-end label…"
+          />
+        </div>
+        <div className="flex gap-1 mt-1.5">
           <button
-            onClick={applyLabel}
-            disabled={!labelInput.trim()}
-            className="px-2 py-0.5 text-[10px] bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+            onClick={applyLabels}
+            disabled={!srcLabelInput.trim() && !midLabelInput.trim() && !tgtLabelInput.trim()}
+            className="flex-1 px-2 py-0.5 text-[10px] bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 cursor-pointer"
           >
-            Set
+            Apply
           </button>
           <button
-            onClick={clearLabel}
-            className="px-2 py-0.5 text-[10px] text-[var(--color-text-muted)] hover:text-red-600 border border-[var(--color-border)] rounded hover:border-red-300 cursor-pointer whitespace-nowrap"
+            onClick={clearAllLabels}
+            disabled={!anyLabelSet}
+            className="flex-1 px-2 py-0.5 text-[10px] text-[var(--color-text-muted)] hover:text-red-600 border border-[var(--color-border)] rounded hover:border-red-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Clear
+            Clear all
           </button>
         </div>
-        <button
-          onClick={() => setPerEndOpen((v) => !v)}
-          className="mt-1.5 text-[10px] text-[var(--color-text-muted)] hover:text-blue-600 underline cursor-pointer"
-        >
-          {perEndOpen ? "Hide" : "Show"} per-end labels{anyPerEndSet ? " (set)" : ""}
-        </button>
-        {perEndOpen && (
-          <div className="mt-1.5 space-y-1.5 pl-2 border-l-2 border-[var(--color-border)]">
-            <p className="text-[10px] text-[var(--color-text-muted)] leading-tight">
-              Per-end labels override the shared label at each endpoint. Endpoint mode only.
-            </p>
-            <div className="flex gap-1">
-              <input
-                className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
-                value={srcLabelInput}
-                onChange={(e) => setSrcLabelInput(e.target.value)}
-                onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") applyPerEndLabels(); }}
-                placeholder="Source label…"
-              />
-              <input
-                className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500"
-                value={tgtLabelInput}
-                onChange={(e) => setTgtLabelInput(e.target.value)}
-                onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") applyPerEndLabels(); }}
-                placeholder="Target label…"
-              />
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={applyPerEndLabels}
-                disabled={!srcLabelInput.trim() && !tgtLabelInput.trim()}
-                className="flex-1 px-2 py-0.5 text-[10px] bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 cursor-pointer"
-              >
-                Set
-              </button>
-              <button
-                onClick={clearPerEndLabels}
-                disabled={!anyPerEndSet}
-                className="flex-1 px-2 py-0.5 text-[10px] text-[var(--color-text-muted)] hover:text-red-600 border border-[var(--color-border)] rounded hover:border-red-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* Line style */}
@@ -325,7 +269,6 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
             [
               { field: "directAttach" as const, label: "Direct Attach", state: directAttach },
               { field: "hideCableId" as const, label: "Hide Cable ID", state: hideCableId },
-              { field: "hideCustomLabel" as const, label: "Hide Custom Label", state: hideCustomLabel },
             ] as const
           ).map(({ field, label, state }) => (
             <label key={field} className="flex items-center gap-2 cursor-pointer">

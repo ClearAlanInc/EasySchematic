@@ -116,43 +116,24 @@ function OffsetEdgeComponent({
   const showCableIdLabels = useSchematicStore((s) => s.showCableIdLabels);
   const showCustomLabels = useSchematicStore((s) => s.showCustomLabels);
   const globalCableIdGap = useSchematicStore((s) => s.cableIdGap);
-  const globalCustomLabelGap = useSchematicStore((s) => s.customLabelGap);
   const globalCableIdMidOffset = useSchematicStore((s) => s.cableIdMidOffset);
-  const globalCustomLabelMidOffset = useSchematicStore((s) => s.customLabelMidOffset);
   const globalCableIdLabelMode = useSchematicStore((s) => s.cableIdLabelMode);
-  const globalCustomLabelMode = useSchematicStore((s) => s.customLabelMode);
   const cableId = useSchematicStore((s) => s.cableIdMap[id] ?? "");
   const hideCableId = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.hideCableId === true || edge?.data?.hideLabel === true;
   });
-  const hideCustomLabel = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.hideCustomLabel === true;
-  });
   const edgeCableIdGap = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.cableIdGap as number | undefined;
-  });
-  const edgeCustomLabelGap = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.customLabelGap as number | undefined;
   });
   const edgeCableIdMidOffset = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.cableIdMidOffset as number | undefined;
   });
-  const edgeCustomLabelMidOffset = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.customLabelMidOffset as number | undefined;
-  });
   const edgeCableIdLabelMode = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.cableIdLabelMode as "endpoint" | "midpoint" | undefined;
-  });
-  const edgeCustomLabelMode = useSchematicStore((s) => {
-    const edge = s.edges.find((e) => e.id === id);
-    return edge?.data?.customLabelMode as "endpoint" | "midpoint" | undefined;
   });
 
   // Endpoint cable-ID labels are suppressed at any stub-label endpoint — the stub box
@@ -328,15 +309,14 @@ function OffsetEdgeComponent({
     }
   }
 
-  // --- Label rendering (#5, #61) ---
+  // --- Label rendering (#5, #61, #114) ---
   const signalColor = (style?.stroke as string) ?? "#6b7280";
   const labelText = cableId;
   const cableIdGap = edgeCableIdGap ?? globalCableIdGap;
-  const customGap = edgeCustomLabelGap ?? globalCustomLabelGap;
   const cableIdLabelMode = edgeCableIdLabelMode ?? globalCableIdLabelMode;
-  const customLabelMode = edgeCustomLabelMode ?? globalCustomLabelMode;
   const cidMidOff = edgeCableIdMidOffset ?? globalCableIdMidOffset;
-  const clblMidOff = edgeCustomLabelMidOffset ?? globalCustomLabelMidOffset;
+  // Custom labels use a fixed endpoint gap (#114 rework — no longer user-tunable).
+  const CUSTOM_LABEL_GAP = 4;
 
   // Build cumulative distances along the routed path (shared by midpoint calculations)
   let pathWps: { x: number; y: number }[] = [];
@@ -471,25 +451,24 @@ function OffsetEdgeComponent({
 
   // Determine which labels to show
   const showCableId = showCableIdLabels && !hideCableId && labelText && routeStr;
-  // Resolve per-end text: per-end override → shared label → empty
-  const srcEndpointText = edgeSourceLabel || edgeLabel;
-  const tgtEndpointText = edgeTargetLabel || edgeLabel;
-  const hasAnyCustomText = !!(edgeLabel || edgeSourceLabel || edgeTargetLabel);
-  const showCustom = showCustomLabels && !hideCustomLabel && hasAnyCustomText && routeStr;
+  const showAnyCustom = !!showCustomLabels && !!routeStr;
 
-  // Calculate custom label endpoint offset (past cable ID badge if both visible at endpoints)
+  // Each custom label slot is visible iff its text is non-empty (#114 rework).
+  const showSrcLabel = showAnyCustom && !!edgeSourceLabel;
+  const showMidLabel = showAnyCustom && !!edgeLabel;
+  const showTgtLabel = showAnyCustom && !!edgeTargetLabel;
+
+  // Calculate custom label endpoint offset (past cable ID badge when cable ID is also at the same endpoint)
   const cableIdBadgeWidth = labelText ? estimateBadgeWidth(labelText, 9, 3) : 0;
-  const bothAtEndpoints = showCableId && cableIdLabelMode === "endpoint"
-    && showCustom && customLabelMode === "endpoint";
-  const customEndpointOffset = bothAtEndpoints
-    ? cableIdGap + cableIdBadgeWidth + 3 + (customGap - 4) // base gap + badge + 3px padding + user adjustment
-    : customGap;
+  const customEndpointOffset = (showCableId && cableIdLabelMode === "endpoint")
+    ? cableIdGap + cableIdBadgeWidth + 3 // base gap + badge + 3px padding
+    : CUSTOM_LABEL_GAP;
 
-  // Compute midpoint positions along the path with user offsets
+  // Compute midpoint position along the path (for cable ID midpoint and custom midpoint label)
   const cidMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2 + cidMidOff) : { x: lx, y: ly };
-  const clblMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2 + clblMidOff) : { x: lx, y: ly };
+  const customMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2) : { x: lx, y: ly };
 
-  // Cable ID labels — at endpoints or midpoint depending on mode
+  // Cable ID labels — at endpoints or midpoint depending on mode (unchanged)
   const cableIdLabels = showCableId ? (
     cableIdLabelMode === "endpoint" ? (
       <>
@@ -511,28 +490,25 @@ function OffsetEdgeComponent({
     )
   ) : null;
 
-  // Custom labels — at endpoints or midpoint depending on mode
-  const customLabels = showCustom ? (
-    customLabelMode === "endpoint" ? (
-      <>
-        {srcEndpointText && makeEndpointLabel(true, customEndpointOffset, srcEndpointText, customLabelStyle, "clbl-src",
-          sourceX, sourceY, srcDx, srcDy)}
-        {tgtEndpointText && makeEndpointLabel(false, customEndpointOffset, tgtEndpointText, customLabelStyle, "clbl-tgt",
-          tgtLabelX, tgtLabelY, -tgtDx, -tgtDy)}
-      </>
-    ) : (
-      // Midpoint mode uses only the shared label. Per-end labels don't make sense at midpoint.
-      edgeLabel ? (
+  // Custom labels — three independent slots (#114 rework). Each renders if its text is set.
+  const customLabels = (showSrcLabel || showMidLabel || showTgtLabel) ? (
+    <>
+      {showSrcLabel && makeEndpointLabel(true, customEndpointOffset, edgeSourceLabel, customLabelStyle, "clbl-src",
+        sourceX, sourceY, srcDx, srcDy)}
+      {showMidLabel && (
         <div
+          key="clbl-mid"
           style={{
             ...customLabelStyle,
-            transform: `translate(-50%, -50%) translate(${clblMidPt.x}px, ${clblMidPt.y}px)`,
+            transform: `translate(-50%, -50%) translate(${customMidPt.x}px, ${customMidPt.y}px)`,
           }}
         >
           {edgeLabel}
         </div>
-      ) : null
-    )
+      )}
+      {showTgtLabel && makeEndpointLabel(false, customEndpointOffset, edgeTargetLabel, customLabelStyle, "clbl-tgt",
+        tgtLabelX, tgtLabelY, -tgtDx, -tgtDy)}
+    </>
   ) : null;
 
   // Visual-only reconnect circles + tooltip — rendered in HTML layer above cable labels.
