@@ -29,6 +29,7 @@
 - **Quick-add** — double-click empty canvas to open a search dialog; type to find any device, note, or room and place it instantly
 - **Signal type filter** — narrow device search to templates exposing a chosen signal type, in both the app and the devices site
 - **Expansion slots** — devices with swappable card bays (e.g. router chassis with SDI/HDMI/fiber cards); right-click a slot to swap cards in or out, or build a custom card from scratch
+- **Swap Device** — right-click any device → **Swap Device...** to replace it with a different model (e.g. AJA Kumo 3232 → 6464, or graduate a placeholder into a real device). A port-mapping dialog auto-suggests where each existing connection lands on the new device, carries over installed expansion cards by slot family, and auto-installs cards to satisfy connections the new chassis only supports via expansion. Direction-crossing remaps require explicit user opt-in; everything is a single undo step.
 - **Custom devices** — design any device from scratch with a guided builder (matrix routers, breakout panels, anything with structured I/O sections)
 - **Notes & annotations** — text annotations on the canvas with rectangle and ellipse shapes
 - **Rooms** — resizable dashed-border containers for grouping devices, with lock/unlock to prevent accidental moves

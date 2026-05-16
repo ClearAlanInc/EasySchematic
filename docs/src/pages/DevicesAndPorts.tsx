@@ -319,6 +319,53 @@ export default function DevicesAndPortsPage() {
         <li>Toggle the <strong>venue-provided</strong> flag to mark devices supplied by the venue</li>
       </ul>
 
+      <h2>Swapping devices</h2>
+      <p>
+        Right-click any device and choose <strong>Swap Device...</strong> to replace it with a
+        different model — graduate a blank placeholder into a real device, upgrade a 32x32 matrix
+        router to a 64x64, or substitute one brand for another — without redrawing the connections
+        that touch it.
+      </p>
+      <p>
+        Picking a replacement opens a port-mapping dialog that auto-suggests where each existing
+        connection should land on the new device, in this priority order:
+      </p>
+      <ol>
+        <li>Same template port lineage (matches across versions of the same template)</li>
+        <li>Same port label and direction (e.g. "INPUT 1" on a 3232 maps to "INPUT 1" on a 6464)</li>
+        <li>Same signal type, connector, and direction</li>
+        <li>Same signal type and direction (with a connector-mismatch badge)</li>
+        <li>Drop the connection</li>
+      </ol>
+      <p>
+        Direction is never crossed automatically — an output never maps to an input unless you
+        explicitly pick it from the dropdown, in which case a red warning shows.
+      </p>
+      <p>
+        If the new device has <strong>expansion slots</strong> and one of the connections you're
+        trying to keep needs ports the new device doesn't have on its base panel, the dialog will
+        automatically install a matching card into a compatible empty slot. For example, swapping
+        a dedicated DisplayPort source to a chassis that only has DisplayPort via expansion cards
+        will auto-install the card needed to host those four DisplayPort connections. Auto-installed
+        cards show up as checkboxes — uncheck one to drop the connections it satisfies instead.
+      </p>
+      <p>
+        Cards already installed in the old device's slots are <strong>carried over</strong> to
+        matching empty slots on the new device by slot family. If no matching slot exists, the
+        dialog lists the cards that couldn't be carried so you can re-add them by hand.
+      </p>
+      <p>
+        Per-port customizations follow the connection to its new home — custom port labels (e.g.
+        "Camera Bay A" instead of "INPUT 1"), network configuration on Ethernet/AoIP ports, port
+        notes, PoE draw, and gender overrides are all preserved. Per-device customizations like
+        custom hostname, short name, and label-wrap preference also survive the swap. The device's
+        node ID stays the same, so rack placements and undo history continue to work.
+      </p>
+      <p>
+        The footer summarizes how many connections will be remapped and how many will be dropped
+        before you commit. The whole swap is a single undo step.
+      </p>
+
       <h2>Port flipping</h2>
       <p>
         By default, input ports appear on the <strong>left</strong> side of a device and output ports on

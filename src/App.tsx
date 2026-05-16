@@ -31,6 +31,7 @@ import ViewOptionsPanel from "./components/ViewOptionsPanel";
 import MenuBar from "./components/MenuBar";
 import EdgeContextMenu from "./components/EdgeContextMenu";
 import IncompatibleConnectionDialog from "./components/IncompatibleConnectionDialog";
+import DeviceSwapDialog from "./components/DeviceSwapDialog";
 import MobileGate from "./components/MobileGate";
 import ToastContainer from "./components/ToastContainer";
 import PendingSubmissionBanner from "./components/PendingSubmissionBanner";
@@ -1764,6 +1765,7 @@ export default function App() {
       <StubLabelContextMenu />
       <PortContextMenu />
       <IncompatibleConnectionDialog />
+      <DeviceSwapDialog />
       <MobileGate />
       <ToastContainer />
     </div>

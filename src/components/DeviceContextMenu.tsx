@@ -40,6 +40,14 @@ export default function DeviceContextMenu() {
     useSchematicStore.setState({ deviceContextMenu: null });
   }, [menu]);
 
+  const swapDevice = useCallback(() => {
+    if (!menu) return;
+    useSchematicStore.setState({
+      deviceSwapTarget: { nodeId: menu.nodeId },
+      deviceContextMenu: null,
+    });
+  }, [menu]);
+
   const deleteDevice = useCallback(() => {
     if (!menu) return;
     useSchematicStore.setState({ deviceContextMenu: null });
@@ -70,6 +78,7 @@ export default function DeviceContextMenu() {
       onClick={(e) => e.stopPropagation()}
     >
       <MenuItem label="Edit Properties..." onClick={editProperties} />
+      <MenuItem label="Swap Device..." onClick={swapDevice} />
 
       {deviceData && (
         <>

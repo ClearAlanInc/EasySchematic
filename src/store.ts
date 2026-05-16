@@ -51,6 +51,7 @@ import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getTemplateById } from "./templateApi";
 import { syncDeviceWithTemplate, type SyncResult } from "./templateSync";
+import { chooseNewHandleSuffix, type SwapPlan, type NewPortRef } from "./deviceSwap";
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
 import { computeCableSchedule } from "./cableSchedule";
 import { autoFillSheetForRack } from "./printSheetAutoFill";
@@ -246,6 +247,10 @@ interface SchematicState {
   ) => void;
   /** Reconcile a placed device against the latest version of its source template. */
   syncDeviceFromTemplate: (nodeId: string) => SyncResult | null;
+  /** Replace a device in place with a different template, remapping connections per the plan. */
+  swapDevice: (nodeId: string, plan: SwapPlan) => void;
+  /** UI state: when set, the Swap Device dialog is open targeting this node. */
+  deviceSwapTarget: { nodeId: string } | null;
   /** Swap or remove a card in a modular slot. Pass null cardTemplateId to empty the slot. */
   swapCard: (nodeId: string, slotId: string, cardTemplateId: string | null) => void;
   /** Add a new empty expansion slot to a device. */
@@ -1070,6 +1075,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   routingDebugData: null,
   deviceContextMenu: null,
   setDeviceContextMenu: (menu) => set({ deviceContextMenu: menu }),
+  deviceSwapTarget: null,
   edgeContextMenu: null,
   roomContextMenu: null,
   stubLabelContextMenu: null,
@@ -2130,6 +2136,234 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     });
     get().saveToLocalStorage();
     return result;
+  },
+
+  swapDevice: (nodeId, plan) => {
+    const state = get();
+    const node = state.nodes.find((n) => n.id === nodeId && n.type === "device") as DeviceNode | undefined;
+    if (!node) {
+      set({ deviceSwapTarget: null });
+      return;
+    }
+
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const oldData = node.data;
+    const newTemplate = plan.newTemplate;
+    const customTemplates = state.customTemplates;
+
+    // 1. Build base ports — clone with fresh IDs and stamp templatePortId.
+    const basePorts = clonePorts(newTemplate.ports);
+    basePorts.forEach((p, i) => { p.templatePortId = newTemplate.ports[i].id; });
+    const baseByTemplateId = new Map<string, Port>();
+    newTemplate.ports.forEach((tp, i) => { baseByTemplateId.set(tp.id, basePorts[i]); });
+
+    // 2. Build slots respecting plan.installedCards (only enabled cards installed).
+    //    Walk slot defs depth-first; empty/unmatched slots get their template defaults.
+    const installedSlots: InstalledSlot[] = [];
+    const cardPorts: Port[] = [];
+    const cardByRef = new Map<string, Map<string, Port>>(); // slotId → (cardTemplatePortId → clonedPort)
+
+    const walkSlotDefs = (slotDefs: SlotDefinition[], parentPath: string | undefined, parentLabel: string | undefined) => {
+      for (const sd of slotDefs) {
+        const fullId = parentPath ? `${parentPath}/${sd.id}` : sd.id;
+        const fullLabel = parentLabel ? `${parentLabel} > ${sd.label}` : sd.label;
+        const planned = plan.installedCards.find((c) => c.slotId === fullId && c.enabled);
+        const cardTplId = planned ? planned.cardTemplateId : sd.defaultCardId;
+        const cardTpl = cardTplId ? getTemplateById(cardTplId, customTemplates) : undefined;
+
+        if (cardTpl) {
+          const cloned = cloneCardPorts(cardTpl.ports, fullId, fullLabel);
+          cloned.forEach((p, i) => { p.templatePortId = cardTpl.ports[i].id; });
+          cardPorts.push(...cloned);
+          const refMap = new Map<string, Port>();
+          cardTpl.ports.forEach((cp, i) => refMap.set(cp.id, cloned[i]));
+          cardByRef.set(fullId, refMap);
+
+          installedSlots.push({
+            slotId: fullId,
+            label: sd.label,
+            slotFamily: sd.slotFamily,
+            ...(parentPath ? { parentSlotId: parentPath } : {}),
+            ...(sd.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
+            cardTemplateId: cardTpl.id,
+            cardLabel: cardTpl.label,
+            cardManufacturer: cardTpl.manufacturer,
+            cardModelNumber: cardTpl.modelNumber,
+            cardUnitCost: cardTpl.unitCost,
+            portIds: cloned.map((p) => p.id),
+          });
+          if (cardTpl.slots && cardTpl.slots.length > 0) {
+            walkSlotDefs(cardTpl.slots, fullId, fullLabel);
+          }
+        } else {
+          installedSlots.push({
+            slotId: fullId,
+            label: sd.label,
+            slotFamily: sd.slotFamily,
+            ...(parentPath ? { parentSlotId: parentPath } : {}),
+            ...(sd.hideWhenEmpty ? { hideWhenEmpty: true } : {}),
+            portIds: [],
+          });
+        }
+      }
+    };
+    if (newTemplate.slots && newTemplate.slots.length > 0) {
+      walkSlotDefs(newTemplate.slots, undefined, undefined);
+    }
+
+    const newPorts: Port[] = [...basePorts, ...cardPorts];
+
+    // 3. Resolve NewPortRef → final Port.
+    const resolveRef = (ref: NewPortRef): Port | undefined => {
+      if (ref.kind === "base") return baseByTemplateId.get(ref.templatePortId);
+      return cardByRef.get(ref.slotId)?.get(ref.cardTemplatePortId);
+    };
+
+    // 4. Per-port preservation: carry user customizations (label, flipped, network config,
+    //    notes, etc.) from old port onto its remapped new port. mergePort-style.
+    const mergedNewPortIds = new Set<string>();
+    for (const m of plan.mappings) {
+      if (!m.newPortRef) continue;
+      const target = resolveRef(m.newPortRef);
+      if (!target) continue;
+      if (mergedNewPortIds.has(target.id)) continue;
+      mergedNewPortIds.add(target.id);
+      const op = m.oldPort;
+      if (op.label) target.label = op.label;
+      if (op.flipped) target.flipped = op.flipped;
+      if (op.notes) target.notes = op.notes;
+      if (op.activeConfig) target.activeConfig = { ...op.activeConfig };
+      if (op.linkSpeed) target.linkSpeed = op.linkSpeed;
+      if (op.gender) target.gender = op.gender;
+      if (op.poeDrawW != null) target.poeDrawW = op.poeDrawW;
+      if (op.networkConfig && NETWORK_SIGNAL_TYPES.has(target.signalType)) {
+        target.networkConfig = { ...op.networkConfig };
+      }
+    }
+
+    // 5. Build new DeviceData. Take factual fields from template; preserve a small set
+    //    of instance-level customizations from the old device.
+    const userRenamed = !oldData.baseLabel; // baseLabel cleared on user rename
+    const preservedLabel = userRenamed ? oldData.label : newTemplate.label;
+    const newData: DeviceData = {
+      label: preservedLabel,
+      deviceType: newTemplate.deviceType,
+      ports: newPorts,
+      ...(newTemplate.color ? { color: newTemplate.color } : {}),
+      ...(userRenamed ? {} : { baseLabel: newTemplate.label }),
+      model: newTemplate.label,
+      ...(newTemplate.shortName ? { shortName: newTemplate.shortName } : {}),
+      ...(newTemplate.id ? { templateId: newTemplate.id } : {}),
+      ...(newTemplate.version ? { templateVersion: newTemplate.version } : {}),
+      ...(newTemplate.manufacturer ? { manufacturer: newTemplate.manufacturer } : {}),
+      ...(newTemplate.modelNumber ? { modelNumber: newTemplate.modelNumber } : {}),
+      ...(newTemplate.referenceUrl ? { referenceUrl: newTemplate.referenceUrl } : {}),
+      ...(newTemplate.category ? { category: newTemplate.category } : {}),
+      ...(newTemplate.powerDrawW != null ? { powerDrawW: newTemplate.powerDrawW } : {}),
+      ...(newTemplate.powerCapacityW != null ? { powerCapacityW: newTemplate.powerCapacityW } : {}),
+      ...(newTemplate.voltage ? { voltage: newTemplate.voltage } : {}),
+      ...(newTemplate.poeBudgetW != null ? { poeBudgetW: newTemplate.poeBudgetW } : {}),
+      ...(newTemplate.poeDrawW != null ? { poeDrawW: newTemplate.poeDrawW } : {}),
+      ...(newTemplate.unitCost != null ? { unitCost: newTemplate.unitCost } : {}),
+      ...(newTemplate.thermalBtuh != null ? { thermalBtuh: newTemplate.thermalBtuh } : {}),
+      ...(newTemplate.searchTerms?.length ? { searchTerms: [...newTemplate.searchTerms] } : {}),
+      ...(newTemplate.heightMm != null ? { heightMm: newTemplate.heightMm } : {}),
+      ...(newTemplate.widthMm != null ? { widthMm: newTemplate.widthMm } : {}),
+      ...(newTemplate.depthMm != null ? { depthMm: newTemplate.depthMm } : {}),
+      ...(newTemplate.weightKg != null ? { weightKg: newTemplate.weightKg } : {}),
+      ...(newTemplate.isVenueProvided ? { isVenueProvided: true } : {}),
+      ...(newTemplate.deviceType === "cable-accessory" ? { isCableAccessory: true } : {}),
+      ...(installedSlots.length > 0 ? { slots: installedSlots } : {}),
+      ...(newTemplate.auxiliaryData?.length
+        ? { auxiliaryData: newTemplate.auxiliaryData.map((r) => ({ ...r })) }
+        : { auxiliaryData: [{ text: "{{deviceType}}", position: "header" as const }] }),
+      // Preserved instance fields:
+      ...(oldData.hostname ? { hostname: oldData.hostname } : (newTemplate.hostname ? { hostname: newTemplate.hostname } : {})),
+      ...(oldData.useShortName !== undefined ? { useShortName: oldData.useShortName } : {}),
+      ...(oldData.wrapLabel !== undefined ? { wrapLabel: oldData.wrapLabel } : {}),
+    };
+
+    // 6. Remap edges. For each mapping with a target, compute the new handle. Otherwise drop.
+    const droppedEdgeIds = new Set<string>();
+    const linkedIdsToDrop = new Set<string>();
+    const edgeHandleUpdates = new Map<string, { sourceHandle?: string; targetHandle?: string }>();
+    let remappedCount = 0;
+
+    const markDropped = (edges: ConnectionEdge[]) => {
+      for (const e of edges) {
+        droppedEdgeIds.add(e.id);
+        if (e.data?.linkedConnectionId) linkedIdsToDrop.add(e.data.linkedConnectionId);
+      }
+    };
+
+    for (const m of plan.mappings) {
+      if (!m.newPortRef) {
+        markDropped(m.edges);
+        continue;
+      }
+      const target = resolveRef(m.newPortRef);
+      if (!target) {
+        markDropped(m.edges);
+        continue;
+      }
+      const newSuffix = chooseNewHandleSuffix(m.oldHandleSuffix, target.direction);
+      if (newSuffix === null) {
+        markDropped(m.edges);
+        continue;
+      }
+      const newHandle = target.id + newSuffix;
+      for (const e of m.edges) {
+        const upd = edgeHandleUpdates.get(e.id) ?? {};
+        if (m.oldEndpoint === "source") upd.sourceHandle = newHandle;
+        else upd.targetHandle = newHandle;
+        edgeHandleUpdates.set(e.id, upd);
+        remappedCount++;
+      }
+    }
+
+    // 7. Cascade drops to stub-leg partners and stub-label nodes.
+    if (linkedIdsToDrop.size > 0) {
+      for (const e of state.edges) {
+        if (e.data?.linkedConnectionId && linkedIdsToDrop.has(e.data.linkedConnectionId)) {
+          droppedEdgeIds.add(e.id);
+        }
+      }
+    }
+
+    // 8. Assemble new edges + node array.
+    const newEdges: ConnectionEdge[] = [];
+    for (const e of state.edges) {
+      if (droppedEdgeIds.has(e.id)) continue;
+      const upd = edgeHandleUpdates.get(e.id);
+      newEdges.push(upd ? { ...e, ...upd } : e);
+    }
+
+    let newNodes: SchematicNode[] = state.nodes.map((n) => {
+      if (n.id !== nodeId) return n;
+      return { ...n, data: newData } as DeviceNode;
+    });
+    if (linkedIdsToDrop.size > 0) {
+      newNodes = newNodes.filter((n) => {
+        if (n.type !== "stub-label") return true;
+        const sd = n.data as import("./types").StubLabelData;
+        return !linkedIdsToDrop.has(sd.linkedConnectionId);
+      });
+    }
+
+    set({
+      nodes: renumberNodes(newNodes),
+      edges: newEdges,
+      deviceSwapTarget: null,
+    });
+
+    const droppedCount = [...droppedEdgeIds].filter((id) => state.edges.some((e) => e.id === id)).length;
+    const installedCount = plan.installedCards.filter((c) => c.enabled).length;
+    let toast = `Swapped to ${newTemplate.label}: ${remappedCount} connection${remappedCount !== 1 ? "s" : ""} remapped`;
+    if (droppedCount > 0) toast += `, ${droppedCount} dropped`;
+    if (installedCount > 0) toast += `; ${installedCount} card${installedCount !== 1 ? "s" : ""} installed`;
+    get().addToast(toast, "success");
+    get().saveToLocalStorage();
   },
 
   swapCard: (nodeId, slotId, cardTemplateId) => {
