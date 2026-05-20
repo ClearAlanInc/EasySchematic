@@ -103,7 +103,7 @@ docker compose up -d`}</code>
         The dev profile uses <code>compose.dev.yml</code> and{" "}
         <code>docker/Dockerfile.dev</code>. On each start the container shallow-clones
         the GitHub repository into a named Docker volume, runs{" "}
-        <code>npm ci</code>, and starts Vite on port <strong>3000</strong>. The
+        <code>npm ci</code>, and starts Vite on port <strong>5173</strong>. The
         clone persists between restarts, so later starts only fetch the latest
         commit and reinstall dependencies if the lockfile changed.
       </p>
@@ -115,7 +115,7 @@ make dev`}</code>
       </pre>
 
       <p>
-        Open <a href="http://localhost:3000">http://localhost:3000</a>. The
+        Open <a href="http://localhost:5173">http://localhost:5173</a>. The
         first start takes about 30–60 seconds (clone + install). Subsequent
         starts are faster (pull + verify).
       </p>
@@ -177,7 +177,7 @@ make dev`}</code>
       </p>
 
       <pre>
-        <code>docker compose -f compose.yml -f compose.dev.yml up</code>
+        <code>docker compose -f compose.dev.yml up</code>
       </pre>
 
       <p>
@@ -185,7 +185,7 @@ make dev`}</code>
       </p>
 
       <pre>
-        <code>{`docker compose -f compose.yml -f compose.dev.yml down -v
+        <code>{`docker compose -f compose.dev.yml down -v
 make dev`}</code>
       </pre>
 
@@ -229,7 +229,7 @@ make dev`}</code>
       <p>
         If you omit <code>.env</code>, the dev server uses the same default as a
         production build. Cloud login, saves, and templates against the hosted
-        API work from <code>localhost:3000</code> because that origin is already
+        API work from <code>localhost:5173</code> because that origin is already
         allowed by the API CORS policy.
       </p>
 

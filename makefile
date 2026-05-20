@@ -24,16 +24,16 @@ logs: ## Tail container logs
 	docker compose logs -f
 
 dev: ## Clone/pull repo and start Vite dev server
-	docker compose -f compose.yml -f compose.dev.yml up
+	docker compose -f compose.dev.yml up
 
 dev-detach: ## Clone/pull repo and start Vite dev server in background
-	docker compose -f compose.yml -f compose.dev.yml up -d
+	docker compose -f compose.dev.yml up -d
 
 dev-down: ## Stop the Vite dev server
-	docker compose -f compose.yml -f compose.dev.yml down
+	docker compose -f compose.dev.yml down
 
 dev-logs: ## Tail dev server logs
-	docker compose -f compose.yml -f compose.dev.yml logs -f
+	docker compose -f compose.dev.yml logs -f
 
 dev-update: ## Force re-pull latest code and restart
-	docker compose -f compose.yml -f compose.dev.yml restart
+	docker compose -f compose.dev.yml restart

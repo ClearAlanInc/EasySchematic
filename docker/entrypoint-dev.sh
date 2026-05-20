@@ -2,7 +2,7 @@
 set -e
 
 REPO_URL="${REPO_URL:-https://github.com/duremovich/EasySchematic.git}"
-BRANCH="${BRANCH:-main}"
+BRANCH="${BRANCH:-master}"
 
 if [ ! -d "/app/.git" ]; then
   echo "[dev] Cloning $REPO_URL @ $BRANCH ..."
@@ -17,5 +17,5 @@ echo "[dev] Installing dependencies..."
 cd /app
 npm ci --legacy-peer-deps
 
-echo "[dev] Starting Vite on :3000 ..."
-exec npx vite --host 0.0.0.0 --port 3000
+echo "[dev] Starting Vite on :5173 ..."
+exec npx vite --host 0.0.0.0 --port 5173
