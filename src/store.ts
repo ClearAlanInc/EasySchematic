@@ -55,7 +55,7 @@ import { chooseNewHandleSuffix, type SwapPlan, type NewPortRef } from "./deviceS
 import { getSignalColorOverrides, applySignalColors, loadSignalColors, saveSignalColors } from "./signalColors";
 import { computeCableSchedule } from "./cableSchedule";
 import { autoFillSheetForRack } from "./printSheetAutoFill";
-import { allocateEdgeId, maxEdgeCounterFromIds, uniquifyEdgeIds } from "./idUtils";
+import { allocateEdgeId, maxEdgeCounterFromIds, newLinkedConnectionId, uniquifyEdgeIds } from "./idUtils";
 
 /** Fix UTF-8 → Windows-1252 double-encoding in string values (e.g. → becomes â†').
  *  Applied on import so old/corrupted saves display correctly. */
@@ -1619,6 +1619,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Build old ID → new ID mapping for nodes and ports
     const nodeIdMap = new Map<string, string>();
     const portIdMap = new Map<string, string>();
+    // Stubbed connections are identified by a shared linkedConnectionId across
+    // their stub-leg edges and stub-label nodes. Re-key it per pasted connection
+    // so the copy is independent of the original — otherwise collapsing one stub
+    // would delete both, and labels would resolve through the wrong partner.
+    const linkIdMap = new Map<string, string>();
+    const remapLink = (oldLink: string): string => {
+      let v = linkIdMap.get(oldLink);
+      if (!v) {
+        v = newLinkedConnectionId();
+        linkIdMap.set(oldLink, v);
+      }
+      return v;
+    };
 
     const yOffset = clipboard.boundsHeight + PASTE_GAP;
 
@@ -1648,6 +1661,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           },
         } as DeviceNode;
       }
+      if (n.type === "stub-label") {
+        const sd = n.data as import("./types").StubLabelData;
+        return {
+          ...n,
+          id: newId,
+          position: { x: n.position.x, y: n.position.y + yOffset },
+          selected: true,
+          data: { ...sd, linkedConnectionId: remapLink(sd.linkedConnectionId) },
+        };
+      }
       return {
         ...n,
         id: newId,
@@ -1659,6 +1682,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const existingEdges = ensureUniqueEdgeIds(state.edges);
     const newEdges: ConnectionEdge[] = [];
     for (const e of clipboard.edges) {
+      const data = e.data?.linkedConnectionId
+        ? { ...e.data, linkedConnectionId: remapLink(e.data.linkedConnectionId) }
+        : e.data;
       newEdges.push({
         ...e,
         id: nextEdgeId([...existingEdges, ...newEdges]),
@@ -1666,6 +1692,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         target: nodeIdMap.get(e.target) ?? e.target,
         sourceHandle: e.sourceHandle ? (portIdMap.get(e.sourceHandle) ?? e.sourceHandle) : e.sourceHandle,
         targetHandle: e.targetHandle ? (portIdMap.get(e.targetHandle) ?? e.targetHandle) : e.targetHandle,
+        data,
       });
     }
 
@@ -4866,10 +4893,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const srcParentAbs = { x: Math.round(rawSrcParentAbs.x), y: Math.round(rawSrcParentAbs.y) };
     const tgtParentAbs = { x: Math.round(rawTgtParentAbs.x), y: Math.round(rawTgtParentAbs.y) };
 
-    const linkedConnectionId =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `link-${edge.id}-${Date.now()}`;
+    const linkedConnectionId = newLinkedConnectionId();
     const stubNodeIdSrc = `stub-${edge.id}-src`;
     const stubNodeIdTgt = `stub-${edge.id}-tgt`;
     const sigType = edge.data!.signalType;
