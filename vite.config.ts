@@ -24,7 +24,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' lets src/sw-register.ts decide what to do when a new SW
+      // arrives — show a pill when the user's active, silent-reload when
+      // they're idle. 'autoUpdate' would swallow onNeedRefresh and force a
+      // silent reload on every update, even mid-interaction.
+      registerType: 'prompt',
+      // We call registerSW() manually from src/main.tsx; don't let the plugin
+      // auto-inject a second registration script.
+      injectRegister: false,
       workbox: {
         // Force a freshly-installed SW to activate and claim all open tabs
         // immediately, instead of waiting for every client to close. Without

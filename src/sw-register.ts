@@ -21,7 +21,13 @@ export function initServiceWorkerUpdates(): void {
   updateSW = registerSW({
     onRegisteredSW(_url, reg) {
       if (!reg) return;
-      setInterval(() => { reg.update().catch(() => { /* offline / transient */ }); }, POLL_MS);
+      const check = () => { reg.update().catch(() => { /* offline / transient */ }); };
+      setInterval(check, POLL_MS);
+      // Tab returning from background should check immediately, not wait
+      // for the next 10-min interval.
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") check();
+      });
     },
     onNeedRefresh() {
       const idle = Date.now() - lastActivity > IDLE_RELOAD_MS;
