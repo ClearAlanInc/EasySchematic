@@ -2,37 +2,29 @@ import { registerSW } from "virtual:pwa-register";
 import { useSWStore } from "./swStore";
 
 const POLL_MS = 10 * 60_000;
-const IDLE_RELOAD_MS = 2 * 60_000;
 
-let lastActivity = Date.now();
 let updateSW: ((reload?: boolean) => Promise<void>) | null = null;
-
-function trackActivity(): void {
-  const bump = () => { lastActivity = Date.now(); };
-  window.addEventListener("mousemove", bump, { passive: true });
-  window.addEventListener("keydown", bump, { passive: true });
-  window.addEventListener("pointerdown", bump, { passive: true });
-}
 
 export function initServiceWorkerUpdates(): void {
   if (typeof window === "undefined") return;
-  trackActivity();
 
   updateSW = registerSW({
     onRegisteredSW(_url, reg) {
       if (!reg) return;
       const check = () => { reg.update().catch(() => { /* offline / transient */ }); };
       setInterval(check, POLL_MS);
-      // Tab returning from background should check immediately, not wait
-      // for the next 10-min interval.
+      // Tab returning from background should check immediately, not wait for
+      // the next 10-min interval.
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") check();
       });
     },
     onNeedRefresh() {
-      const idle = Date.now() - lastActivity > IDLE_RELOAD_MS;
-      const hidden = document.visibilityState === "hidden";
-      if (hidden || idle) {
+      // Hidden tab → user can't see a pill anyway, just reload silently so
+      // their next focus lands on fresh code. Visible tab → show the pill and
+      // let the user decide; if they ignore it forever, that's fine, it sits
+      // there until they reload manually or click it.
+      if (document.visibilityState === "hidden") {
         void updateSW?.(true);
       } else {
         useSWStore.getState().setUpdateAvailable(true);
