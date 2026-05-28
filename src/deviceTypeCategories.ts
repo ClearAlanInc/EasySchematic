@@ -107,6 +107,11 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "conference-system": "Audio",
   "di-box": "Audio",
   "display": "Displays",
+  "charging-station": "Microphones",
+  "audio-bar": "Audio",
+  "mtr-pc": "Codecs",
+  "touch-controller": "Control",
+  "occupancy-sensor": "Control",
 };
 
 /** Human-readable labels for device types (kebab-case → Title Case with known acronyms) */
