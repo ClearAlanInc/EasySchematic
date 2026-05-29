@@ -41,6 +41,7 @@ import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
+import { healStaleWaypoints } from "./waypointHealing";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
@@ -163,6 +164,17 @@ import { GRID_SIZE } from "./gridConstants";
  *  Stub labels are skipped — they store sub-grid Y to center the box on a
  *  port row (box height ≈13–14px, half of which would round away). Snapping
  *  them shifted the label down a few px on every load. */
+/** Conservatively drop manual waypoints stranded by device/room moves in a loaded
+ *  file (they detour the edge or route it through a device). Silent — logs a
+ *  support-triage line if anything healed, mirroring the [waypoint-orphan] probe. */
+function applyWaypointHeal(nodes: SchematicNode[], edges: ConnectionEdge[]): ConnectionEdge[] {
+  const { edges: healedEdges, healed } = healStaleWaypoints(nodes, edges);
+  if (healed.length > 0) {
+    console.info("[waypoint-heal]", healed.length, "connection(s) re-routed (stale manual waypoints)");
+  }
+  return healedEdges;
+}
+
 function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   for (const n of nodes) {
     if (n.type === "stub-label") continue;
@@ -4379,6 +4391,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           applyRoomLockState(data.nodes);
           syncCounters(data.nodes, data.edges);
           data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
+          data.edges = applyWaypointHeal(data.nodes, data.edges);
           const colors = data.signalColors ?? {};
           applySignalColors(colors);
           saveSignalColors({ ...loadSignalColors(), ...colors });
@@ -4456,6 +4469,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       applyRoomLockState(data.nodes);
       syncCounters(data.nodes, data.edges);
       data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
+      data.edges = applyWaypointHeal(data.nodes, data.edges);
       // Always apply colors — if file has none, reset to defaults
       const colors = data.signalColors ?? {};
       applySignalColors(colors);
@@ -4613,6 +4627,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     applyRoomLockState(nodes);
     syncCounters(nodes, edges);
     edges = ensureUniqueEdgeIds(removeOrphanedEdges(nodes, edges));
+    edges = applyWaypointHeal(nodes, edges);
     // Merge imported custom templates with existing ones (avoid duplicates by template key)
     if (data.customTemplates?.length) {
       const existing = get().customTemplates;
