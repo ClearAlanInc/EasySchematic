@@ -4,7 +4,7 @@
  * work must improve without regressing.
  */
 
-import type { SchematicNode, SignalType, DeviceData } from "../types";
+import type { SchematicNode, SignalType, DeviceData, Port, ConnectionEdge } from "../types";
 import { computeDeviceHandles } from "./deviceHandleLayout";
 import { makeDevice, makeEdge, makePort, makeStubPair, makeFixture, type Fixture } from "./fixtures";
 
@@ -105,6 +105,59 @@ function mixedSignalCorridor(): Fixture {
   return makeFixture("mixed-signal-corridor", nodes, edges);
 }
 
+/**
+ * Multiple sources at different Y feeding ONE shared vertical stack of targets,
+ * wired interleaved so the vertical spans overlap. This is the user's reported
+ * defect: edges to vertically-stacked targets run down the same/adjacent X corridor
+ * and overlap instead of nesting into concentric channels. The auto-router should
+ * order the corridors concentrically (inner = shortest vertical span).
+ */
+function multiSourceStack(): Fixture {
+  const s1Outs = Array.from({ length: 3 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
+  const s2Outs = Array.from({ length: 3 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
+  const s1 = makeDevice({ id: "s1", label: "Camera A", x: 0, y: 40, ports: s1Outs });
+  const s2 = makeDevice({ id: "s2", label: "Camera B", x: 0, y: 520, ports: s2Outs });
+  const nodes: SchematicNode[] = [s1, s2];
+  const tgts = Array.from({ length: 6 }, (_, i) => {
+    const tin = makePort("In", "sdi", "input");
+    const t = makeDevice({ id: `t${i}`, label: `Monitor ${i + 1}`, x: 820, y: i * 130, ports: [tin] });
+    nodes.push(t);
+    return { t, tin };
+  });
+  // Interleave so spans cross: S1(top) → T0,T2,T4 ; S2(bottom) → T1,T3,T5.
+  const edges: ConnectionEdge[] = [];
+  const wire = (src: SchematicNode, outs: Port[], oi: number, ti: number) =>
+    edges.push(makeEdge({
+      id: `${src.id}-t${ti}`, source: src.id, sourceHandle: outs[oi].id,
+      target: `t${ti}`, targetHandle: tgts[ti].tin.id, signalType: "sdi",
+    }));
+  wire(s1, s1Outs, 0, 0); wire(s1, s1Outs, 1, 2); wire(s1, s1Outs, 2, 4);
+  wire(s2, s2Outs, 0, 1); wire(s2, s2Outs, 1, 3); wire(s2, s2Outs, 2, 5);
+  return makeFixture("multi-source-stack", nodes, edges);
+}
+
+/**
+ * Single source fanning to stacked targets with a tall obstacle device sitting
+ * between them, so the clean L-shape is blocked and the multi-leg corridor
+ * assembly must navigate around it. Exercises the "odd unneeded bends near the
+ * target" path: leg1 + vertical + leg3 assembly and simplifyWaypoints cleanup.
+ */
+function fanThroughGap(): Fixture {
+  const outs = Array.from({ length: 5 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 280, ports: outs });
+  // A tall wall device spanning the vertical extent, blocking direct horizontals.
+  const wallPorts = Array.from({ length: 14 }, (_, i) => makePort(`P${i + 1}`, "sdi", i % 2 ? "output" : "input"));
+  const wall = makeDevice({ id: "wall", label: "Patch Wall", x: 420, y: 0, ports: wallPorts });
+  const nodes: SchematicNode[] = [src, wall];
+  const edges = outs.map((p, i) => {
+    const tin = makePort("In", "sdi", "input");
+    const t = makeDevice({ id: `t${i}`, label: `Display ${i + 1}`, x: 820, y: i * 150, ports: [tin] });
+    nodes.push(t);
+    return makeEdge({ id: `g${i}`, source: "src", sourceHandle: p.id, target: `t${i}`, targetHandle: tin.id, signalType: "sdi" });
+  });
+  return makeFixture("fan-through-gap", nodes, edges);
+}
+
 /** A grid of devices wired diagonally so naive routing produces many crossings. */
 function crossingGrid(): Fixture {
   const nodes: SchematicNode[] = [];
@@ -134,12 +187,42 @@ export function syntheticFixtures(): Fixture[] {
     nestedRooms(),
     stubsSpread(),
     mixedSignalCorridor(),
+    multiSourceStack(),
+    fanThroughGap(),
     crossingGrid(),
   ];
 }
 
-/** All fixtures: synthetic + the bundled default schematic + any real exports on disk. */
+/**
+ * Strip every manualWaypoint so the edge re-auto-routes from scratch. Real exports
+ * are often partly hand-routed (WeirdRoom = 25/42 edges manual), and the as-saved
+ * weave/detour metrics largely measure USER routes, not the auto-router. The
+ * stripped variant is the true auto-router quality signal — and the thing Phase 2
+ * is actually trying to improve. Returns null if the fixture has no manual routes.
+ */
+function autoRouteVariant(fx: Fixture): Fixture | null {
+  let hasManual = false;
+  const edges = fx.edges.map((e) => {
+    if (e.data?.manualWaypoints?.length) {
+      hasManual = true;
+      const data = { ...e.data };
+      delete (data as { manualWaypoints?: unknown }).manualWaypoints;
+      return { ...e, data } as ConnectionEdge;
+    }
+    return e;
+  });
+  if (!hasManual) return null;
+  return { name: `${fx.name}__auto`, nodes: fx.nodes, edges };
+}
+
+/**
+ * All fixtures: synthetic + the bundled default schematic + any real exports on disk.
+ * Each partly-hand-routed file fixture also gets a `__auto` strip-manual variant so
+ * the pure auto-router is measured and gated independently of user-placed routing.
+ */
 export async function allFixtures(): Promise<Fixture[]> {
   const { defaultSchematicFixture, loadFileFixtures } = await import("./fixtures");
-  return [...syntheticFixtures(), defaultSchematicFixture(), ...loadFileFixtures()];
+  const base = [...syntheticFixtures(), defaultSchematicFixture(), ...loadFileFixtures()];
+  const variants = base.map(autoRouteVariant).filter((f): f is Fixture => f !== null);
+  return [...base, ...variants];
 }

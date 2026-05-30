@@ -53,6 +53,8 @@ src/__tests__/fixtures/routing/baselines/*
 !src/__tests__/fixtures/routing/baselines/stubs-spread.json
 !src/__tests__/fixtures/routing/baselines/mixed-signal-corridor.json
 !src/__tests__/fixtures/routing/baselines/crossing-grid.json
+!src/__tests__/fixtures/routing/baselines/multi-source-stack.json
+!src/__tests__/fixtures/routing/baselines/fan-through-gap.json
 !src/__tests__/fixtures/routing/baselines/defaultSchematic.json
 
 # Playwright
