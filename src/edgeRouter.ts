@@ -1044,9 +1044,6 @@ export function routeAllEdges(
     ranges.push({ yMin, yMax });
   };
 
-  // Process fan groups largest first (more edges = more constrained = allocate first)
-  const sortedFanGroups = [...fanGroups].sort((a, b) => b.edges.length - a.edges.length);
-
   /** Allocate a contiguous block of columns for a sorted list of edges.
    *  excludeNodeIds: endpoint device IDs to skip in obstacle checks (an edge's
    *  corridor can overlap its own source/target device's obstacle rect). */
@@ -1116,39 +1113,89 @@ export function routeAllEdges(
     }
   };
 
-  for (const fg of sortedFanGroups) {
-    const searchStart = fg.tgtXMin - 2;
-    const searchEnd = fg.srcXMax + 2;
+  // ---------- Co-target clustering ----------
+  // Fan groups arriving at the same stacked target column must share ONE concentric
+  // corridor ordering. Allocating each fan group independently lets a fan reaching LOWER
+  // targets grab inner columns (closer to the stack) while a fan reaching HIGHER targets
+  // gets outer columns — the two then weave: each low fan's near-source horizontal cuts
+  // across the high fan's verticals, and each high fan's target horizontal cuts back
+  // across the low fan's verticals. (This is the root cause of the WeirdRoom Stage-fan
+  // weave: the ethernet fan to PTZOptics/Panasonic — below the BMD stack — was getting
+  // corridors INNER to the SDI fan.) Merging co-target fan groups and ordering the combined
+  // edges by target Y nests the whole stack concentrically (highest target = innermost/
+  // rightmost column, lowest = outermost/leftmost).
+  //
+  // Merge criterion mirrors the fan detector: target X ranges within CO_TARGET_X of a
+  // contiguous target band, AND Y ranges overlapping (with FAN_Y_MARGIN slack). The Y
+  // guard is essential — without it, two stacked copies of a layout (identical target X,
+  // disjoint Y) would merge and demand 2×N distinct columns instead of sharing N, the same
+  // failure the fan detector's overlapsY check exists to prevent.
+  const CO_TARGET_X = 5; // grid cells — reuses the fan detector's tolerance as a range margin
+  type Cluster = { tgtXMin: number; tgtXMax: number; srcXMax: number; yMin: number; yMax: number; groups: FanGroup[] };
+  const clusters: Cluster[] = [];
+  for (const fg of [...fanGroups].sort((a, b) => a.tgtXMin - b.tgtXMin)) {
+    const c = clusters.find(
+      (cl) =>
+        fg.tgtXMin <= cl.tgtXMax + CO_TARGET_X &&
+        fg.tgtXMax >= cl.tgtXMin - CO_TARGET_X &&
+        fg.yMax >= cl.yMin - FAN_Y_MARGIN &&
+        fg.yMin <= cl.yMax + FAN_Y_MARGIN,
+    );
+    if (c) {
+      c.tgtXMin = Math.min(c.tgtXMin, fg.tgtXMin);
+      c.tgtXMax = Math.max(c.tgtXMax, fg.tgtXMax);
+      c.srcXMax = Math.max(c.srcXMax, fg.srcXMax);
+      c.yMin = Math.min(c.yMin, fg.yMin);
+      c.yMax = Math.max(c.yMax, fg.yMax);
+      c.groups.push(fg);
+    } else {
+      clusters.push({ tgtXMin: fg.tgtXMin, tgtXMax: fg.tgtXMax, srcXMax: fg.srcXMax, yMin: fg.yMin, yMax: fg.yMax, groups: [fg] });
+    }
+  }
 
-    // Split into direction subgroups
-    const downEdges: ColumnEdge[] = [];
-    const upEdges: ColumnEdge[] = [];
-    for (const ce of fg.edges) {
-      if (ce.tgtGY >= ce.srcGY) {
-        downEdges.push(ce);
-      } else {
-        upEdges.push(ce);
+  /** Split a set of edges into DOWN/UP subgroups, order each concentrically (innermost
+   *  = nearest the targets), and allocate contiguous corridor columns in [searchEnd,
+   *  searchStart]. The DOWN/UP subgroups are allocated separately and the Y-aware column
+   *  tracker keeps them apart, so same-column cross-direction overlap can't happen; a DOWN
+   *  horizontal can still cross an UP vertical, but those crossings are minimized, not
+   *  eliminated. */
+  const allocateForEdges = (edges: ColumnEdge[], searchStart: number, searchEnd: number) => {
+    const endpointIds = new Set<string>();
+    for (const ce of edges) {
+      endpointIds.add(ce.ep.edge.source);
+      endpointIds.add(ce.ep.edge.target);
+    }
+    const downEdges = edges.filter((ce) => ce.tgtGY >= ce.srcGY);
+    const upEdges = edges.filter((ce) => ce.tgtGY < ce.srcGY);
+    // DOWN: highest target = innermost (block's first/rightmost column = top target),
+    // srcY ascending as a stable tiebreaker. UP: mirror — lowest source = innermost.
+    downEdges.sort((a, b) => a.tgtGY - b.tgtGY || a.srcGY - b.srcGY);
+    upEdges.sort((a, b) => b.srcGY - a.srcGY || b.tgtGY - a.tgtGY);
+    allocateBlock(downEdges, searchStart, searchEnd, endpointIds);
+    allocateBlock(upEdges, searchStart, searchEnd, endpointIds);
+  };
+
+  // Process clusters largest-first (most edges = most constrained = allocate first).
+  const clusterEdgeCount = (cl: Cluster) => cl.groups.reduce((n, g) => n + g.edges.length, 0);
+  const sortedClusters = [...clusters].sort((a, b) => clusterEdgeCount(b) - clusterEdgeCount(a));
+
+  for (const cl of sortedClusters) {
+    // Co-target nesting only applies when there's a real corridor band between the
+    // cluster's sources and its shared target column (searchStart > searchEnd). When
+    // transitive merging drags in short edges whose target X ≈ source X, the band
+    // inverts and allocateBlock's fallback would place forward edges in columns BEHIND
+    // their own source (the multi-leg A* then knots back to reach them). In that case,
+    // fall back to allocating each member fan group on its own band (the per-group shape
+    // the router used before co-target clustering), so only genuinely-stacked targets get
+    // merged nesting.
+    const bandValid = cl.tgtXMin - 2 > cl.srcXMax + 2;
+    if (bandValid && cl.groups.length > 1) {
+      allocateForEdges(cl.groups.flatMap((g) => g.edges), cl.tgtXMin - 2, cl.srcXMax + 2);
+    } else {
+      for (const g of cl.groups) {
+        allocateForEdges(g.edges, g.tgtXMin - 2, g.srcXMax + 2);
       }
     }
-
-    // DOWN: sort by tgtY ascending → highest corridor to lowest tgtY.
-    downEdges.sort((a, b) => a.tgtGY - b.tgtGY);
-
-    // UP: sort by srcY descending → highest corridor to highest srcY.
-    upEdges.sort((a, b) => b.srcGY - a.srcGY);
-
-    // Collect all endpoint device IDs for this fan group — corridors may overlap
-    // these devices' obstacle rects, which is expected (edges exit through them).
-    const fanEndpointIds = new Set<string>();
-    for (const ce of fg.edges) {
-      fanEndpointIds.add(ce.ep.edge.source);
-      fanEndpointIds.add(ce.ep.edge.target);
-    }
-
-    // Allocate DOWN subgroup first, then UP subgroup. The two subgroups occupy different
-    // Y bands so cross-direction crossings are geometrically impossible.
-    allocateBlock(downEdges, searchStart, searchEnd, fanEndpointIds);
-    allocateBlock(upEdges, searchStart, searchEnd, fanEndpointIds);
   }
 
   // ---------- PHASE 2: Path Construction ----------
