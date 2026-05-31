@@ -88,7 +88,7 @@ export function renderFixtureSvg(
   const vbX = minX - margin;
   const vbY = minY - margin;
   const vbW = maxX - minX + margin * 2;
-  const legendH = 150;
+  const legendH = 180;
   const vbH = maxY - minY + margin * 2 + legendH;
 
   const parts: string[] = [];
@@ -133,6 +133,19 @@ export function renderFixtureSvg(
     );
   }
 
+  // --- track guides: faint dashed verticals at each trunk X, so corridor packing
+  //     and concentric nesting are eyeball-able against the routed paths ---
+  const trunkXs = new Set<number>();
+  for (const e of edges) {
+    const wps = routes[e.id]?.waypoints ?? [];
+    for (let i = 0; i < wps.length - 1; i++) {
+      if (wps[i].x === wps[i + 1].x && wps[i].y !== wps[i + 1].y) trunkXs.add(wps[i].x);
+    }
+  }
+  for (const x of trunkXs) {
+    parts.push(`<line x1="${x}" y1="${minY}" x2="${x}" y2="${maxY}" stroke="#c7d2fe" stroke-width="0.5" stroke-dasharray="2 5"/>`);
+  }
+
   // --- edges ---
   for (const e of edges) {
     const route = routes[e.id];
@@ -165,6 +178,7 @@ export function renderFixtureSvg(
     `R1 deviceOverlap=${m.deviceOverlapCount}   R3 nonOrthogonal=${m.nonOrthogonalSegments}   unrouted=${m.unroutedEdges}   R2 vertArrivals=${m.nonHorizontalArrivals}`,
     `shared(R5/6)=${m.sharedParallelSegments}   crossings=${m.crossingPairs}   weaving=${m.weavingPairs}   crossType(R11)=${m.crossTypeSepViolations}`,
     `backwardSegs=${m.backwardSegments}   turns(tot/max)=${m.turnsTotal}/${m.turnsMax}   detour(max/mean)=${m.detourRatioMax}/${m.detourRatioMean}   fallback=${m.fallbackCount}`,
+    `channelDensity=${m.channelDensity}   distinctTracks=${m.distinctTrackXs}   doglegs=${m.doglegCount}`,
   ];
   lines.forEach((line, i) => {
     parts.push(

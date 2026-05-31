@@ -280,6 +280,29 @@ export function computeRuleReport(opts: {
     }
   }
 
+  // ---- track-assignment quality (Phase-0 engine metrics) ----
+  // channelDensity = max number of vertical trunk segments overlapping in Y within a
+  // narrow X window (~one channel). This is the lower bound on tracks (the clique number
+  // of the interval graph); a routed result whose distinct trunk-X count near a band
+  // greatly exceeds density signals poor packing. distinctTrackXs = total distinct
+  // vertical-segment X positions. doglegCount = routes whose trunk was split to break a
+  // vertical-constraint cycle (0 until Phase 3 lands doglegs).
+  const verticalSegs = geoms.flatMap((g) =>
+    g.segs.filter((s) => s.axis === "v").map((s) => ({
+      x: s.x1, yMin: Math.min(s.y1, s.y2), yMax: Math.max(s.y1, s.y2),
+    })),
+  );
+  let channelDensity = 0;
+  for (const v of verticalSegs) {
+    let c = 0;
+    for (const w of verticalSegs) {
+      if (Math.abs(w.x - v.x) <= 40 && w.yMax >= v.yMin && w.yMin <= v.yMax) c++;
+    }
+    channelDensity = Math.max(channelDensity, c);
+  }
+  const distinctTrackXs = new Set(verticalSegs.map((v) => v.x)).size;
+  const doglegCount = edges.filter((e) => /dogleg/i.test(String(routes[e.id]?.turns ?? ""))).length;
+
   const routedCount = geoms.length;
   const warnings: string[] = [];
   if (overBudget) warnings.push("routing exceeded time budget (partial/fallback routes)");
@@ -306,6 +329,9 @@ export function computeRuleReport(opts: {
       detourRatioMean: routedCount ? Math.round((detourSum / routedCount) * 1000) / 1000 : 0,
       fallbackCount,
       unroutedEdges: unrouted.length,
+      channelDensity,
+      distinctTrackXs,
+      doglegCount,
     },
     offenders,
     warnings,
