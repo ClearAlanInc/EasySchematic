@@ -23,6 +23,7 @@ import {
   type Rect,
 } from "./pathfinding";
 import { computePageGrid } from "./printPageGrid";
+import { packOrdered, laneCount } from "./routing";
 import { STUB_W_EST } from "./stubPlacement";
 import {
   type Orientation,
@@ -1082,13 +1083,27 @@ export function routeAllEdges(
     const n = edges.length;
     if (n === 0) return;
 
-    // Try to find a contiguous block of N clear columns
+    // Order-preserving Left-Edge packing: trunks arrive in nesting order; consecutive
+    // Y-disjoint trunks share a column (column index stays monotonic in the order, so
+    // nesting — and thus crossing count — is preserved). The block needs `numLanes`
+    // (<= n) columns instead of one per edge. laneOf gives each edge its column offset.
+    const lane = packOrdered(
+      edges.map((ce) => ({
+        id: ce.ep.edge.id,
+        yMin: Math.min(ce.srcGY, ce.tgtGY),
+        yMax: Math.max(ce.srcGY, ce.tgtGY),
+      })),
+      COL_GAP,
+    );
+    const laneOf = (ce: ColumnEdge) => lane.get(ce.ep.edge.id) ?? 0;
+    const numLanes = laneCount(lane);
+
+    // Try to find a contiguous block of `numLanes` clear columns; lane L → blockStart - L.
     let blockStart = -1;
-    for (let baseX = searchStart; baseX - (n - 1) >= searchEnd; baseX--) {
+    for (let baseX = searchStart; baseX - (numLanes - 1) >= searchEnd; baseX--) {
       let allClear = true;
-      for (let i = 0; i < n; i++) {
-        const candidateX = baseX - i;
-        const ce = edges[i];
+      for (const ce of edges) {
+        const candidateX = baseX - laneOf(ce);
         const yMin = Math.min(ce.srcGY, ce.tgtGY);
         const yMax = Math.max(ce.srcGY, ce.tgtGY);
         if (!isColumnAvailable(candidateX, yMin, yMax)) { allClear = false; break; }
@@ -1101,9 +1116,8 @@ export function routeAllEdges(
     }
 
     if (blockStart >= 0) {
-      for (let i = 0; i < n; i++) {
-        const colX = blockStart - i;
-        const ce = edges[i];
+      for (const ce of edges) {
+        const colX = blockStart - laneOf(ce);
         ce.assignedCol = colX;
         claimColumn(colX, Math.min(ce.srcGY, ce.tgtGY), Math.max(ce.srcGY, ce.tgtGY));
       }
