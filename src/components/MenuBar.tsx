@@ -553,6 +553,8 @@ export default function MenuBar() {
       { type: "item", label: "Delete", shortcut: "Del", onClick: () => useSchematicStore.getState().removeSelected() },
       { type: "separator" },
       { type: "item", label: "Select All", shortcut: "Ctrl+A", onClick: () => useSchematicStore.getState().selectAll() },
+      { type: "separator" },
+      { type: "item", label: "Reset All Routes", title: "Clear every manual route so the whole schematic re-auto-routes (undoable)", onClick: () => useSchematicStore.getState().clearAllManualWaypoints() },
     ],
     Insert: [
       { type: "item", label: "Add Rectangle", onClick: () => addAnnotation("rectangle") },

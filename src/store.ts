@@ -347,6 +347,9 @@ interface SchematicState {
   // Manual edge routing
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
+  /** Strip manual waypoints from EVERY connection so the whole schematic re-auto-routes
+   *  from scratch. Undoable. Useful for vetting auto-route without resetting edges one by one. */
+  clearAllManualWaypoints: () => void;
   deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   setDeviceContextMenu: (menu: { nodeId: string; screenX: number; screenY: number } | null) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
@@ -5096,6 +5099,23 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ? { ...e, data: restData as ConnectionEdge["data"] }
         : e,
     );
+    set({
+      edges: newEdges,
+      nodes: reconcileWaypointNodes(state.nodes, newEdges),
+    });
+    get().saveToLocalStorage();
+  },
+
+  clearAllManualWaypoints: () => {
+    const state = get();
+    if (!state.edges.some((e) => e.data?.manualWaypoints?.length)) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newEdges = state.edges.map((e) => {
+      if (!e.data?.manualWaypoints?.length) return e;
+      // Strip both the manual route and the auto-route-frozen flag so the edge re-routes fresh.
+      const { manualWaypoints: _mw, autoRouteWaypoints: _ar, ...restData } = e.data;
+      return { ...e, data: restData as ConnectionEdge["data"] };
+    });
     set({
       edges: newEdges,
       nodes: reconcileWaypointNodes(state.nodes, newEdges),
