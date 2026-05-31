@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 39;
+export const CURRENT_SCHEMA_VERSION = 40;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -501,6 +501,31 @@ const migrations: Record<number, Migration> = {
       }
     }
     data.version = 34;
+    return data;
+  },
+
+  39: (data) => {
+    // v39 → v40: connection bundling. Additive — ensure a bundles map exists, drop any
+    // dangling bundleId (references a bundle with no meta), and dissolve bundles that end
+    // up with fewer than 2 members (a bundle is meaningless below 2).
+    if (typeof data.bundles !== "object" || data.bundles === null) data.bundles = {};
+    const counts: Record<string, number> = {};
+    if (Array.isArray(data.edges)) {
+      for (const e of data.edges) {
+        const id = e?.data?.bundleId;
+        if (typeof id === "string") counts[id] = (counts[id] ?? 0) + 1;
+      }
+      for (const e of data.edges) {
+        const id = e?.data?.bundleId;
+        if (typeof id === "string" && (!data.bundles[id] || counts[id] < 2)) {
+          delete e.data.bundleId;
+        }
+      }
+    }
+    for (const id of Object.keys(data.bundles)) {
+      if ((counts[id] ?? 0) < 2) delete data.bundles[id];
+    }
+    data.version = 40;
     return data;
   },
 };
