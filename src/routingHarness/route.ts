@@ -3,6 +3,7 @@
 import type { SchematicNode, ConnectionEdge, BundleMeta } from "../types";
 import { routeAllEdges, type RoutedEdge } from "../edgeRouter";
 import { createMockRfInstance } from "./mockRfInstance";
+import { buildHandleSnapshot } from "../routing/handleSnapshot";
 
 export interface RoutedFixture {
   nodes: SchematicNode[];
@@ -17,10 +18,11 @@ export function routeFixture(
   opts: { timeBudgetMs?: number; bundles?: Record<string, BundleMeta> } = {},
 ): RoutedFixture {
   const rf = createMockRfInstance(nodes);
+  const handles = buildHandleSnapshot(nodes, rf);
   const { routes, overBudget } = routeAllEdges(
     nodes,
     edges,
-    rf,
+    handles,
     false,
     undefined,
     opts.timeBudgetMs,

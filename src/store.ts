@@ -45,6 +45,7 @@ import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
 import { newBundleId, gcBundles } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
+import { buildHandleSnapshot } from "./routing/handleSnapshot";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
@@ -5494,7 +5495,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id))
       : state.nodes;
 
-    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, rfInstance, state.debugEdges, undefined, undefined, state.bundles);
+    const handles = buildHandleSnapshot(routingNodes, rfInstance);
+    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, handles, state.debugEdges, undefined, undefined, state.bundles);
 
     // Map virtual edge routes back to primary real edge IDs
     for (const [virtualId, mapping] of virtualEdgeSources) {

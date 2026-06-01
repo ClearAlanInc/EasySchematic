@@ -5,9 +5,9 @@
  * Pure algorithm — no React dependencies.
  */
 
-import type { ReactFlowInstance } from "@xyflow/react";
 import type { SchematicNode, ConnectionEdge, BundleMeta } from "./types";
 import { computeBundleTrunk } from "./routing/bundleRoute";
+import type { HandleSnapshot, SnapshotHandle } from "./routing/handleSnapshot";
 import {
   buildGlobalGrid,
   buildObstacles,
@@ -135,14 +135,13 @@ export const ROUTER_PARAMS: typeof ROUTER_DEFAULTS = new Proxy(ROUTER_DEFAULTS, 
 
 function getHandlePositions(
   nodeId: string,
-  rfInstance: ReactFlowInstance,
+  handles: HandleSnapshot,
 ): HandlePos[] {
-  const internal = rfInstance.getInternalNode(nodeId);
+  const internal = handles[nodeId];
   if (!internal) return [];
 
-  const absX = internal.internals.positionAbsolute.x;
-  const absY = internal.internals.positionAbsolute.y;
-  const bounds = internal.internals.handleBounds;
+  const absX = internal.positionAbsolute.x;
+  const absY = internal.positionAbsolute.y;
   const result: HandlePos[] = [];
 
   // For stub-label nodes, the connecting handles (l/r) are vertically centered
@@ -155,11 +154,10 @@ function getHandlePositions(
   // with non-standard positioning, etc. still re-measure correctly.
   const isStubLabel = internal.type === "stub-label";
   const stubCenterY = isStubLabel
-    ? absY + ((internal.measured?.height as number | undefined) ?? 14) / 2
+    ? absY + (internal.measuredHeight ?? 14) / 2
     : 0;
 
-  const push = (handle: { id?: string | null; x: number; y: number; width: number; height: number }) => {
-    if (!handle.id) return;
+  const push = (handle: SnapshotHandle) => {
     const useStubCenter = isStubLabel && (handle.id === "l" || handle.id === "r");
     const cy = useStubCenter ? stubCenterY : absY + handle.y + handle.height / 2;
     result.push({
@@ -169,8 +167,8 @@ function getHandlePositions(
     });
   };
 
-  for (const handle of bounds?.source ?? []) push(handle);
-  for (const handle of bounds?.target ?? []) push(handle);
+  for (const handle of internal.source) push(handle);
+  for (const handle of internal.target) push(handle);
   return result;
 }
 
@@ -585,7 +583,7 @@ const DEFAULT_TIME_BUDGET_MS = 3000;
 export function routeAllEdges(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
-  rfInstance: ReactFlowInstance,
+  handles: HandleSnapshot,
   debug?: boolean,
   printConfig?: PrintConfig,
   _timeBudgetMs: number = DEFAULT_TIME_BUDGET_MS,
@@ -603,7 +601,7 @@ export function routeAllEdges(
   // Build handle position map
   const handleMap = new Map<string, HandlePos>();
   for (const node of nodes) {
-    for (const hp of getHandlePositions(node.id, rfInstance)) {
+    for (const hp of getHandlePositions(node.id, handles)) {
       handleMap.set(`${node.id}:${hp.id}`, hp);
     }
   }
