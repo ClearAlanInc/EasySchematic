@@ -394,6 +394,12 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
+  const bundleSelection = useCallback(() => {
+    const store = useSchematicStore.getState();
+    store.createBundle(store.edges.filter((e) => e.selected).map((e) => e.id));
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, []);
+
   if (!menu) return null;
 
   const store = useSchematicStore.getState();
@@ -413,6 +419,18 @@ export default function EdgeContextMenu() {
   const bundleId = edge?.data?.bundleId;
   const inBundle = !!bundleId && (store.bundles[bundleId]?.id != null
     || store.edges.filter((e) => e.data?.bundleId === bundleId).length >= 2);
+
+  // Bundle-from-selection: offered when ≥2 connections are selected and the right-clicked one is
+  // among them — so you can bundle a highlighted set without opening the bulk-edit panel. Hidden
+  // when the selection is already a single intact bundle (use the in-bundle items instead).
+  const selectedEdgeObjs = store.edges.filter((e) => e.selected);
+  const selectedBundleIds = [...new Set(selectedEdgeObjs.map((e) => e.data?.bundleId).filter(Boolean))];
+  const selectionIsOneBundle =
+    selectedBundleIds.length === 1 && selectedEdgeObjs.every((e) => e.data?.bundleId === selectedBundleIds[0]);
+  const canBundleSelection =
+    selectedEdgeObjs.length >= 2 &&
+    selectedEdgeObjs.some((e) => e.id === menu.edgeId) &&
+    !selectionIsOneBundle;
 
   // Check if this is a trunk (multicable) edge
   const srcNode = store.nodes.find((n) => n.id === edge?.source);
@@ -535,6 +553,12 @@ export default function EdgeContextMenu() {
         label={isStubbed ? "Show Full Connection" : "Stub Connection"}
         onClick={toggleStubbed}
       />
+      {canBundleSelection && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuItem label={`Bundle ${selectedEdgeObjs.length} Connections`} onClick={bundleSelection} />
+        </>
+      )}
       {inBundle && (
         <>
           <div className="h-px bg-gray-200 my-1" />

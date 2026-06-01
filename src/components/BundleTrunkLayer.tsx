@@ -43,15 +43,6 @@ export default function BundleTrunkLayer() {
                 onClick={(e) => { e.stopPropagation(); selectEdges(members.map((m) => m.id)); }}
               >
                 <path d={r.svgPath} fill="none" stroke={color} strokeWidth={7} opacity={0.45} strokeLinecap="round" strokeLinejoin="round" />
-                <text
-                  x={r.labelX} y={r.labelY - 7}
-                  fontSize={12} fontWeight={600} fill={color}
-                  textAnchor="middle"
-                  paintOrder="stroke" stroke="#ffffff" strokeWidth={3}
-                  style={{ userSelect: "none" }}
-                >
-                  {members.length}×
-                </text>
               </g>
             );
           })}
