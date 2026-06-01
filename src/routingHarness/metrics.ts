@@ -56,6 +56,7 @@ export function computeRuleReport(opts: {
 /** Metrics that must be exactly 0 for a routing run to be considered correct. */
 export const HARD_ZERO_METRICS = [
   "deviceOverlapCount",
+  "endpointBodyCrossings",
   "nonOrthogonalSegments",
   "unroutedEdges",
 ] as const;

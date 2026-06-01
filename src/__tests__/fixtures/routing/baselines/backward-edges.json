@@ -1,5 +1,6 @@
 {
   "deviceOverlapCount": 0,
+  "endpointBodyCrossings": 0,
   "nonHorizontalArrivals": 0,
   "nonOrthogonalSegments": 0,
   "sharedParallelSegments": 1,

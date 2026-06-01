@@ -29,8 +29,8 @@ describe("routingScore", () => {
     expect(routingScore(withOverlap)).toBeGreaterThan(routingScore(uglyButValid));
   });
 
-  it("all three hard-zero metrics are penalized", () => {
-    for (const k of ["deviceOverlapCount", "nonOrthogonalSegments", "unroutedEdges"]) {
+  it("every hard-zero metric is penalized", () => {
+    for (const k of ["deviceOverlapCount", "endpointBodyCrossings", "nonOrthogonalSegments", "unroutedEdges"]) {
       expect(routingScore({ [k]: 1 })).toBeGreaterThanOrEqual(DEFAULT_WEIGHTS.hardZero);
     }
   });

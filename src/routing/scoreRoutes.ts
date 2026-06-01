@@ -123,6 +123,7 @@ export function computeRoutingMetrics(
   const map = new Map<string, SchematicNode>();
   for (const n of nodes) map.set(n.id, n);
   const rects = deviceRects(nodes, map);
+  const rectById = new Map(rects.map((r) => [r.id, r] as const));
 
   const geoms: EdgeGeom[] = [];
   const unrouted: string[] = [];
@@ -163,6 +164,24 @@ export function computeRoutingMetrics(
     if (hit) {
       deviceOverlapCount++;
       add("deviceOverlap", g.edgeId);
+    }
+  }
+
+  // ---- R1b: route crosses its OWN endpoint device body ----
+  // A connection should reach its port from OUTSIDE the device; a route that dips into its own
+  // source/target body to reach a port (e.g. a corridor placed inside a tall device, so the port is
+  // approached from inside) reads as "routing behind the device." Distinct from deviceOverlapCount
+  // (which is crossing a NON-endpoint device); both are hard-zero correctness violations.
+  let endpointBodyCrossings = 0;
+  for (const g of geoms) {
+    const srcR = rectById.get(g.srcNode);
+    const tgtR = rectById.get(g.tgtNode);
+    if (
+      (srcR && g.segs.some((s) => segmentEntersRect(s, srcR))) ||
+      (tgtR && g.segs.some((s) => segmentEntersRect(s, tgtR)))
+    ) {
+      endpointBodyCrossings++;
+      add("endpointBodyCrossing", g.edgeId);
     }
   }
 
@@ -301,6 +320,7 @@ export function computeRoutingMetrics(
   return {
     metrics: {
       deviceOverlapCount,
+      endpointBodyCrossings,
       nonHorizontalArrivals,
       nonOrthogonalSegments,
       sharedParallelSegments: sharedParallel,

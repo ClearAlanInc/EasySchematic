@@ -32,7 +32,8 @@ describe("device avoidance (no route behind a non-endpoint device)", () => {
   for (const fx of syntheticFixtures()) {
     it(`${fx.name}: best-of-portfolio has zero hard-zero violations`, () => {
       const m = bestMetrics(fx);
-      expect(m.deviceOverlapCount, "route passes through a device body").toBe(0);
+      expect(m.deviceOverlapCount, "route passes through a non-endpoint device body").toBe(0);
+      expect(m.endpointBodyCrossings, "route dips into its own endpoint device body (routes 'behind' it)").toBe(0);
       expect(m.nonOrthogonalSegments, "non-orthogonal segment").toBe(0);
       expect(m.unroutedEdges, "edge produced no route").toBe(0);
     });

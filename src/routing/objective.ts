@@ -57,7 +57,12 @@ export const DEFAULT_WEIGHTS: ObjectiveWeights = {
 };
 
 /** Metrics that must be exactly 0 for a correct route; any nonzero is multiplied by `hardZero`. */
-const HARD_ZERO_KEYS = ["deviceOverlapCount", "nonOrthogonalSegments", "unroutedEdges"] as const;
+const HARD_ZERO_KEYS = [
+  "deviceOverlapCount",
+  "endpointBodyCrossings",
+  "nonOrthogonalSegments",
+  "unroutedEdges",
+] as const;
 
 type Metrics = Record<string, number>;
 const num = (m: Metrics, k: string) => m[k] ?? 0;
