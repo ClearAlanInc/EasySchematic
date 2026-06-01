@@ -386,7 +386,26 @@ export interface WaypointData {
 
 export type WaypointNode = Node<WaypointData, "waypoint">;
 
-export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode | WaypointNode;
+/** A bundle's break-in / break-out junction. POSITION ANCHOR only — no edges attach to it.
+ *  Each bundle owns exactly two (role "in" = where members gather into the trunk, role "out"
+ *  = where they fan back out). The router reads these positions as the comb's entry/exit
+ *  (in place of the auto-computed computeBundleTrunk). Members stay single source→target
+ *  connections, so the per-cable / schedule-row count is unaffected. */
+export interface BundleJunctionData {
+  [key: string]: unknown;
+  /** The bundle this junction anchors. Matches each member connection's data.bundleId
+   *  and the BundleMeta.id key. */
+  bundleId: string;
+  /** Which end of the trunk this anchor controls. */
+  role: "in" | "out";
+  /** True once the user has dragged it. Until then the heal pass may reposition it from
+   *  member device geometry (sticky-after-drag, mirroring StubLabelData.placed). */
+  placed?: boolean;
+}
+
+export type BundleJunctionNode = Node<BundleJunctionData, "bundle-junction">;
+
+export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode | WaypointNode | BundleJunctionNode;
 
 export interface ConnectionData {
   [key: string]: unknown;

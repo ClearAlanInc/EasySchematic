@@ -1,4 +1,7 @@
-import type { ConnectionEdge, BundleMeta } from "./types";
+import type { ConnectionEdge, BundleMeta, SchematicNode, BundleJunctionNode } from "./types";
+
+/** React Flow node type for a bundle's break-in / break-out anchor. */
+export const BUNDLE_JUNCTION_TYPE = "bundle-junction" as const;
 
 let bundleCounter = 0;
 /** Fresh bundle id (mirrors the linked-connection id scheme). */
@@ -10,6 +13,24 @@ export function newBundleId(): string {
 /** Edges belonging to a bundle. */
 export function bundleMembers(edges: ConnectionEdge[], id: string): ConnectionEdge[] {
   return edges.filter((e) => e.data?.bundleId === id);
+}
+
+/** The break-in / break-out anchor nodes for a bundle (either may be missing until the
+ *  heal pass spawns it — see Phase 2). Pure; callers read positions off the returned nodes. */
+export function bundleJunctionsFor(
+  nodes: SchematicNode[],
+  id: string,
+): { in?: BundleJunctionNode; out?: BundleJunctionNode } {
+  let inNode: BundleJunctionNode | undefined;
+  let outNode: BundleJunctionNode | undefined;
+  for (const n of nodes) {
+    if (n.type !== BUNDLE_JUNCTION_TYPE) continue;
+    const jn = n as BundleJunctionNode;
+    if (jn.data.bundleId !== id) continue;
+    if (jn.data.role === "in") inNode = jn;
+    else if (jn.data.role === "out") outNode = jn;
+  }
+  return { in: inNode, out: outNode };
 }
 
 /** Drop bundleId from edges whose bundle has <2 members or no meta, and delete those
