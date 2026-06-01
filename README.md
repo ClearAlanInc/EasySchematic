@@ -56,6 +56,7 @@
 - **Cable length** — editable per-connection field, tracked in cable schedule and pack list
 - **Estimated cable length** — auto-populated from room-to-room distances when both endpoints are inside placed rooms; flows into the cable schedule, patch panel schedule, and pack list
 - **Multicable support** — cable accessory templates (snakes, socapex), trunk ports, break-in/break-out devices
+- **Connection bundling** — select 2+ connections and route them along one shared trunk that gathers at one end and fans out at the other (like running a snake/multicore). Mixed signal types allowed — the trunk draws neutral with an `N×` badge while each connection keeps its color. Each member stays its own cable in the schedule/pack list (counts never collapse); the cable schedule gains an optional **Bundle** column and group-by-bundle. Manage from the bulk-edit panel or by right-clicking a member (Select Members / Remove / Dissolve)
 - **Cable ID labels** — auto-assigned with type-prefix naming (e.g. "SDI-1", "HDMI-2") or sequential ("Cable 1", "Cable 2")
 - **Line jump arcs** at connection crossings
 - **Stubbed connections** — render as short stubs with destination labels (device name, optional port, room, page) instead of full routed lines; drag labels to reposition, add intermediate waypoints via right-click. Globally toggle port-name display and page-number mode (cross-page only / always / never), or override per connection.
