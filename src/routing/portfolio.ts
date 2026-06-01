@@ -39,6 +39,11 @@ export const ROUTING_CANDIDATES: RoutingCandidate[] = [
   { label: "sort0-tn4", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4 } },
   { label: "sort0-tn4-cx30", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 30 } },
   { label: "sort0-tn4-ov40", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, OVERLAP_PENALTY: 40 } },
+  // Wider escape margin gives A* more room to route around the obstacle field — measurably fewer
+  // weaves/crossings on dense schematics (icdc weave 36→22, cross 223→194). Adding candidates is
+  // zero-risk: best-of-K with more options can only improve or tie.
+  { label: "sort0-tn4-m6", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, ESCAPE_MARGIN: 6 } },
+  { label: "sort0-tn4-cx30-m6", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 30, ESCAPE_MARGIN: 6 } },
   { label: "sort1-tn4", params: { SORT_STRATEGY: 1, TURN_PENALTY: 4 } },
   { label: "sort2", params: { SORT_STRATEGY: 2 } },
 ];
