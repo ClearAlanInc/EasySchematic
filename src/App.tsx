@@ -623,10 +623,11 @@ function SchematicCanvas() {
     }
     useSchematicStore.setState({ isRouting: true });
     const timer = setTimeout(() => {
+      // Posts to the routing worker; isRouting is cleared asynchronously when the result is
+      // applied (or a superseding edit posts a fresh request).
       useSchematicStore.getState().recomputeRoutes(rfInstance);
-      useSchematicStore.setState({ isRouting: false });
     }, 50);
-    return () => { clearTimeout(timer); useSchematicStore.setState({ isRouting: false }); };
+    return () => clearTimeout(timer);
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
 
   // Retry routing if initial computation raced ahead of React Flow internals

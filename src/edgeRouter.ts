@@ -530,7 +530,9 @@ function logRoutingReport(
       crossings: e.crossings,
     })),
   };
-  (window as unknown as Record<string, unknown>).__routingReport = report;
+  // globalThis (not window) so this is safe inside the routing Web Worker too;
+  // the worker ferries it back and the main thread re-publishes it on window.
+  (globalThis as unknown as Record<string, unknown>).__routingReport = report;
 }
 
 // ---------- Title block obstacles ----------

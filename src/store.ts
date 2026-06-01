@@ -46,8 +46,9 @@ import { healStaleWaypoints } from "./waypointHealing";
 import { newBundleId, gcBundles } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
 import { buildHandleSnapshot } from "./routing/handleSnapshot";
+import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./routing/routingClient";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
-import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
+import { orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, effectiveSignalType } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
@@ -801,6 +802,74 @@ function pushUndo(partial: { nodes: SchematicNode[]; edges: ConnectionEdge[]; au
   redoStack.length = 0; // clear redo on new action
   // Sync reactive counters so undo/redo buttons stay in sync
   useSchematicStore.setState({ undoSize: undoStack.length, redoSize: 0 });
+}
+
+// ── Async routing (Web Worker) plumbing ──────────────────────────────────
+// recomputeRoutes posts a seq-tagged request to the routing worker and stashes the main-thread-only
+// context (virtual-edge remap + adapter visibility) here; applyRoutingResult consumes it when the
+// matching result returns. Coalescing in routingClient means only the newest request actually runs,
+// so we discard any result whose seq isn't the latest we posted.
+let routeSeq = 0;
+let routingHandlerRegistered = false;
+interface RouteApplyCtx {
+  seq: number;
+  virtualEdgeSources: Map<string, { primaryEdgeId: string; secondaryEdgeId: string; adapterNodeId: string }>;
+  hiddenAdapterNodeIds: Set<string>;
+  hiddenVirtualEdgeIds: Set<string>;
+  virtualEdgeGradients: Record<string, { sourceColor: string; targetColor: string }>;
+}
+let pendingRouteCtx: RouteApplyCtx | null = null;
+
+function applyRoutingResult(r: RoutingResult): void {
+  // Discard stale/superseded results — only the latest posted seq's context is live.
+  if (!pendingRouteCtx || r.seq !== pendingRouteCtx.seq) return;
+  const ctx = pendingRouteCtx;
+  const state = useSchematicStore.getState();
+  // Auto-route was switched off after this request was posted — the simple (L-shape) routes are
+  // already in place; drop the stale A* result rather than clobbering them.
+  if (!state.autoRoute) {
+    useSchematicStore.setState({ isRouting: false });
+    return;
+  }
+  const results = r.routes;
+
+  // Re-publish the debug artifacts (the worker computed them in its own globalThis).
+  (globalThis as Record<string, unknown>).__routingReport = r.routingReport ?? undefined;
+
+  // Map virtual edge routes (hidden adapters) back to their primary real edge IDs.
+  for (const [virtualId, mapping] of ctx.virtualEdgeSources) {
+    const route = results[virtualId];
+    if (route) {
+      results[mapping.primaryEdgeId] = { ...route, edgeId: mapping.primaryEdgeId };
+      delete results[virtualId];
+    }
+  }
+
+  if (r.overBudget) {
+    state.addToast("Auto-routing disabled — schematic is too large for real-time routing", "info");
+  }
+
+  // Normalize edge zIndex: boost line-jump-hop edges to 1, everyone else 0.
+  const hopEdgeIds = new Set<string>();
+  if (state.showLineJumps) {
+    for (const [edgeId, routed] of Object.entries(results)) {
+      if (routed.crossingPoints && routed.crossingPoints.length > 0) hopEdgeIds.add(edgeId);
+    }
+  }
+  const updatedEdges = state.edges.map((e) =>
+    hopEdgeIds.has(e.id) ? { ...e, zIndex: 1 } : { ...e, zIndex: 0 },
+  );
+
+  useSchematicStore.setState({
+    routedEdges: results,
+    routingDebugData: r.routingDebug ?? null,
+    edges: updatedEdges,
+    hiddenAdapterNodeIds: ctx.hiddenAdapterNodeIds,
+    hiddenVirtualEdgeIds: ctx.hiddenVirtualEdgeIds,
+    virtualEdgeGradients: ctx.virtualEdgeGradients,
+    isRouting: false,
+    ...(r.overBudget ? { autoRoute: false } : {}),
+  });
 }
 
 function clonePorts(ports: Port[]): Port[] {
@@ -5495,47 +5564,31 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id))
       : state.nodes;
 
+    // Hand the heavy A* off to the routing worker. Build the DOM-derived handle snapshot here
+    // (needs rfInstance), tag the request with a monotonic seq, stash the main-thread-only context
+    // (virtual-edge remap + adapter visibility) for the matching apply step, and post. The result
+    // is applied asynchronously by applyRoutingResult; stale/superseded seqs are discarded there.
+    if (!routingHandlerRegistered) {
+      setRoutingResultHandler(applyRoutingResult);
+      routingHandlerRegistered = true;
+    }
     const handles = buildHandleSnapshot(routingNodes, rfInstance);
-    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, handles, state.debugEdges, undefined, undefined, state.bundles);
-
-    // Map virtual edge routes back to primary real edge IDs
-    for (const [virtualId, mapping] of virtualEdgeSources) {
-      const route = results[virtualId];
-      if (route) {
-        results[mapping.primaryEdgeId] = { ...route, edgeId: mapping.primaryEdgeId };
-        delete results[virtualId];
-      }
-    }
-
-    // If routing exceeded the time budget, auto-disable and notify user
-    if (overBudget) {
-      get().addToast("Auto-routing disabled — schematic is too large for real-time routing", "info");
-    }
-
-    // Always normalize edge zIndex: boost edges with line-jump hops to 1,
-    // set all others to 0. This prevents stale zIndex from selected/undo state.
-    const hopEdgeIds = new Set<string>();
-    if (state.showLineJumps) {
-      for (const [edgeId, routed] of Object.entries(results)) {
-        if (routed.crossingPoints && routed.crossingPoints.length > 0) {
-          hopEdgeIds.add(edgeId);
-        }
-      }
-    }
-    const updatedEdges = state.edges.map((e) =>
-      hopEdgeIds.has(e.id)
-        ? { ...e, zIndex: 1 }
-        : { ...e, zIndex: 0 },
-    );
-
-    set({
-      routedEdges: results,
-      routingDebugData: (globalThis as unknown as Record<string, unknown>).__routingDebug ?? null,
-      edges: updatedEdges,
+    routeSeq += 1;
+    pendingRouteCtx = {
+      seq: routeSeq,
+      virtualEdgeSources,
       hiddenAdapterNodeIds,
       hiddenVirtualEdgeIds,
       virtualEdgeGradients,
-      ...(overBudget ? { autoRoute: false } : {}),
+    };
+    requestRoutes({
+      seq: routeSeq,
+      nodes: routingNodes,
+      edges: visibleEdges,
+      handles,
+      bundles: state.bundles,
+      debug: state.debugEdges,
+      routingParams: (globalThis as Record<string, unknown>).__routingParams as Record<string, number> | undefined,
     });
   },
 
