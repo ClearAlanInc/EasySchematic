@@ -6,6 +6,7 @@
  */
 
 import { routeAllEdges } from "../edgeRouter";
+import { scoreRoutes } from "./scoreRoutes";
 import type { RoutingRequest, RoutingResult } from "./routingClient";
 
 // `self` is the DedicatedWorkerGlobalScope; the app's tsconfig only includes the DOM lib, so cast
@@ -27,6 +28,10 @@ ctx.onmessage = (ev) => {
 
   ctx.postMessage({
     seq: req.seq,
+    candidateLabel: req.candidateLabel,
+    // Self-score with the SHARED scorer so the client can pick the best candidate by the exact
+    // objective the harness gates on.
+    score: scoreRoutes(req.nodes, req.edges, routes),
     routes,
     overBudget,
     routingDebug: g.__routingDebug ?? null,
