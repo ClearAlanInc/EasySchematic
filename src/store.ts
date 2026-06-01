@@ -31,6 +31,7 @@ import type {
   SlotDefinition,
   CustomTemplateGroup,
   CustomTemplateMeta,
+  BundleMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
@@ -42,6 +43,7 @@ import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
+import { newBundleId, gcBundles } from "./bundles";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
@@ -422,6 +424,14 @@ interface SchematicState {
   colorKeyOverrides: Partial<Record<SignalType, boolean>> | undefined;
   cableCosts: Record<string, number> | undefined;
   setCableCost: (key: string, cost: number | undefined) => void;
+  // Connection bundles — groups of ≥2 connections sharing one physical trunk (membership on edge.data.bundleId)
+  bundles: Record<string, BundleMeta>;
+  createBundle: (edgeIds: string[]) => void;
+  dissolveBundle: (bundleId: string) => void;
+  addToBundle: (bundleId: string, edgeIds: string[]) => void;
+  removeFromBundle: (edgeIds: string[]) => void;
+  setBundleMeta: (bundleId: string, patch: Partial<BundleMeta>) => void;
+  setBundleTrunkWaypoints: (bundleId: string, trunkWaypoints: { x: number; y: number }[]) => void;
   // Room distance + cable-length estimation (#146)
   roomDistances: Record<string, number> | undefined;
   distanceSettings: DistanceSettings | undefined;
@@ -760,6 +770,7 @@ interface Snapshot {
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
   pages: SchematicPage[];
+  bundles: Record<string, BundleMeta>;
   autoRoute?: boolean;
 }
 const MAX_HISTORY = 50;
@@ -776,8 +787,10 @@ export function setReconnectingEdgeId(id: string | null) {
 }
 
 function pushUndo(partial: { nodes: SchematicNode[]; edges: ConnectionEdge[]; autoRoute?: boolean }) {
-  const pages = useSchematicStore?.getState?.()?.pages ?? [];
-  const snapshot: Snapshot = { ...partial, pages };
+  const liveState = useSchematicStore?.getState?.();
+  const pages = liveState?.pages ?? [];
+  const bundles = liveState?.bundles ?? {};
+  const snapshot: Snapshot = { ...partial, pages, bundles };
   undoStack.push(structuredClone(pendingUndoSnapshot ?? snapshot));
   pendingUndoSnapshot = null;
   if (undoStack.length > MAX_HISTORY) undoStack.shift();
@@ -1137,6 +1150,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   colorKeyPage: "all" as "first" | "last" | "all",
   colorKeyOverrides: undefined,
   cableCosts: undefined,
+  bundles: {},
   roomDistances: undefined,
   distanceSettings: undefined,
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
@@ -2925,7 +2939,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setPendingUndoSnapshot: () => {
     const state = get();
-    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages });
+    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles });
   },
 
   clearPendingUndoSnapshot: () => {
@@ -2943,10 +2957,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const prev = undoStack.pop();
     if (!prev) return;
     const state = get();
-    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
+    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles, autoRoute: state.autoRoute }));
     const edges = prev.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof prev.edges;
     const restoreAutoRoute = prev.autoRoute !== undefined ? { autoRoute: prev.autoRoute } : {};
-    set({ nodes: prev.nodes, edges, pages: prev.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: prev.nodes, edges, pages: prev.pages ?? state.pages, bundles: prev.bundles ?? state.bundles, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -2954,10 +2968,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const next = redoStack.pop();
     if (!next) return;
     const state = get();
-    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
+    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles, autoRoute: state.autoRoute }));
     const edges = next.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof next.edges;
     const restoreAutoRoute = next.autoRoute !== undefined ? { autoRoute: next.autoRoute } : {};
-    set({ nodes: next.nodes, edges, pages: next.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: next.nodes, edges, pages: next.pages ?? state.pages, bundles: next.bundles ?? state.bundles, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -4364,6 +4378,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      bundles: Object.keys(state.bundles).length > 0 ? state.bundles : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
     };
@@ -4456,6 +4471,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             colorKeyOverrides: data.colorKeyOverrides ?? undefined,
             pages: data.pages ?? [],
             cableCosts: data.cableCosts ?? undefined,
+            bundles: data.bundles ?? {},
             roomDistances: data.roomDistances ?? undefined,
             distanceSettings: data.distanceSettings ?? undefined,
             loadSeq: get().loadSeq + 1,
@@ -4534,6 +4550,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         colorKeyOverrides: data.colorKeyOverrides ?? undefined,
         pages: data.pages ?? [],
         cableCosts: data.cableCosts ?? undefined,
+        bundles: data.bundles ?? {},
         roomDistances: data.roomDistances ?? undefined,
         distanceSettings: data.distanceSettings ?? undefined,
         // Restore cloud identity from autosave (not part of SchematicFile)
@@ -4610,6 +4627,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      bundles: Object.keys(state.bundles).length > 0 ? state.bundles : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
     };
@@ -4704,6 +4722,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       pages: data.pages ?? [],
       activePage: "schematic",
       cableCosts: data.cableCosts ?? undefined,
+      bundles: data.bundles ?? {},
       roomDistances: data.roomDistances ?? undefined,
       distanceSettings: data.distanceSettings ?? undefined,
       // File imports and shared schematics always start as local-only
@@ -4753,6 +4772,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       set({
         nodes: [],
         edges: [],
+        bundles: {},
         schematicName: "Untitled Schematic",
         isDemo: false,
         ownedGear: [],
@@ -5122,6 +5142,69 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     });
     get().saveToLocalStorage();
   },
+
+  // ── Connection bundling ───────────────────────────────────────────────
+  createBundle: (edgeIds) => {
+    const state = get();
+    const ids = edgeIds.filter((id) => state.edges.some((e) => e.id === id && e.data?.signalType));
+    if (ids.length < 2) {
+      get().addToast("Select at least 2 connections to bundle", "info");
+      return;
+    }
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = newBundleId();
+    const edges = state.edges.map((e) =>
+      ids.includes(e.id) ? { ...e, data: { ...e.data!, bundleId: id } } : e,
+    );
+    set({ edges, bundles: { ...state.bundles, [id]: { id } } });
+    get().saveToLocalStorage();
+  },
+  dissolveBundle: (bundleId) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) => {
+      if (e.data?.bundleId !== bundleId) return e;
+      const { bundleId: _b, ...rest } = e.data!;
+      return { ...e, data: rest as ConnectionEdge["data"] };
+    });
+    const { [bundleId]: _gone, ...bundles } = state.bundles;
+    set({ edges, bundles });
+    get().saveToLocalStorage();
+  },
+  addToBundle: (bundleId, edgeIds) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) =>
+      edgeIds.includes(e.id) && e.data?.signalType ? { ...e, data: { ...e.data!, bundleId } } : e,
+    );
+    set({ edges });
+    get().saveToLocalStorage();
+  },
+  removeFromBundle: (edgeIds) => {
+    const state = get();
+    if (!state.edges.some((e) => edgeIds.includes(e.id) && e.data?.bundleId)) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) => {
+      if (!edgeIds.includes(e.id) || !e.data?.bundleId) return e;
+      const { bundleId: _b, ...rest } = e.data!;
+      return { ...e, data: rest as ConnectionEdge["data"] };
+    });
+    // Auto-dissolve any bundle that dropped below 2 members.
+    const gc = gcBundles(edges, state.bundles);
+    set({ edges: gc.edges, bundles: gc.bundles });
+    get().saveToLocalStorage();
+  },
+  setBundleMeta: (bundleId, patch) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({ bundles: { ...state.bundles, [bundleId]: { ...state.bundles[bundleId], ...patch } } });
+    get().saveToLocalStorage();
+  },
+  setBundleTrunkWaypoints: (bundleId, trunkWaypoints) =>
+    get().setBundleMeta(bundleId, { trunkWaypoints }),
 
   computeSimpleRoutes: (rfInstance) => {
     // Simple orthogonal L-shapes — no A*, no penalties, instant.
