@@ -233,6 +233,28 @@ function bundleMixedSignal(): Fixture {
   return makeFixture("bundle-mixed-signal", nodes, edges, { b1: { id: "b1" } });
 }
 
+/**
+ * A bundle sharing the channel with un-bundled traffic. One source fans to 8 stacked targets;
+ * the even connections are bundled, the odd ones are not. The un-bundled connections must route
+ * AROUND the bundle's reserved gather/fan spines rather than sharing their vertical corridors —
+ * this is the regression guard for "the bundle doesn't follow corridor rules".
+ */
+function bundleWithTraffic(): Fixture {
+  const outs = Array.from({ length: 8 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 300, ports: outs });
+  const nodes: SchematicNode[] = [src];
+  const edges = outs.map((p, i) => {
+    const tIn = makePort("In", "sdi", "input");
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 760, y: i * 100, ports: [tIn] });
+    nodes.push(tgt);
+    return makeEdge({
+      id: `e${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tIn.id,
+      signalType: "sdi", data: i % 2 === 0 ? { bundleId: "b1" } : undefined,
+    });
+  });
+  return makeFixture("bundle-with-traffic", nodes, edges, { b1: { id: "b1" } });
+}
+
 export function syntheticFixtures(): Fixture[] {
   return [
     fanOutDense(),
@@ -246,6 +268,7 @@ export function syntheticFixtures(): Fixture[] {
     bundle6SamePair(),
     bundleFanIn(),
     bundleMixedSignal(),
+    bundleWithTraffic(),
   ];
 }
 

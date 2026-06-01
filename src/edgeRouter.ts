@@ -811,6 +811,9 @@ export function routeAllEdges(
     if (bid) bundlePresentCounts.set(bid, (bundlePresentCounts.get(bid) ?? 0) + 1);
   }
   const bundleGroups = new Map<string, EdgeEndpoints[]>();
+  // Per-bundle trunk endpoints, resolved during the spine-reservation pass (below) so the
+  // column allocator can route ordinary edges around the reserved spines.
+  const bundleSpines = new Map<string, { entry: Point; exit: Point; overrideTrunk: Point[] | null }>();
 
   // ---------- Route manual edges first (unchanged — they get a clean slate) ----------
   const manualEndpoints: EdgeEndpoints[] = [];
@@ -1089,6 +1092,44 @@ export function routeAllEdges(
     ranges.push({ yMin, yMax });
   };
 
+  // ---------- Bundle spine reservation (BEFORE column allocation) ----------
+  // A bundle gathers its members onto a vertical spine just past the source cluster, runs one
+  // horizontal trunk, then fans onto a spine just before the target cluster. Reserve those two
+  // spine columns NOW so the allocator routes ordinary forward edges AROUND the bundle — it's a
+  // user-declared shared trunk and gets corridor priority. The comb itself is routed in Phase 0.5,
+  // through the columns reserved here, so the bundle's verticals never share a corridor with other
+  // connections. (User-overridden trunk polylines are used as-is and skip reservation.)
+  for (const [bid, members] of bundleGroups) {
+    if (members.length < 2) continue;
+    const meta = bundles[bid];
+    if (meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2) {
+      const wp = meta.trunkWaypoints.map((p) => ({ x: p.x, y: p.y }));
+      bundleSpines.set(bid, { entry: wp[0], exit: wp[wp.length - 1], overrideTrunk: wp });
+      continue;
+    }
+    const bt = computeBundleTrunk(members.map((ep) => ({
+      edgeId: ep.edge.id, srcX: ep.sourceX, srcY: ep.sourceY, tgtX: ep.targetX, tgtY: ep.targetY,
+    })));
+    const trunkY = bt.entry.y;
+    // Gather spine column, just right of the sources, spanning every source Y plus the trunk Y.
+    const gYs = members.flatMap((ep) => [ep.sourceY, trunkY]);
+    const gYMin = px2g(Math.min(...gYs)), gYMax = px2g(Math.max(...gYs));
+    let entryGX = px2g(bt.entry.x);
+    for (let i = 0; i < 24 && !isColumnAvailable(entryGX, gYMin, gYMax); i++) entryGX += 1;
+    claimColumn(entryGX, gYMin, gYMax);
+    // Fan spine column, just left of the targets.
+    const fYs = members.flatMap((ep) => [ep.targetY, trunkY]);
+    const fYMin = px2g(Math.min(...fYs)), fYMax = px2g(Math.max(...fYs));
+    let exitGX = px2g(bt.exit.x);
+    for (let i = 0; i < 24 && !isColumnAvailable(exitGX, fYMin, fYMax); i++) exitGX -= 1;
+    claimColumn(exitGX, fYMin, fYMax);
+    bundleSpines.set(bid, {
+      entry: { x: g2px(entryGX), y: trunkY },
+      exit: { x: g2px(exitGX), y: trunkY },
+      overrideTrunk: null,
+    });
+  }
+
   /** Allocate a contiguous block of columns for a sorted list of edges.
    *  excludeNodeIds: endpoint device IDs to skip in obstacle checks (an edge's
    *  corridor can overlap its own source/target device's obstacle rect). */
@@ -1298,33 +1339,27 @@ export function routeAllEdges(
   };
 
   // ---------- PHASE 0.5: bundles ----------
-  // Route one shared trunk per bundle, then connect each member's source→trunk (gather)
-  // and trunk→target (fan) via the existing A* legs. The trunk is routed once (A* so it
-  // avoids devices) and embedded into every member's waypoints — members deliberately
-  // share the trunk span, so cross-type separation (R11) is NOT applied here and bundle
-  // legs do not contribute penalty zones (members are allowed to run together). The trunk
-  // is also emitted as a synthetic `bundle:<id>` route for the overlay layer.
+  // Route each bundle as a clean comb through the spine columns reserved above: a horizontal
+  // gather branch from each source to the gather spine, a vertical spine down/up to the trunk Y,
+  // one horizontal trunk, then the mirror on the fan side. Routed AFTER manual edges (so the
+  // branches dodge already-placed routes) and BEFORE the column-edge loop, then the whole comb is
+  // contributed as penalty zones so ordinary edges avoid it. Members deliberately share the spine
+  // + trunk, so R11 is not applied among them. The trunk is also emitted as a synthetic
+  // `bundle:<id>` route for the overlay layer.
+  const bundlePenalties = runningPenalties.length > 0 ? runningPenalties : undefined;
   for (const [bid, members] of bundleGroups) {
     if (members.length < 2) continue;
-    const meta = bundles[bid];
-    const bes = members.map((ep) => ({
-      edgeId: ep.edge.id, srcX: ep.sourceX, srcY: ep.sourceY, tgtX: ep.targetX, tgtY: ep.targetY,
-    }));
+    const spine = bundleSpines.get(bid);
+    if (!spine) continue;
+    const { entry, exit } = spine;
 
-    // Trunk geometry: user override polyline, or auto-computed + A*-routed to dodge devices.
-    let entry: Point;
-    let exit: Point;
+    // Trunk: user override polyline, or A*-route entry→exit (horizontal) dodging devices + routes.
     let trunkPath: Point[];
-    if (meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2) {
-      trunkPath = meta.trunkWaypoints.map((p) => ({ x: p.x, y: p.y }));
-      entry = trunkPath[0];
-      exit = trunkPath[trunkPath.length - 1];
+    if (spine.overrideTrunk) {
+      trunkPath = spine.overrideTrunk;
     } else {
-      const bt = computeBundleTrunk(bes);
-      entry = bt.entry;
-      exit = bt.exit;
       const routedTrunk = checkBudget() ? null : routeLeg(
-        entry.x, entry.y, exit.x, exit.y, obs.rects, 0, undefined,
+        entry.x, entry.y, exit.x, exit.y, obs.rects, 0, bundlePenalties,
         undefined, true, true, undefined, undefined, undefined, undefined, undefined, undefined,
       );
       trunkPath = routedTrunk ? routedTrunk.waypoints : [entry, exit];
@@ -1332,21 +1367,25 @@ export function routeAllEdges(
 
     for (const ep of members) {
       const sigType = ep.edge.data?.signalType;
-      const gather = checkBudget() ? null : routeLeg(
-        ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, undefined,
+      // Gather branch: source → (gather spine X, source Y). The spine carries it to the trunk Y.
+      const branchIn = checkBudget() ? null : routeLeg(
+        ep.sourceX, ep.sourceY, entry.x, ep.sourceY, obs.rects, 0, bundlePenalties,
         sigType, false, true, undefined, undefined, ep.edge.source, undefined,
         ep.sourceExitsRight, undefined,
       );
-      const fan = checkBudget() ? null : routeLeg(
-        exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, undefined,
+      // Fan branch: (fan spine X, target Y) → target.
+      const branchOut = checkBudget() ? null : routeLeg(
+        exit.x, ep.targetY, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
         sigType, true, false, undefined, undefined, undefined, ep.edge.target,
         undefined, ep.targetEntersLeft,
       );
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
-        ...(gather ? gather.waypoints.slice(1, -1) : []),
-        ...trunkPath,
-        ...(fan ? fan.waypoints.slice(1, -1) : []),
+        ...(branchIn ? branchIn.waypoints.slice(1, -1) : []),
+        { x: entry.x, y: ep.sourceY }, // gather spine top
+        ...trunkPath,                  // entry(trunkY) … exit(trunkY)
+        { x: exit.x, y: ep.targetY },  // fan spine bottom
+        ...(branchOut ? branchOut.waypoints.slice(1, -1) : []),
         { x: ep.targetX, y: ep.targetY },
       ];
       const cleaned = simplifyWaypoints(orthogonalize(wp));
@@ -1356,6 +1395,8 @@ export function routeAllEdges(
         turns: "bundle", status: "good", signalType: sigType,
       };
       routeStates.push(rs);
+      // Contribute the comb so ordinary edges (and backward A*) route around the bundle.
+      appendPenalties(rs);
     }
 
     // Synthetic trunk route for the overlay layer (drawn once, thick, neutral).

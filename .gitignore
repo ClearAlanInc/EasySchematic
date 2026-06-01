@@ -59,6 +59,7 @@ src/__tests__/fixtures/routing/baselines/*
 !src/__tests__/fixtures/routing/baselines/bundle-6-same-pair.json
 !src/__tests__/fixtures/routing/baselines/bundle-fan-in.json
 !src/__tests__/fixtures/routing/baselines/bundle-mixed-signal.json
+!src/__tests__/fixtures/routing/baselines/bundle-with-traffic.json
 
 # Playwright
 e2e/test-results/
