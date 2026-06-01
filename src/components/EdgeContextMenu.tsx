@@ -371,6 +371,29 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu, setCenter, getZoom, getInternalNode]);
 
+  const selectBundleMembers = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const bid = store.edges.find((e) => e.id === menu.edgeId)?.data?.bundleId;
+    if (!bid) return;
+    store.selectEdges(store.edges.filter((e) => e.data?.bundleId === bid).map((e) => e.id));
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  const removeFromBundleItem = useCallback(() => {
+    if (!menu) return;
+    useSchematicStore.getState().removeFromBundle([menu.edgeId]);
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  const dissolveBundleItem = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const bid = store.edges.find((e) => e.id === menu.edgeId)?.data?.bundleId;
+    if (bid) store.dissolveBundle(bid);
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
   if (!menu) return null;
 
   const store = useSchematicStore.getState();
@@ -387,6 +410,9 @@ export default function EdgeContextMenu() {
   const allowIncompatible = edge?.data?.allowIncompatible === true;
   const isDirectAttach = edge?.data?.directAttach === true;
   const customColor = (edge?.data?.color as string | undefined) ?? "";
+  const bundleId = edge?.data?.bundleId;
+  const inBundle = !!bundleId && (store.bundles[bundleId]?.id != null
+    || store.edges.filter((e) => e.data?.bundleId === bundleId).length >= 2);
 
   // Check if this is a trunk (multicable) edge
   const srcNode = store.nodes.find((n) => n.id === edge?.source);
@@ -509,6 +535,14 @@ export default function EdgeContextMenu() {
         label={isStubbed ? "Show Full Connection" : "Stub Connection"}
         onClick={toggleStubbed}
       />
+      {inBundle && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuItem label="Select Bundle Members" onClick={selectBundleMembers} />
+          <MenuItem label="Remove from Bundle" onClick={removeFromBundleItem} />
+          <MenuItem label="Dissolve Bundle" onClick={dissolveBundleItem} />
+        </>
+      )}
       {(hasMismatch || allowIncompatible) && (
         <MenuItem
           label={allowIncompatible ? "Disallow Incompatible" : "Allow Incompatible"}
