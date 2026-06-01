@@ -21,6 +21,7 @@ import type {
 } from "../types";
 import { deviceContentHeight } from "./deviceHandleLayout";
 import { defaultStubPlacement, STUB_W_EST, STUB_H_EST } from "../stubPlacement";
+import { reconcileBundleJunctions } from "../bundles";
 import defaultSchematicJson from "../defaultSchematic.json";
 
 export interface Fixture {
@@ -54,7 +55,11 @@ export function makeFixture(
   edges: ConnectionEdge[],
   bundles?: Record<string, BundleMeta>,
 ): Fixture {
-  return { name, nodes: normalize(nodes), edges, bundles };
+  // Mirror the app's heal-on-load: spawn break-in/out junction anchors for any live bundle so
+  // the harness measures the real Phase-3 router path (entry/exit read from junction positions),
+  // not the computeBundleTrunk fallback.
+  const nodesWithJunctions = reconcileBundleJunctions(normalize(nodes), edges);
+  return { name, nodes: nodesWithJunctions, edges, bundles };
 }
 
 /** Load a fixture from a JSON file (full schematic or thin {nodes,edges}). */

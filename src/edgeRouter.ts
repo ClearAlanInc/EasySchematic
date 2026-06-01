@@ -7,6 +7,7 @@
 
 import type { SchematicNode, ConnectionEdge, BundleMeta } from "./types";
 import { computeBundleTrunk } from "./routing/bundleRoute";
+import { bundleJunctionsFor } from "./bundles";
 import type { HandleSnapshot, SnapshotHandle } from "./routing/handleSnapshot";
 import {
   buildGlobalGrid,
@@ -1107,25 +1108,32 @@ export function routeAllEdges(
       bundleSpines.set(bid, { entry: wp[0], exit: wp[wp.length - 1], overrideTrunk: wp });
       continue;
     }
+    // Authoritative entry/exit = the bundle's break-in / break-out junction nodes (Phase 3).
+    // They're POSITION ANCHORS (no edges attach). computeBundleTrunk is the fallback for any
+    // anchor that's missing (heal not yet run, or member geometry unresolved). Break-in and
+    // break-out can sit at different Ys (independently dragged) — the comb's trunk leg routes
+    // entry→exit, so we span each spine column by its own anchor Y.
+    const { in: jin, out: jout } = bundleJunctionsFor(nodes, bid);
     const bt = computeBundleTrunk(members.map((ep) => ({
       edgeId: ep.edge.id, srcX: ep.sourceX, srcY: ep.sourceY, tgtX: ep.targetX, tgtY: ep.targetY,
     })));
-    const trunkY = bt.entry.y;
-    // Gather spine column, just right of the sources, spanning every source Y plus the trunk Y.
-    const gYs = members.flatMap((ep) => [ep.sourceY, trunkY]);
+    const entryPt = jin ? getAbsPos(jin, nodeMap) : bt.entry;
+    const exitPt = jout ? getAbsPos(jout, nodeMap) : bt.exit;
+    // Gather spine column, just right of the sources, spanning every source Y plus the break-in Y.
+    const gYs = members.flatMap((ep) => [ep.sourceY, entryPt.y]);
     const gYMin = px2g(Math.min(...gYs)), gYMax = px2g(Math.max(...gYs));
-    let entryGX = px2g(bt.entry.x);
+    let entryGX = px2g(entryPt.x);
     for (let i = 0; i < 24 && !isColumnAvailable(entryGX, gYMin, gYMax); i++) entryGX += 1;
     claimColumn(entryGX, gYMin, gYMax);
-    // Fan spine column, just left of the targets.
-    const fYs = members.flatMap((ep) => [ep.targetY, trunkY]);
+    // Fan spine column, just left of the targets, spanning every target Y plus the break-out Y.
+    const fYs = members.flatMap((ep) => [ep.targetY, exitPt.y]);
     const fYMin = px2g(Math.min(...fYs)), fYMax = px2g(Math.max(...fYs));
-    let exitGX = px2g(bt.exit.x);
+    let exitGX = px2g(exitPt.x);
     for (let i = 0; i < 24 && !isColumnAvailable(exitGX, fYMin, fYMax); i++) exitGX -= 1;
     claimColumn(exitGX, fYMin, fYMax);
     bundleSpines.set(bid, {
-      entry: { x: g2px(entryGX), y: trunkY },
-      exit: { x: g2px(exitGX), y: trunkY },
+      entry: { x: g2px(entryGX), y: entryPt.y },
+      exit: { x: g2px(exitGX), y: exitPt.y },
       overrideTrunk: null,
     });
   }

@@ -69,7 +69,7 @@ export function renderFixtureSvg(
     maxY = Math.max(maxY, y);
   };
   for (const n of nodes) {
-    if (n.type === "note" || n.type === "annotation" || n.type === "waypoint") continue;
+    if (n.type === "note" || n.type === "annotation" || n.type === "waypoint" || n.type === "bundle-junction") continue;
     const p = absPos(n, map);
     const { w, h } = nodeSize(n);
     grow(p.x, p.y);
