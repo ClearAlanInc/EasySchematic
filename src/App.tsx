@@ -40,7 +40,6 @@ import BetaBanner from "./components/BetaBanner";
 import UpdatePill from "./components/UpdatePill";
 import PortContextMenu from "./components/PortContextMenu";
 import RoutingDebugOverlay from "./components/RoutingDebugOverlay";
-import BundleTrunkLayer from "./components/BundleTrunkLayer";
 import RoutingTuningPanel from "./components/RoutingTuningPanel";
 import SelectionFilterBar from "./components/SelectionFilterBar";
 import RoomContextMenu from "./components/RoomContextMenu";
@@ -1163,8 +1162,10 @@ function SchematicCanvas() {
     (_event: React.MouseEvent, draggedNode: Node, draggedNodes: Node[]) => {
       const state = useSchematicStore.getState();
 
-      // Waypoint nodes are simple: snap to grid, no overlap or reparent logic.
-      if (draggedNode.type === "waypoint") {
+      // Waypoint and bundle-junction nodes are simple router anchors: grid-snap, no
+      // overlap or reparent logic. (The router grid-snaps the bundle spine column too,
+      // so snapping the junction keeps the box aligned with the drawn trunk.)
+      if (draggedNode.type === "waypoint" || draggedNode.type === "bundle-junction") {
         const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
         const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
         if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
@@ -1233,10 +1234,11 @@ function SchematicCanvas() {
 
       const state = useSchematicStore.getState();
 
-      // Waypoints don't participate in spacing/overlap/reparent logic. Just
-      // grid-snap the final position and bail out so the manualWaypoints sync
-      // (in store.onNodesChange) sees the resting position.
-      if (draggedNode.type === "waypoint") {
+      // Waypoints and bundle junctions are router anchors — no spacing/overlap/reparent.
+      // Grid-snap the final position and bail; for waypoints store.onNodesChange syncs
+      // manualWaypoints from the resting position, and for junctions the node-digest
+      // reroute redraws the comb through the new break-in/out position.
+      if (draggedNode.type === "waypoint" || draggedNode.type === "bundle-junction") {
         const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
         const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
         if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
@@ -1593,7 +1595,6 @@ function SchematicCanvas() {
         </div>
       )}
       {!printView && <CanvasOriginOverlay />}
-      {!printView && <BundleTrunkLayer />}
       <Background variant={BackgroundVariant.Dots} gap={GRID_SIZE} size={1} color={isDark ? "#374151" : "#d4d4d4"} />
       <Controls position="bottom-right" />
       <AutoRouteChip />

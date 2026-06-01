@@ -1347,21 +1347,24 @@ export function routeAllEdges(
   };
 
   // ---------- PHASE 0.5: bundles ----------
-  // Route each bundle as a clean comb through the spine columns reserved above: a horizontal
-  // gather branch from each source to the gather spine, a vertical spine down/up to the trunk Y,
-  // one horizontal trunk, then the mirror on the fan side. Routed AFTER manual edges (so the
-  // branches dodge already-placed routes) and BEFORE the column-edge loop, then the whole comb is
-  // contributed as penalty zones so ordinary edges avoid it. Members deliberately share the spine
-  // + trunk, so R11 is not applied among them. The trunk is also emitted as a synthetic
-  // `bundle:<id>` route for the overlay layer.
-  const bundlePenalties = runningPenalties.length > 0 ? runningPenalties : undefined;
+  // Route each bundle so its members CONVERGE on the shared break-in / break-out points: every
+  // member gathers from its source straight to the break-in point, one trunk runs to the break-out
+  // point, then each member fans out to its target. Routed AFTER manual edges (so legs dodge
+  // already-placed routes) and BEFORE the column-edge loop. The whole comb is contributed as
+  // penalty zones AFTER all of a bundle's members route — so ordinary edges and later bundles avoid
+  // it, but members do NOT avoid EACH OTHER (their gather/fan legs are free to overlap as they
+  // converge on the node). The trunk is also emitted as a synthetic `bundle:<id>` route.
   for (const [bid, members] of bundleGroups) {
     if (members.length < 2) continue;
     const spine = bundleSpines.get(bid);
     if (!spine) continue;
     const { entry, exit } = spine;
 
-    // Trunk: user override polyline, or A*-route entry→exit (horizontal) dodging devices + routes.
+    // Freeze the penalty set for this bundle: members route against non-member routes (and earlier
+    // bundles), but a snapshot means none of this bundle's own legs penalize each other.
+    const bundlePenalties = runningPenalties.length > 0 ? [...runningPenalties] : undefined;
+
+    // Trunk: user override polyline, or A*-route break-in→break-out dodging devices + routes.
     let trunkPath: Point[];
     if (spine.overrideTrunk) {
       trunkPath = spine.overrideTrunk;
@@ -1373,26 +1376,26 @@ export function routeAllEdges(
       trunkPath = routedTrunk ? routedTrunk.waypoints : [entry, exit];
     }
 
+    const memberStates: RouteState[] = [];
     for (const ep of members) {
       const sigType = ep.edge.data?.signalType;
-      // Gather branch: source → (gather spine X, source Y). The spine carries it to the trunk Y.
+      // Gather leg: source → the break-in POINT. All members converge there (the bundle visibly
+      // comes together at the draggable node), then share the trunk.
       const branchIn = checkBudget() ? null : routeLeg(
-        ep.sourceX, ep.sourceY, entry.x, ep.sourceY, obs.rects, 0, bundlePenalties,
+        ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, bundlePenalties,
         sigType, false, true, undefined, undefined, ep.edge.source, undefined,
         ep.sourceExitsRight, undefined,
       );
-      // Fan branch: (fan spine X, target Y) → target.
+      // Fan leg: the break-out POINT → target.
       const branchOut = checkBudget() ? null : routeLeg(
-        exit.x, ep.targetY, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
+        exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
         sigType, true, false, undefined, undefined, undefined, ep.edge.target,
         undefined, ep.targetEntersLeft,
       );
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
         ...(branchIn ? branchIn.waypoints.slice(1, -1) : []),
-        { x: entry.x, y: ep.sourceY }, // gather spine top
-        ...trunkPath,                  // entry(trunkY) … exit(trunkY)
-        { x: exit.x, y: ep.targetY },  // fan spine bottom
+        ...trunkPath,                  // break-in … break-out (supplies both node points)
         ...(branchOut ? branchOut.waypoints.slice(1, -1) : []),
         { x: ep.targetX, y: ep.targetY },
       ];
@@ -1403,9 +1406,11 @@ export function routeAllEdges(
         turns: "bundle", status: "good", signalType: sigType,
       };
       routeStates.push(rs);
-      // Contribute the comb so ordinary edges (and backward A*) route around the bundle.
-      appendPenalties(rs);
+      memberStates.push(rs);
     }
+    // Contribute the whole comb as penalty zones now (after all members) so ordinary edges and
+    // later bundles route around it.
+    for (const rs of memberStates) appendPenalties(rs);
 
     // Synthetic trunk route for the overlay layer (drawn once, thick, neutral).
     const trunkWp = simplifyWaypoints(orthogonalize(trunkPath));

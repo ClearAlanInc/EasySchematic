@@ -43,7 +43,7 @@ import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
-import { newBundleId, gcBundles, reconcileBundleJunctions } from "./bundles";
+import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
 import { buildHandleSnapshot } from "./routing/handleSnapshot";
 import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./routing/routingClient";
@@ -5433,12 +5433,23 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     for (const [bid, members] of bundleGroups) {
       if (members.length < 2) continue;
       const meta = state.bundles[bid];
-      const bt = meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2
-        ? { entry: meta.trunkWaypoints[0], exit: meta.trunkWaypoints[meta.trunkWaypoints.length - 1], trunk: meta.trunkWaypoints }
-        : computeBundleTrunk(members);
+      // Break-in / break-out points: a user trunk override wins; otherwise the bundle's junction
+      // nodes are authoritative (matches the A* path in edgeRouter); fall back to computeBundleTrunk.
+      const { in: jin, out: jout } = bundleJunctionsFor(state.nodes, bid);
+      let entry: { x: number; y: number }, exit: { x: number; y: number }, trunk: { x: number; y: number }[];
+      if (meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2) {
+        entry = meta.trunkWaypoints[0];
+        exit = meta.trunkWaypoints[meta.trunkWaypoints.length - 1];
+        trunk = meta.trunkWaypoints;
+      } else {
+        const bt = computeBundleTrunk(members);
+        entry = jin ? jin.position : bt.entry;
+        exit = jout ? jout.position : bt.exit;
+        trunk = [entry, exit];
+      }
       for (const m of members) {
         const wp = simplifyWaypoints(orthogonalize([
-          { x: m.srcX, y: m.srcY }, bt.entry, bt.exit, { x: m.tgtX, y: m.tgtY },
+          { x: m.srcX, y: m.srcY }, entry, exit, { x: m.tgtX, y: m.tgtY },
         ]));
         const midPt = wp[Math.floor(wp.length / 2)];
         results[m.edgeId] = {
@@ -5447,8 +5458,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           turns: "bundle", crossingPoints: [],
         };
       }
-      const trunkWp = simplifyWaypoints(orthogonalize(bt.trunk.map((p) => ({ x: p.x, y: p.y }))));
-      const tMid = trunkWp[Math.floor(trunkWp.length / 2)] ?? bt.entry;
+      const trunkWp = simplifyWaypoints(orthogonalize(trunk.map((p) => ({ x: p.x, y: p.y }))));
+      const tMid = trunkWp[Math.floor(trunkWp.length / 2)] ?? entry;
       results[`bundle:${bid}`] = {
         edgeId: `bundle:${bid}`, svgPath: waypointsToSvgPath(trunkWp), waypoints: trunkWp,
         segments: extractSegments(trunkWp), labelX: tMid.x, labelY: tMid.y,

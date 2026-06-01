@@ -46,6 +46,10 @@ export function junctionNodeId(bundleId: string, role: "in" | "out"): string {
 const JUNCTION_GAP = 40;
 /** Match the waypoint-node z so junctions sit above (elevated) edges and stay clickable. */
 const JUNCTION_Z_INDEX = 100;
+/** Routing grid (px). Junction anchors are snapped to it so the drawn trunk — which the
+ *  router A*-snaps to this grid — passes exactly through the handle (no few-px float). */
+const GRID = 20;
+const snapGrid = (v: number) => Math.round(v / GRID) * GRID;
 
 /** Absolute bounding box (left/right edge + vertical center) of a node, walking the parent
  *  chain so devices nested in rooms resolve correctly. measured size supersedes the 180×60
@@ -97,9 +101,10 @@ export function estimateBundleJunctionPositions(
   const medY = ys.length % 2
     ? ys[(ys.length - 1) / 2]
     : Math.round((ys[ys.length / 2 - 1] + ys[ys.length / 2]) / 2);
+  const trunkY = snapGrid(medY);
   return {
-    in: { x: Math.round(Math.max(...srcRights) + JUNCTION_GAP), y: medY },
-    out: { x: Math.round(Math.min(...tgtLefts) - JUNCTION_GAP), y: medY },
+    in: { x: snapGrid(Math.max(...srcRights) + JUNCTION_GAP), y: trunkY },
+    out: { x: snapGrid(Math.min(...tgtLefts) - JUNCTION_GAP), y: trunkY },
   };
 }
 
