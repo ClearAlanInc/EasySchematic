@@ -17,6 +17,7 @@ import type {
   Port,
   SignalType,
   PortDirection,
+  BundleMeta,
 } from "../types";
 import { deviceContentHeight } from "./deviceHandleLayout";
 import { defaultStubPlacement, STUB_W_EST, STUB_H_EST } from "../stubPlacement";
@@ -26,6 +27,8 @@ export interface Fixture {
   name: string;
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
+  /** Connection bundles, keyed by id — threaded to routeAllEdges for bundle fixtures. */
+  bundles?: Record<string, BundleMeta>;
 }
 
 const FIXTURE_DIR = fileURLToPath(new URL("../__tests__/fixtures/routing", import.meta.url));
@@ -45,8 +48,13 @@ function normalize(nodes: SchematicNode[]): SchematicNode[] {
   });
 }
 
-export function makeFixture(name: string, nodes: SchematicNode[], edges: ConnectionEdge[]): Fixture {
-  return { name, nodes: normalize(nodes), edges };
+export function makeFixture(
+  name: string,
+  nodes: SchematicNode[],
+  edges: ConnectionEdge[],
+  bundles?: Record<string, BundleMeta>,
+): Fixture {
+  return { name, nodes: normalize(nodes), edges, bundles };
 }
 
 /** Load a fixture from a JSON file (full schematic or thin {nodes,edges}). */

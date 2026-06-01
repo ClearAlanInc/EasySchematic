@@ -1,6 +1,6 @@
 /** Glue: route a fixture's nodes/edges headlessly via the mock ReactFlow instance. */
 
-import type { SchematicNode, ConnectionEdge } from "../types";
+import type { SchematicNode, ConnectionEdge, BundleMeta } from "../types";
 import { routeAllEdges, type RoutedEdge } from "../edgeRouter";
 import { createMockRfInstance } from "./mockRfInstance";
 
@@ -14,7 +14,7 @@ export interface RoutedFixture {
 export function routeFixture(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
-  opts: { timeBudgetMs?: number } = {},
+  opts: { timeBudgetMs?: number; bundles?: Record<string, BundleMeta> } = {},
 ): RoutedFixture {
   const rf = createMockRfInstance(nodes);
   const { routes, overBudget } = routeAllEdges(
@@ -24,6 +24,7 @@ export function routeFixture(
     false,
     undefined,
     opts.timeBudgetMs,
+    opts.bundles,
   );
   return { nodes, edges, routes, overBudget };
 }

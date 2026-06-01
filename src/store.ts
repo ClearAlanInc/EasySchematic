@@ -44,6 +44,7 @@ import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from 
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
 import { newBundleId, gcBundles } from "./bundles";
+import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
@@ -5211,6 +5212,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Used when autoRoute is off for lag-free editing.
     const state = get();
     const results: Record<string, RoutedEdge> = {};
+
+    // Bundle members route along one shared trunk (straight L-gather + trunk + L-fan, no
+    // A*). Tally present members per bundle; a bundle is live only with ≥2 members.
+    const bundleCounts = new Map<string, number>();
+    for (const e of state.edges) {
+      const bid = e.data?.bundleId;
+      if (bid) bundleCounts.set(bid, (bundleCounts.get(bid) ?? 0) + 1);
+    }
+    const bundleGroups = new Map<string, BundleEndpoint[]>();
+
     for (const edge of state.edges) {
       const srcInternal = rfInstance.getInternalNode(edge.source);
       const tgtInternal = rfInstance.getInternalNode(edge.target);
@@ -5230,6 +5241,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       const sy = Math.round(srcAbs.y + srcHandle.y + srcHandle.height / 2);
       const tx = Math.round(tgtAbs.x + tgtHandle.x + tgtHandle.width / 2);
       const ty = Math.round(tgtAbs.y + tgtHandle.y + tgtHandle.height / 2);
+
+      // Bundle members defer to the shared-trunk pass below.
+      const bid = edge.data?.bundleId;
+      if (bid && (bundleCounts.get(bid) ?? 0) >= 2) {
+        let group = bundleGroups.get(bid);
+        if (!group) { group = []; bundleGroups.set(bid, group); }
+        group.push({ edgeId: edge.id, srcX: sx, srcY: sy, tgtX: tx, tgtY: ty });
+        continue;
+      }
 
       // Use manual waypoints if present (frozen from A* or user-placed), otherwise L-shape
       let simplified: { x: number; y: number }[];
@@ -5264,9 +5284,37 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       };
     }
 
+    // Shared-trunk pass for bundles: straight L-gather → trunk → L-fan per member, plus
+    // one synthetic `bundle:<id>` trunk route for the overlay layer.
+    for (const [bid, members] of bundleGroups) {
+      if (members.length < 2) continue;
+      const meta = state.bundles[bid];
+      const bt = meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2
+        ? { entry: meta.trunkWaypoints[0], exit: meta.trunkWaypoints[meta.trunkWaypoints.length - 1], trunk: meta.trunkWaypoints }
+        : computeBundleTrunk(members);
+      for (const m of members) {
+        const wp = simplifyWaypoints(orthogonalize([
+          { x: m.srcX, y: m.srcY }, bt.entry, bt.exit, { x: m.tgtX, y: m.tgtY },
+        ]));
+        const midPt = wp[Math.floor(wp.length / 2)];
+        results[m.edgeId] = {
+          edgeId: m.edgeId, svgPath: waypointsToSvgPath(wp), waypoints: wp,
+          segments: extractSegments(wp), labelX: midPt.x, labelY: midPt.y,
+          turns: "bundle", crossingPoints: [],
+        };
+      }
+      const trunkWp = simplifyWaypoints(orthogonalize(bt.trunk.map((p) => ({ x: p.x, y: p.y }))));
+      const tMid = trunkWp[Math.floor(trunkWp.length / 2)] ?? bt.entry;
+      results[`bundle:${bid}`] = {
+        edgeId: `bundle:${bid}`, svgPath: waypointsToSvgPath(trunkWp), waypoints: trunkWp,
+        segments: extractSegments(trunkWp), labelX: tMid.x, labelY: tMid.y,
+        turns: "trunk", crossingPoints: [],
+      };
+    }
+
     // Detect crossings so line hops render in manual mode too.
     const stubbedIds = new Set(state.edges.filter((e) => e.data?.stubbed).map((e) => e.id));
-    const entries = Object.values(results).filter((r) => !stubbedIds.has(r.edgeId));
+    const entries = Object.values(results).filter((r) => !stubbedIds.has(r.edgeId) && !r.edgeId.startsWith("bundle:"));
     const segCount = entries.reduce((n, r) => n + r.segments.length, 0);
     const overBudget = entries.length > 400 || segCount * segCount > 250_000;
     if (!overBudget) {
@@ -5396,7 +5444,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id))
       : state.nodes;
 
-    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, rfInstance, state.debugEdges);
+    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, rfInstance, state.debugEdges, undefined, undefined, state.bundles);
 
     // Map virtual edge routes back to primary real edge IDs
     for (const [virtualId, mapping] of virtualEdgeSources) {

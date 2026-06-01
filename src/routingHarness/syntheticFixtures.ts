@@ -180,6 +180,59 @@ function crossingGrid(): Fixture {
   return makeFixture("crossing-grid", nodes, edges);
 }
 
+/** 6 connections, one source region → one target region, all bundled onto one trunk. */
+function bundle6SamePair(): Fixture {
+  const outs = Array.from({ length: 6 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 200, ports: outs });
+  const nodes: SchematicNode[] = [src];
+  const edges = outs.map((p, i) => {
+    const tIn = makePort("In", "sdi", "input");
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 700, y: i * 110, ports: [tIn] });
+    nodes.push(tgt);
+    return makeEdge({
+      id: `e${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tIn.id,
+      signalType: "sdi", data: { bundleId: "b1" },
+    });
+  });
+  return makeFixture("bundle-6-same-pair", nodes, edges, { b1: { id: "b1" } });
+}
+
+/** 3 sources at different Y → 1 target device, bundled (gather-heavy at the target). */
+function bundleFanIn(): Fixture {
+  const nodes: SchematicNode[] = [];
+  const tIns = Array.from({ length: 3 }, (_, i) => makePort(`In ${i + 1}`, "sdi", "input"));
+  const tgt = makeDevice({ id: "tgt", label: "Switcher", x: 800, y: 200, ports: tIns });
+  nodes.push(tgt);
+  const edges = tIns.map((tIn, i) => {
+    const out = makePort("Out", "sdi", "output");
+    const src = makeDevice({ id: `src${i}`, label: `Camera ${i + 1}`, x: 0, y: i * 160, ports: [out] });
+    nodes.push(src);
+    return makeEdge({
+      id: `f${i}`, source: `src${i}`, sourceHandle: out.id, target: "tgt", targetHandle: tIn.id,
+      signalType: "sdi", data: { bundleId: "b1" },
+    });
+  });
+  return makeFixture("bundle-fan-in", nodes, edges, { b1: { id: "b1" } });
+}
+
+/** Mixed signal types bundled together — trunk is neutral; R11 must be suppressed inside. */
+function bundleMixedSignal(): Fixture {
+  const sigs: SignalType[] = ["sdi", "hdmi", "dante", "ndi"];
+  const outs = sigs.map((s, i) => makePort(`Out ${i + 1}`, s, "output"));
+  const src = makeDevice({ id: "src", label: "Hub", x: 0, y: 250, ports: outs });
+  const nodes: SchematicNode[] = [src];
+  const edges = sigs.map((s, i) => {
+    const tIn = makePort("In", s, "input");
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Node ${i + 1}`, x: 650, y: i * 130, ports: [tIn] });
+    nodes.push(tgt);
+    return makeEdge({
+      id: `x${i}`, source: "src", sourceHandle: outs[i].id, target: `tgt${i}`, targetHandle: tIn.id,
+      signalType: s, data: { bundleId: "b1" },
+    });
+  });
+  return makeFixture("bundle-mixed-signal", nodes, edges, { b1: { id: "b1" } });
+}
+
 export function syntheticFixtures(): Fixture[] {
   return [
     fanOutDense(),
@@ -190,6 +243,9 @@ export function syntheticFixtures(): Fixture[] {
     multiSourceStack(),
     fanThroughGap(),
     crossingGrid(),
+    bundle6SamePair(),
+    bundleFanIn(),
+    bundleMixedSignal(),
   ];
 }
 

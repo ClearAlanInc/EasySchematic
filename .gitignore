@@ -56,6 +56,9 @@ src/__tests__/fixtures/routing/baselines/*
 !src/__tests__/fixtures/routing/baselines/multi-source-stack.json
 !src/__tests__/fixtures/routing/baselines/fan-through-gap.json
 !src/__tests__/fixtures/routing/baselines/defaultSchematic.json
+!src/__tests__/fixtures/routing/baselines/bundle-6-same-pair.json
+!src/__tests__/fixtures/routing/baselines/bundle-fan-in.json
+!src/__tests__/fixtures/routing/baselines/bundle-mixed-signal.json
 
 # Playwright
 e2e/test-results/

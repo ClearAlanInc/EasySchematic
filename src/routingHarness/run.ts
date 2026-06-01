@@ -51,7 +51,7 @@ async function main() {
 
   for (const fx of fixtures) {
     const start = Date.now();
-    const { routes, overBudget } = routeFixture(fx.nodes, fx.edges);
+    const { routes, overBudget } = routeFixture(fx.nodes, fx.edges, { bundles: fx.bundles });
     const elapsed = Date.now() - start;
     const report = computeRuleReport({
       fixture: fx.name,

@@ -6,7 +6,8 @@
  */
 
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SchematicNode, ConnectionEdge } from "./types";
+import type { SchematicNode, ConnectionEdge, BundleMeta } from "./types";
+import { computeBundleTrunk } from "./routing/bundleRoute";
 import {
   buildGlobalGrid,
   buildObstacles,
@@ -588,6 +589,7 @@ export function routeAllEdges(
   debug?: boolean,
   printConfig?: PrintConfig,
   _timeBudgetMs: number = DEFAULT_TIME_BUDGET_MS,
+  bundles: Record<string, BundleMeta> = {},
 ): RouteAllResult {
   let overBudget = false;
   const routingStart = Date.now();
@@ -799,11 +801,27 @@ export function routeAllEdges(
     return overBudget;
   };
 
+  // ---------- Bundle membership ----------
+  // A connection is a bundle member only if its bundleId group has ≥2 members actually
+  // present in this routing pass. Members bypass the normal manual/auto split entirely —
+  // they route along one shared trunk (Phase 0.5 below) regardless of manualWaypoints.
+  const bundlePresentCounts = new Map<string, number>();
+  for (const ep of edgeEndpoints) {
+    const bid = ep.edge.data?.bundleId;
+    if (bid) bundlePresentCounts.set(bid, (bundlePresentCounts.get(bid) ?? 0) + 1);
+  }
+  const bundleGroups = new Map<string, EdgeEndpoints[]>();
+
   // ---------- Route manual edges first (unchanged — they get a clean slate) ----------
   const manualEndpoints: EdgeEndpoints[] = [];
   const autoEndpoints: EdgeEndpoints[] = [];
   for (const ep of edgeEndpoints) {
-    if (ep.edge.data?.manualWaypoints?.length) {
+    const bid = ep.edge.data?.bundleId;
+    if (bid && (bundlePresentCounts.get(bid) ?? 0) >= 2) {
+      let group = bundleGroups.get(bid);
+      if (!group) { group = []; bundleGroups.set(bid, group); }
+      group.push(ep);
+    } else if (ep.edge.data?.manualWaypoints?.length) {
       manualEndpoints.push(ep);
     } else {
       autoEndpoints.push(ep);
@@ -1278,6 +1296,76 @@ export function routeAllEdges(
     }
     return result;
   };
+
+  // ---------- PHASE 0.5: bundles ----------
+  // Route one shared trunk per bundle, then connect each member's source→trunk (gather)
+  // and trunk→target (fan) via the existing A* legs. The trunk is routed once (A* so it
+  // avoids devices) and embedded into every member's waypoints — members deliberately
+  // share the trunk span, so cross-type separation (R11) is NOT applied here and bundle
+  // legs do not contribute penalty zones (members are allowed to run together). The trunk
+  // is also emitted as a synthetic `bundle:<id>` route for the overlay layer.
+  for (const [bid, members] of bundleGroups) {
+    if (members.length < 2) continue;
+    const meta = bundles[bid];
+    const bes = members.map((ep) => ({
+      edgeId: ep.edge.id, srcX: ep.sourceX, srcY: ep.sourceY, tgtX: ep.targetX, tgtY: ep.targetY,
+    }));
+
+    // Trunk geometry: user override polyline, or auto-computed + A*-routed to dodge devices.
+    let entry: Point;
+    let exit: Point;
+    let trunkPath: Point[];
+    if (meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2) {
+      trunkPath = meta.trunkWaypoints.map((p) => ({ x: p.x, y: p.y }));
+      entry = trunkPath[0];
+      exit = trunkPath[trunkPath.length - 1];
+    } else {
+      const bt = computeBundleTrunk(bes);
+      entry = bt.entry;
+      exit = bt.exit;
+      const routedTrunk = checkBudget() ? null : routeLeg(
+        entry.x, entry.y, exit.x, exit.y, obs.rects, 0, undefined,
+        undefined, true, true, undefined, undefined, undefined, undefined, undefined, undefined,
+      );
+      trunkPath = routedTrunk ? routedTrunk.waypoints : [entry, exit];
+    }
+
+    for (const ep of members) {
+      const sigType = ep.edge.data?.signalType;
+      const gather = checkBudget() ? null : routeLeg(
+        ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, undefined,
+        sigType, false, true, undefined, undefined, ep.edge.source, undefined,
+        ep.sourceExitsRight, undefined,
+      );
+      const fan = checkBudget() ? null : routeLeg(
+        exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, undefined,
+        sigType, true, false, undefined, undefined, undefined, ep.edge.target,
+        undefined, ep.targetEntersLeft,
+      );
+      const wp: Point[] = [
+        { x: ep.sourceX, y: ep.sourceY },
+        ...(gather ? gather.waypoints.slice(1, -1) : []),
+        ...trunkPath,
+        ...(fan ? fan.waypoints.slice(1, -1) : []),
+        { x: ep.targetX, y: ep.targetY },
+      ];
+      const cleaned = simplifyWaypoints(orthogonalize(wp));
+      const rs: RouteState = {
+        edgeId: ep.edge.id, waypoints: cleaned, segments: extractSegments(cleaned),
+        svgPath: waypointsToSvgPath(cleaned), labelX: entry.x, labelY: entry.y,
+        turns: "bundle", status: "good", signalType: sigType,
+      };
+      routeStates.push(rs);
+    }
+
+    // Synthetic trunk route for the overlay layer (drawn once, thick, neutral).
+    const trunkWp = simplifyWaypoints(orthogonalize(trunkPath));
+    const mid = trunkWp[Math.floor(trunkWp.length / 2)] ?? entry;
+    results[`bundle:${bid}`] = {
+      edgeId: `bundle:${bid}`, svgPath: waypointsToSvgPath(trunkWp), waypoints: trunkWp,
+      segments: extractSegments(trunkWp), labelX: mid.x, labelY: mid.y, turns: "trunk",
+    };
+  }
 
   for (const ce of columnEdges) {
     const ep = ce.ep;
