@@ -38,6 +38,9 @@ export const ROUTING_CANDIDATES: RoutingCandidate[] = [
   { label: "sort0", params: { SORT_STRATEGY: 0 } },
   { label: "sort0-tn4", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4 } },
   { label: "sort0-tn4-cx30", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 30 } },
+  // High crossing penalty (PathFinder-ish strong congestion avoidance) — best on dense backward-heavy
+  // schematics (ARKEMA weave 35→28). Zero-risk: best-of-K only improves or ties.
+  { label: "sort0-tn4-cx80-m6", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 80, ESCAPE_MARGIN: 6 } },
   { label: "sort0-tn4-ov40", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, OVERLAP_PENALTY: 40 } },
   // Wider escape margin gives A* more room to route around the obstacle field — measurably fewer
   // weaves/crossings on dense schematics (icdc weave 36→22, cross 223→194). Adding candidates is
