@@ -1575,9 +1575,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nextDistances = Object.keys(filtered).length > 0 ? filtered : undefined;
     }
 
+    // Deleting members may drop a bundle below 2 — GC dangling membership + empty bundles.
+    const gc = gcBundles(edgesAfterSplice, state.bundles);
+
     set({
       nodes: renumberNodes(reconciledNodes),
-      edges: edgesAfterSplice,
+      edges: gc.edges,
+      bundles: gc.bundles,
       pages,
       ...(nextDistances !== state.roomDistances ? { roomDistances: nextDistances } : {}),
     });
@@ -1664,6 +1668,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       }
       return v;
     };
+    // Bundles are likewise re-keyed per paste so the copy is an independent bundle.
+    const bundleIdMap = new Map<string, string>();
+    const remapBundle = (oldId: string): string => {
+      let v = bundleIdMap.get(oldId);
+      if (!v) {
+        v = newBundleId();
+        bundleIdMap.set(oldId, v);
+      }
+      return v;
+    };
 
     const yOffset = clipboard.boundsHeight + PASTE_GAP;
 
@@ -1714,9 +1728,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const existingEdges = ensureUniqueEdgeIds(state.edges);
     const newEdges: ConnectionEdge[] = [];
     for (const e of clipboard.edges) {
-      const data = e.data?.linkedConnectionId
-        ? { ...e.data, linkedConnectionId: remapLink(e.data.linkedConnectionId) }
-        : e.data;
+      let data = e.data;
+      if (data?.linkedConnectionId) data = { ...data, linkedConnectionId: remapLink(data.linkedConnectionId) };
+      if (data?.bundleId) data = { ...data, bundleId: remapBundle(data.bundleId) };
       newEdges.push({
         ...e,
         id: nextEdgeId([...existingEdges, ...newEdges]),
@@ -1737,10 +1751,25 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ...existingEdges.map((e) => (e.selected ? { ...e, selected: false } : e)),
       ...newEdges,
     ];
+    // Clone BundleMeta for each remapped bundle, then GC any pasted bundle that ended up
+    // with <2 members (e.g. only some members were copied) — dropping both the empty
+    // bundle and the now-dangling bundleId on its lone pasted edge.
+    let finalEdges = mergedEdges;
+    let finalBundles = state.bundles;
+    if (bundleIdMap.size > 0) {
+      const cloned: Record<string, BundleMeta> = { ...state.bundles };
+      for (const [oldId, newId] of bundleIdMap) {
+        cloned[newId] = { ...(state.bundles[oldId] ?? {}), id: newId };
+      }
+      const gc = gcBundles(mergedEdges, cloned);
+      finalEdges = gc.edges;
+      finalBundles = gc.bundles;
+    }
     // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them.
     set({
-      nodes: renumberNodes(reconcileWaypointNodes(mergedNodes, mergedEdges)),
-      edges: mergedEdges,
+      nodes: renumberNodes(reconcileWaypointNodes(mergedNodes, finalEdges)),
+      edges: finalEdges,
+      ...(finalBundles !== state.bundles ? { bundles: finalBundles } : {}),
     });
 
     // Update clipboard positions so repeated paste keeps offsetting
@@ -4993,6 +5022,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const baseData = { ...edge.data! };
     delete (baseData as Record<string, unknown>).manualWaypoints;
     delete (baseData as Record<string, unknown>).autoRouteWaypoints;
+    // Stubbing a bundled member removes it from the bundle (a stub has no trunk to share).
+    const wasBundled = !!(baseData as Record<string, unknown>).bundleId;
+    delete (baseData as Record<string, unknown>).bundleId;
 
     const srcLeg: ConnectionEdge = {
       ...edge,
@@ -5020,10 +5052,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     pushUndo({ nodes: state.nodes, edges: state.edges });
     const newEdges = [...state.edges.filter((e) => e.id !== edgeId), srcLeg, tgtLeg];
+    // Removing this member may drop its bundle below 2 — GC dangling membership + bundles.
+    const gc = gcBundles(newEdges, state.bundles);
     set({
-      nodes: reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], newEdges),
-      edges: newEdges,
+      nodes: reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], gc.edges),
+      edges: gc.edges,
+      bundles: gc.bundles,
     });
+    if (wasBundled) get().addToast("Removed from bundle (stubbed)", "info");
     get().saveToLocalStorage();
   },
 
