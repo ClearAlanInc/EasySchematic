@@ -14,6 +14,8 @@ import { routeFixture } from "./route";
 import { computeRuleReport } from "./metrics";
 import { renderFixtureSvg } from "./svgReport";
 import { loadBaseline, saveBaseline, diffMetrics, formatDiff } from "./baseline";
+import { ROUTING_CANDIDATES, pickBest } from "../routing/portfolio";
+import { routingScore } from "../routing/objective";
 
 const REPORTS_DIR = fileURLToPath(new URL("../__tests__/fixtures/routing/reports", import.meta.url));
 
@@ -34,6 +36,39 @@ async function main() {
   if (fixtures.length === 0) {
     console.error("No fixtures matched.");
     process.exit(1);
+  }
+
+  // --portfolio: route every candidate config per fixture, score each via the objective, and report
+  // best-of-K vs the shipped default. Measurement only — does not change baselines or pick a winner
+  // for --check. Proves/quantifies the portfolio search end-to-end (Phase 1).
+  if (has("--portfolio")) {
+    const g = globalThis as { __routingParams?: Record<string, number> };
+    console.log(`Routing portfolio — ${ROUTING_CANDIDATES.length} candidates — ${fixtures.length} fixture(s)\n`);
+    let totalDef = 0, totalBest = 0;
+    for (const fx of fixtures) {
+      const scored = ROUTING_CANDIDATES.map((c) => {
+        g.__routingParams = c.params;
+        const { routes, overBudget } = routeFixture(fx.nodes, fx.edges, { bundles: fx.bundles });
+        const metrics = computeRuleReport({ fixture: fx.name, nodes: fx.nodes, edges: fx.edges, routes, overBudget }).metrics;
+        return { label: c.label, score: routingScore(metrics), metrics };
+      });
+      g.__routingParams = undefined;
+      const def = scored[0]; // default is always first
+      const best = pickBest(scored.map((s) => ({ label: s.label, score: s.score })))!;
+      const bestFull = scored.find((s) => s.label === best.label)!;
+      totalDef += def.score; totalBest += best.score;
+      const gain = def.score > 0 ? (1 - best.score / def.score) * 100 : 0;
+      const tag = best.label === "default" ? "(default already best)" : `won by ${best.label}`;
+      console.log(
+        `  ${fx.name.padEnd(26)} default=${def.score.toFixed(0).padStart(6)} best=${best.score.toFixed(0).padStart(6)} ` +
+        `${gain >= 0.5 ? `(-${gain.toFixed(0)}%)` : "(—)  "} ${tag}\n` +
+        `      weave ${def.metrics.weavingPairs}->${bestFull.metrics.weavingPairs}  cross ${def.metrics.crossingPairs}->${bestFull.metrics.crossingPairs}  ` +
+        `overlap ${def.metrics.deviceOverlapCount}->${bestFull.metrics.deviceOverlapCount}`,
+      );
+    }
+    const totalGain = totalDef > 0 ? (1 - totalBest / totalDef) * 100 : 0;
+    console.log(`\nPortfolio total objective: default=${totalDef.toFixed(0)} best=${totalBest.toFixed(0)} (-${totalGain.toFixed(0)}%)`);
+    return;
   }
 
   if (mode === "report" || wantPng) {
