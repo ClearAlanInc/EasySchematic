@@ -19,6 +19,7 @@ import {
   type Connection,
 } from "@xyflow/react";
 import { useSchematicStore, GRID_SIZE, setReconnectingEdgeId } from "./store";
+import { warmupRoutingWorker } from "./routing/routingClient";
 import { nodeTypes, edgeTypes } from "./nodeTypes";
 import SnapGuides from "./components/SnapGuides";
 import PageBoundaryOverlay from "./components/PageBoundaryOverlay";
@@ -608,6 +609,10 @@ function SchematicCanvas() {
     prevPortSignaturesRef.current = current;
     if (changed.length > 0) updateNodeInternals(changed);
   }, [portSignatures, updateNodeInternals]);
+
+  // Spawn the routing worker eagerly on editor mount so the first route doesn't pay
+  // worker construction latency mid-interaction.
+  useEffect(() => { warmupRoutingWorker(); }, []);
 
   useEffect(() => {
     if (isDragging) return;
