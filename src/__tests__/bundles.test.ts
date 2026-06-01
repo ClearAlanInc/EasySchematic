@@ -1,8 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { gcBundles, bundleMembers, newBundleId } from "../bundles";
+import {
+  gcBundles,
+  bundleMembers,
+  newBundleId,
+  reconcileBundleJunctions,
+  estimateBundleJunctionPositions,
+  junctionNodeId,
+  bundleJunctionsFor,
+  BUNDLE_JUNCTION_TYPE,
+} from "../bundles";
 
 const edge = (id: string, bundleId?: string) =>
   ({ id, source: "a", target: "b", data: { signalType: "sdi", ...(bundleId ? { bundleId } : {}) } }) as any;
+
+// Member edge wired between two specific device nodes (for geometry-based heal tests).
+const memberEdge = (id: string, source: string, target: string, bundleId: string) =>
+  ({ id, source, target, data: { signalType: "sdi", bundleId } }) as any;
+
+// Device node with explicit measured size at a position.
+const device = (id: string, x: number, y: number, w = 180, h = 60) =>
+  ({ id, type: "device", position: { x, y }, measured: { width: w, height: h }, data: {} }) as any;
 
 describe("gcBundles", () => {
   it("keeps bundles with >=2 members, dissolves the rest", () => {
@@ -19,4 +36,101 @@ describe("gcBundles", () => {
     expect(out.every((e) => e.data?.bundleId === undefined)).toBe(true);
   });
   it("newBundleId is unique", () => expect(newBundleId()).not.toBe(newBundleId()));
+});
+
+describe("estimateBundleJunctionPositions", () => {
+  it("places in right of the source cluster and out left of the target cluster, at median Y", () => {
+    // Two sources on the left (right edges 180 and 200), two targets on the right (left edges 500, 540).
+    const nodes = [
+      device("s1", 0, 0),      // right = 180, centerY = 30
+      device("s2", 20, 100),   // right = 200, centerY = 130
+      device("t1", 500, 0),    // left = 500, centerY = 30
+      device("t2", 540, 100),  // left = 540, centerY = 130
+    ];
+    const members = [memberEdge("e1", "s1", "t1", "b1"), memberEdge("e2", "s2", "t2", "b1")];
+    const pos = estimateBundleJunctionPositions(members, nodes)!;
+    expect(pos.in.x).toBe(200 + 40);  // max source right + gap
+    expect(pos.out.x).toBe(500 - 40); // min target left - gap
+    // Ys = [30,30,130,130] → median of 4 = round((30+130)/2) = 80
+    expect(pos.in.y).toBe(80);
+    expect(pos.out.y).toBe(80);
+  });
+
+  it("returns null when fewer than 2 members resolve to both endpoints", () => {
+    const nodes = [device("s1", 0, 0), device("t1", 500, 0)];
+    const members = [
+      memberEdge("e1", "s1", "t1", "b1"),
+      memberEdge("e2", "missing", "t1", "b1"), // source node absent
+    ];
+    expect(estimateBundleJunctionPositions(members, nodes)).toBeNull();
+  });
+});
+
+describe("reconcileBundleJunctions", () => {
+  const liveBundleNodes = () => [
+    device("s1", 0, 0),
+    device("s2", 0, 100),
+    device("t1", 500, 0),
+    device("t2", 500, 100),
+  ];
+  const liveBundleEdges = () => [
+    memberEdge("e1", "s1", "t1", "b1"),
+    memberEdge("e2", "s2", "t2", "b1"),
+  ];
+
+  it("spawns break-in and break-out anchors for a live (>=2 member) bundle", () => {
+    const out = reconcileBundleJunctions(liveBundleNodes(), liveBundleEdges());
+    const junctions = out.filter((n) => n.type === BUNDLE_JUNCTION_TYPE);
+    expect(junctions).toHaveLength(2);
+    const { in: jin, out: jout } = bundleJunctionsFor(out, "b1");
+    expect(jin?.id).toBe(junctionNodeId("b1", "in"));
+    expect(jout?.id).toBe(junctionNodeId("b1", "out"));
+    expect(jin?.data.role).toBe("in");
+    expect(jout?.data.role).toBe("out");
+    expect(jin?.data.placed).toBe(false);
+  });
+
+  it("is idempotent — re-running returns the same reference", () => {
+    const once = reconcileBundleJunctions(liveBundleNodes(), liveBundleEdges());
+    const twice = reconcileBundleJunctions(once, liveBundleEdges());
+    expect(twice).toBe(once);
+  });
+
+  it("leaves an existing (user-dragged) junction position untouched", () => {
+    const nodes = liveBundleNodes();
+    const dragged = {
+      id: junctionNodeId("b1", "in"),
+      type: BUNDLE_JUNCTION_TYPE,
+      position: { x: 999, y: 999 },
+      data: { bundleId: "b1", role: "in", placed: true },
+    } as any;
+    const out = reconcileBundleJunctions([...nodes, dragged], liveBundleEdges());
+    const { in: jin } = bundleJunctionsFor(out, "b1");
+    expect(jin?.position).toEqual({ x: 999, y: 999 }); // not repositioned
+    expect(jin?.data.placed).toBe(true);
+    // The missing "out" anchor is still spawned alongside.
+    expect(out.filter((n) => n.type === BUNDLE_JUNCTION_TYPE)).toHaveLength(2);
+  });
+
+  it("removes orphan anchors when a bundle drops below 2 members", () => {
+    const withJunctions = reconcileBundleJunctions(liveBundleNodes(), liveBundleEdges());
+    // Drop a member so b1 has only 1 left → no longer live.
+    const out = reconcileBundleJunctions(withJunctions, [memberEdge("e1", "s1", "t1", "b1")]);
+    expect(out.filter((n) => n.type === BUNDLE_JUNCTION_TYPE)).toHaveLength(0);
+  });
+
+  it("returns the same reference when there is nothing to heal", () => {
+    const nodes = liveBundleNodes();
+    expect(reconcileBundleJunctions(nodes, [])).toBe(nodes);
+  });
+
+  it("skips spawning (no crash) when member geometry can't be resolved", () => {
+    const edges = [
+      memberEdge("e1", "ghostA", "ghostB", "b1"),
+      memberEdge("e2", "ghostC", "ghostD", "b1"),
+    ];
+    const nodes = [device("unrelated", 0, 0)];
+    const out = reconcileBundleJunctions(nodes, edges);
+    expect(out).toBe(nodes); // live bundle, but unresolvable → no junctions spawned
+  });
 });

@@ -107,7 +107,8 @@ export function buildObstacles(
       n.type === "room" ||
       n.type === "note" ||
       n.type === "stub-label" ||
-      n.type === "waypoint"
+      n.type === "waypoint" ||
+      n.type === "bundle-junction"
     ) continue;
     if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);

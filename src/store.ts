@@ -43,7 +43,7 @@ import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
-import { newBundleId, gcBundles } from "./bundles";
+import { newBundleId, gcBundles, reconcileBundleJunctions } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
 import { buildHandleSnapshot } from "./routing/handleSnapshot";
 import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./routing/routingClient";
@@ -1647,9 +1647,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     // Deleting members may drop a bundle below 2 — GC dangling membership + empty bundles.
     const gc = gcBundles(edgesAfterSplice, state.bundles);
+    // Drop junction anchors orphaned by a dissolved bundle (and re-heal a live bundle whose
+    // anchor was itself in the deleted selection).
+    const healedNodes = reconcileBundleJunctions(reconciledNodes, gc.edges);
 
     set({
-      nodes: renumberNodes(reconciledNodes),
+      nodes: renumberNodes(healedNodes),
       edges: gc.edges,
       bundles: gc.bundles,
       pages,
@@ -1690,10 +1693,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   copySelected: () => {
     const state = get();
-    // Waypoint nodes are derived from edge.data.manualWaypoints. Excluding them
-    // here keeps the clipboard small and lets paste re-spawn waypoints fresh
-    // (with re-keyed ids) via reconcileWaypointNodes.
-    const selectedNodes = state.nodes.filter((n) => n.selected && n.type !== "waypoint");
+    // Waypoint nodes are derived from edge.data.manualWaypoints, and bundle-junction
+    // anchors are healed from bundle membership. Excluding both here keeps the clipboard
+    // small and lets paste re-spawn them fresh (with re-keyed ids / the remapped bundle)
+    // via reconcileWaypointNodes / reconcileBundleJunctions.
+    const selectedNodes = state.nodes.filter(
+      (n) => n.selected && n.type !== "waypoint" && n.type !== "bundle-junction",
+    );
     if (selectedNodes.length === 0) return;
 
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
@@ -1835,9 +1841,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       finalEdges = gc.edges;
       finalBundles = gc.bundles;
     }
-    // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them.
+    // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them. Pasted
+    // bundles (remapped ids) get fresh break-in/out anchors via reconcileBundleJunctions.
     set({
-      nodes: renumberNodes(reconcileWaypointNodes(mergedNodes, finalEdges)),
+      nodes: renumberNodes(reconcileBundleJunctions(reconcileWaypointNodes(mergedNodes, finalEdges), finalEdges)),
       edges: finalEdges,
       ...(finalBundles !== state.bundles ? { bundles: finalBundles } : {}),
     });
@@ -4524,6 +4531,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           syncCounters(data.nodes, data.edges);
           data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
           data.edges = applyWaypointHeal(data.nodes, data.edges);
+          // Heal-on-load: spawn break-in/out anchors for any pre-existing bundle (idempotent).
+          data.nodes = reconcileBundleJunctions(data.nodes, data.edges);
           const colors = data.signalColors ?? {};
           applySignalColors(colors);
           saveSignalColors({ ...loadSignalColors(), ...colors });
@@ -4603,6 +4612,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       syncCounters(data.nodes, data.edges);
       data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
       data.edges = applyWaypointHeal(data.nodes, data.edges);
+      // Heal-on-load: spawn break-in/out anchors for any pre-existing bundle (idempotent).
+      data.nodes = reconcileBundleJunctions(data.nodes, data.edges);
       // Always apply colors — if file has none, reset to defaults
       const colors = data.signalColors ?? {};
       applySignalColors(colors);
@@ -4750,7 +4761,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   importFromJSON: (rawData) => {
     rawData = repairMojibake(rawData) as SchematicFile;
     const data = migrateSchematic(rawData) as SchematicFile;
-    const nodes = data.nodes ?? [];
+    let nodes = data.nodes ?? [];
     let edges = data.edges ?? [];
     // Sanitize note HTML to prevent XSS from malicious schematic files
     for (const node of nodes) {
@@ -4763,6 +4774,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     syncCounters(nodes, edges);
     edges = ensureUniqueEdgeIds(removeOrphanedEdges(nodes, edges));
     edges = applyWaypointHeal(nodes, edges);
+    // Heal-on-load: spawn break-in/out anchors for any imported bundle (idempotent).
+    nodes = reconcileBundleJunctions(nodes, edges);
     // Merge imported custom templates with existing ones (avoid duplicates by template key)
     if (data.customTemplates?.length) {
       const existing = get().customTemplates;
@@ -5125,7 +5138,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Removing this member may drop its bundle below 2 — GC dangling membership + bundles.
     const gc = gcBundles(newEdges, state.bundles);
     set({
-      nodes: reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], gc.edges),
+      // Stubbing a member can dissolve its bundle — drop the now-orphan junction anchors.
+      nodes: reconcileBundleJunctions(
+        reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], gc.edges),
+        gc.edges,
+      ),
       edges: gc.edges,
       bundles: gc.bundles,
     });
@@ -5277,7 +5294,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const edges = state.edges.map((e) =>
       ids.includes(e.id) ? { ...e, data: { ...e.data!, bundleId: id } } : e,
     );
-    set({ edges, bundles: { ...state.bundles, [id]: { id } } });
+    // Spawn the bundle's break-in/break-out anchors (estimated from member device geometry).
+    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    set({ edges, bundles: { ...state.bundles, [id]: { id } }, nodes });
     get().saveToLocalStorage();
   },
   dissolveBundle: (bundleId) => {
@@ -5290,7 +5309,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       return { ...e, data: rest as ConnectionEdge["data"] };
     });
     const { [bundleId]: _gone, ...bundles } = state.bundles;
-    set({ edges, bundles });
+    // Drop the dissolved bundle's now-orphan junction anchors.
+    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    set({ edges, bundles, nodes });
     get().saveToLocalStorage();
   },
   addToBundle: (bundleId, edgeIds) => {
@@ -5300,7 +5321,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const edges = state.edges.map((e) =>
       edgeIds.includes(e.id) && e.data?.signalType ? { ...e, data: { ...e.data!, bundleId } } : e,
     );
-    set({ edges });
+    // Anchors already exist for a live bundle (no-op); reconcile only spawns if somehow missing.
+    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    set({ edges, nodes });
     get().saveToLocalStorage();
   },
   removeFromBundle: (edgeIds) => {
@@ -5312,9 +5335,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       const { bundleId: _b, ...rest } = e.data!;
       return { ...e, data: rest as ConnectionEdge["data"] };
     });
-    // Auto-dissolve any bundle that dropped below 2 members.
+    // Auto-dissolve any bundle that dropped below 2 members, then drop its orphan anchors.
     const gc = gcBundles(edges, state.bundles);
-    set({ edges: gc.edges, bundles: gc.bundles });
+    const nodes = reconcileBundleJunctions(state.nodes, gc.edges);
+    set({ edges: gc.edges, bundles: gc.bundles, nodes });
     get().saveToLocalStorage();
   },
   setBundleMeta: (bundleId, patch) => {

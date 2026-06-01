@@ -16,7 +16,8 @@ export function bundleMembers(edges: ConnectionEdge[], id: string): ConnectionEd
 }
 
 /** The break-in / break-out anchor nodes for a bundle (either may be missing until the
- *  heal pass spawns it — see Phase 2). Pure; callers read positions off the returned nodes. */
+ *  heal pass spawns it — see reconcileBundleJunctions). Pure; callers read positions off
+ *  the returned nodes. */
 export function bundleJunctionsFor(
   nodes: SchematicNode[],
   id: string,
@@ -31,6 +32,156 @@ export function bundleJunctionsFor(
     else if (jn.data.role === "out") outNode = jn;
   }
   return { in: inNode, out: outNode };
+}
+
+/** Deterministic id for a bundle's break-in / break-out anchor node. Deterministic so the
+ *  heal pass is idempotent (existence check by id) and paste can derive the new id from the
+ *  remapped bundle id. */
+export function junctionNodeId(bundleId: string, role: "in" | "out"): string {
+  return `bj-${bundleId}-${role}`;
+}
+
+/** Gap (px) between a member device cluster and its break-in/out anchor — mirrors
+ *  computeBundleTrunk's default. */
+const JUNCTION_GAP = 40;
+/** Match the waypoint-node z so junctions sit above (elevated) edges and stay clickable. */
+const JUNCTION_Z_INDEX = 100;
+
+/** Absolute bounding box (left/right edge + vertical center) of a node, walking the parent
+ *  chain so devices nested in rooms resolve correctly. measured size supersedes the 180×60
+ *  device fallback once React Flow has measured. */
+function absNodeBox(
+  n: SchematicNode,
+  nodeMap: Map<string, SchematicNode>,
+): { left: number; right: number; centerY: number } {
+  let x = n.position.x;
+  let y = n.position.y;
+  let pid = n.parentId;
+  while (pid) {
+    const p = nodeMap.get(pid);
+    if (!p) break;
+    x += p.position.x;
+    y += p.position.y;
+    pid = p.parentId;
+  }
+  const w = (n.measured?.width as number | undefined) ?? (n.width as number | undefined) ?? 180;
+  const h = (n.measured?.height as number | undefined) ?? (n.height as number | undefined) ?? 60;
+  return { left: x, right: x + w, centerY: y + h / 2 };
+}
+
+/** Estimate a bundle's break-in (source side) / break-out (target side) anchor positions
+ *  from member DEVICE geometry — node bounding boxes, not handle px (only the router resolves
+ *  those, and not on the main thread where junctions spawn). Mirrors computeBundleTrunk's
+ *  median-Y / cluster-edge logic. Returns null when fewer than 2 members resolve to both a
+ *  source and target node (can't place a meaningful trunk). */
+export function estimateBundleJunctionPositions(
+  members: ConnectionEdge[],
+  nodes: SchematicNode[],
+): { in: { x: number; y: number }; out: { x: number; y: number } } | null {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n] as const));
+  const srcRights: number[] = [];
+  const tgtLefts: number[] = [];
+  const ys: number[] = [];
+  for (const m of members) {
+    const s = nodeMap.get(m.source);
+    const t = nodeMap.get(m.target);
+    if (!s || !t) continue;
+    const sb = absNodeBox(s, nodeMap);
+    const tb = absNodeBox(t, nodeMap);
+    srcRights.push(sb.right);
+    tgtLefts.push(tb.left);
+    ys.push(sb.centerY, tb.centerY);
+  }
+  if (srcRights.length < 2) return null;
+  ys.sort((a, b) => a - b);
+  const medY = ys.length % 2
+    ? ys[(ys.length - 1) / 2]
+    : Math.round((ys[ys.length / 2 - 1] + ys[ys.length / 2]) / 2);
+  return {
+    in: { x: Math.round(Math.max(...srcRights) + JUNCTION_GAP), y: medY },
+    out: { x: Math.round(Math.min(...tgtLefts) - JUNCTION_GAP), y: medY },
+  };
+}
+
+/** Heal a node set so every live bundle (≥2 member connections — matches gcBundles liveness)
+ *  owns exactly its break-in and break-out anchors, and no orphan junctions (bundle dissolved
+ *  or dropped below 2 members) linger.
+ *
+ *  Idempotent. Unlike fully-derived waypoint nodes, existing junctions are LEFT IN PLACE —
+ *  their positions are user-owned (draggable, sticky). This pass only SPAWNS the missing
+ *  anchors (from member device geometry) and REMOVES orphans; it never repositions a junction
+ *  that already exists. Returns the same `nodes` reference when nothing changes. */
+export function reconcileBundleJunctions(
+  nodes: SchematicNode[],
+  edges: ConnectionEdge[],
+): SchematicNode[] {
+  const counts = new Map<string, number>();
+  for (const e of edges) {
+    const id = e.data?.bundleId;
+    if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  const live = new Set<string>();
+  for (const [id, c] of counts) if (c >= 2) live.add(id);
+
+  // Survey existing junctions: count orphans (bundle no longer live) and record which roles
+  // each live bundle already has.
+  const presentRoles = new Map<string, Set<"in" | "out">>();
+  let orphanCount = 0;
+  for (const n of nodes) {
+    if (n.type !== BUNDLE_JUNCTION_TYPE) continue;
+    const jn = n as BundleJunctionNode;
+    if (!live.has(jn.data.bundleId)) {
+      orphanCount++;
+      continue;
+    }
+    let roles = presentRoles.get(jn.data.bundleId);
+    if (!roles) {
+      roles = new Set();
+      presentRoles.set(jn.data.bundleId, roles);
+    }
+    roles.add(jn.data.role);
+  }
+
+  const missing: { bundleId: string; role: "in" | "out" }[] = [];
+  for (const id of live) {
+    const roles = presentRoles.get(id);
+    if (!roles || !roles.has("in")) missing.push({ bundleId: id, role: "in" });
+    if (!roles || !roles.has("out")) missing.push({ bundleId: id, role: "out" });
+  }
+
+  if (orphanCount === 0 && missing.length === 0) return nodes;
+
+  const kept = orphanCount === 0
+    ? nodes
+    : nodes.filter(
+        (n) => n.type !== BUNDLE_JUNCTION_TYPE || live.has((n as BundleJunctionNode).data.bundleId),
+      );
+
+  if (missing.length === 0) return kept;
+
+  // Spawn missing anchors at estimated positions. A bundle whose geometry can't be resolved
+  // (members reference missing nodes) is skipped — the router falls back to computeBundleTrunk.
+  const posCache = new Map<string, ReturnType<typeof estimateBundleJunctionPositions>>();
+  const spawned: BundleJunctionNode[] = [];
+  for (const { bundleId, role } of missing) {
+    let pos = posCache.get(bundleId);
+    if (pos === undefined) {
+      pos = estimateBundleJunctionPositions(bundleMembers(edges, bundleId), nodes);
+      posCache.set(bundleId, pos);
+    }
+    if (!pos) continue;
+    const node: BundleJunctionNode = {
+      id: junctionNodeId(bundleId, role),
+      type: BUNDLE_JUNCTION_TYPE,
+      position: { ...(role === "in" ? pos.in : pos.out) },
+      data: { bundleId, role, placed: false },
+      zIndex: JUNCTION_Z_INDEX,
+    };
+    spawned.push(node);
+  }
+
+  if (spawned.length === 0) return kept;
+  return [...kept, ...spawned];
 }
 
 /** Drop bundleId from edges whose bundle has <2 members or no meta, and delete those

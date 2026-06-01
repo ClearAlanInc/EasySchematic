@@ -493,11 +493,12 @@ export function computeSnap(
       // Child devices only align to their own parent room; top-level devices
       // see every room (placement-time alignment).
       if (draggedParentId && n.id !== draggedParentId) continue;
-    } else if (n.type === "stub-label" || n.type === "waypoint") {
+    } else if (n.type === "stub-label" || n.type === "waypoint" || n.type === "bundle-junction") {
       // Stubs sit at sub-grid Y by design (centered on a port row); waypoints
-      // are router-positioned. Aligning a device to either pulls the device
-      // off the 20px grid, and snapNodesToGrid then yanks it back on the next
-      // reload — looking like the device "jumped."
+      // are router-positioned; bundle junctions are router/heal-positioned trunk
+      // anchors. Aligning a device to any of them pulls the device off the 20px
+      // grid, and snapNodesToGrid then yanks it back on the next reload — looking
+      // like the device "jumped."
       continue;
     }
     // else: device or other top-level type — cross-room alignment allowed.
