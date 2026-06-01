@@ -273,35 +273,36 @@ export function syntheticFixtures(): Fixture[] {
 }
 
 /**
- * Strip every manualWaypoint so the edge re-auto-routes from scratch. Real exports
- * are often partly hand-routed (WeirdRoom = 25/42 edges manual), and the as-saved
- * weave/detour metrics largely measure USER routes, not the auto-router. The
- * stripped variant is the true auto-router quality signal — and the thing Phase 2
- * is actually trying to improve. Returns null if the fixture has no manual routes.
+ * Reset all routes: strip every manualWaypoint so each edge re-auto-routes from scratch.
+ * Real exports are often partly hand-routed (WeirdRoom = 27/42 edges manual) and several have
+ * `autoRoute: false` saved — so their as-saved geometry measures USER routes, not the auto-router.
+ * The harness ALWAYS routes with A* (auto), so resetting routes here gives a clean, apples-to-apples
+ * auto-router quality signal on every schematic regardless of its saved routing/autoRoute state —
+ * which is what the violation metrics are meant to gate. Returns the same fixture when it had no
+ * manual routes (synthetic fixtures, defaultSchematic).
  */
-function autoRouteVariant(fx: Fixture): Fixture | null {
-  let hasManual = false;
+function resetRoutes(fx: Fixture): Fixture {
+  let changed = false;
   const edges = fx.edges.map((e) => {
     if (e.data?.manualWaypoints?.length) {
-      hasManual = true;
+      changed = true;
       const data = { ...e.data };
       delete (data as { manualWaypoints?: unknown }).manualWaypoints;
+      delete (data as { autoRouteWaypoints?: unknown }).autoRouteWaypoints;
       return { ...e, data } as ConnectionEdge;
     }
     return e;
   });
-  if (!hasManual) return null;
-  return { name: `${fx.name}__auto`, nodes: fx.nodes, edges };
+  return changed ? { ...fx, edges } : fx;
 }
 
 /**
- * All fixtures: synthetic + the bundled default schematic + any real exports on disk.
- * Each partly-hand-routed file fixture also gets a `__auto` strip-manual variant so
- * the pure auto-router is measured and gated independently of user-placed routing.
+ * All fixtures: synthetic + the bundled default schematic + any real exports on disk, every one
+ * with its routes RESET so the harness measures the pure auto-router (see resetRoutes). The harness
+ * forces A* auto-routing, so this is the accurate violation signal across all schematics.
  */
 export async function allFixtures(): Promise<Fixture[]> {
   const { defaultSchematicFixture, loadFileFixtures } = await import("./fixtures");
   const base = [...syntheticFixtures(), defaultSchematicFixture(), ...loadFileFixtures()];
-  const variants = base.map(autoRouteVariant).filter((f): f is Fixture => f !== null);
-  return [...base, ...variants];
+  return base.map(resetRoutes);
 }
