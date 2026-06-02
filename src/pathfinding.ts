@@ -54,13 +54,32 @@ interface GridNode {
 
 // ---------- Constants ----------
 
-/** Grid cell size in pixels. All grid coordinates are multiples of this. */
+/**
+ * Default grid cell size in pixels. All grid coordinates are multiples of the ACTIVE cell size.
+ * The active size is overridable per routing run via `__routingParams.CELL_SIZE` (see `cellSize`),
+ * which the portfolio uses as a search axis: a finer grid gives the column allocator more distinct
+ * lanes in a tight band, which measurably cuts weaving on dense schematics (icdc weave 22→8, video
+ * 27→14, ARKEMA 53→32) and reduces routes forced inside a tall hub's body — at the cost of more A*
+ * cells (slower). 10 is the sweet spot; below ~8px corridors read as shared verticals and it backfires.
+ */
 export const CELL_SIZE = 20;
 
+/**
+ * Active grid cell size for the current routing run. Reads `__routingParams.CELL_SIZE` (the same
+ * live-override channel ROUTING_PARAMS uses) and falls back to the default. Must stay constant for
+ * the duration of one `routeAllEdges` call — callers set `__routingParams` before routing and clear
+ * it after, so px2g/g2px round-trip consistently within a run (a determinism prerequisite).
+ */
+export const cellSize = (): number => {
+  const o = (globalThis as unknown as Record<string, unknown>).__routingParams as Record<string, number> | undefined;
+  const v = o?.CELL_SIZE;
+  return typeof v === "number" && v > 0 ? v : CELL_SIZE;
+};
+
 /** Convert pixel coordinate to grid coordinate. */
-export const px2g = (px: number) => Math.round(px / CELL_SIZE);
+export const px2g = (px: number) => Math.round(px / cellSize());
 /** Convert grid coordinate to pixel coordinate. */
-export const g2px = (g: number) => g * CELL_SIZE;
+export const g2px = (g: number) => g * cellSize();
 
 /** Default routing parameters. Values are in GRID CELLS unless noted. */
 export const ROUTING_DEFAULTS = {
@@ -123,7 +142,7 @@ export function buildObstacles(
   getAbsPos: (node: typeof nodes[number]) => { x: number; y: number },
 ): { rects: Rect[] } {
   const rects: Rect[] = [];
-  const pad = ROUTING_PARAMS.PAD * CELL_SIZE; // PAD is in grid cells
+  const pad = ROUTING_PARAMS.PAD * cellSize(); // PAD is in grid cells
   for (const n of nodes) {
     if (
       n.type === "room" ||
@@ -149,11 +168,12 @@ export function buildObstacles(
 
 /** Convert pixel-coordinate obstacle rects to grid-coordinate rects. */
 export function pixelRectsToGrid(rects: Rect[]): GridRect[] {
+  const cs = cellSize();
   return rects.map((r) => ({
-    left: Math.floor(r.left / CELL_SIZE),
-    top: Math.floor(r.top / CELL_SIZE),
-    right: Math.ceil(r.right / CELL_SIZE),
-    bottom: Math.ceil(r.bottom / CELL_SIZE),
+    left: Math.floor(r.left / cs),
+    top: Math.floor(r.top / cs),
+    right: Math.ceil(r.right / cs),
+    bottom: Math.ceil(r.bottom / cs),
     nodeId: r.nodeId,
   }));
 }
