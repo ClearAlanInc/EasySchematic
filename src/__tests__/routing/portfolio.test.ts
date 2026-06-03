@@ -11,10 +11,10 @@ describe("portfolio candidate set", () => {
     const labels = ROUTING_CANDIDATES.map((c) => c.label);
     expect(new Set(labels).size).toBe(labels.length);
     expect(labels.length).toBeGreaterThanOrEqual(4);
-    // Kept deliberately small (research: most gain in the first 4–8 well-diversified members). The
-    // upper bound has room for the CELL_SIZE-10 (finer-grid) trio, which earns its slot with large
-    // measured wins on the dense fixtures (icdc/video/ARKEMA). Resist letting this balloon.
-    expect(labels.length).toBeLessThanOrEqual(14);
+    // Kept deliberately small (research: most gain in the first 4–8 well-diversified members).
+    // Resist letting this balloon. (A finer-grid CELL_SIZE-10 trio was tried and reverted — it
+    // gamed the density-blind objective into a bundled, slow result; see portfolio.ts.)
+    expect(labels.length).toBeLessThanOrEqual(10);
   });
 });
 

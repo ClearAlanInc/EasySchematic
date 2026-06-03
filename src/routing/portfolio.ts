@@ -49,15 +49,13 @@ export const ROUTING_CANDIDATES: RoutingCandidate[] = [
   { label: "sort0-tn4-cx30-m6", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 30, ESCAPE_MARGIN: 6 } },
   { label: "sort1-tn4", params: { SORT_STRATEGY: 1, TURN_PENALTY: 4 } },
   { label: "sort2", params: { SORT_STRATEGY: 2 } },
-  // Finer routing grid (CELL_SIZE 10 vs the default 20). A half-size grid doubles the number of
-  // distinct corridor lanes available in a tight band, so the column allocator stops forcing edges to
-  // share a lane (= weave) or to fall back inside a tall hub's body. Measured: icdc weave 22→8 / body
-  // 11→7, video weave 27→14 / body 12→7, ARKEMA weave 53→32 / cross 274→210. Costs ~2.4× routing time
-  // (more A* cells) — fine in the worker pool, under the op budget. Below ~8px the grid backfires
-  // (corridors read as shared verticals), so 10 is the floor. Zero-risk: best-of-K only improves/ties.
-  { label: "sort0-tn4-m6-c10", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, ESCAPE_MARGIN: 6, CELL_SIZE: 10 } },
-  { label: "sort0-tn4-cx30-m6-c10", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 30, ESCAPE_MARGIN: 6, CELL_SIZE: 10 } },
-  { label: "sort0-tn4-cx80-m6-c10", params: { SORT_STRATEGY: 0, TURN_PENALTY: 4, CROSSING_PENALTY: 80, ESCAPE_MARGIN: 6, CELL_SIZE: 10 } },
+  // NOTE: a finer-grid trio (CELL_SIZE 10) was tried and reverted. It won the objective on dense
+  // fixtures (icdc weave 55→9, etc.) but the objective is blind to lane DENSITY (scoreRoutes
+  // SHARED_PX=8), so a 10px grid packs verticals ~10px apart — a bundled smear the eye reads as
+  // WORSE, not better. It was also ~2.4× slower (the wait-for-all client made it the latency floor)
+  // and fragile (endpoint-body crossings spike at 16px). Most of the real weave win lives in the
+  // params above (sort0-tn4-m6 / -cx80-m6) at the normal 20px grid. See plan
+  // ~/.claude/plans/wobbly-skipping-pike.md and [[project_edge_routing]].
 ];
 
 export interface ScoredCandidate {
