@@ -7,6 +7,7 @@
   "crossingPairs": 3,
   "weavingPairs": 0,
   "crossTypeSepViolations": 0,
+  "smearPairs": 0,
   "backwardSegments": 0,
   "turnsTotal": 12,
   "turnsMax": 2,
