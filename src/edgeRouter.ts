@@ -1881,12 +1881,58 @@ export function routeAllEdges(
 
     if (leg1 && leg3) {
       // Assemble: leg1 waypoints + vertical segment + leg3 waypoints
-      const allWaypoints: Point[] = [
+      let cleaned = simplifyWaypoints([
         ...leg1.waypoints,
         cwp2, // bottom of vertical (leg1 ends at cwp1, add cwp2 for vertical segment)
         ...leg3.waypoints.slice(1), // skip first point (it's cwp2)
-      ];
-      const cleaned = simplifyWaypoints(allWaypoints);
+      ]);
+
+      // The corner waypoints pin the path to the source/target ROWS at the corridor x.
+      // When a device forces a leg to detour, that pin can produce a HAIRPIN: dodge
+      // under the device, climb back to the source row just to touch the corner, then
+      // descend again — the vertical direction reverses twice. A single dodge-and-
+      // continue (one reversal) is normal and keeps corridor discipline; only the
+      // double reversal warrants abandoning the pinned corner. Try the decompositions
+      // that skip it — source straight to the corridor BOTTOM, or corridor TOP straight
+      // to the target — and keep the cheapest (length + A*'s own turn weight).
+      let vFlips = 0;
+      let lastVDir = 0;
+      for (let i = 1; i < cleaned.length; i++) {
+        const dy = cleaned[i].y - cleaned[i - 1].y;
+        if (dy === 0) continue;
+        const dir = Math.sign(dy);
+        if (lastVDir !== 0 && dir !== lastVDir) vFlips++;
+        lastVDir = dir;
+      }
+      if (vFlips >= 2) {
+        const lenOf = (wp: Point[]) => {
+          let len = 0;
+          for (let i = 1; i < wp.length; i++) len += Math.abs(wp[i].x - wp[i - 1].x) + Math.abs(wp[i].y - wp[i - 1].y);
+          return len;
+        };
+        const score = (wp: Point[]) => lenOf(wp) + (wp.length - 2) * ROUTING_PARAMS.TURN_PENALTY * cellSize();
+        const consider = (wp: Point[] | null) => {
+          if (wp && score(wp) < score(cleaned)) cleaned = wp;
+        };
+        if (!checkBudget()) {
+          const legB = routeLeg(
+            ep.sourceX, ep.sourceY, cwp2.x, cwp2.y,
+            obs.rects, ep.stubSpread, pens, sigType,
+            false, true, undefined, undefined, ep.edge.source, undefined,
+            ep.sourceExitsRight, undefined,
+          );
+          consider(legB ? simplifyWaypoints([...legB.waypoints, ...leg3.waypoints.slice(1)]) : null);
+        }
+        if (!checkBudget()) {
+          const legC = routeLeg(
+            cwp1.x, cwp1.y, ep.targetX, ep.targetY,
+            obs.rects, 0, pens, sigType,
+            true, false, undefined, undefined, undefined, ep.edge.target,
+            undefined, ep.targetEntersLeft,
+          );
+          consider(legC ? simplifyWaypoints([...leg1.waypoints, ...legC.waypoints.slice(1)]) : null);
+        }
+      }
       const svgPath = waypointsToSvgPath(cleaned);
       const rs: RouteState = {
         edgeId: ep.edge.id, waypoints: cleaned,
