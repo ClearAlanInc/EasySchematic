@@ -7,6 +7,7 @@ import {
   estimateBundleJunctionPositions,
   junctionNodeId,
   bundleJunctionsFor,
+  splitMemberWaypoints,
   BUNDLE_JUNCTION_TYPE,
 } from "../bundles";
 
@@ -97,6 +98,40 @@ describe("estimateBundleJunctionPositions", () => {
     ];
     const pos = estimateBundleJunctionPositions(members, nodes, () => null)!;
     expect(pos.in.y).toBe(40); // snapGrid(30) — same as the no-resolver estimate
+  });
+});
+
+describe("splitMemberWaypoints", () => {
+  const entry = { x: 200, y: 100 };
+  const exit = { x: 800, y: 100 };
+
+  it("returns empty runs for no waypoints", () => {
+    expect(splitMemberWaypoints(undefined, entry, exit)).toEqual({ gather: [], fan: [] });
+    expect(splitMemberWaypoints([], entry, exit)).toEqual({ gather: [], fan: [] });
+  });
+
+  it("assigns waypoints to gather/fan by junction proximity, preserving order", () => {
+    const wps = [
+      { x: 150, y: 40 },  // near entry → gather
+      { x: 180, y: 160 }, // near entry → gather
+      { x: 760, y: 30 },  // near exit → fan
+      { x: 850, y: 180 }, // near exit → fan
+    ];
+    const { gather, fan } = splitMemberWaypoints(wps, entry, exit);
+    expect(gather).toEqual(wps.slice(0, 2));
+    expect(fan).toEqual(wps.slice(2));
+  });
+
+  it("keeps everything after the first fan-side waypoint in the fan run (order wins over distance)", () => {
+    // The 3rd point is geometrically nearer the entry, but it follows a fan-side point —
+    // re-sorting would scramble a deliberate detour.
+    const wps = [
+      { x: 700, y: 100 }, // fan side
+      { x: 300, y: 100 }, // entry side, but AFTER a fan point
+    ];
+    const { gather, fan } = splitMemberWaypoints(wps, entry, exit);
+    expect(gather).toEqual([]);
+    expect(fan).toEqual(wps);
   });
 });
 

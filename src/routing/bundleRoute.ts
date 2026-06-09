@@ -13,6 +13,9 @@ export interface BundleEndpoint {
   srcY: number;
   tgtX: number;
   tgtY: number;
+  /** User-placed waypoints on this member, honored on its gather/fan legs
+   *  (split by splitMemberWaypoints in bundles.ts). */
+  manualWaypoints?: { x: number; y: number }[];
 }
 
 export interface BundleTrunk {

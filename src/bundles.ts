@@ -201,6 +201,25 @@ export function reconcileBundleJunctions(
   return [...kept, ...spawned];
 }
 
+/** Split a bundled member's manual waypoints into the run that shapes its GATHER leg
+ *  (source → break-in) and the run that shapes its FAN leg (break-out → target). A member
+ *  always travels break-in → trunk → break-out; user waypoints customize the legs on either
+ *  side. Order-preserving: the fan run starts at the first waypoint that sits closer
+ *  (Manhattan) to the break-out than to the break-in — waypoints are an ordered path
+ *  source→target, so re-sorting them would scramble a deliberate detour. Pure. */
+export function splitMemberWaypoints(
+  wps: { x: number; y: number }[] | undefined,
+  entry: { x: number; y: number },
+  exit: { x: number; y: number },
+): { gather: { x: number; y: number }[]; fan: { x: number; y: number }[] } {
+  if (!wps?.length) return { gather: [], fan: [] };
+  const d = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  const k = wps.findIndex((w) => d(w, exit) < d(w, entry));
+  if (k === -1) return { gather: [...wps], fan: [] };
+  return { gather: wps.slice(0, k), fan: wps.slice(k) };
+}
+
 /** Drop bundleId from edges whose bundle has <2 members or no meta, and delete those
  *  bundles. Returns the cleaned edges + bundles (pure; callers set()). */
 export function gcBundles(

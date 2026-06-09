@@ -47,6 +47,30 @@ describe("bundle comb gather/fan", () => {
     }
   });
 
+  it("honors a member's manual waypoint on its fan leg (trunk stays shared)", () => {
+    const fx = fixture();
+    const jin = fx.nodes.find((n) => n.id === "bj-b1-in")!;
+    const jout = fx.nodes.find((n) => n.id === "bj-b1-out")!;
+    // Detour m0's fan leg through a point well below the trunk, between break-out and target.
+    const detour = { x: jout.position.x + 100, y: jout.position.y + 200 };
+    const m0 = fx.edges.find((e) => e.id === "m0")!;
+    m0.data = { ...m0.data!, manualWaypoints: [detour] };
+    const { routes } = routeFixture(fx.nodes, fx.edges, { bundles: fx.bundles });
+    const wps = routes.m0.waypoints;
+    // The route passes through (or orthogonally adjacent to) the detour point...
+    const near = wps.some((p) => Math.abs(p.x - detour.x) < 30 || Math.abs(p.y - detour.y) < 30)
+      && wps.some((p) => p.y >= detour.y - 30);
+    expect(near, `m0 ignores its waypoint: ${wps.map((p) => `${p.x},${p.y}`).join(" ")}`).toBe(true);
+    // ...and still travels the shared trunk (both junction points on the path).
+    const onPath = (pt: { x: number; y: number }) =>
+      wps.some((p) => Math.abs(p.x - pt.x) < 2 && Math.abs(p.y - pt.y) < 2);
+    expect(onPath(jin.position), "m0 left the trunk: missing break-in").toBe(true);
+    expect(onPath(jout.position), "m0 left the trunk: missing break-out").toBe(true);
+    // Other members keep the plain comb.
+    const m1segs = routes.m1.waypoints;
+    expect(m1segs.every((p) => p.y < detour.y - 50)).toBe(true);
+  });
+
   it("gather verticals share the break-in column; fan verticals the break-out column", () => {
     const fx = fixture();
     const jin = fx.nodes.find((n) => n.id === "bj-b1-in")!;

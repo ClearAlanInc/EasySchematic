@@ -43,7 +43,7 @@ import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
-import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor } from "./bundles";
+import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor, splitMemberWaypoints } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
 import { buildHandleSnapshot } from "./routing/handleSnapshot";
 import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./routing/routingClient";
@@ -5404,7 +5404,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (bid && (bundleCounts.get(bid) ?? 0) >= 2) {
         let group = bundleGroups.get(bid);
         if (!group) { group = []; bundleGroups.set(bid, group); }
-        group.push({ edgeId: edge.id, srcX: sx, srcY: sy, tgtX: tx, tgtY: ty });
+        group.push({
+          edgeId: edge.id, srcX: sx, srcY: sy, tgtX: tx, tgtY: ty,
+          manualWaypoints: edge.data?.manualWaypoints,
+        });
         continue;
       }
 
@@ -5461,8 +5464,23 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         trunk = [entry, exit];
       }
       for (const m of members) {
+        // Comb shape, matching the A* router: gather horizontal at the port row with the
+        // vertical AT the break-in column, and — critically — fan vertical AT the break-out
+        // column before the horizontal into the target. (Plain orthogonalize bends
+        // horizontal-first, which ran every member along the trunk row and dropped a shared
+        // vertical pressed against the target device — members flattened into one
+        // unselectable stack.) User waypoints on a member shape its gather/fan legs.
+        const { gather, fan } = splitMemberWaypoints(m.manualWaypoints, entry, exit);
+        const pre = gather.length
+          ? [{ x: m.srcX, y: m.srcY }, ...gather, entry]
+          : [{ x: m.srcX, y: m.srcY }, { x: entry.x, y: m.srcY }, entry];
+        const post = fan.length
+          ? [exit, ...fan, { x: m.tgtX, y: m.tgtY }]
+          : [exit, { x: exit.x, y: m.tgtY }, { x: m.tgtX, y: m.tgtY }];
         const wp = simplifyWaypoints(orthogonalize([
-          { x: m.srcX, y: m.srcY }, entry, exit, { x: m.tgtX, y: m.tgtY },
+          ...pre,
+          ...trunk.slice(1, -1), // user-shaped trunk interior (empty for the default straight trunk)
+          ...post,
         ]));
         const midPt = wp[Math.floor(wp.length / 2)];
         results[m.edgeId] = {

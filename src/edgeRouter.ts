@@ -7,7 +7,7 @@
 
 import type { SchematicNode, ConnectionEdge, BundleMeta } from "./types";
 import { computeBundleTrunk } from "./routing/bundleRoute";
-import { bundleJunctionsFor } from "./bundles";
+import { bundleJunctionsFor, splitMemberWaypoints } from "./bundles";
 import type { HandleSnapshot, SnapshotHandle } from "./routing/handleSnapshot";
 import {
   buildGlobalGrid,
@@ -813,7 +813,8 @@ export function routeAllEdges(
   // ---------- Bundle membership ----------
   // A connection is a bundle member only if its bundleId group has ≥2 members actually
   // present in this routing pass. Members bypass the normal manual/auto split entirely —
-  // they route along one shared trunk (Phase 0.5 below) regardless of manualWaypoints.
+  // they route along one shared trunk (Phase 0.5 below). A member's manualWaypoints are
+  // honored on its gather/fan legs (split around the junctions); the trunk stays shared.
   const bundlePresentCounts = new Map<string, number>();
   for (const ep of edgeEndpoints) {
     const bid = ep.edge.data?.bundleId;
@@ -1384,9 +1385,47 @@ export function routeAllEdges(
       trunkPath = routedTrunk ? routedTrunk.waypoints : [entry, exit];
     }
 
+    // Route a polyline of via-points as chained A* legs (port stubs only at the true
+    // endpoint). Used for a member's gather/fan leg when the user has placed waypoints on
+    // it. Returns null when any leg fails or the budget is spent — caller falls back to a
+    // straight orthogonalized chain so the waypoints still take effect.
+    const routeChain = (
+      pts: Point[],
+      sigType: string | undefined,
+      opts: {
+        srcStub?: { nodeId: string; exitsRight: boolean };
+        tgtStub?: { nodeId: string; entersLeft: boolean };
+      },
+    ): Point[] | null => {
+      const out: Point[] = [];
+      let prevArrival: number | undefined;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const first = i === 0;
+        const last = i === pts.length - 2;
+        if (checkBudget()) return null;
+        const leg = routeLeg(
+          pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y,
+          obs.rects, 0, bundlePenalties, sigType,
+          !(first && opts.srcStub), !(last && opts.tgtStub),
+          prevArrival !== undefined ? (prevArrival + 2) % 4 : undefined, undefined,
+          first ? opts.srcStub?.nodeId : undefined,
+          last ? opts.tgtStub?.nodeId : undefined,
+          first ? opts.srcStub?.exitsRight : undefined,
+          last ? opts.tgtStub?.entersLeft : undefined,
+        );
+        if (!leg) return null;
+        prevArrival = leg.arrivalDir;
+        out.push(...(out.length ? leg.waypoints.slice(1) : leg.waypoints));
+      }
+      return out;
+    };
+
     const memberStates: RouteState[] = [];
     for (const ep of members) {
       const sigType = ep.edge.data?.signalType;
+      // User waypoints on a member shape its gather/fan legs (the trunk section stays
+      // shared — membership wins over a fully manual route).
+      const { gather, fan } = splitMemberWaypoints(ep.edge.data?.manualWaypoints, entry, exit);
       // Gather leg: source → the break-in POINT. All members converge there (the bundle visibly
       // comes together at the draggable node), then share the trunk.
       //
@@ -1399,30 +1438,42 @@ export function routeAllEdges(
       const srcRowG = px2g(ep.sourceY);
       const entryColG = px2g(entry.x);
       const gatherCombOk =
+        gather.length === 0 &&
         (ep.sourceExitsRight ? entry.x >= ep.sourceX + cellSize() : entry.x <= ep.sourceX - cellSize()) &&
         isHSegmentClear(srcRowG, Math.min(px2g(ep.sourceX), entryColG), Math.max(px2g(ep.sourceX), entryColG), new Set([ep.edge.source])) &&
         isColumnClear(entryColG, Math.min(srcRowG, px2g(entry.y)), Math.max(srcRowG, px2g(entry.y)));
+      const gatherPts = [{ x: ep.sourceX, y: ep.sourceY }, ...gather, entry];
       const branchIn = gatherCombOk
         ? { waypoints: [{ x: ep.sourceX, y: ep.sourceY }, { x: entry.x, y: ep.sourceY }, entry] }
-        : checkBudget() ? null : routeLeg(
-            ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, bundlePenalties,
-            sigType, false, true, undefined, undefined, ep.edge.source, undefined,
-            ep.sourceExitsRight, undefined,
-          );
+        : gather.length > 0
+          ? { waypoints:
+              routeChain(gatherPts, sigType, { srcStub: { nodeId: ep.edge.source, exitsRight: ep.sourceExitsRight } })
+              ?? simplifyWaypoints(orthogonalize(gatherPts)) }
+          : checkBudget() ? null : routeLeg(
+              ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, bundlePenalties,
+              sigType, false, true, undefined, undefined, ep.edge.source, undefined,
+              ep.sourceExitsRight, undefined,
+            );
       // Fan leg: the break-out POINT → target. Same comb preference, mirrored.
       const tgtRowG = px2g(ep.targetY);
       const exitColG = px2g(exit.x);
       const fanCombOk =
+        fan.length === 0 &&
         (ep.targetEntersLeft ? exit.x <= ep.targetX - cellSize() : exit.x >= ep.targetX + cellSize()) &&
         isHSegmentClear(tgtRowG, Math.min(exitColG, px2g(ep.targetX)), Math.max(exitColG, px2g(ep.targetX)), new Set([ep.edge.target])) &&
         isColumnClear(exitColG, Math.min(px2g(exit.y), tgtRowG), Math.max(px2g(exit.y), tgtRowG));
+      const fanPts = [exit, ...fan, { x: ep.targetX, y: ep.targetY }];
       const branchOut = fanCombOk
         ? { waypoints: [exit, { x: exit.x, y: ep.targetY }, { x: ep.targetX, y: ep.targetY }] }
-        : checkBudget() ? null : routeLeg(
-            exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
-            sigType, true, false, undefined, undefined, undefined, ep.edge.target,
-            undefined, ep.targetEntersLeft,
-          );
+        : fan.length > 0
+          ? { waypoints:
+              routeChain(fanPts, sigType, { tgtStub: { nodeId: ep.edge.target, entersLeft: ep.targetEntersLeft } })
+              ?? simplifyWaypoints(orthogonalize(fanPts)) }
+          : checkBudget() ? null : routeLeg(
+              exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
+              sigType, true, false, undefined, undefined, undefined, ep.edge.target,
+              undefined, ep.targetEntersLeft,
+            );
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
         ...(branchIn ? branchIn.waypoints.slice(1, -1) : []),
