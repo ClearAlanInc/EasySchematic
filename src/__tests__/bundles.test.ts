@@ -64,6 +64,40 @@ describe("estimateBundleJunctionPositions", () => {
     ];
     expect(estimateBundleJunctionPositions(members, nodes)).toBeNull();
   });
+
+  it("uses resolved endpoint Ys over device centerY (tall-device bundle sits on its cables)", () => {
+    // Esther regression: a 1400px-tall console whose bundle leaves 8 ports near the TOP.
+    // Device centerY (700) would park the junction hundreds of px below every cable.
+    const nodes = [
+      device("console", 0, 0, 180, 1400), // centerY = 700
+      device("t1", 500, 80, 180, 240),    // centerY = 200
+    ];
+    const members = [
+      memberEdge("e1", "console", "t1", "b1"),
+      memberEdge("e2", "console", "t1", "b1"),
+    ];
+    const portY: Record<string, { source: number; target: number }> = {
+      e1: { source: 100, target: 120 },
+      e2: { source: 140, target: 160 },
+    };
+    const pos = estimateBundleJunctionPositions(
+      members, nodes, (e, end) => portY[e.id]?.[end] ?? null,
+    )!;
+    // Median of [100,120,140,160] = 130 → grid-snapped: within the cable band, not at y≈700.
+    expect(pos.in.y).toBeGreaterThanOrEqual(100);
+    expect(pos.in.y).toBeLessThanOrEqual(160);
+    expect(pos.out.y).toBe(pos.in.y);
+  });
+
+  it("falls back to device centerY for members the resolver can't resolve", () => {
+    const nodes = [device("s1", 0, 0), device("t1", 500, 0)]; // centerY = 30 both
+    const members = [
+      memberEdge("e1", "s1", "t1", "b1"),
+      memberEdge("e2", "s1", "t1", "b1"),
+    ];
+    const pos = estimateBundleJunctionPositions(members, nodes, () => null)!;
+    expect(pos.in.y).toBe(40); // snapGrid(30) — same as the no-resolver estimate
+  });
 });
 
 describe("reconcileBundleJunctions", () => {

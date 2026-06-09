@@ -73,14 +73,23 @@ function absNodeBox(
   return { left: x, right: x + w, centerY: y + h / 2 };
 }
 
-/** Estimate a bundle's break-in (source side) / break-out (target side) anchor positions
- *  from member DEVICE geometry — node bounding boxes, not handle px (only the router resolves
- *  those, and not on the main thread where junctions spawn). Mirrors computeBundleTrunk's
- *  median-Y / cluster-edge logic. Returns null when fewer than 2 members resolve to both a
- *  source and target node (can't place a meaningful trunk). */
+/** Resolves a member edge's actual connection-point Y at one end (e.g. from the live routed
+ *  waypoints, whose first/last points are the exact pins). Return null when unknown. */
+export type MemberEndpointY = (edge: ConnectionEdge, end: "source" | "target") => number | null;
+
+/** Estimate a bundle's break-in (source side) / break-out (target side) anchor positions.
+ *
+ *  Trunk Y comes from the median of member CONNECTION-POINT Ys when the caller can resolve
+ *  them (`endpointY` — the store passes routed-waypoint pins); otherwise from device-box
+ *  centerY. The port-level Y matters: a bundle leaving 8 ports near the top of a 1400px-tall
+ *  console must sit at those ports, not at the console's center — device centerY put the
+ *  junction hundreds of px below every member cable (Esther Musical A001 bundle). X always
+ *  comes from device boxes (cluster edge + gap). Returns null when fewer than 2 members
+ *  resolve to both a source and target node (can't place a meaningful trunk). */
 export function estimateBundleJunctionPositions(
   members: ConnectionEdge[],
   nodes: SchematicNode[],
+  endpointY?: MemberEndpointY,
 ): { in: { x: number; y: number }; out: { x: number; y: number } } | null {
   const nodeMap = new Map(nodes.map((n) => [n.id, n] as const));
   const srcRights: number[] = [];
@@ -94,7 +103,9 @@ export function estimateBundleJunctionPositions(
     const tb = absNodeBox(t, nodeMap);
     srcRights.push(sb.right);
     tgtLefts.push(tb.left);
-    ys.push(sb.centerY, tb.centerY);
+    const sy = endpointY?.(m, "source");
+    const ty = endpointY?.(m, "target");
+    ys.push(sy ?? sb.centerY, ty ?? tb.centerY);
   }
   if (srcRights.length < 2) return null;
   ys.sort((a, b) => a - b);
@@ -119,6 +130,7 @@ export function estimateBundleJunctionPositions(
 export function reconcileBundleJunctions(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
+  endpointY?: MemberEndpointY,
 ): SchematicNode[] {
   const counts = new Map<string, number>();
   for (const e of edges) {
@@ -171,7 +183,7 @@ export function reconcileBundleJunctions(
   for (const { bundleId, role } of missing) {
     let pos = posCache.get(bundleId);
     if (pos === undefined) {
-      pos = estimateBundleJunctionPositions(bundleMembers(edges, bundleId), nodes);
+      pos = estimateBundleJunctionPositions(bundleMembers(edges, bundleId), nodes, endpointY);
       posCache.set(bundleId, pos);
     }
     if (!pos) continue;

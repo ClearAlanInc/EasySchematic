@@ -12,6 +12,7 @@ import type { HandleSnapshot, SnapshotHandle } from "./routing/handleSnapshot";
 import {
   buildGlobalGrid,
   buildObstacles,
+  cellSize,
   computeEdgePath,
   createPenaltySpatialIndex,
   g2px,
@@ -1388,17 +1389,40 @@ export function routeAllEdges(
       const sigType = ep.edge.data?.signalType;
       // Gather leg: source → the break-in POINT. All members converge there (the bundle visibly
       // comes together at the draggable node), then share the trunk.
-      const branchIn = checkBudget() ? null : routeLeg(
-        ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, bundlePenalties,
-        sigType, false, true, undefined, undefined, ep.edge.source, undefined,
-        ep.sourceExitsRight, undefined,
-      );
-      // Fan leg: the break-out POINT → target.
-      const branchOut = checkBudget() ? null : routeLeg(
-        exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
-        sigType, true, false, undefined, undefined, undefined, ep.edge.target,
-        undefined, ep.targetEntersLeft,
-      );
+      //
+      // Prefer the canonical COMB shape — horizontal at the port row, then one shared vertical
+      // AT the junction column. Independent A* legs pick their turn columns by tie-break, so
+      // two members could turn at different columns and weave each other (frozen penalty
+      // snapshot = members can't see each other); on the shared column they merge instead.
+      // Falls back to A* when a device blocks the L or the junction sits against the port's
+      // exit direction.
+      const srcRowG = px2g(ep.sourceY);
+      const entryColG = px2g(entry.x);
+      const gatherCombOk =
+        (ep.sourceExitsRight ? entry.x >= ep.sourceX + cellSize() : entry.x <= ep.sourceX - cellSize()) &&
+        isHSegmentClear(srcRowG, Math.min(px2g(ep.sourceX), entryColG), Math.max(px2g(ep.sourceX), entryColG), new Set([ep.edge.source])) &&
+        isColumnClear(entryColG, Math.min(srcRowG, px2g(entry.y)), Math.max(srcRowG, px2g(entry.y)));
+      const branchIn = gatherCombOk
+        ? { waypoints: [{ x: ep.sourceX, y: ep.sourceY }, { x: entry.x, y: ep.sourceY }, entry] }
+        : checkBudget() ? null : routeLeg(
+            ep.sourceX, ep.sourceY, entry.x, entry.y, obs.rects, 0, bundlePenalties,
+            sigType, false, true, undefined, undefined, ep.edge.source, undefined,
+            ep.sourceExitsRight, undefined,
+          );
+      // Fan leg: the break-out POINT → target. Same comb preference, mirrored.
+      const tgtRowG = px2g(ep.targetY);
+      const exitColG = px2g(exit.x);
+      const fanCombOk =
+        (ep.targetEntersLeft ? exit.x <= ep.targetX - cellSize() : exit.x >= ep.targetX + cellSize()) &&
+        isHSegmentClear(tgtRowG, Math.min(exitColG, px2g(ep.targetX)), Math.max(exitColG, px2g(ep.targetX)), new Set([ep.edge.target])) &&
+        isColumnClear(exitColG, Math.min(px2g(exit.y), tgtRowG), Math.max(px2g(exit.y), tgtRowG));
+      const branchOut = fanCombOk
+        ? { waypoints: [exit, { x: exit.x, y: ep.targetY }, { x: ep.targetX, y: ep.targetY }] }
+        : checkBudget() ? null : routeLeg(
+            exit.x, exit.y, ep.targetX, ep.targetY, obs.rects, 0, bundlePenalties,
+            sigType, true, false, undefined, undefined, undefined, ep.edge.target,
+            undefined, ep.targetEntersLeft,
+          );
       const wp: Point[] = [
         { x: ep.sourceX, y: ep.sourceY },
         ...(branchIn ? branchIn.waypoints.slice(1, -1) : []),

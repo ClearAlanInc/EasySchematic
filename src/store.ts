@@ -172,6 +172,17 @@ import { GRID_SIZE } from "./gridConstants";
 /** Conservatively drop manual waypoints stranded by device/room moves in a loaded
  *  file (they detour the edge or route it through a device). Silent — logs a
  *  support-triage line if anything healed, mirroring the [waypoint-orphan] probe. */
+/** Member-endpoint Y resolver for bundle junction placement: the live routed waypoints'
+ *  first/last points are the exact pins. Returns null per end when the edge isn't routed
+ *  (reconcile falls back to device-box centerY). */
+function routedEndpointY(routedEdges: Record<string, RoutedEdge>) {
+  return (edge: ConnectionEdge, end: "source" | "target"): number | null => {
+    const wps = routedEdges[edge.id]?.waypoints;
+    if (!wps || wps.length < 2) return null;
+    return end === "source" ? wps[0].y : wps[wps.length - 1].y;
+  };
+}
+
 function applyWaypointHeal(nodes: SchematicNode[], edges: ConnectionEdge[]): ConnectionEdge[] {
   const { edges: healedEdges, healed } = healStaleWaypoints(nodes, edges);
   if (healed.length > 0) {
@@ -5294,8 +5305,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const edges = state.edges.map((e) =>
       ids.includes(e.id) ? { ...e, data: { ...e.data!, bundleId: id } } : e,
     );
-    // Spawn the bundle's break-in/break-out anchors (estimated from member device geometry).
-    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    // Spawn the bundle's break-in/break-out anchors. The members are already routed, so their
+    // waypoint endpoints give the exact pin Ys — the anchors land on the cables, not at the
+    // (possibly very tall) device's vertical center.
+    const nodes = reconcileBundleJunctions(state.nodes, edges, routedEndpointY(state.routedEdges));
     set({ edges, bundles: { ...state.bundles, [id]: { id } }, nodes });
     get().saveToLocalStorage();
   },
@@ -5322,7 +5335,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       edgeIds.includes(e.id) && e.data?.signalType ? { ...e, data: { ...e.data!, bundleId } } : e,
     );
     // Anchors already exist for a live bundle (no-op); reconcile only spawns if somehow missing.
-    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    const nodes = reconcileBundleJunctions(state.nodes, edges, routedEndpointY(state.routedEdges));
     set({ edges, nodes });
     get().saveToLocalStorage();
   },
