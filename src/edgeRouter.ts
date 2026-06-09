@@ -126,6 +126,11 @@ export const ROUTER_DEFAULTS = {
   STUB_GAP: 0,          // no stub spread — start simple
   /** Edge sort strategy: 0=default(signal-type→shortest→position), 1=longest-first, 2=most-connected-first */
   SORT_STRATEGY: 1 as number,
+  /** Half-pitch comb ribbons (same-signal lanes compressed to 10px when a band overflows).
+   *  OFF by default: at sub-100% zoom a 10px pair reads as a shared lane, and the portfolio
+   *  objective can't see ribbon density (smearPairs isn't weighted) — same trap as the
+   *  CELL_SIZE=10 experiment. Re-enable only with a density-aware objective. */
+  HALF_PITCH_LANES: 0 as number,
 };
 
 /** Live-overridable via window.__routingParams for debug tuning. */
@@ -801,7 +806,10 @@ export function routeAllEdges(
   const runningPenalties: PenaltyZone[] = [];
   const penaltySpatialIdx = createPenaltySpatialIndex();
 
-  /** Append penalty zones for a newly routed edge and grow the spatial index. */
+  /** Append penalty zones for a newly routed edge and grow the spatial index.
+   *  NOTE if HALF_PITCH_LANES is ever re-enabled: v-zone coordinates here quantize to
+   *  whole cells, which displaces a half-pitch ribbon trunk's zone 10px to one side and
+   *  leaves its other flank unguarded — quantize to half cells (with extra weight) then. */
   const appendPenalties = (rs: RouteState) => {
     for (const seg of rs.segments) {
       if (seg.axis === "v") {
@@ -1138,15 +1146,20 @@ export function routeAllEdges(
 
   // Y-range-aware column tracking — a column is only "taken" for the Y span of the
   // edge that claimed it. Edges at different Y positions can share the same X column.
+  // Keys are multiples of 0.5 grid cells: half-pitch comb lanes claim at X.5 keys.
   const takenColumns = new Map<number, { yMin: number; yMax: number }[]>();
   const COL_GAP = 2; // grid cells of vertical gap tolerance between claimed ranges
 
-  /** Check if a column X is available for a given Y range. */
+  /** Check if a column X is available for a given Y range. Any claim within half a
+   *  cell (10px) conflicts — strangers never end up half-pitch from each other; only
+   *  a half-pitch block's own lanes (claimed together after checking) sit that close. */
   const isColumnAvailable = (gx: number, yMin: number, yMax: number): boolean => {
-    const ranges = takenColumns.get(gx);
-    if (!ranges) return true;
-    for (const r of ranges) {
-      if (yMax + COL_GAP >= r.yMin && yMin - COL_GAP <= r.yMax) return false;
+    for (const key of [gx - 0.5, gx, gx + 0.5]) {
+      const ranges = takenColumns.get(key);
+      if (!ranges) continue;
+      for (const r of ranges) {
+        if (yMax + COL_GAP >= r.yMin && yMin - COL_GAP <= r.yMax) return false;
+      }
     }
     return true;
   };
@@ -1203,6 +1216,20 @@ export function routeAllEdges(
     });
   }
 
+  /** Can this edge's comb leg be built as a clean DIRECT L-shape via colX (no A*)?
+   *  Mirrors Phase 2's direct-construction conditions exactly — the allocator must never
+   *  promise a half-pitch (off-grid) lane that Phase 2 can only reach through A*. */
+  const cleanCombLegOk = (ce: ColumnEdge, colX: number): boolean => {
+    const ep = ce.ep;
+    const corridorPx = g2px(colX);
+    const ownIds = new Set([ep.edge.source, ep.edge.target]);
+    const srcOk = ep.sourceExitsRight ? corridorPx >= ep.sourceX : corridorPx <= ep.sourceX;
+    const tgtOk = ep.targetEntersLeft ? corridorPx <= ep.targetX : corridorPx >= ep.targetX;
+    return srcOk && tgtOk &&
+      isHSegmentClear(ce.srcGY, Math.min(ce.srcGX, colX), Math.max(ce.srcGX, colX), ownIds) &&
+      isHSegmentClear(ce.tgtGY, Math.min(colX, ce.tgtGX), Math.max(colX, ce.tgtGX), ownIds);
+  };
+
   /** Allocate a contiguous block of columns for a sorted list of edges.
    *  excludeNodeIds: endpoint device IDs to skip in obstacle checks (an edge's
    *  corridor can overlap its own source/target device's obstacle rect). */
@@ -1253,23 +1280,71 @@ export function routeAllEdges(
         ce.assignedCol = colX;
         claimColumn(colX, Math.min(ce.srcGY, ce.tgtGY), Math.max(ce.srcGY, ce.tgtGY));
       }
-    } else {
-      // Fallback: per-edge scan (non-contiguous but still unique columns). No overflow
-      // past searchStart — for a left-entering co-target block, columns right of the band
-      // sit on/behind the target device, forcing a loop around (or through) it. Edges that
-      // don't fit stay unassigned and take the free-A* path, which respects obstacles.
-      let nextX = searchStart;
+      return;
+    }
+
+    // Variable-pitch retry: the band can't fit numLanes at full (20px) pitch. A nested
+    // comb whose legs are ALL clean direct L-shapes can pack at variable pitch instead:
+    // same-signal neighbor lanes compress to half pitch (10px — a family ribbon reads as
+    // a deliberate bus), different-signal neighbors keep the full cell (R11 breathing
+    // room). isColumnAvailable's ±half-cell conflict radius keeps strangers a full cell
+    // away from every lane. Off-grid trunk x can't serve as an A* via point, so any edge
+    // needing A* disqualifies the block (it falls to the per-edge full-pitch scan below).
+    if (numLanes > 1 && ROUTER_PARAMS.HALF_PITCH_LANES) {
+      // Lane signal uniformity (a lane can hold several Y-disjoint edges; mixed = null).
+      const laneSignals: (string | null | undefined)[] = [];
       for (const ce of edges) {
-        const yMin = Math.min(ce.srcGY, ce.tgtGY);
-        const yMax = Math.max(ce.srcGY, ce.tgtGY);
-        for (let gx = nextX; gx >= searchEnd; gx--) {
-          if (!isColumnAvailable(gx, yMin, yMax)) continue;
-          if (isColumnClear(gx, yMin, yMax, excludeNodeIds)) {
-            ce.assignedCol = gx;
-            claimColumn(gx, yMin, yMax);
-            nextX = gx - 1;
-            break;
+        const L = laneOf(ce);
+        if (laneSignals[L] === undefined) laneSignals[L] = ce.signalType;
+        else if (laneSignals[L] !== ce.signalType) laneSignals[L] = null;
+      }
+      const laneOffset: number[] = [0];
+      for (let L = 1; L < numLanes; L++) {
+        const tight = laneSignals[L] != null && laneSignals[L] === laneSignals[L - 1];
+        laneOffset[L] = laneOffset[L - 1] + (tight ? 0.5 : 1);
+      }
+      const span = laneOffset[numLanes - 1];
+      // span === numLanes-1 means nothing compressed — identical to the search that
+      // already failed, skip the redundant scan.
+      if (span < numLanes - 1) {
+        for (let baseX = searchStart; baseX - span >= searchEnd; baseX--) {
+          let allClear = true;
+          for (const ce of edges) {
+            const cx = baseX - laneOffset[laneOf(ce)];
+            const yMin = Math.min(ce.srcGY, ce.tgtGY);
+            const yMax = Math.max(ce.srcGY, ce.tgtGY);
+            if (
+              !isColumnAvailable(cx, yMin, yMax) ||
+              !isColumnClear(cx, yMin, yMax, excludeNodeIds) ||
+              !cleanCombLegOk(ce, cx)
+            ) { allClear = false; break; }
           }
+          if (!allClear) continue;
+          for (const ce of edges) {
+            const cx = baseX - laneOffset[laneOf(ce)];
+            ce.assignedCol = cx;
+            claimColumn(cx, Math.min(ce.srcGY, ce.tgtGY), Math.max(ce.srcGY, ce.tgtGY));
+          }
+          return;
+        }
+      }
+    }
+
+    // Fallback: per-edge scan (non-contiguous but still unique columns). No overflow
+    // past searchStart — for a left-entering co-target block, columns right of the band
+    // sit on/behind the target device, forcing a loop around (or through) it. Edges that
+    // don't fit stay unassigned and take the free-A* path, which respects obstacles.
+    let nextX = searchStart;
+    for (const ce of edges) {
+      const yMin = Math.min(ce.srcGY, ce.tgtGY);
+      const yMax = Math.max(ce.srcGY, ce.tgtGY);
+      for (let gx = nextX; gx >= searchEnd; gx--) {
+        if (!isColumnAvailable(gx, yMin, yMax)) continue;
+        if (isColumnClear(gx, yMin, yMax, excludeNodeIds)) {
+          ce.assignedCol = gx;
+          claimColumn(gx, yMin, yMax);
+          nextX = gx - 1;
+          break;
         }
       }
     }
@@ -1386,6 +1461,8 @@ export function routeAllEdges(
         rangeMin: Math.min(ce.srcGY, ce.tgtGY),
         rangeMax: Math.max(ce.srcGY, ce.tgtGY),
         signalType: ce.signalType,
+        // Half-pitch ribbon lanes: a stranger half a cell away is as bad as overlap.
+        weight: ce.assignedCol % 1 !== 0 ? 4 : undefined,
       },
       {
         axis: "h",
@@ -1662,6 +1739,13 @@ export function routeAllEdges(
   for (const ce of columnEdges) {
     const ep = ce.ep;
     const sigType = ep.edge.data?.signalType;
+
+    // A half-pitch lane (fractional column) is only constructible as a direct L-shape —
+    // its x can't be an A* via point. The allocator pre-verified the same static
+    // conditions, so this demotion should never fire; it's the safety net.
+    if (ce.assignedCol !== null && ce.assignedCol % 1 !== 0 && !cleanCombLegOk(ce, ce.assignedCol)) {
+      ce.assignedCol = null;
+    }
 
     // Backward edges or edges without column assignment → unconstrained A* fallback.
     // Combined penalties (routed edges + allocator claims) force a local penalty index.

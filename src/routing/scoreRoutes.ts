@@ -19,6 +19,8 @@ type Seg = ReturnType<typeof extractSegments>[number];
 /** Harness-local geometry thresholds (pixels). */
 const SHARED_PX = 8; // parallel segments closer than this (and overlapping > this) are "shared"
 const CROSS_TYPE_PX = 16; // different-signal verticals closer than this are under-separated (R11)
+const SMEAR_PX = 16; // STRANGER verticals closer than this read as a bundled smear (half-pitch
+                     // lanes are reserved for same-family combs; see CELL_SIZE=10 post-mortem)
 const DEVICE_INSET = 2; // shrink device body before testing interior intersection (handles sit on the edge)
 const MAX_OFFENDERS = 25;
 
@@ -241,13 +243,20 @@ export function computeRoutingMetrics(
   let crossingPairs = 0;
   let weavingPairs = 0;
   let crossTypeSep = 0;
+  let smearPairs = 0;
   for (let i = 0; i < geoms.length; i++) {
     for (let j = i + 1; j < geoms.length; j++) {
       const a = geoms[i];
       const b = geoms[j];
+      // Edges sharing an endpoint device are "family" — tight parallel runs between them
+      // (a comb at half pitch) are deliberate; only STRANGER tightness is a smear.
+      const strangers =
+        a.srcNode !== b.srcNode && a.srcNode !== b.tgtNode &&
+        a.tgtNode !== b.srcNode && a.tgtNode !== b.tgtNode;
       let shared = false;
       let crossCount = 0;
       let crossType = false;
+      let smear = false;
       for (const sa of a.segs) {
         for (const sb of b.segs) {
           if (parallelOverlap(sa, sb, SHARED_PX)) shared = true;
@@ -260,6 +269,15 @@ export function computeRoutingMetrics(
             !parallelOverlap(sa, sb, SHARED_PX)
           ) {
             crossType = true;
+          }
+          if (
+            strangers &&
+            sa.axis === "v" &&
+            sb.axis === "v" &&
+            Math.abs(sa.x1 - sb.x1) > 0.5 &&
+            parallelOverlap(sa, sb, SMEAR_PX)
+          ) {
+            smear = true;
           }
         }
       }
@@ -275,6 +293,10 @@ export function computeRoutingMetrics(
       if (crossType) {
         crossTypeSep++;
         add("crossTypeSep", `${a.edgeId}|${b.edgeId}`);
+      }
+      if (smear) {
+        smearPairs++;
+        add("smear", `${a.edgeId}|${b.edgeId}`);
       }
     }
   }
@@ -327,6 +349,7 @@ export function computeRoutingMetrics(
       crossingPairs,
       weavingPairs,
       crossTypeSepViolations: crossTypeSep,
+      smearPairs,
       backwardSegments,
       turnsTotal,
       turnsMax,

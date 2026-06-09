@@ -38,10 +38,14 @@ export interface Point {
 
 export interface PenaltyZone {
   axis: "h" | "v";
-  coordinate: number;  // grid coordinate (col for vertical, row for horizontal)
+  coordinate: number;  // grid coordinate (col for vertical, row for horizontal); may be
+                       // a half-cell (X.5) for half-pitch comb ribbon lanes
   rangeMin: number;     // start of segment (grid coord)
   rangeMax: number;     // end of segment (grid coord)
   signalType?: string;
+  /** Overlap-penalty multiplier. Half-pitch ribbon lanes use >1 so that sitting half a
+   *  cell (10px) away still costs like a full overlap — strangers stay a cell away. */
+  weight?: number;
 }
 
 interface GridNode {
@@ -521,7 +525,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgy, ngy);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness;
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
                 }
               }
             } else if (pz.axis === "h" && (d === 0 || d === 2)) {
@@ -531,7 +535,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgx, ngx);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness;
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
                 }
               }
             }
