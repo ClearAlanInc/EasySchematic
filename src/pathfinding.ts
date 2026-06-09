@@ -636,6 +636,127 @@ export function simplifyWaypoints(points: Point[]): Point[] {
   return result;
 }
 
+// ---------- Endpoint anchoring + sub-grid step placement ----------
+
+/**
+ * Re-anchor a simplified, orthogonal waypoint list to the EXACT pin coordinates the route was
+ * asked to connect (A* works on the snapped grid, so raw output endpoints can sit up to half a
+ * cell off the true pin — the wire visibly misses the port, and multi-leg callers that splice
+ * legs against exact corridor points get sub-grid "jog" artifacts at the seams).
+ *
+ * The ≤half-cell delta is absorbed into the segment ADJACENT to the endpoint segment: that
+ * segment is perpendicular (simplification guarantees alternating axes) and at least one grid
+ * cell long, so shifting its shared corner can never collapse or flip it. A 2-point straight
+ * route whose exact endpoints disagree on the cross-axis genuinely needs one step — it is
+ * inserted one cell from the target so it hugs a pin (and the final tuck pass may relocate it).
+ *
+ * Pure; returns a new array. Callers' contract afterwards: waypoints[0] === src exactly and
+ * waypoints[last] === tgt exactly.
+ */
+export function anchorRouteEndpoints(wps: Point[], src: Point, tgt: Point): Point[] {
+  if (wps.length < 2) return wps;
+  const pts = wps.map((p) => ({ x: p.x, y: p.y }));
+
+  if (pts.length === 2) {
+    const horizontal = pts[0].y === pts[1].y;
+    const vertical = pts[0].x === pts[1].x;
+    if (horizontal && src.y === tgt.y) return [{ ...src }, { ...tgt }];
+    if (vertical && src.x === tgt.x) return [{ ...src }, { ...tgt }];
+    const cs = cellSize();
+    if (horizontal) {
+      // Exact endpoints disagree in Y → one step is unavoidable; put it a cell from the target.
+      const dir = Math.sign(pts[1].x - pts[0].x) || 1;
+      const jogOff = Math.min(cs, Math.floor(Math.abs(tgt.x - src.x) / 2));
+      if (jogOff <= 0) return pts;
+      const jx = tgt.x - dir * jogOff;
+      return [{ ...src }, { x: jx, y: src.y }, { x: jx, y: tgt.y }, { ...tgt }];
+    }
+    if (vertical) {
+      const dir = Math.sign(pts[1].y - pts[0].y) || 1;
+      const jogOff = Math.min(cs, Math.floor(Math.abs(tgt.y - src.y) / 2));
+      if (jogOff <= 0) return pts;
+      const jy = tgt.y - dir * jogOff;
+      return [{ ...src }, { x: src.x, y: jy }, { x: tgt.x, y: jy }, { ...tgt }];
+    }
+    return pts; // non-orthogonal (shouldn't happen) — leave as-is
+  }
+
+  const anchorOneEnd = (exact: Point, atStart: boolean): void => {
+    const p0 = atStart ? pts[0] : pts[pts.length - 1];
+    const p1 = atStart ? pts[1] : pts[pts.length - 2];
+    if (p0.x === exact.x && p0.y === exact.y) return;
+    if (p0.y === p1.y) {
+      p1.y = exact.y; // endpoint segment horizontal → next segment is vertical, absorbs the Y shift
+    } else if (p0.x === p1.x) {
+      p1.x = exact.x; // endpoint segment vertical → next segment is horizontal, absorbs the X shift
+    } else {
+      return; // non-orthogonal endpoint segment — leave snapped
+    }
+    p0.x = exact.x;
+    p0.y = exact.y;
+  };
+  anchorOneEnd(src, true);
+  anchorOneEnd(tgt, false);
+  return simplifyWaypoints(pts);
+}
+
+/**
+ * Relocate unavoidable sub-grid steps so they hug a pin instead of sitting mid-span.
+ *
+ * When two pins sit a few px apart vertically (off-grid port offsets), an orthogonal route MUST
+ * contain one sub-cell vertical step. Construction places it wherever the corridor/leg seam
+ * happens to fall — often mid-span, where the eye reads it as a routing mistake. This pass
+ * slides such a step along its flanking horizontals to one cell from the route endpoint it is
+ * nearest (only when a single horizontal separates it from that endpoint), where it reads as a
+ * port entry. Length, turn count, and all other geometry are unchanged; pure; returns the same
+ * array if nothing applies.
+ */
+export function tuckSubgridSteps(wps: Point[]): Point[] {
+  if (wps.length < 4) return wps;
+  const cs = cellSize();
+  let pts: Point[] | null = null;
+  const ensure = () => (pts ??= wps.map((p) => ({ x: p.x, y: p.y })));
+  let lastTouched = -1; // guard: never write overlapping index ranges
+
+  // A candidate step is the vertical p[i]→p[i+1] with |dy| < cell, flanked by horizontals
+  // p[i-1]→p[i] and p[i+1]→p[i+2] that continue in the SAME x-direction (a stair, not a U-turn).
+  for (let i = 1; i + 2 < wps.length; i++) {
+    const a = wps[i - 1];
+    const b = wps[i];
+    const c = wps[i + 1];
+    const d = wps[i + 2];
+    const isStep =
+      a.y === b.y && b.x === c.x && c.y === d.y &&
+      b.y !== c.y && Math.abs(c.y - b.y) < cs &&
+      Math.sign(b.x - a.x) === Math.sign(d.x - c.x) && b.x !== a.x;
+    if (!isStep || i - 1 <= lastTouched) continue;
+
+    const dir = Math.sign(d.x - c.x);
+    // Slide toward an endpoint the step is one horizontal away from; prefer whichever flank
+    // touches a route end (start wins if both do — symmetric anyway).
+    if (i - 1 === 0) {
+      // a is the route start: park the step one cell past the start pin
+      const nx = a.x + dir * Math.min(cs, Math.abs(b.x - a.x));
+      if (nx !== b.x && Math.sign(d.x - nx) === dir) {
+        const out = ensure();
+        out[i] = { x: nx, y: b.y };
+        out[i + 1] = { x: nx, y: c.y };
+        lastTouched = i + 1;
+      }
+    } else if (i + 2 === wps.length - 1) {
+      // d is the route end: park the step one cell before the end pin
+      const nx = d.x - dir * Math.min(cs, Math.abs(d.x - c.x));
+      if (nx !== b.x && Math.sign(nx - a.x) === dir) {
+        const out = ensure();
+        out[i] = { x: nx, y: b.y };
+        out[i + 1] = { x: nx, y: c.y };
+        lastTouched = i + 1;
+      }
+    }
+  }
+  return pts ?? wps;
+}
+
 // ---------- SVG path generation ----------
 
 export function waypointsToSvgPath(waypoints: Point[], radius: number = CORNER_RADIUS): string {
@@ -1059,7 +1180,13 @@ export function computeEdgePath(
   }
   waypoints.push({ x: g2px(tgx), y: g2px(tgy) }); // Target (grid-snapped pixel)
 
-  const simplified = simplifyWaypoints(waypoints);
+  // Anchor the snapped route to the EXACT endpoints it was asked to connect — the wire must
+  // terminate on the true pin, and multi-leg callers splice legs against exact corridor points.
+  const simplified = anchorRouteEndpoints(
+    simplifyWaypoints(waypoints),
+    { x: sourceX, y: sourceY },
+    { x: targetX, y: targetY },
+  );
   const path = waypointsToSvgPath(simplified);
 
   const midIdx = Math.floor(simplified.length / 2);

@@ -19,6 +19,7 @@ import {
   pixelRectsToGrid,
   px2g,
   simplifyWaypoints,
+  tuckSubgridSteps,
   waypointsToSvgPath,
   waypointsToSvgPathWithHops,
   beginRoutingBudget,
@@ -1577,6 +1578,19 @@ export function routeAllEdges(
       };
       routeStates.push(rs);
       appendPenalties(rs);
+    }
+  }
+
+  // Park unavoidable sub-grid steps against the pins (pins a few px apart vertically force a
+  // sub-cell step somewhere; mid-span it reads as a routing mistake, at the port it reads as a
+  // port entry). Cosmetic relocation only — same turns and length. Runs BEFORE crossing
+  // detection so hop arcs match the drawn geometry.
+  for (const rs of routeStates) {
+    const tucked = tuckSubgridSteps(rs.waypoints);
+    if (tucked !== rs.waypoints) {
+      rs.waypoints = tucked;
+      rs.segments = extractSegments(tucked);
+      rs.svgPath = waypointsToSvgPath(tucked);
     }
   }
 
