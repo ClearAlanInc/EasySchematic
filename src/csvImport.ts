@@ -368,18 +368,18 @@ function findPort(
 
 // ---------- Auto Layout ----------
 
-/** Estimate device height from port count (matches DeviceNode rendering: 60 + rows×20). */
+/** Estimate device height from port count (matches DeviceNode rendering: 48 + rows×16). */
 function estimateHeight(ports: Port[]): number {
   const inputs = ports.filter((p) => p.direction === "input").length;
   const outputs = ports.filter((p) => p.direction === "output").length;
   const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
-  return 60 + (Math.max(inputs, outputs) + bidirs) * 20;
+  return 48 + (Math.max(inputs, outputs) + bidirs) * 16;
 }
 
-const DEVICE_WIDTH = 180;
-const COLUMN_SPACING = 400; // 180px device + 220px gap (generous for routing stubs)
-const VERTICAL_GAP = 40;   // 2 grid steps between devices
-const ROOM_GAP = 80;       // gap between room bands
+const DEVICE_WIDTH = 144;
+const COLUMN_SPACING = 320; // 144px device + 176px gap (generous for routing stubs)
+const VERTICAL_GAP = 32;   // 2 grid steps between devices
+const ROOM_GAP = 64;       // gap between room bands
 
 function autoLayout(
   connections: ParsedConnection[],

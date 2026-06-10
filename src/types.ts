@@ -386,7 +386,26 @@ export interface WaypointData {
 
 export type WaypointNode = Node<WaypointData, "waypoint">;
 
-export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode | WaypointNode;
+/** A bundle's break-in / break-out junction. POSITION ANCHOR only — no edges attach to it.
+ *  Each bundle owns exactly two (role "in" = where members gather into the trunk, role "out"
+ *  = where they fan back out). The router reads these positions as the comb's entry/exit
+ *  (in place of the auto-computed computeBundleTrunk). Members stay single source→target
+ *  connections, so the per-cable / schedule-row count is unaffected. */
+export interface BundleJunctionData {
+  [key: string]: unknown;
+  /** The bundle this junction anchors. Matches each member connection's data.bundleId
+   *  and the BundleMeta.id key. */
+  bundleId: string;
+  /** Which end of the trunk this anchor controls. */
+  role: "in" | "out";
+  /** True once the user has dragged it. Until then the heal pass may reposition it from
+   *  member device geometry (sticky-after-drag, mirroring StubLabelData.placed). */
+  placed?: boolean;
+}
+
+export type BundleJunctionNode = Node<BundleJunctionData, "bundle-junction">;
+
+export type SchematicNode = DeviceNode | RoomNode | NoteNode | AnnotationNode | StubLabelNode | WaypointNode | BundleJunctionNode;
 
 export interface ConnectionData {
   [key: string]: unknown;
@@ -407,6 +426,10 @@ export interface ConnectionData {
   /** When set, this edge is one half of a logical cable that has been split into two
    *  stub-leg edges connected via stub-label nodes. Both halves share the same id. */
   linkedConnectionId?: string;
+  /** Bundle membership — connections sharing a bundleId route along one shared physical
+   *  trunk (a snake/multicore) that gathers at one end and fans out at the other. Each
+   *  member stays its own cable in the schedule. */
+  bundleId?: string;
   /** @deprecated v31+: stubs are real nodes now. Kept on the type so the v30→v31 migration can read it. */
   stubbed?: boolean;
   /** @deprecated v31+: replaced by StubLabelNode position. */
@@ -672,6 +695,16 @@ export interface PrintSheetPage {
 
 export type SchematicPage = RackElevationPage | PrintSheetPage;
 
+/** Per-bundle metadata. Membership is on each connection's `data.bundleId`; this holds
+ *  the label, an optional user-dragged trunk override, and collapse state. */
+export interface BundleMeta {
+  id: string;
+  label?: string;
+  /** Optional trunk override polyline (absolute points); absent → trunk is auto-computed. */
+  trunkWaypoints?: { x: number; y: number }[];
+  collapsed?: boolean;
+}
+
 export interface SchematicFile {
   version: number;
   name: string;
@@ -748,6 +781,9 @@ export interface SchematicFile {
   showFacePlateDetail?: boolean;
   /** Cable unit costs keyed by "cableType|signalType|cableLength" */
   cableCosts?: Record<string, number>;
+  /** Connection bundles — each groups ≥2 connections that share one physical trunk.
+   *  Membership lives on each connection's data.bundleId; this map holds per-bundle meta. */
+  bundles?: Record<string, BundleMeta>;
   /** Force-case device/port/slot labels on write (normal = leave as-typed) */
   labelCase?: LabelCaseMode;
   /** Pairwise distances between top-level rooms; key is canonical pairKey("idA","idB"). */

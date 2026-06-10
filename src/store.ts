@@ -31,18 +31,24 @@ import type {
   SlotDefinition,
   CustomTemplateGroup,
   CustomTemplateMeta,
+  BundleMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
-import { defaultStubPlacement } from "./stubPlacement";
+import { defaultStubPlacement, healStubPortAlignment } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_SHOW_ROOM, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
 import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
+import { healStaleWaypoints } from "./waypointHealing";
+import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor, splitMemberWaypoints } from "./bundles";
+import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
+import { buildHandleSnapshot } from "./routing/handleSnapshot";
+import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./routing/routingClient";
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
-import { routeAllEdges, orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
+import { orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, effectiveSignalType } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
@@ -163,8 +169,34 @@ import { GRID_SIZE } from "./gridConstants";
  *  Stub labels are skipped — they store sub-grid Y to center the box on a
  *  port row (box height ≈13–14px, half of which would round away). Snapping
  *  them shifted the label down a few px on every load. */
+/** Conservatively drop manual waypoints stranded by device/room moves in a loaded
+ *  file (they detour the edge or route it through a device). Silent — logs a
+ *  support-triage line if anything healed, mirroring the [waypoint-orphan] probe. */
+/** Member-endpoint Y resolver for bundle junction placement: the live routed waypoints'
+ *  first/last points are the exact pins. Returns null per end when the edge isn't routed
+ *  (reconcile falls back to device-box centerY). */
+function routedEndpointY(routedEdges: Record<string, RoutedEdge>) {
+  return (edge: ConnectionEdge, end: "source" | "target"): number | null => {
+    const wps = routedEdges[edge.id]?.waypoints;
+    if (!wps || wps.length < 2) return null;
+    return end === "source" ? wps[0].y : wps[wps.length - 1].y;
+  };
+}
+
+function applyWaypointHeal(nodes: SchematicNode[], edges: ConnectionEdge[]): ConnectionEdge[] {
+  const { edges: healedEdges, healed } = healStaleWaypoints(nodes, edges);
+  if (healed.length > 0) {
+    console.info("[waypoint-heal]", healed.length, "connection(s) re-routed (stale manual waypoints)");
+  }
+  return healedEdges;
+}
+
 function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   for (const n of nodes) {
+    // Stub labels are healed against their REAL partner port at routing time
+    // (healStubPortAlignment in recomputeRoutes) — DOM-measured ports can sit a few px
+    // off the model grid, so snapping the stub to the abstract grid here would BREAK
+    // colinearity with such ports (kink at the label). Leave their stored Y alone.
     if (n.type === "stub-label") continue;
     n.position.x = Math.round(n.position.x / GRID_SIZE) * GRID_SIZE;
     n.position.y = Math.round(n.position.y / GRID_SIZE) * GRID_SIZE;
@@ -294,6 +326,8 @@ interface SchematicState {
 
   // Selection
   selectAll: () => void;
+  /** Select exactly the given edge ids (deselecting all other edges and all nodes). */
+  selectEdges: (ids: string[]) => void;
 
   // Custom templates
   addCustomTemplate: (template: DeviceTemplate) => void;
@@ -335,6 +369,9 @@ interface SchematicState {
   // Manual edge routing
   setManualWaypoints: (edgeId: string, waypoints: { x: number; y: number }[]) => void;
   clearManualWaypoints: (edgeId: string) => void;
+  /** Strip manual waypoints from EVERY connection so the whole schematic re-auto-routes
+   *  from scratch. Undoable. Useful for vetting auto-route without resetting edges one by one. */
+  clearAllManualWaypoints: () => void;
   deviceContextMenu: { nodeId: string; screenX: number; screenY: number } | null;
   setDeviceContextMenu: (menu: { nodeId: string; screenX: number; screenY: number } | null) => void;
   edgeContextMenu: { edgeId: string; screenX: number; screenY: number; flowX: number; flowY: number } | null;
@@ -407,6 +444,14 @@ interface SchematicState {
   colorKeyOverrides: Partial<Record<SignalType, boolean>> | undefined;
   cableCosts: Record<string, number> | undefined;
   setCableCost: (key: string, cost: number | undefined) => void;
+  // Connection bundles — groups of ≥2 connections sharing one physical trunk (membership on edge.data.bundleId)
+  bundles: Record<string, BundleMeta>;
+  createBundle: (edgeIds: string[]) => void;
+  dissolveBundle: (bundleId: string) => void;
+  addToBundle: (bundleId: string, edgeIds: string[]) => void;
+  removeFromBundle: (edgeIds: string[]) => void;
+  setBundleMeta: (bundleId: string, patch: Partial<BundleMeta>) => void;
+  setBundleTrunkWaypoints: (bundleId: string, trunkWaypoints: { x: number; y: number }[]) => void;
   // Room distance + cable-length estimation (#146)
   roomDistances: Record<string, number> | undefined;
   distanceSettings: DistanceSettings | undefined;
@@ -745,6 +790,7 @@ interface Snapshot {
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
   pages: SchematicPage[];
+  bundles: Record<string, BundleMeta>;
   autoRoute?: boolean;
 }
 const MAX_HISTORY = 50;
@@ -761,14 +807,84 @@ export function setReconnectingEdgeId(id: string | null) {
 }
 
 function pushUndo(partial: { nodes: SchematicNode[]; edges: ConnectionEdge[]; autoRoute?: boolean }) {
-  const pages = useSchematicStore?.getState?.()?.pages ?? [];
-  const snapshot: Snapshot = { ...partial, pages };
+  const liveState = useSchematicStore?.getState?.();
+  const pages = liveState?.pages ?? [];
+  const bundles = liveState?.bundles ?? {};
+  const snapshot: Snapshot = { ...partial, pages, bundles };
   undoStack.push(structuredClone(pendingUndoSnapshot ?? snapshot));
   pendingUndoSnapshot = null;
   if (undoStack.length > MAX_HISTORY) undoStack.shift();
   redoStack.length = 0; // clear redo on new action
   // Sync reactive counters so undo/redo buttons stay in sync
   useSchematicStore.setState({ undoSize: undoStack.length, redoSize: 0 });
+}
+
+// ── Async routing (Web Worker) plumbing ──────────────────────────────────
+// recomputeRoutes posts a seq-tagged request to the routing worker and stashes the main-thread-only
+// context (virtual-edge remap + adapter visibility) here; applyRoutingResult consumes it when the
+// matching result returns. Coalescing in routingClient means only the newest request actually runs,
+// so we discard any result whose seq isn't the latest we posted.
+let routeSeq = 0;
+let routingHandlerRegistered = false;
+interface RouteApplyCtx {
+  seq: number;
+  virtualEdgeSources: Map<string, { primaryEdgeId: string; secondaryEdgeId: string; adapterNodeId: string }>;
+  hiddenAdapterNodeIds: Set<string>;
+  hiddenVirtualEdgeIds: Set<string>;
+  virtualEdgeGradients: Record<string, { sourceColor: string; targetColor: string }>;
+}
+let pendingRouteCtx: RouteApplyCtx | null = null;
+
+function applyRoutingResult(r: RoutingResult): void {
+  // Discard stale/superseded results — only the latest posted seq's context is live.
+  if (!pendingRouteCtx || r.seq !== pendingRouteCtx.seq) return;
+  const ctx = pendingRouteCtx;
+  const state = useSchematicStore.getState();
+  // Auto-route was switched off after this request was posted — the simple (L-shape) routes are
+  // already in place; drop the stale A* result rather than clobbering them.
+  if (!state.autoRoute) {
+    useSchematicStore.setState({ isRouting: false });
+    return;
+  }
+  const results = r.routes;
+
+  // Re-publish the debug artifacts (the worker computed them in its own globalThis).
+  (globalThis as Record<string, unknown>).__routingReport = r.routingReport ?? undefined;
+
+  // Map virtual edge routes (hidden adapters) back to their primary real edge IDs.
+  for (const [virtualId, mapping] of ctx.virtualEdgeSources) {
+    const route = results[virtualId];
+    if (route) {
+      results[mapping.primaryEdgeId] = { ...route, edgeId: mapping.primaryEdgeId };
+      delete results[virtualId];
+    }
+  }
+
+  if (r.overBudget) {
+    state.addToast("Auto-routing disabled — schematic is too large for real-time routing", "info");
+  }
+
+  // Normalize edge zIndex: boost line-jump-hop edges to 1, everyone else 0.
+  const hopEdgeIds = new Set<string>();
+  if (state.showLineJumps) {
+    for (const [edgeId, routed] of Object.entries(results)) {
+      if (routed.crossingPoints && routed.crossingPoints.length > 0) hopEdgeIds.add(edgeId);
+    }
+  }
+  const updatedEdges = state.edges.map((e) =>
+    hopEdgeIds.has(e.id) ? { ...e, zIndex: 1 } : { ...e, zIndex: 0 },
+  );
+
+  useSchematicStore.setState({
+    routedEdges: results,
+    routingDebugData: r.routingDebug ?? null,
+    edges: updatedEdges,
+    hiddenAdapterNodeIds: ctx.hiddenAdapterNodeIds,
+    hiddenVirtualEdgeIds: ctx.hiddenVirtualEdgeIds,
+    virtualEdgeGradients: ctx.virtualEdgeGradients,
+    isRouting: false,
+    ...(r.overBudget ? { autoRoute: false } : {}),
+  });
 }
 
 function clonePorts(ports: Port[]): Port[] {
@@ -1122,6 +1238,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   colorKeyPage: "all" as "first" | "last" | "all",
   colorKeyOverrides: undefined,
   cableCosts: undefined,
+  bundles: {},
   roomDistances: undefined,
   distanceSettings: undefined,
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
@@ -1543,9 +1660,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nextDistances = Object.keys(filtered).length > 0 ? filtered : undefined;
     }
 
+    // Deleting members may drop a bundle below 2 — GC dangling membership + empty bundles.
+    const gc = gcBundles(edgesAfterSplice, state.bundles);
+    // Drop junction anchors orphaned by a dissolved bundle (and re-heal a live bundle whose
+    // anchor was itself in the deleted selection).
+    const healedNodes = reconcileBundleJunctions(reconciledNodes, gc.edges);
+
     set({
-      nodes: renumberNodes(reconciledNodes),
-      edges: edgesAfterSplice,
+      nodes: renumberNodes(healedNodes),
+      edges: gc.edges,
+      bundles: gc.bundles,
       pages,
       ...(nextDistances !== state.roomDistances ? { roomDistances: nextDistances } : {}),
     });
@@ -1584,10 +1708,13 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   copySelected: () => {
     const state = get();
-    // Waypoint nodes are derived from edge.data.manualWaypoints. Excluding them
-    // here keeps the clipboard small and lets paste re-spawn waypoints fresh
-    // (with re-keyed ids) via reconcileWaypointNodes.
-    const selectedNodes = state.nodes.filter((n) => n.selected && n.type !== "waypoint");
+    // Waypoint nodes are derived from edge.data.manualWaypoints, and bundle-junction
+    // anchors are healed from bundle membership. Excluding both here keeps the clipboard
+    // small and lets paste re-spawn them fresh (with re-keyed ids / the remapped bundle)
+    // via reconcileWaypointNodes / reconcileBundleJunctions.
+    const selectedNodes = state.nodes.filter(
+      (n) => n.selected && n.type !== "waypoint" && n.type !== "bundle-junction",
+    );
     if (selectedNodes.length === 0) return;
 
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
@@ -1599,7 +1726,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     let minY = Infinity;
     let maxY = -Infinity;
     for (const n of selectedNodes) {
-      const h = n.measured?.height ?? 60;
+      const h = n.measured?.height ?? 48;
       minY = Math.min(minY, n.position.y);
       maxY = Math.max(maxY, n.position.y + h);
     }
@@ -1629,6 +1756,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (!v) {
         v = newLinkedConnectionId();
         linkIdMap.set(oldLink, v);
+      }
+      return v;
+    };
+    // Bundles are likewise re-keyed per paste so the copy is an independent bundle.
+    const bundleIdMap = new Map<string, string>();
+    const remapBundle = (oldId: string): string => {
+      let v = bundleIdMap.get(oldId);
+      if (!v) {
+        v = newBundleId();
+        bundleIdMap.set(oldId, v);
       }
       return v;
     };
@@ -1682,9 +1819,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const existingEdges = ensureUniqueEdgeIds(state.edges);
     const newEdges: ConnectionEdge[] = [];
     for (const e of clipboard.edges) {
-      const data = e.data?.linkedConnectionId
-        ? { ...e.data, linkedConnectionId: remapLink(e.data.linkedConnectionId) }
-        : e.data;
+      let data = e.data;
+      if (data?.linkedConnectionId) data = { ...data, linkedConnectionId: remapLink(data.linkedConnectionId) };
+      if (data?.bundleId) data = { ...data, bundleId: remapBundle(data.bundleId) };
+      // A pasted connection is a NEW physical cable — it must get its own cable ID,
+      // not inherit the original's (IDs are permanent and label-printable).
+      if (data?.cableId) {
+        const { cableId: _omitCableId, ...rest } = data;
+        data = rest;
+      }
       newEdges.push({
         ...e,
         id: nextEdgeId([...existingEdges, ...newEdges]),
@@ -1705,10 +1848,26 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ...existingEdges.map((e) => (e.selected ? { ...e, selected: false } : e)),
       ...newEdges,
     ];
-    // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them.
+    // Clone BundleMeta for each remapped bundle, then GC any pasted bundle that ended up
+    // with <2 members (e.g. only some members were copied) — dropping both the empty
+    // bundle and the now-dangling bundleId on its lone pasted edge.
+    let finalEdges = mergedEdges;
+    let finalBundles = state.bundles;
+    if (bundleIdMap.size > 0) {
+      const cloned: Record<string, BundleMeta> = { ...state.bundles };
+      for (const [oldId, newId] of bundleIdMap) {
+        cloned[newId] = { ...(state.bundles[oldId] ?? {}), id: newId };
+      }
+      const gc = gcBundles(mergedEdges, cloned);
+      finalEdges = gc.edges;
+      finalBundles = gc.bundles;
+    }
+    // Pasted edges may carry manualWaypoints; spawn fresh waypoint nodes for them. Pasted
+    // bundles (remapped ids) get fresh break-in/out anchors via reconcileBundleJunctions.
     set({
-      nodes: renumberNodes(reconcileWaypointNodes(mergedNodes, mergedEdges)),
-      edges: mergedEdges,
+      nodes: renumberNodes(reconcileBundleJunctions(reconcileWaypointNodes(mergedNodes, finalEdges), finalEdges)),
+      edges: finalEdges,
+      ...(finalBundles !== state.bundles ? { bundles: finalBundles } : {}),
     });
 
     // Update clipboard positions so repeated paste keeps offsetting
@@ -2788,8 +2947,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     const nodeMap = new Map(state.nodes.map((n) => [n.id, n]));
     const isRoom = node.type === "room";
-    const nodeW = node.measured?.width ?? (isRoom ? 400 : 180);
-    const nodeH = node.measured?.height ?? (isRoom ? 300 : 60);
+    const nodeW = node.measured?.width ?? (isRoom ? 400 : 144);
+    const nodeH = node.measured?.height ?? (isRoom ? 300 : 48);
     const centerX = absolutePosition.x + nodeW / 2;
     const centerY = absolutePosition.y + nodeH / 2;
 
@@ -2861,8 +3020,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (node.type === "room" || node.type === "waypoint") continue;
 
       const absPos = getAbsolutePosition(node.id, nodeMap);
-      const nodeW = node.measured?.width ?? 180;
-      const nodeH = node.measured?.height ?? 60;
+      const nodeW = node.measured?.width ?? 144;
+      const nodeH = node.measured?.height ?? 48;
       const centerX = absPos.x + nodeW / 2;
       const centerY = absPos.y + nodeH / 2;
 
@@ -2910,7 +3069,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setPendingUndoSnapshot: () => {
     const state = get();
-    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages });
+    pendingUndoSnapshot = structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles });
   },
 
   clearPendingUndoSnapshot: () => {
@@ -2928,10 +3087,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const prev = undoStack.pop();
     if (!prev) return;
     const state = get();
-    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
+    redoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles, autoRoute: state.autoRoute }));
     const edges = prev.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof prev.edges;
     const restoreAutoRoute = prev.autoRoute !== undefined ? { autoRoute: prev.autoRoute } : {};
-    set({ nodes: prev.nodes, edges, pages: prev.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: prev.nodes, edges, pages: prev.pages ?? state.pages, bundles: prev.bundles ?? state.bundles, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -2939,10 +3098,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const next = redoStack.pop();
     if (!next) return;
     const state = get();
-    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, autoRoute: state.autoRoute }));
+    undoStack.push(structuredClone({ nodes: state.nodes, edges: state.edges, pages: state.pages, bundles: state.bundles, autoRoute: state.autoRoute }));
     const edges = next.edges.map(({ zIndex: _, selected: _s, ...rest }) => ({ ...rest, zIndex: 0 })) as typeof next.edges;
     const restoreAutoRoute = next.autoRoute !== undefined ? { autoRoute: next.autoRoute } : {};
-    set({ nodes: next.nodes, edges, pages: next.pages ?? state.pages, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
+    set({ nodes: next.nodes, edges, pages: next.pages ?? state.pages, bundles: next.bundles ?? state.bundles, ...restoreAutoRoute, undoSize: undoStack.length, redoSize: redoStack.length });
     get().saveToLocalStorage();
   },
 
@@ -2954,6 +3113,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({
       nodes: state.nodes.map((n) => ({ ...n, selected: n.type !== "room" })),
       edges: state.edges.map((e) => ({ ...e, selected: true })),
+    });
+  },
+
+  selectEdges: (ids) => {
+    const want = new Set(ids);
+    const state = get();
+    set({
+      nodes: state.nodes.some((n) => n.selected) ? state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)) : state.nodes,
+      edges: state.edges.map((e) => {
+        const sel = want.has(e.id);
+        return e.selected === sel ? e : { ...e, selected: sel };
+      }),
     });
   },
 
@@ -3195,15 +3366,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     const srcAbs = absPos(sourceNode);
     const tgtAbs = absPos(targetNode);
-    const srcW = sourceNode.measured?.width ?? 180;
-    const tgtW = targetNode.measured?.width ?? 180;
+    const srcW = sourceNode.measured?.width ?? 144;
+    const tgtW = targetNode.measured?.width ?? 144;
 
     // Midpoint between the right edge of the left device and left edge of the right device
     // (or just center-to-center if they're stacked vertically)
     const srcCenterX = srcAbs.x + srcW / 2;
     const tgtCenterX = tgtAbs.x + tgtW / 2;
-    const srcCenterY = srcAbs.y + (sourceNode.measured?.height ?? 60) / 2;
-    const tgtCenterY = tgtAbs.y + (targetNode.measured?.height ?? 60) / 2;
+    const srcCenterY = srcAbs.y + (sourceNode.measured?.height ?? 48) / 2;
+    const tgtCenterY = tgtAbs.y + (targetNode.measured?.height ?? 48) / 2;
 
     let idealX = Math.round(((srcCenterX + tgtCenterX) / 2) / GRID_SIZE) * GRID_SIZE;
     let idealY = Math.round(((srcCenterY + tgtCenterY) / 2) / GRID_SIZE) * GRID_SIZE;
@@ -3267,16 +3438,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     };
 
     // Nudge adapter position if it overlaps existing devices
-    const MIN_GAP = GRID_SIZE * 5; // 100px — enough for stubs + routing
-    const adapterW = 180; // approximate width before measurement
-    const adapterH = 60;
+    const MIN_GAP = GRID_SIZE * 5; // 80px — enough for stubs + routing
+    const adapterW = 144; // approximate width before measurement
+    const adapterH = 48;
     let posX = adapterNode.position.x;
     const posY = adapterNode.position.y;
     for (const other of state.nodes) {
       if (other.type !== "device") continue;
       if (other.parentId !== adapterParentId) continue;
-      const ow = other.measured?.width ?? 180;
-      const oh = other.measured?.height ?? 60;
+      const ow = other.measured?.width ?? 144;
+      const oh = other.measured?.height ?? 48;
       // Check AABB overlap with gap
       const overlapX = posX < other.position.x + ow + MIN_GAP && posX + adapterW + MIN_GAP > other.position.x;
       const overlapY = posY < other.position.y + oh && posY + adapterH > other.position.y;
@@ -3626,7 +3797,25 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         if (map[pid]) { map[e.id] = map[pid]; break; }
       }
     }
-    set({ cableIdMap: map });
+    // Persist generated IDs onto the edges themselves. Cable IDs are PERMANENT once
+    // assigned — users print labels and reference them in pull sheets — so they ride
+    // the save file (edge.data.cableId) instead of being re-derived per session.
+    // Only edges MISSING an ID are written (stored/user-set IDs are never touched),
+    // so this is a no-op on every run after the first and can't loop the App effect
+    // that calls it. Not undo-tracked: assignment is derived bookkeeping, not an edit.
+    let persisted = false;
+    const edges = state.edges.map((e) => {
+      const id = map[e.id];
+      if (!id || !e.data || e.data.cableId) return e;
+      persisted = true;
+      return { ...e, data: { ...e.data, cableId: id } };
+    });
+    if (persisted) {
+      set({ cableIdMap: map, edges });
+      get().saveToLocalStorage();
+    } else {
+      set({ cableIdMap: map });
+    }
   },
 
   exportCustomTemplates: () => {
@@ -4349,6 +4538,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      bundles: Object.keys(state.bundles).length > 0 ? state.bundles : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
     };
@@ -4379,6 +4569,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           applyRoomLockState(data.nodes);
           syncCounters(data.nodes, data.edges);
           data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
+          data.edges = applyWaypointHeal(data.nodes, data.edges);
+          // Heal-on-load: spawn break-in/out anchors for any pre-existing bundle (idempotent).
+          data.nodes = reconcileBundleJunctions(data.nodes, data.edges);
           const colors = data.signalColors ?? {};
           applySignalColors(colors);
           saveSignalColors({ ...loadSignalColors(), ...colors });
@@ -4440,6 +4633,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             colorKeyOverrides: data.colorKeyOverrides ?? undefined,
             pages: data.pages ?? [],
             cableCosts: data.cableCosts ?? undefined,
+            bundles: data.bundles ?? {},
             roomDistances: data.roomDistances ?? undefined,
             distanceSettings: data.distanceSettings ?? undefined,
             loadSeq: get().loadSeq + 1,
@@ -4456,6 +4650,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       applyRoomLockState(data.nodes);
       syncCounters(data.nodes, data.edges);
       data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
+      data.edges = applyWaypointHeal(data.nodes, data.edges);
+      // Heal-on-load: spawn break-in/out anchors for any pre-existing bundle (idempotent).
+      data.nodes = reconcileBundleJunctions(data.nodes, data.edges);
       // Always apply colors — if file has none, reset to defaults
       const colors = data.signalColors ?? {};
       applySignalColors(colors);
@@ -4517,6 +4714,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         colorKeyOverrides: data.colorKeyOverrides ?? undefined,
         pages: data.pages ?? [],
         cableCosts: data.cableCosts ?? undefined,
+        bundles: data.bundles ?? {},
         roomDistances: data.roomDistances ?? undefined,
         distanceSettings: data.distanceSettings ?? undefined,
         // Restore cloud identity from autosave (not part of SchematicFile)
@@ -4593,6 +4791,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       colorKeyOverrides: state.colorKeyOverrides && Object.keys(state.colorKeyOverrides).length > 0 ? state.colorKeyOverrides : undefined,
       pages: state.pages.length > 0 ? state.pages : undefined,
       cableCosts: state.cableCosts && Object.keys(state.cableCosts).length > 0 ? state.cableCosts : undefined,
+      bundles: Object.keys(state.bundles).length > 0 ? state.bundles : undefined,
       roomDistances: state.roomDistances && Object.keys(state.roomDistances).length > 0 ? state.roomDistances : undefined,
       distanceSettings: state.distanceSettings,
     };
@@ -4601,7 +4800,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   importFromJSON: (rawData) => {
     rawData = repairMojibake(rawData) as SchematicFile;
     const data = migrateSchematic(rawData) as SchematicFile;
-    const nodes = data.nodes ?? [];
+    let nodes = data.nodes ?? [];
     let edges = data.edges ?? [];
     // Sanitize note HTML to prevent XSS from malicious schematic files
     for (const node of nodes) {
@@ -4613,6 +4812,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     applyRoomLockState(nodes);
     syncCounters(nodes, edges);
     edges = ensureUniqueEdgeIds(removeOrphanedEdges(nodes, edges));
+    edges = applyWaypointHeal(nodes, edges);
+    // Heal-on-load: spawn break-in/out anchors for any imported bundle (idempotent).
+    nodes = reconcileBundleJunctions(nodes, edges);
     // Merge imported custom templates with existing ones (avoid duplicates by template key)
     if (data.customTemplates?.length) {
       const existing = get().customTemplates;
@@ -4686,6 +4888,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       pages: data.pages ?? [],
       activePage: "schematic",
       cableCosts: data.cableCosts ?? undefined,
+      bundles: data.bundles ?? {},
       roomDistances: data.roomDistances ?? undefined,
       distanceSettings: data.distanceSettings ?? undefined,
       // File imports and shared schematics always start as local-only
@@ -4735,6 +4938,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       set({
         nodes: [],
         edges: [],
+        bundles: {},
         schematicName: "Untitled Schematic",
         isDemo: false,
         ownedGear: [],
@@ -4872,8 +5076,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (match) return { x: match.absX, y: match.absY, side: match.side };
       // Fallback: device vertical center on the appropriate edge.
       const dPos = absPos(deviceNode);
-      const w = (deviceNode.measured?.width as number | undefined) ?? 180;
-      const h = (deviceNode.measured?.height as number | undefined) ?? 60;
+      const w = (deviceNode.measured?.width as number | undefined) ?? 144;
+      const h = (deviceNode.measured?.height as number | undefined) ?? 48;
       const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
       const baseId = (handleId ?? "").replace(/-(in|out|rear|front)$/, "");
       const port = ports.find((pp) => pp.id === baseId);
@@ -4940,6 +5144,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const baseData = { ...edge.data! };
     delete (baseData as Record<string, unknown>).manualWaypoints;
     delete (baseData as Record<string, unknown>).autoRouteWaypoints;
+    // Stubbing a bundled member removes it from the bundle (a stub has no trunk to share).
+    const wasBundled = !!(baseData as Record<string, unknown>).bundleId;
+    delete (baseData as Record<string, unknown>).bundleId;
 
     const srcLeg: ConnectionEdge = {
       ...edge,
@@ -4967,10 +5174,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     pushUndo({ nodes: state.nodes, edges: state.edges });
     const newEdges = [...state.edges.filter((e) => e.id !== edgeId), srcLeg, tgtLeg];
+    // Removing this member may drop its bundle below 2 — GC dangling membership + bundles.
+    const gc = gcBundles(newEdges, state.bundles);
     set({
-      nodes: reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], newEdges),
-      edges: newEdges,
+      // Stubbing a member can dissolve its bundle — drop the now-orphan junction anchors.
+      nodes: reconcileBundleJunctions(
+        reconcileWaypointNodes([...state.nodes, srcStubNode, tgtStubNode], gc.edges),
+        gc.edges,
+      ),
+      edges: gc.edges,
+      bundles: gc.bundles,
     });
+    if (wasBundled) get().addToast("Removed from bundle (stubbed)", "info");
     get().saveToLocalStorage();
   },
 
@@ -5088,11 +5303,110 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  clearAllManualWaypoints: () => {
+    const state = get();
+    if (!state.edges.some((e) => e.data?.manualWaypoints?.length)) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const newEdges = state.edges.map((e) => {
+      if (!e.data?.manualWaypoints?.length) return e;
+      // Strip both the manual route and the auto-route-frozen flag so the edge re-routes fresh.
+      const { manualWaypoints: _mw, autoRouteWaypoints: _ar, ...restData } = e.data;
+      return { ...e, data: restData as ConnectionEdge["data"] };
+    });
+    set({
+      edges: newEdges,
+      nodes: reconcileWaypointNodes(state.nodes, newEdges),
+    });
+    get().saveToLocalStorage();
+  },
+
+  // ── Connection bundling ───────────────────────────────────────────────
+  createBundle: (edgeIds) => {
+    const state = get();
+    const ids = edgeIds.filter((id) => state.edges.some((e) => e.id === id && e.data?.signalType));
+    if (ids.length < 2) {
+      get().addToast("Select at least 2 connections to bundle", "info");
+      return;
+    }
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const id = newBundleId();
+    const edges = state.edges.map((e) =>
+      ids.includes(e.id) ? { ...e, data: { ...e.data!, bundleId: id } } : e,
+    );
+    // Spawn the bundle's break-in/break-out anchors. The members are already routed, so their
+    // waypoint endpoints give the exact pin Ys — the anchors land on the cables, not at the
+    // (possibly very tall) device's vertical center.
+    const nodes = reconcileBundleJunctions(state.nodes, edges, routedEndpointY(state.routedEdges));
+    set({ edges, bundles: { ...state.bundles, [id]: { id } }, nodes });
+    get().saveToLocalStorage();
+  },
+  dissolveBundle: (bundleId) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) => {
+      if (e.data?.bundleId !== bundleId) return e;
+      const { bundleId: _b, ...rest } = e.data!;
+      return { ...e, data: rest as ConnectionEdge["data"] };
+    });
+    const { [bundleId]: _gone, ...bundles } = state.bundles;
+    // Drop the dissolved bundle's now-orphan junction anchors.
+    const nodes = reconcileBundleJunctions(state.nodes, edges);
+    set({ edges, bundles, nodes });
+    get().saveToLocalStorage();
+  },
+  addToBundle: (bundleId, edgeIds) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) =>
+      edgeIds.includes(e.id) && e.data?.signalType ? { ...e, data: { ...e.data!, bundleId } } : e,
+    );
+    // Anchors already exist for a live bundle (no-op); reconcile only spawns if somehow missing.
+    const nodes = reconcileBundleJunctions(state.nodes, edges, routedEndpointY(state.routedEdges));
+    set({ edges, nodes });
+    get().saveToLocalStorage();
+  },
+  removeFromBundle: (edgeIds) => {
+    const state = get();
+    if (!state.edges.some((e) => edgeIds.includes(e.id) && e.data?.bundleId)) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const edges = state.edges.map((e) => {
+      if (!edgeIds.includes(e.id) || !e.data?.bundleId) return e;
+      const { bundleId: _b, ...rest } = e.data!;
+      return { ...e, data: rest as ConnectionEdge["data"] };
+    });
+    // Auto-dissolve any bundle that dropped below 2 members, then drop its orphan anchors.
+    const gc = gcBundles(edges, state.bundles);
+    const nodes = reconcileBundleJunctions(state.nodes, gc.edges);
+    set({ edges: gc.edges, bundles: gc.bundles, nodes });
+    get().saveToLocalStorage();
+  },
+  setBundleMeta: (bundleId, patch) => {
+    const state = get();
+    if (!state.bundles[bundleId]) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({ bundles: { ...state.bundles, [bundleId]: { ...state.bundles[bundleId], ...patch } } });
+    get().saveToLocalStorage();
+  },
+  setBundleTrunkWaypoints: (bundleId, trunkWaypoints) =>
+    get().setBundleMeta(bundleId, { trunkWaypoints }),
+
   computeSimpleRoutes: (rfInstance) => {
     // Simple orthogonal L-shapes — no A*, no penalties, instant.
     // Used when autoRoute is off for lag-free editing.
     const state = get();
     const results: Record<string, RoutedEdge> = {};
+
+    // Bundle members route along one shared trunk (straight L-gather + trunk + L-fan, no
+    // A*). Tally present members per bundle; a bundle is live only with ≥2 members.
+    const bundleCounts = new Map<string, number>();
+    for (const e of state.edges) {
+      const bid = e.data?.bundleId;
+      if (bid) bundleCounts.set(bid, (bundleCounts.get(bid) ?? 0) + 1);
+    }
+    const bundleGroups = new Map<string, BundleEndpoint[]>();
+
     for (const edge of state.edges) {
       const srcInternal = rfInstance.getInternalNode(edge.source);
       const tgtInternal = rfInstance.getInternalNode(edge.target);
@@ -5112,6 +5426,18 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       const sy = Math.round(srcAbs.y + srcHandle.y + srcHandle.height / 2);
       const tx = Math.round(tgtAbs.x + tgtHandle.x + tgtHandle.width / 2);
       const ty = Math.round(tgtAbs.y + tgtHandle.y + tgtHandle.height / 2);
+
+      // Bundle members defer to the shared-trunk pass below.
+      const bid = edge.data?.bundleId;
+      if (bid && (bundleCounts.get(bid) ?? 0) >= 2) {
+        let group = bundleGroups.get(bid);
+        if (!group) { group = []; bundleGroups.set(bid, group); }
+        group.push({
+          edgeId: edge.id, srcX: sx, srcY: sy, tgtX: tx, tgtY: ty,
+          manualWaypoints: edge.data?.manualWaypoints,
+        });
+        continue;
+      }
 
       // Use manual waypoints if present (frozen from A* or user-placed), otherwise L-shape
       let simplified: { x: number; y: number }[];
@@ -5146,9 +5472,63 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       };
     }
 
+    // Shared-trunk pass for bundles: straight L-gather → trunk → L-fan per member, plus
+    // one synthetic `bundle:<id>` trunk route for the overlay layer.
+    for (const [bid, members] of bundleGroups) {
+      if (members.length < 2) continue;
+      const meta = state.bundles[bid];
+      // Break-in / break-out points: a user trunk override wins; otherwise the bundle's junction
+      // nodes are authoritative (matches the A* path in edgeRouter); fall back to computeBundleTrunk.
+      const { in: jin, out: jout } = bundleJunctionsFor(state.nodes, bid);
+      let entry: { x: number; y: number }, exit: { x: number; y: number }, trunk: { x: number; y: number }[];
+      if (meta?.trunkWaypoints && meta.trunkWaypoints.length >= 2) {
+        entry = meta.trunkWaypoints[0];
+        exit = meta.trunkWaypoints[meta.trunkWaypoints.length - 1];
+        trunk = meta.trunkWaypoints;
+      } else {
+        const bt = computeBundleTrunk(members);
+        entry = jin ? jin.position : bt.entry;
+        exit = jout ? jout.position : bt.exit;
+        trunk = [entry, exit];
+      }
+      for (const m of members) {
+        // Comb shape, matching the A* router: gather horizontal at the port row with the
+        // vertical AT the break-in column, and — critically — fan vertical AT the break-out
+        // column before the horizontal into the target. (Plain orthogonalize bends
+        // horizontal-first, which ran every member along the trunk row and dropped a shared
+        // vertical pressed against the target device — members flattened into one
+        // unselectable stack.) User waypoints on a member shape its gather/fan legs.
+        const { gather, fan } = splitMemberWaypoints(m.manualWaypoints, entry, exit);
+        const pre = gather.length
+          ? [{ x: m.srcX, y: m.srcY }, ...gather, entry]
+          : [{ x: m.srcX, y: m.srcY }, { x: entry.x, y: m.srcY }, entry];
+        const post = fan.length
+          ? [exit, ...fan, { x: m.tgtX, y: m.tgtY }]
+          : [exit, { x: exit.x, y: m.tgtY }, { x: m.tgtX, y: m.tgtY }];
+        const wp = simplifyWaypoints(orthogonalize([
+          ...pre,
+          ...trunk.slice(1, -1), // user-shaped trunk interior (empty for the default straight trunk)
+          ...post,
+        ]));
+        const midPt = wp[Math.floor(wp.length / 2)];
+        results[m.edgeId] = {
+          edgeId: m.edgeId, svgPath: waypointsToSvgPath(wp), waypoints: wp,
+          segments: extractSegments(wp), labelX: midPt.x, labelY: midPt.y,
+          turns: "bundle", crossingPoints: [],
+        };
+      }
+      const trunkWp = simplifyWaypoints(orthogonalize(trunk.map((p) => ({ x: p.x, y: p.y }))));
+      const tMid = trunkWp[Math.floor(trunkWp.length / 2)] ?? entry;
+      results[`bundle:${bid}`] = {
+        edgeId: `bundle:${bid}`, svgPath: waypointsToSvgPath(trunkWp), waypoints: trunkWp,
+        segments: extractSegments(trunkWp), labelX: tMid.x, labelY: tMid.y,
+        turns: "trunk", crossingPoints: [],
+      };
+    }
+
     // Detect crossings so line hops render in manual mode too.
     const stubbedIds = new Set(state.edges.filter((e) => e.data?.stubbed).map((e) => e.id));
-    const entries = Object.values(results).filter((r) => !stubbedIds.has(r.edgeId));
+    const entries = Object.values(results).filter((r) => !stubbedIds.has(r.edgeId) && !r.edgeId.startsWith("bundle:"));
     const segCount = entries.reduce((n, r) => n + r.segments.length, 0);
     const overBudget = entries.length > 400 || segCount * segCount > 250_000;
     if (!overBudget) {
@@ -5278,46 +5658,42 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id))
       : state.nodes;
 
-    const { routes: results, overBudget } = routeAllEdges(routingNodes, visibleEdges, rfInstance, state.debugEdges);
+    // Hand the heavy A* off to the routing worker. Build the DOM-derived handle snapshot here
+    // (needs rfInstance), tag the request with a monotonic seq, stash the main-thread-only context
+    // (virtual-edge remap + adapter visibility) for the matching apply step, and post. The result
+    // is applied asynchronously by applyRoutingResult; stale/superseded seqs are discarded there.
+    if (!routingHandlerRegistered) {
+      setRoutingResultHandler(applyRoutingResult);
+      routingHandlerRegistered = true;
+    }
+    const handles = buildHandleSnapshot(routingNodes, rfInstance);
 
-    // Map virtual edge routes back to primary real edge IDs
-    for (const [virtualId, mapping] of virtualEdgeSources) {
-      const route = results[virtualId];
-      if (route) {
-        results[mapping.primaryEdgeId] = { ...route, edgeId: mapping.primaryEdgeId };
-        delete results[virtualId];
-      }
+    // Stub↔port colinearity heal: a stub handle a few px off its partner port's TRUE
+    // (DOM-measured) row kinks the wire at the label. This is the only place port truth
+    // exists. Corrections change nodeDigest, which re-fires routing with aligned stubs;
+    // idempotent (healed stubs fall inside the dead-band next pass).
+    const healedStubNodes = healStubPortAlignment(state.nodes, state.edges, handles);
+    if (healedStubNodes) {
+      set({ nodes: healedStubNodes });
+      return;
     }
 
-    // If routing exceeded the time budget, auto-disable and notify user
-    if (overBudget) {
-      get().addToast("Auto-routing disabled — schematic is too large for real-time routing", "info");
-    }
-
-    // Always normalize edge zIndex: boost edges with line-jump hops to 1,
-    // set all others to 0. This prevents stale zIndex from selected/undo state.
-    const hopEdgeIds = new Set<string>();
-    if (state.showLineJumps) {
-      for (const [edgeId, routed] of Object.entries(results)) {
-        if (routed.crossingPoints && routed.crossingPoints.length > 0) {
-          hopEdgeIds.add(edgeId);
-        }
-      }
-    }
-    const updatedEdges = state.edges.map((e) =>
-      hopEdgeIds.has(e.id)
-        ? { ...e, zIndex: 1 }
-        : { ...e, zIndex: 0 },
-    );
-
-    set({
-      routedEdges: results,
-      routingDebugData: (globalThis as unknown as Record<string, unknown>).__routingDebug ?? null,
-      edges: updatedEdges,
+    routeSeq += 1;
+    pendingRouteCtx = {
+      seq: routeSeq,
+      virtualEdgeSources,
       hiddenAdapterNodeIds,
       hiddenVirtualEdgeIds,
       virtualEdgeGradients,
-      ...(overBudget ? { autoRoute: false } : {}),
+    };
+    requestRoutes({
+      seq: routeSeq,
+      nodes: routingNodes,
+      edges: visibleEdges,
+      handles,
+      bundles: state.bundles,
+      debug: state.debugEdges,
+      routingParams: (globalThis as Record<string, unknown>).__routingParams as Record<string, number> | undefined,
     });
   },
 

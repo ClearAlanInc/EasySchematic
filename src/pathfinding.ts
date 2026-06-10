@@ -38,10 +38,14 @@ export interface Point {
 
 export interface PenaltyZone {
   axis: "h" | "v";
-  coordinate: number;  // grid coordinate (col for vertical, row for horizontal)
+  coordinate: number;  // grid coordinate (col for vertical, row for horizontal); may be
+                       // a half-cell (X.5) for half-pitch comb ribbon lanes
   rangeMin: number;     // start of segment (grid coord)
   rangeMax: number;     // end of segment (grid coord)
   signalType?: string;
+  /** Overlap-penalty multiplier. Half-pitch ribbon lanes use >1 so that sitting half a
+   *  cell (10px) away still costs like a full overlap — strangers stay a cell away. */
+  weight?: number;
 }
 
 interface GridNode {
@@ -54,13 +58,33 @@ interface GridNode {
 
 // ---------- Constants ----------
 
-/** Grid cell size in pixels. All grid coordinates are multiples of this. */
-export const CELL_SIZE = 20;
+/**
+ * Default grid cell size in pixels. All grid coordinates are multiples of the ACTIVE cell size.
+ * The active size is overridable per routing run via `__routingParams.CELL_SIZE` (see `cellSize`),
+ * which the portfolio uses as a search axis: a finer grid gives the column allocator more distinct
+ * lanes in a tight band, which measurably cuts weaving on dense schematics — at the cost of more A*
+ * cells (slower) and, below the port pitch, corridors that read as shared verticals (the failed
+ * CELL_SIZE=10 experiment). 16 since schema v41: matches GRID_SIZE and the 16px port row pitch —
+ * the routing grid and the port grid must agree or every endpoint picks up a sub-cell jog.
+ */
+export const CELL_SIZE = 16;
+
+/**
+ * Active grid cell size for the current routing run. Reads `__routingParams.CELL_SIZE` (the same
+ * live-override channel ROUTING_PARAMS uses) and falls back to the default. Must stay constant for
+ * the duration of one `routeAllEdges` call — callers set `__routingParams` before routing and clear
+ * it after, so px2g/g2px round-trip consistently within a run (a determinism prerequisite).
+ */
+export const cellSize = (): number => {
+  const o = (globalThis as unknown as Record<string, unknown>).__routingParams as Record<string, number> | undefined;
+  const v = o?.CELL_SIZE;
+  return typeof v === "number" && v > 0 ? v : CELL_SIZE;
+};
 
 /** Convert pixel coordinate to grid coordinate. */
-export const px2g = (px: number) => Math.round(px / CELL_SIZE);
+export const px2g = (px: number) => Math.round(px / cellSize());
 /** Convert grid coordinate to pixel coordinate. */
-export const g2px = (g: number) => g * CELL_SIZE;
+export const g2px = (g: number) => g * cellSize();
 
 /** Default routing parameters. Values are in GRID CELLS unless noted. */
 export const ROUTING_DEFAULTS = {
@@ -87,6 +111,28 @@ export const ROUTING_PARAMS: typeof ROUTING_DEFAULTS = new Proxy(ROUTING_DEFAULT
   },
 }) as typeof ROUTING_DEFAULTS;
 
+// ---------- Deterministic work budget ----------
+// Replaces a wall-clock time budget (Date.now()), which made routing nondeterministic under load —
+// edges past the cutoff fell back to L-shapes, so the SAME input could route differently run-to-run.
+// A* instead counts node expansions and bails when the cumulative count for the current
+// routeAllEdges run exceeds the cap. Expansions are a pure function of geometry + params, so routing
+// is reproducible (a prerequisite for caching candidate scores and comparing portfolio runs).
+let _astarOps = 0;
+let _astarOpsCap = Infinity;
+/** Reset the per-run A* expansion counter and set the cap. Call once at the start of a routing run. */
+export function beginRoutingBudget(cap = Infinity): void {
+  _astarOps = 0;
+  _astarOpsCap = cap;
+}
+/** True once this run's cumulative A* expansions have reached the cap. Deterministic. */
+export function routingBudgetExceeded(): boolean {
+  return _astarOps >= _astarOpsCap;
+}
+/** Total A* expansions consumed this run (for calibration / telemetry). */
+export function routingOpsUsed(): number {
+  return _astarOps;
+}
+
 const CORNER_RADIUS = 8;
 export const ARC_R = 6;
 export const GAP_HALF = 3;
@@ -101,18 +147,19 @@ export function buildObstacles(
   getAbsPos: (node: typeof nodes[number]) => { x: number; y: number },
 ): { rects: Rect[] } {
   const rects: Rect[] = [];
-  const pad = ROUTING_PARAMS.PAD * CELL_SIZE; // PAD is in grid cells
+  const pad = ROUTING_PARAMS.PAD * cellSize(); // PAD is in grid cells
   for (const n of nodes) {
     if (
       n.type === "room" ||
       n.type === "note" ||
       n.type === "stub-label" ||
-      n.type === "waypoint"
+      n.type === "waypoint" ||
+      n.type === "bundle-junction"
     ) continue;
     if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);
-    const w = n.measured?.width ?? 180;
-    const h = n.measured?.height ?? 60;
+    const w = n.measured?.width ?? 144;
+    const h = n.measured?.height ?? 48;
     rects.push({
       left: pos.x - pad,
       top: pos.y - pad,
@@ -126,11 +173,12 @@ export function buildObstacles(
 
 /** Convert pixel-coordinate obstacle rects to grid-coordinate rects. */
 export function pixelRectsToGrid(rects: Rect[]): GridRect[] {
+  const cs = cellSize();
   return rects.map((r) => ({
-    left: Math.floor(r.left / CELL_SIZE),
-    top: Math.floor(r.top / CELL_SIZE),
-    right: Math.ceil(r.right / CELL_SIZE),
-    bottom: Math.ceil(r.bottom / CELL_SIZE),
+    left: Math.floor(r.left / cs),
+    top: Math.floor(r.top / cs),
+    right: Math.ceil(r.right / cs),
+    bottom: Math.ceil(r.bottom / cs),
     nodeId: r.nodeId,
   }));
 }
@@ -408,6 +456,8 @@ export function astarOrthogonal(
 
   while (open.length > 0) {
     const current = open.pop()!;
+    // Deterministic work budget: count every expansion; bail (→ caller falls back) once over cap.
+    if (++_astarOps >= _astarOpsCap) return null;
     const ck = (current.xi * rows + current.yi) * NUM_DIRS + current.dir;
 
     if (current.xi === eci && current.yi === eri) {
@@ -476,7 +526,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgy, ngy);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness;
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
                 }
               }
             } else if (pz.axis === "h" && (d === 0 || d === 2)) {
@@ -486,7 +536,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgx, ngx);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness;
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
                 }
               }
             }
@@ -589,6 +639,127 @@ export function simplifyWaypoints(points: Point[]): Point[] {
   }
   result.push(points[points.length - 1]);
   return result;
+}
+
+// ---------- Endpoint anchoring + sub-grid step placement ----------
+
+/**
+ * Re-anchor a simplified, orthogonal waypoint list to the EXACT pin coordinates the route was
+ * asked to connect (A* works on the snapped grid, so raw output endpoints can sit up to half a
+ * cell off the true pin — the wire visibly misses the port, and multi-leg callers that splice
+ * legs against exact corridor points get sub-grid "jog" artifacts at the seams).
+ *
+ * The ≤half-cell delta is absorbed into the segment ADJACENT to the endpoint segment: that
+ * segment is perpendicular (simplification guarantees alternating axes) and at least one grid
+ * cell long, so shifting its shared corner can never collapse or flip it. A 2-point straight
+ * route whose exact endpoints disagree on the cross-axis genuinely needs one step — it is
+ * inserted one cell from the target so it hugs a pin (and the final tuck pass may relocate it).
+ *
+ * Pure; returns a new array. Callers' contract afterwards: waypoints[0] === src exactly and
+ * waypoints[last] === tgt exactly.
+ */
+export function anchorRouteEndpoints(wps: Point[], src: Point, tgt: Point): Point[] {
+  if (wps.length < 2) return wps;
+  const pts = wps.map((p) => ({ x: p.x, y: p.y }));
+
+  if (pts.length === 2) {
+    const horizontal = pts[0].y === pts[1].y;
+    const vertical = pts[0].x === pts[1].x;
+    if (horizontal && src.y === tgt.y) return [{ ...src }, { ...tgt }];
+    if (vertical && src.x === tgt.x) return [{ ...src }, { ...tgt }];
+    const cs = cellSize();
+    if (horizontal) {
+      // Exact endpoints disagree in Y → one step is unavoidable; put it a cell from the target.
+      const dir = Math.sign(pts[1].x - pts[0].x) || 1;
+      const jogOff = Math.min(cs, Math.floor(Math.abs(tgt.x - src.x) / 2));
+      if (jogOff <= 0) return pts;
+      const jx = tgt.x - dir * jogOff;
+      return [{ ...src }, { x: jx, y: src.y }, { x: jx, y: tgt.y }, { ...tgt }];
+    }
+    if (vertical) {
+      const dir = Math.sign(pts[1].y - pts[0].y) || 1;
+      const jogOff = Math.min(cs, Math.floor(Math.abs(tgt.y - src.y) / 2));
+      if (jogOff <= 0) return pts;
+      const jy = tgt.y - dir * jogOff;
+      return [{ ...src }, { x: src.x, y: jy }, { x: tgt.x, y: jy }, { ...tgt }];
+    }
+    return pts; // non-orthogonal (shouldn't happen) — leave as-is
+  }
+
+  const anchorOneEnd = (exact: Point, atStart: boolean): void => {
+    const p0 = atStart ? pts[0] : pts[pts.length - 1];
+    const p1 = atStart ? pts[1] : pts[pts.length - 2];
+    if (p0.x === exact.x && p0.y === exact.y) return;
+    if (p0.y === p1.y) {
+      p1.y = exact.y; // endpoint segment horizontal → next segment is vertical, absorbs the Y shift
+    } else if (p0.x === p1.x) {
+      p1.x = exact.x; // endpoint segment vertical → next segment is horizontal, absorbs the X shift
+    } else {
+      return; // non-orthogonal endpoint segment — leave snapped
+    }
+    p0.x = exact.x;
+    p0.y = exact.y;
+  };
+  anchorOneEnd(src, true);
+  anchorOneEnd(tgt, false);
+  return simplifyWaypoints(pts);
+}
+
+/**
+ * Relocate unavoidable sub-grid steps so they hug a pin instead of sitting mid-span.
+ *
+ * When two pins sit a few px apart vertically (off-grid port offsets), an orthogonal route MUST
+ * contain one sub-cell vertical step. Construction places it wherever the corridor/leg seam
+ * happens to fall — often mid-span, where the eye reads it as a routing mistake. This pass
+ * slides such a step along its flanking horizontals to one cell from the route endpoint it is
+ * nearest (only when a single horizontal separates it from that endpoint), where it reads as a
+ * port entry. Length, turn count, and all other geometry are unchanged; pure; returns the same
+ * array if nothing applies.
+ */
+export function tuckSubgridSteps(wps: Point[]): Point[] {
+  if (wps.length < 4) return wps;
+  const cs = cellSize();
+  let pts: Point[] | null = null;
+  const ensure = () => (pts ??= wps.map((p) => ({ x: p.x, y: p.y })));
+  let lastTouched = -1; // guard: never write overlapping index ranges
+
+  // A candidate step is the vertical p[i]→p[i+1] with |dy| < cell, flanked by horizontals
+  // p[i-1]→p[i] and p[i+1]→p[i+2] that continue in the SAME x-direction (a stair, not a U-turn).
+  for (let i = 1; i + 2 < wps.length; i++) {
+    const a = wps[i - 1];
+    const b = wps[i];
+    const c = wps[i + 1];
+    const d = wps[i + 2];
+    const isStep =
+      a.y === b.y && b.x === c.x && c.y === d.y &&
+      b.y !== c.y && Math.abs(c.y - b.y) < cs &&
+      Math.sign(b.x - a.x) === Math.sign(d.x - c.x) && b.x !== a.x;
+    if (!isStep || i - 1 <= lastTouched) continue;
+
+    const dir = Math.sign(d.x - c.x);
+    // Slide toward an endpoint the step is one horizontal away from; prefer whichever flank
+    // touches a route end (start wins if both do — symmetric anyway).
+    if (i - 1 === 0) {
+      // a is the route start: park the step one cell past the start pin
+      const nx = a.x + dir * Math.min(cs, Math.abs(b.x - a.x));
+      if (nx !== b.x && Math.sign(d.x - nx) === dir) {
+        const out = ensure();
+        out[i] = { x: nx, y: b.y };
+        out[i + 1] = { x: nx, y: c.y };
+        lastTouched = i + 1;
+      }
+    } else if (i + 2 === wps.length - 1) {
+      // d is the route end: park the step one cell before the end pin
+      const nx = d.x - dir * Math.min(cs, Math.abs(d.x - c.x));
+      if (nx !== b.x && Math.sign(nx - a.x) === dir) {
+        const out = ensure();
+        out[i] = { x: nx, y: b.y };
+        out[i + 1] = { x: nx, y: c.y };
+        lastTouched = i + 1;
+      }
+    }
+  }
+  return pts ?? wps;
 }
 
 // ---------- SVG path generation ----------
@@ -1014,7 +1185,13 @@ export function computeEdgePath(
   }
   waypoints.push({ x: g2px(tgx), y: g2px(tgy) }); // Target (grid-snapped pixel)
 
-  const simplified = simplifyWaypoints(waypoints);
+  // Anchor the snapped route to the EXACT endpoints it was asked to connect — the wire must
+  // terminate on the true pin, and multi-leg callers splice legs against exact corridor points.
+  const simplified = anchorRouteEndpoints(
+    simplifyWaypoints(waypoints),
+    { x: sourceX, y: sourceY },
+    { x: targetX, y: targetY },
+  );
   const path = waypointsToSvgPath(simplified);
 
   const midIdx = Math.floor(simplified.length / 2);

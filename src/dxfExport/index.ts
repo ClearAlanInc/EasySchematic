@@ -43,8 +43,8 @@ export function exportDxf(rfInstance: ReactFlowInstance) {
     if (!internal) continue;
     const ax = internal.internals.positionAbsolute.x;
     const ay = internal.internals.positionAbsolute.y;
-    const w = node.measured?.width ?? 180;
-    const h = node.measured?.height ?? 80;
+    const w = node.measured?.width ?? 144;
+    const h = node.measured?.height ?? 64;
     const x1 = pxToIn(ax), x2 = pxToIn(ax + w);
     const y1 = -pxToIn(ay), y2 = -pxToIn(ay + h);
     minX = Math.min(minX, x1, x2);

@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useSchematicStore } from "../store";
+import { useSchematicStore, GRID_SIZE } from "../store";
 import { resolvePort } from "../packList";
 import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
@@ -69,7 +69,7 @@ export default function EdgeContextMenu() {
     if (!edge) return;
 
     store.pushSnapshot();
-    const GRID = 20;
+    const GRID = GRID_SIZE;
     const newPtSnapped = {
       x: Math.round(menu.flowX / GRID) * GRID,
       y: Math.round(menu.flowY / GRID) * GRID,
@@ -371,6 +371,35 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu, setCenter, getZoom, getInternalNode]);
 
+  const selectBundleMembers = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const bid = store.edges.find((e) => e.id === menu.edgeId)?.data?.bundleId;
+    if (!bid) return;
+    store.selectEdges(store.edges.filter((e) => e.data?.bundleId === bid).map((e) => e.id));
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  const removeFromBundleItem = useCallback(() => {
+    if (!menu) return;
+    useSchematicStore.getState().removeFromBundle([menu.edgeId]);
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  const dissolveBundleItem = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const bid = store.edges.find((e) => e.id === menu.edgeId)?.data?.bundleId;
+    if (bid) store.dissolveBundle(bid);
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, [menu]);
+
+  const bundleSelection = useCallback(() => {
+    const store = useSchematicStore.getState();
+    store.createBundle(store.edges.filter((e) => e.selected).map((e) => e.id));
+    useSchematicStore.setState({ edgeContextMenu: null });
+  }, []);
+
   if (!menu) return null;
 
   const store = useSchematicStore.getState();
@@ -387,6 +416,21 @@ export default function EdgeContextMenu() {
   const allowIncompatible = edge?.data?.allowIncompatible === true;
   const isDirectAttach = edge?.data?.directAttach === true;
   const customColor = (edge?.data?.color as string | undefined) ?? "";
+  const bundleId = edge?.data?.bundleId;
+  const inBundle = !!bundleId && (store.bundles[bundleId]?.id != null
+    || store.edges.filter((e) => e.data?.bundleId === bundleId).length >= 2);
+
+  // Bundle-from-selection: offered when ≥2 connections are selected and the right-clicked one is
+  // among them — so you can bundle a highlighted set without opening the bulk-edit panel. Hidden
+  // when the selection is already a single intact bundle (use the in-bundle items instead).
+  const selectedEdgeObjs = store.edges.filter((e) => e.selected);
+  const selectedBundleIds = [...new Set(selectedEdgeObjs.map((e) => e.data?.bundleId).filter(Boolean))];
+  const selectionIsOneBundle =
+    selectedBundleIds.length === 1 && selectedEdgeObjs.every((e) => e.data?.bundleId === selectedBundleIds[0]);
+  const canBundleSelection =
+    selectedEdgeObjs.length >= 2 &&
+    selectedEdgeObjs.some((e) => e.id === menu.edgeId) &&
+    !selectionIsOneBundle;
 
   // Check if this is a trunk (multicable) edge
   const srcNode = store.nodes.find((n) => n.id === edge?.source);
@@ -509,6 +553,20 @@ export default function EdgeContextMenu() {
         label={isStubbed ? "Show Full Connection" : "Stub Connection"}
         onClick={toggleStubbed}
       />
+      {canBundleSelection && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuItem label={`Bundle ${selectedEdgeObjs.length} Connections`} onClick={bundleSelection} />
+        </>
+      )}
+      {inBundle && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuItem label="Select Bundle Members" onClick={selectBundleMembers} />
+          <MenuItem label="Remove from Bundle" onClick={removeFromBundleItem} />
+          <MenuItem label="Dissolve Bundle" onClick={dissolveBundleItem} />
+        </>
+      )}
       {(hasMismatch || allowIncompatible) && (
         <MenuItem
           label={allowIncompatible ? "Disallow Incompatible" : "Allow Incompatible"}

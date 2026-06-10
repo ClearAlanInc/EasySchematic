@@ -61,8 +61,8 @@ function cellHasContent(
   nodes: NodeInfo[],
 ): boolean {
   for (const n of nodes) {
-    const nw = n.measured?.width ?? 180;
-    const nh = n.measured?.height ?? 60;
+    const nw = n.measured?.width ?? 144;
+    const nh = n.measured?.height ?? 48;
     // AABB intersection
     if (
       n.position.x + nw > contentX &&
@@ -102,8 +102,8 @@ export function computePageGrid(
   // Compute content bounding box
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const n of absNodes) {
-    const nw = n.measured?.width ?? 180;
-    const nh = n.measured?.height ?? 60;
+    const nw = n.measured?.width ?? 144;
+    const nh = n.measured?.height ?? 48;
     minX = Math.min(minX, n.position.x);
     minY = Math.min(minY, n.position.y);
     maxX = Math.max(maxX, n.position.x + nw);

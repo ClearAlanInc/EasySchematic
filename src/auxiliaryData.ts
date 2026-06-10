@@ -1,5 +1,6 @@
 import type { AuxRow, DeviceData, Port } from "./types";
 import { effectiveThermalBtuh } from "./thermal";
+import { GRID_SIZE } from "./gridConstants";
 
 export interface AuxResolveContext {
   /** Number of connected port handles — only known at render time in DeviceNode. */
@@ -178,33 +179,33 @@ export function auxRowHeight(row: AuxRow): number {
 }
 
 /** Height (in px) of the footer aux block — border-top (1) + Σ row heights, rounded up
- *  to the next 20-multiple so device bottom stays grid-aligned. 0 when no footer rows.
+ *  to the next GRID-multiple so device bottom stays grid-aligned. 0 when no footer rows.
  *  Header rows live in a different band (see `headerBandHeight`). */
 export function auxBlockHeight(rows: unknown): number {
   const trimmed = trimTrailingEmpty(normalizeAuxRows(rows)).filter((r) => rowPosition(r) === "footer");
   if (trimmed.length === 0) return 0;
   const raw = 1 + trimmed.reduce((sum, r) => sum + auxRowHeight(r), 0);
-  return Math.ceil(raw / 20) * 20;
+  return Math.ceil(raw / GRID_SIZE) * GRID_SIZE;
 }
 
-/** Pixel height of the header "name + aux" band. Minimum 40 (bare name strip when no
+/** Pixel height of the header "name + aux" band. Minimum 32 (bare name strip when no
  *  header aux rows). When aux rows are present the label zone + content is padded
- *  up to the next 20-multiple, keeping the first port on the 20-px pathfinding grid.
+ *  up to the next GRID-multiple, keeping the first port on the 16-px pathfinding grid.
  *
- *  `labelZone` defaults to HEADER_LABEL_ZONE_PX (20, single-line). Pass HEADER_LABEL_ZONE_2_PX
+ *  `labelZone` defaults to HEADER_LABEL_ZONE_PX (16, single-line). Pass HEADER_LABEL_ZONE_2_PX
  *  (32, two-line) for wrapped device labels. */
 export function headerBandHeight(rows: unknown, labelZone: number = HEADER_LABEL_ZONE_PX): number {
   const trimmed = trimTrailingEmpty(normalizeAuxRows(rows)).filter((r) => rowPosition(r) === "header");
   const content = labelZone + trimmed.reduce((sum, r) => sum + auxRowHeight(r), 0);
-  return Math.max(HEADER_BAND_MIN_PX, Math.ceil(content / 20) * 20);
+  return Math.max(HEADER_BAND_MIN_PX, Math.ceil(content / GRID_SIZE) * GRID_SIZE);
 }
 
 /** Label zone height inside the header band — label text centers vertically here. */
-export const HEADER_LABEL_ZONE_PX = 20;
+export const HEADER_LABEL_ZONE_PX = 16;
 /** Two-line label zone height for wrapped device labels (2 lines × 14px leading + 4px slack). */
 export const HEADER_LABEL_ZONE_2_PX = 32;
-/** Minimum header band height (preserves the no-aux 40-px strip look). */
-export const HEADER_BAND_MIN_PX = 40;
+/** Minimum header band height (the bare name strip; 2 grid rows). */
+export const HEADER_BAND_MIN_PX = 32;
 
 /** Extra vertical space (vs the default 40-px name strip) contributed by aux rows + a
  *  possibly-wrapped device label — used by `estimateDeviceHeight`, which already accounts

@@ -19,6 +19,7 @@ import {
   type Connection,
 } from "@xyflow/react";
 import { useSchematicStore, GRID_SIZE, setReconnectingEdgeId } from "./store";
+import { warmupRoutingWorker } from "./routing/routingClient";
 import { nodeTypes, edgeTypes } from "./nodeTypes";
 import SnapGuides from "./components/SnapGuides";
 import PageBoundaryOverlay from "./components/PageBoundaryOverlay";
@@ -565,7 +566,7 @@ function SchematicCanvas() {
   );
   // Digest of edge connectivity
   const edgeDigest = useSchematicStore((s) =>
-    s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}:${e.data?.stubbed ? "s" : ""}`).join("|"),
+    s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}:${e.data?.stubbed ? "s" : ""}:${e.data?.bundleId ?? ""}`).join("|"),
   );
 
   // Filter out edges whose signal type is hidden (presentation-only — store edges stay complete)
@@ -608,6 +609,10 @@ function SchematicCanvas() {
     if (changed.length > 0) updateNodeInternals(changed);
   }, [portSignatures, updateNodeInternals]);
 
+  // Spawn the routing worker eagerly on editor mount so the first route doesn't pay
+  // worker construction latency mid-interaction.
+  useEffect(() => { warmupRoutingWorker(); }, []);
+
   useEffect(() => {
     if (isDragging) return;
     if (nodeCount === 0 && edgeCount === 0) return;
@@ -622,10 +627,11 @@ function SchematicCanvas() {
     }
     useSchematicStore.setState({ isRouting: true });
     const timer = setTimeout(() => {
+      // Posts to the routing worker; isRouting is cleared asynchronously when the result is
+      // applied (or a superseding edit posts a fresh request).
       useSchematicStore.getState().recomputeRoutes(rfInstance);
-      useSchematicStore.setState({ isRouting: false });
     }, 50);
-    return () => { clearTimeout(timer); useSchematicStore.setState({ isRouting: false }); };
+    return () => clearTimeout(timer);
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
 
   // Retry routing if initial computation raced ahead of React Flow internals
@@ -1156,8 +1162,10 @@ function SchematicCanvas() {
     (_event: React.MouseEvent, draggedNode: Node, draggedNodes: Node[]) => {
       const state = useSchematicStore.getState();
 
-      // Waypoint nodes are simple: snap to grid, no overlap or reparent logic.
-      if (draggedNode.type === "waypoint") {
+      // Waypoint and bundle-junction nodes are simple router anchors: grid-snap, no
+      // overlap or reparent logic. (The router grid-snaps the bundle spine column too,
+      // so snapping the junction keeps the box aligned with the drawn trunk.)
+      if (draggedNode.type === "waypoint" || draggedNode.type === "bundle-junction") {
         const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
         const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
         if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
@@ -1226,10 +1234,11 @@ function SchematicCanvas() {
 
       const state = useSchematicStore.getState();
 
-      // Waypoints don't participate in spacing/overlap/reparent logic. Just
-      // grid-snap the final position and bail out so the manualWaypoints sync
-      // (in store.onNodesChange) sees the resting position.
-      if (draggedNode.type === "waypoint") {
+      // Waypoints and bundle junctions are router anchors — no spacing/overlap/reparent.
+      // Grid-snap the final position and bail; for waypoints store.onNodesChange syncs
+      // manualWaypoints from the resting position, and for junctions the node-digest
+      // reroute redraws the comb through the new break-in/out position.
+      if (draggedNode.type === "waypoint" || draggedNode.type === "bundle-junction") {
         const sx = Math.round(draggedNode.position.x / GRID_SIZE) * GRID_SIZE;
         const sy = Math.round(draggedNode.position.y / GRID_SIZE) * GRID_SIZE;
         if (sx !== draggedNode.position.x || sy !== draggedNode.position.y) {
@@ -1373,8 +1382,8 @@ function SchematicCanvas() {
     if (nodes.length === 0) return 0.1;
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
     for (const n of nodes) {
-      const w = n.measured?.width ?? 180;
-      const h = n.measured?.height ?? 60;
+      const w = n.measured?.width ?? 144;
+      const h = n.measured?.height ?? 48;
       left = Math.min(left, n.position.x);
       top = Math.min(top, n.position.y);
       right = Math.max(right, n.position.x + w);

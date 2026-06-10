@@ -17,10 +17,11 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
       .filter((e) => e.selected)
       .map(
         (e) =>
-          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${String(e.data?.sourceLabel ?? "")}:${String(e.data?.label ?? "")}:${String(e.data?.targetLabel ?? "")}:${String(e.data?.color ?? "")}`,
+          `${e.id}:${e.data?.lineStyle ?? ""}:${e.data?.directAttach ? "1" : "0"}:${e.data?.hideCableId ? "1" : "0"}:${String(e.data?.sourceLabel ?? "")}:${String(e.data?.label ?? "")}:${String(e.data?.targetLabel ?? "")}:${String(e.data?.color ?? "")}:${e.data?.bundleId ?? ""}:${e.data?.signalType ?? ""}`,
       )
       .join("|"),
   );
+  const bundles = useSchematicStore((s) => s.bundles);
 
   // selectionKey is the invalidation signal for this getState() snapshot
   const selectedEdges = useMemo(
@@ -34,6 +35,22 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
   const [tgtLabelInput, setTgtLabelInput] = useState("");
 
   const hasEdges = selectedEdges.length >= 2;
+
+  // --- Bundle state ---
+  const selectedBundleIds = [...new Set(selectedEdges.map((e) => e.data?.bundleId).filter(Boolean) as string[])];
+  // The selection IS a single bundle when every selected connection shares one bundleId.
+  const isOneBundle =
+    selectedBundleIds.length === 1 && selectedEdges.every((e) => e.data?.bundleId === selectedBundleIds[0]);
+  const bundleId = isOneBundle ? selectedBundleIds[0] : null;
+  const bundleLabel = bundleId ? (bundles[bundleId]?.label ?? "") : "";
+  const signalTypes = new Set(selectedEdges.map((e) => e.data?.signalType ?? ""));
+  const mixedSignals = signalTypes.size > 1;
+
+  const doBundle = () => useSchematicStore.getState().createBundle(selectedEdges.map((e) => e.id));
+  const doUnbundle = () => useSchematicStore.getState().removeFromBundle(selectedEdges.map((e) => e.id));
+  const commitBundleLabel = (value: string) => {
+    if (bundleId) useSchematicStore.getState().setBundleMeta(bundleId, { label: value.trim() || undefined });
+  };
 
   const lineStyles = selectedEdges.map((e) => (e.data?.lineStyle as LineStyle | undefined) ?? "solid");
   const allSameStyle = lineStyles.every((s) => s === lineStyles[0]);
@@ -148,7 +165,44 @@ export default function BulkConnectionEditPanel({ onClose }: Props) {
         </p>
       )}
 
-      {hasEdges && <>{/* Labels */}
+      {hasEdges && <>{/* Bundle */}
+      <section className="mb-3">
+        <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] mb-1.5">
+          Bundle
+        </div>
+        {isOneBundle ? (
+          <>
+            <input
+              key={bundleId}
+              className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-0.5 text-xs outline-none focus:border-blue-500 mb-1.5"
+              defaultValue={bundleLabel}
+              onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") commitBundleLabel((e.target as HTMLInputElement).value); }}
+              onBlur={(e) => commitBundleLabel(e.target.value)}
+              placeholder="Bundle label…"
+            />
+            <button
+              onClick={doUnbundle}
+              className="w-full px-2 py-0.5 text-[10px] text-[var(--color-text-muted)] hover:text-red-600 border border-[var(--color-border)] rounded hover:border-red-300 cursor-pointer"
+            >
+              Unbundle these connections
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={doBundle}
+            className="w-full px-2 py-1 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-500 cursor-pointer"
+          >
+            Bundle onto one trunk
+          </button>
+        )}
+        {mixedSignals && (
+          <p className="text-[10px] text-[var(--color-text-muted)] leading-tight mt-1.5">
+            Mixed signal types — trunk drawn neutral; each connection keeps its own color and cable.
+          </p>
+        )}
+      </section>
+
+      {/* Labels */}
       <section className="mb-3">
         <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] mb-1.5">
           Labels

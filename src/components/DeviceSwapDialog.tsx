@@ -38,13 +38,16 @@ export default function DeviceSwapDialog() {
     fetchTemplates().then(setLibraryTemplates).catch(() => { /* keep fallback */ });
   }, []);
 
-  // Reset internal state when the target opens / closes / changes.
-  useEffect(() => {
+  // Reset internal state when the target opens / closes / changes (render-time
+  // adjustment — see react.dev "Adjusting some state when a prop changes").
+  const [prevNodeId, setPrevNodeId] = useState<string | null>(target?.nodeId ?? null);
+  if ((target?.nodeId ?? null) !== prevNodeId) {
+    setPrevNodeId(target?.nodeId ?? null);
     setPickedTemplate(null);
     setPlan(null);
     setSearch("");
     setShowFactualChanges(false);
-  }, [target?.nodeId]);
+  }
 
   // Focus search input on phase 1.
   useEffect(() => {
@@ -54,18 +57,13 @@ export default function DeviceSwapDialog() {
     }
   }, [target, pickedTemplate]);
 
-  // Compute plan when a template is picked.
-  useEffect(() => {
-    if (!pickedTemplate || !oldNode) return;
-    const p = planDeviceSwap(
-      oldNode.data,
-      oldNode.id,
-      pickedTemplate,
-      edges,
-      customTemplates,
-    );
-    setPlan(p);
-  }, [pickedTemplate, oldNode, edges, customTemplates]);
+  // Picking a template computes the swap plan right then (event-driven, not an
+  // effect): the plan is later user-mutated (manual mapping, card toggles), so a
+  // dependency-driven recompute would clobber those edits anyway.
+  const pickTemplate = (t: DeviceTemplate) => {
+    setPickedTemplate(t);
+    setPlan(oldNode ? planDeviceSwap(oldNode.data, oldNode.id, t, edges, customTemplates) : null);
+  };
 
   const allTemplates = useMemo(
     () => [...libraryTemplates, ...customTemplates].filter((t) => t.category !== "Expansion Cards"),
@@ -136,7 +134,7 @@ export default function DeviceSwapDialog() {
                   return (
                     <button
                       key={key}
-                      onClick={() => setPickedTemplate(t)}
+                      onClick={() => pickTemplate(t)}
                       className="w-full text-left px-2 py-1.5 rounded hover:bg-[var(--color-surface)] transition-colors flex items-center gap-2"
                     >
                       {t.color && (

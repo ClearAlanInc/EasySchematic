@@ -39,6 +39,34 @@ debug/
 edge-debug.log
 *.tmp.*
 
+# Routing harness — generated reports (baselines/ are committed golden snapshots)
+src/__tests__/fixtures/routing/reports/
+
+# Real user/client schematic exports are local-only (contain client names, IPs,
+# device labels, topology) — EasySchematic is a public repo. Synthetic fixtures live
+# in code; the default schematic ships with the app. Whitelist only public baselines.
+src/__tests__/fixtures/routing/*.json
+src/__tests__/fixtures/routing/baselines/*
+!src/__tests__/fixtures/routing/baselines/fan-out-dense.json
+!src/__tests__/fixtures/routing/baselines/backward-edges.json
+!src/__tests__/fixtures/routing/baselines/nested-rooms.json
+!src/__tests__/fixtures/routing/baselines/stubs-spread.json
+!src/__tests__/fixtures/routing/baselines/mixed-signal-corridor.json
+!src/__tests__/fixtures/routing/baselines/crossing-grid.json
+!src/__tests__/fixtures/routing/baselines/multi-source-stack.json
+!src/__tests__/fixtures/routing/baselines/fan-through-gap.json
+!src/__tests__/fixtures/routing/baselines/defaultSchematic.json
+!src/__tests__/fixtures/routing/baselines/bundle-6-same-pair.json
+!src/__tests__/fixtures/routing/baselines/bundle-fan-in.json
+!src/__tests__/fixtures/routing/baselines/bundle-mixed-signal.json
+!src/__tests__/fixtures/routing/baselines/bundle-with-traffic.json
+
+# Playwright
+e2e/test-results/
+e2e/screenshots/
+playwright-report/
+.playwright/
+
 # Generated seed data
 api/seed/seed-data.sql
 api/seed/import-*.sql
