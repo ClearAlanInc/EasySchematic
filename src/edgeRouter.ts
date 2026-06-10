@@ -1148,7 +1148,10 @@ export function routeAllEdges(
   // edge that claimed it. Edges at different Y positions can share the same X column.
   // Keys are multiples of 0.5 grid cells: half-pitch comb lanes claim at X.5 keys.
   const takenColumns = new Map<number, { yMin: number; yMax: number }[]>();
-  const COL_GAP = 2; // grid cells of vertical gap tolerance between claimed ranges
+  const COL_GAP = 2; // grid cells of vertical gap between claimed ranges before two trunks
+                     // may share a column. NOT 1: claims cover endpoint rows only, but real
+                     // routed verticals wander past them — 1 cell of slack yields actual
+                     // shared verticals (icdc/video sharedParallel +7 when probed 2026-06).
 
   /** Check if a column X is available for a given Y range. Any claim within half a
    *  cell (10px) conflicts — strangers never end up half-pitch from each other; only

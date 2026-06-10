@@ -28,6 +28,7 @@ export interface ObjectiveWeights {
   weavingPairs: number;
   sharedParallelSegments: number;
   crossTypeSepViolations: number;
+  smearPairs: number;
   crossingPairs: number;
   nonHorizontalArrivals: number;
   backwardSegments: number;
@@ -47,6 +48,10 @@ export const DEFAULT_WEIGHTS: ObjectiveWeights = {
   weavingPairs: 5,
   sharedParallelSegments: 3,
   crossTypeSepViolations: 3,
+  // Stranger verticals packed <16px read as a bundled smear — the failure mode the eye
+  // vetoes but earlier objectives couldn't see (CELL_SIZE=10 / half-pitch post-mortems).
+  // Weighted at weave level so the portfolio can never trade smear for cosmetics.
+  smearPairs: 5,
   crossingPairs: 1,
   nonHorizontalArrivals: 3,
   backwardSegments: 2,
@@ -78,6 +83,7 @@ export function scoreBreakdown(metrics: Metrics, weights: ObjectiveWeights = DEF
     weavingPairs: num(metrics, "weavingPairs") * weights.weavingPairs,
     sharedParallelSegments: num(metrics, "sharedParallelSegments") * weights.sharedParallelSegments,
     crossTypeSepViolations: num(metrics, "crossTypeSepViolations") * weights.crossTypeSepViolations,
+    smearPairs: num(metrics, "smearPairs") * weights.smearPairs,
     crossingPairs: num(metrics, "crossingPairs") * weights.crossingPairs,
     nonHorizontalArrivals: num(metrics, "nonHorizontalArrivals") * weights.nonHorizontalArrivals,
     backwardSegments: num(metrics, "backwardSegments") * weights.backwardSegments,
