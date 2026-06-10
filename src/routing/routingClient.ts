@@ -3,11 +3,13 @@
  *
  * Each routing request fans out to the diversified candidate set (portfolio.ts): one sub-job per
  * candidate, dispatched across a pool of workers. Every worker routes its candidate and SELF-SCORES
- * (shared objective, scoreRoutes). When all of the latest request's candidates have returned, the
- * client picks the lowest-scoring (cleanest) result — ties resolve to the earliest candidate, i.e.
- * the shipped default — and hands exactly that one back. The result shape and the
- * requestRoutes / setRoutingResultHandler API are unchanged, so the store is oblivious to the
- * portfolio: it still gets one RoutingResult per seq.
+ * (shared objective, scoreRoutes). Results stream PROGRESSIVELY: each arriving candidate that beats
+ * the currently-applied one (lower score; ties resolve to the earliest candidate, i.e. the shipped
+ * default) is handed to the store immediately, so the first routes paint as soon as the fastest
+ * candidate lands instead of waiting for the slowest. When the whole portfolio has reported, the
+ * final pick is re-checked — the applied winner is always identical to a wait-for-all pick. The
+ * store may therefore see a few successively-better RoutingResults per seq (applyRoutingResult is
+ * idempotent per seq); requestRoutes / setRoutingResultHandler API shapes are unchanged.
  *
  * Coalescing is at the request (seq) level: a newer request supersedes the older one — queued
  * stale candidates are dropped, in-flight ones complete but are discarded. If no Worker exists (or
@@ -77,6 +79,7 @@ let latestMasterReq: RoutingRequest | null = null;
 let latestSeq = -1;
 let expectedForSeq = 0;
 let collected: RoutingResult[] = [];
+let appliedBest: RoutingResult | null = null; // best result already handed to the store this seq
 let awaiting = false;
 let jobQueue: RoutingRequest[] = [];
 
@@ -116,6 +119,7 @@ function onWorkerError(): void {
   poolUnavailable = true;
   jobQueue = [];
   collected = [];
+  appliedBest = null;
   awaiting = false;
   const req = latestMasterReq;
   if (req) runSyncPortfolio(req);
@@ -134,27 +138,39 @@ function onWorkerResult(w: Worker, res: RoutingResult): void {
   // Discard stale results (from a superseded request); only the latest seq's portfolio is live.
   if (awaiting && res.seq === latestSeq) {
     collected.push(res);
+    // Progressive apply: paint each improvement as it lands rather than waiting for the slowest
+    // candidate. Over-budget results are withheld until the final pick — applying one flips
+    // autoRoute off in the store, which would discard the rest of the portfolio.
+    if (!res.overBudget && beats(res, appliedBest) && handler) {
+      appliedBest = res;
+      handler(res);
+    }
     if (collected.length >= expectedForSeq) {
       awaiting = false;
       const best = pickBestResult(collected);
       collected = [];
-      if (best && handler) handler(best);
+      // Usually already applied; re-send only if the full-portfolio pick differs (e.g. the
+      // winner was over-budget and got withheld above).
+      if (best && best !== appliedBest && handler) handler(best);
+      appliedBest = null;
     }
   }
   pump();
 }
 
-/** Lowest score wins; ties resolve to the earliest candidate (so a tie keeps the default). */
+/** True when r beats cur: lower score wins; ties resolve to the earliest candidate (the default). */
+function beats(r: RoutingResult, cur: RoutingResult | null): boolean {
+  if (cur === null) return true;
+  if (r.score !== cur.score) return r.score < cur.score;
+  return (
+    (candIndex.get(r.candidateLabel ?? "") ?? Number.MAX_SAFE_INTEGER) <
+    (candIndex.get(cur.candidateLabel ?? "") ?? Number.MAX_SAFE_INTEGER)
+  );
+}
+
 function pickBestResult(results: RoutingResult[]): RoutingResult | null {
   let best: RoutingResult | null = null;
-  let bestIdx = Infinity;
-  for (const r of results) {
-    const idx = candIndex.get(r.candidateLabel ?? "") ?? Number.MAX_SAFE_INTEGER;
-    if (best === null || r.score < best.score || (r.score === best.score && idx < bestIdx)) {
-      best = r;
-      bestIdx = idx;
-    }
-  }
+  for (const r of results) if (beats(r, best)) best = r;
   return best;
 }
 
@@ -197,6 +213,7 @@ export function requestRoutes(req: RoutingRequest): void {
   // Supersede any older in-flight portfolio: drop its queued candidates and reset collection.
   latestSeq = req.seq;
   collected = [];
+  appliedBest = null;
   jobQueue = [];
 
   const subs = buildSubJobs(req);
