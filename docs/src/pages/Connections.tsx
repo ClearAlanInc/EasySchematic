@@ -285,9 +285,14 @@ export default function ConnectionsPage() {
         </li>
       </ul>
       <p>
+        Cable IDs are <strong>permanent</strong>: each connection's ID is assigned once, saved in your schematic
+        file, and never renumbered — so printed labels and pull sheets stay valid as the drawing evolves. Switching
+        the naming scheme only affects connections that don't have an ID yet; new connections continue numbering
+        from the highest stored ID. Duplicating or pasting a connection gets a fresh ID (it's a new physical cable).
+      </p>
+      <p>
         Use the <strong>View</strong> menu to toggle cable labels on or off across the entire canvas. You can also
-        hide the label on a single connection by right-clicking it and choosing <strong>Hide Label</strong>. To start
-        fresh, use the option to <strong>Clear All Cable IDs</strong> from the same menu.
+        hide the label on a single connection by right-clicking it and choosing <strong>Hide Label</strong>.
       </p>
 
       <h2>Line jump arcs</h2>
