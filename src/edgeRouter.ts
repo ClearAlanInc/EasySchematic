@@ -1060,6 +1060,9 @@ export function routeAllEdges(
     assignedCol: number | null;
     isBackward: boolean; // target is left of source
     fanGroupId: number;  // -1 = solo edge
+    /** Coordinated loop-back U lanes (grid coords): exit column right of the source,
+     *  return row, entry column left of the target. Constructed directly in Phase 2. */
+    loopU: { x1: number; y: number; x2: number } | null;
   };
   const columnEdges: ColumnEdge[] = [];
   for (const ep of autoEndpoints) {
@@ -1077,6 +1080,7 @@ export function routeAllEdges(
       assignedCol: null,
       isBackward: needsUnconstrained,
       fanGroupId: -1,
+      loopU: null,
     });
   }
 
@@ -1172,6 +1176,23 @@ export function routeAllEdges(
     let ranges = takenColumns.get(gx);
     if (!ranges) { ranges = []; takenColumns.set(gx, ranges); }
     ranges.push({ yMin, yMax });
+  };
+
+  // X-range-aware ROW tracking — the horizontal mirror of takenColumns, used by the
+  // loop-back U allocator for its shared return rows.
+  const takenRows = new Map<number, { xMin: number; xMax: number }[]>();
+  const isRowAvailable = (gy: number, xMin: number, xMax: number): boolean => {
+    const ranges = takenRows.get(gy);
+    if (!ranges) return true;
+    for (const r of ranges) {
+      if (xMax + COL_GAP >= r.xMin && xMin - COL_GAP <= r.xMax) return false;
+    }
+    return true;
+  };
+  const claimRow = (gy: number, xMin: number, xMax: number): void => {
+    let ranges = takenRows.get(gy);
+    if (!ranges) { ranges = []; takenRows.set(gy, ranges); }
+    ranges.push({ xMin, xMax });
   };
 
   // ---------- Bundle spine reservation (BEFORE column allocation) ----------
@@ -1448,14 +1469,184 @@ export function routeAllEdges(
     }
   }
 
+  // ---------- Loop-back U allocation ----------
+  // A loop-back edge (exits RIGHT, enters LEFT, target at/behind its source) must wrap:
+  // out to a column right of the source, back along a return row clearing both devices,
+  // down/up a column left of the target, and in. Uncoordinated, a group of these (e.g.
+  // several returns from one device stack to another) each free-A* their own wrap and
+  // weave each other. Coordinate them like the forward comb: group co-located loop-backs,
+  // pick the over/under side per group, and hand out nested X1 / return-row / X2 lanes in
+  // consistent bracket order. Edges that can't get clean lanes keep the free-A* path.
+  {
+    type LoopGroup = {
+      srcXMin: number; srcXMax: number;
+      tgtXMin: number; tgtXMax: number;
+      yMin: number; yMax: number;
+      edges: ColumnEdge[];
+    };
+    // Bucket by exact endpoint pair first — a feedback bank between one device pair is
+    // ONE bracket family even when its port rows spread beyond any Y-overlap margin —
+    // then merge buckets that share regions (proximity + Y overlap, like fan groups).
+    const pairBuckets = new Map<string, ColumnEdge[]>();
+    for (const ce of columnEdges) {
+      if (!ce.isBackward) continue;
+      if (!(ce.ep.sourceExitsRight && ce.ep.targetEntersLeft && ce.tgtGX <= ce.srcGX)) continue;
+      const key = `${ce.ep.edge.source}|${ce.ep.edge.target}`;
+      let bucket = pairBuckets.get(key);
+      if (!bucket) { bucket = []; pairBuckets.set(key, bucket); }
+      bucket.push(ce);
+    }
+    const loopGroups: LoopGroup[] = [];
+    for (const bucket of [...pairBuckets.values()].sort((a, b) => a[0].ep.edge.id.localeCompare(b[0].ep.edge.id))) {
+      const bSrcMin = Math.min(...bucket.map((c) => c.srcGX));
+      const bSrcMax = Math.max(...bucket.map((c) => c.srcGX));
+      const bTgtMin = Math.min(...bucket.map((c) => c.tgtGX));
+      const bTgtMax = Math.max(...bucket.map((c) => c.tgtGX));
+      const bYMin = Math.min(...bucket.map((c) => Math.min(c.srcGY, c.tgtGY)));
+      const bYMax = Math.max(...bucket.map((c) => Math.max(c.srcGY, c.tgtGY)));
+      let placed = false;
+      for (const g of loopGroups) {
+        if (
+          bSrcMax >= g.srcXMin - 8 && bSrcMin <= g.srcXMax + 8 &&
+          bTgtMax >= g.tgtXMin - 8 && bTgtMin <= g.tgtXMax + 8 &&
+          bYMax >= g.yMin - FAN_Y_MARGIN && bYMin <= g.yMax + FAN_Y_MARGIN
+        ) {
+          g.edges.push(...bucket);
+          g.srcXMin = Math.min(g.srcXMin, bSrcMin);
+          g.srcXMax = Math.max(g.srcXMax, bSrcMax);
+          g.tgtXMin = Math.min(g.tgtXMin, bTgtMin);
+          g.tgtXMax = Math.max(g.tgtXMax, bTgtMax);
+          g.yMin = Math.min(g.yMin, bYMin);
+          g.yMax = Math.max(g.yMax, bYMax);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        loopGroups.push({
+          srcXMin: bSrcMin, srcXMax: bSrcMax,
+          tgtXMin: bTgtMin, tgtXMax: bTgtMax,
+          yMin: bYMin, yMax: bYMax, edges: [...bucket],
+        });
+      }
+    }
+
+    const gridRectById = new Map(
+      gridRects.filter((r) => r.nodeId).map((r) => [r.nodeId as string, r]),
+    );
+    const stubRectById = new Map(stubGridRects.map((r) => [r.nodeId, r]));
+
+    const SCAN = 20; // max cells to scan outward for each lane
+    for (const g of loopGroups.sort((a, b) => b.edges.length - a.edges.length || a.edges[0].ep.edge.id.localeCompare(b.edges[0].ep.edge.id))) {
+      if (g.edges.length < 2) continue; // singletons: free A* handles a lone wrap fine
+
+      // Return row must clear every member's endpoint devices (padded) plus port rows.
+      let topMost = g.yMin;
+      let botMost = g.yMax;
+      for (const ce of g.edges) {
+        for (const id of [ce.ep.edge.source, ce.ep.edge.target]) {
+          const r = gridRectById.get(id) ?? stubRectById.get(id);
+          if (r) {
+            topMost = Math.min(topMost, r.top);
+            botMost = Math.max(botMost, r.bottom);
+          }
+        }
+      }
+      const overBase = topMost - 1;
+      const underBase = botMost + 1;
+      const sumDist = (row: number) =>
+        g.edges.reduce((s, ce) => s + Math.abs(ce.srcGY - row) + Math.abs(ce.tgtGY - row), 0);
+      const over = sumDist(overBase) <= sumDist(underBase);
+      const base = over ? overBase : underBase;
+      const step = over ? -1 : 1;
+
+      // Bracket order: innermost (closest to the content) first. Over the top, the
+      // highest endpoint pair nests innermost; under, the lowest.
+      const order = [...g.edges].sort((a, b) => {
+        const ka = a.srcGY + a.tgtGY;
+        const kb = b.srcGY + b.tgtGY;
+        return (over ? ka - kb : kb - ka) || a.ep.edge.id.localeCompare(b.ep.edge.id);
+      });
+
+      const dbg = (globalThis as Record<string, unknown>).__dumpColumnAlloc
+        ? (msg: string) => console.log(`[loopU] ${msg}`)
+        : null;
+      dbg?.(`group n=${g.edges.length} side=${over ? "over" : "under"} base=${base} src=[${g.srcXMin},${g.srcXMax}] tgt=[${g.tgtXMin},${g.tgtXMax}]`);
+      let nextX1 = g.srcXMax + 1;
+      let nextY = base;
+      let nextX2 = g.tgtXMin - 1;
+      for (const ce of order) {
+        const ownSrc = new Set([ce.ep.edge.source]);
+        const ownTgt = new Set([ce.ep.edge.target]);
+        const spanLo = nextX2 - SCAN;
+        const spanHi = nextX1 + SCAN;
+
+        // Return row: outward scan from the group base. (Null sentinels throughout —
+        // grid coordinates are routinely negative, so -1 is a real lane.)
+        let y: number | null = null;
+        for (let r = nextY; Math.abs(r - base) <= SCAN; r += step) {
+          if (isRowAvailable(r, spanLo, spanHi) && isHSegmentClear(r, spanLo, spanHi)) { y = r; break; }
+        }
+        if (y === null) { dbg?.(`${ce.ep.edge.id}: NO ROW (from ${nextY})`); continue; } // stays free-A*
+
+        // Exit column right of the source.
+        let x1: number | null = null;
+        const x1Lo = Math.min(ce.srcGY, y), x1Hi = Math.max(ce.srcGY, y);
+        for (let c = nextX1; c <= nextX1 + SCAN; c++) {
+          if (isColumnAvailable(c, x1Lo, x1Hi) && isColumnClear(c, x1Lo, x1Hi, ownSrc)) { x1 = c; break; }
+        }
+        if (x1 === null) { dbg?.(`${ce.ep.edge.id}: NO X1 (from ${nextX1})`); continue; }
+
+        // Entry column left of the target.
+        let x2: number | null = null;
+        const x2Lo = Math.min(y, ce.tgtGY), x2Hi = Math.max(y, ce.tgtGY);
+        for (let c = nextX2; c >= nextX2 - SCAN; c--) {
+          if (isColumnAvailable(c, x2Lo, x2Hi) && isColumnClear(c, x2Lo, x2Hi, ownTgt)) { x2 = c; break; }
+        }
+        if (x2 === null) { dbg?.(`${ce.ep.edge.id}: NO X2 (from ${nextX2})`); continue; }
+
+        // Port-row horizontals must reach the lanes.
+        if (!isHSegmentClear(ce.srcGY, ce.srcGX, x1, ownSrc)) { dbg?.(`${ce.ep.edge.id}: SRC ROW BLOCKED`); continue; }
+        if (!isHSegmentClear(ce.tgtGY, x2, ce.tgtGX, ownTgt)) { dbg?.(`${ce.ep.edge.id}: TGT ROW BLOCKED`); continue; }
+
+        // Viability: a U whose return row landed far out wraps (and double-crosses) a
+        // lot of content — free A* threads gaps better there. Commit only sane detours.
+        const uLen = (x1 - ce.srcGX) + Math.abs(y - ce.srcGY) + (x1 - x2) + Math.abs(y - ce.tgtGY) + (ce.tgtGX - x2);
+        const manhattan = Math.max((ce.srcGX - ce.tgtGX) + Math.abs(ce.srcGY - ce.tgtGY), 6);
+        if (uLen > 3 * manhattan) { dbg?.(`${ce.ep.edge.id}: U TOO LONG (${uLen} vs ${manhattan})`); continue; }
+        dbg?.(`${ce.ep.edge.id}: x1=${x1} y=${y} x2=${x2}`);
+
+        ce.loopU = { x1, y, x2 };
+        claimColumn(x1, x1Lo, x1Hi);
+        claimRow(y, x2, x1);
+        claimColumn(x2, x2Lo, x2Hi);
+        nextX1 = x1 + 1;
+        nextY = y + step;
+        nextX2 = x2 - 1;
+      }
+    }
+  }
+
   // Allocator claims as penalty zones for edges that route OUTSIDE the column system
   // (unassigned overflow + backward edges). Those route by free A* — often BEFORE the
   // claiming edges (longest-first sort) — and can't see the claims otherwise, so they'd
   // park a trunk on a claimed column (shared vertical with the comb routed later) or
   // slice through the comb's not-yet-routed horizontals at the source/target rows. Seed
   // the whole predicted L-shape: source horizontal, trunk vertical, target horizontal.
+  // Loop-back U lanes are seeded the same way (two verticals + the return run).
   const corridorClaimZones: PenaltyZone[] = [];
   for (const ce of columnEdges) {
+    if (ce.loopU) {
+      const { x1, y, x2 } = ce.loopU;
+      corridorClaimZones.push(
+        { axis: "v", coordinate: x1, rangeMin: Math.min(ce.srcGY, y), rangeMax: Math.max(ce.srcGY, y), signalType: ce.signalType },
+        { axis: "h", coordinate: y, rangeMin: x2, rangeMax: x1, signalType: ce.signalType },
+        { axis: "v", coordinate: x2, rangeMin: Math.min(y, ce.tgtGY), rangeMax: Math.max(y, ce.tgtGY), signalType: ce.signalType },
+        { axis: "h", coordinate: ce.srcGY, rangeMin: ce.srcGX, rangeMax: x1, signalType: ce.signalType },
+        { axis: "h", coordinate: ce.tgtGY, rangeMin: x2, rangeMax: ce.tgtGX, signalType: ce.signalType },
+      );
+      continue;
+    }
     if (ce.assignedCol === null) continue;
     corridorClaimZones.push(
       {
@@ -1742,6 +1933,29 @@ export function routeAllEdges(
   for (const ce of columnEdges) {
     const ep = ce.ep;
     const sigType = ep.edge.data?.signalType;
+
+    // Coordinated loop-back: construct the allocated U directly (the lanes were
+    // verified clear and claimed at allocation time).
+    if (ce.loopU) {
+      const { x1, y, x2 } = ce.loopU;
+      const cleaned = simplifyWaypoints([
+        { x: ep.sourceX, y: ep.sourceY },
+        { x: g2px(x1), y: ep.sourceY },
+        { x: g2px(x1), y: g2px(y) },
+        { x: g2px(x2), y: g2px(y) },
+        { x: g2px(x2), y: ep.targetY },
+        { x: ep.targetX, y: ep.targetY },
+      ]);
+      const rs: RouteState = {
+        edgeId: ep.edge.id, waypoints: cleaned,
+        segments: extractSegments(cleaned), svgPath: waypointsToSvgPath(cleaned),
+        labelX: g2px(x1), labelY: (ep.sourceY + g2px(y)) / 2,
+        turns: "loop-u", status: "good", signalType: sigType,
+      };
+      routeStates.push(rs);
+      appendPenalties(rs);
+      continue;
+    }
 
     // A half-pitch lane (fractional column) is only constructible as a direct L-shape —
     // its x can't be an A* via point. The allocator pre-verified the same static
