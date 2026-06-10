@@ -963,7 +963,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "terminal-block": "Terminal Block",
   powercon: "powerCON",
   edison: "Edison",
-  iec: "IEC C14",
+  iec: "IEC C13/C14",
   "iec-c5": "IEC C5",
   "iec-c7": "IEC C7",
   "iec-c15": "IEC C15",

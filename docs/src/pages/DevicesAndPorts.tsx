@@ -217,7 +217,7 @@ export default function DevicesAndPortsPage() {
           <tr><td>powerCON</td><td>powerCON</td></tr>
           <tr><td>powerCON TRUE1</td><td>powerCON TRUE1</td></tr>
           <tr><td>Edison</td><td>Edison</td></tr>
-          <tr><td>IEC C14</td><td>IEC C14</td></tr>
+          <tr><td>IEC C13/C14</td><td>IEC C13/C14 (kettle lead — inlet C14, outlet C13)</td></tr>
           <tr><td>IEC C5</td><td>IEC C5</td></tr>
           <tr><td>IEC C7</td><td>IEC C7</td></tr>
           <tr><td>IEC C15</td><td>IEC C15</td></tr>
