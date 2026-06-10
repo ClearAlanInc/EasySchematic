@@ -131,6 +131,9 @@ export const ROUTER_DEFAULTS = {
    *  objective can't see ribbon density (smearPairs isn't weighted) — same trap as the
    *  CELL_SIZE=10 experiment. Re-enable only with a density-aware objective. */
   HALF_PITCH_LANES: 0 as number,
+  /** Phase-3 rip-up-and-reroute: re-run free-A* strays caught weaving once the full
+   *  picture exists. Max reroute attempts per pass; 0 disables the phase. */
+  RIPUP_TRIALS: 8 as number,
 };
 
 /** Live-overridable via window.__routingParams for debug tuning. */
@@ -397,6 +400,10 @@ interface RouteState {
   turns: string;
   status: "good" | "bad";
   signalType?: string;
+  /** Eligible for the Phase-3 rip-up pass: free-A* strays only. Coordinated shapes
+   *  (corridor combs, loop-U brackets, bundles, manual routes) must never be ripped —
+   *  a lone reroute breaks the group's visual order. */
+  ripupOk?: boolean;
 }
 
 function logRoutingReport(
@@ -2005,6 +2012,7 @@ export function routeAllEdges(
           segments: extractSegments(result.waypoints), svgPath: result.path,
           labelX: result.labelX, labelY: result.labelY,
           turns: result.turns, status: "good", signalType: sigType,
+          ripupOk: true,
         };
         routeStates.push(rs);
         appendPenalties(rs);
@@ -2025,6 +2033,7 @@ export function routeAllEdges(
           svgPath: wp.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" "),
           labelX: midX, labelY: (ep.sourceY + ep.targetY) / 2,
           turns: "fallback", status: "bad", signalType: sigType,
+          ripupOk: true,
         };
         routeStates.push(rs);
         appendPenalties(rs);
@@ -2180,6 +2189,131 @@ export function routeAllEdges(
       };
       routeStates.push(rs);
       appendPenalties(rs);
+    }
+  }
+
+  // ---------- PHASE 3: rip-up-and-reroute (weave repair) ----------
+  // Sequential routing means every edge dodges only the edges routed BEFORE it; a pair that
+  // ends up weaving (crossing back and forth, 2+ crossings) usually just needs ONE member
+  // re-run now that the full picture exists. Only free-A* strays (ripupOk: backward edges,
+  // allocator overflow) are eligible — corridor combs, loop-U brackets, bundles and manual
+  // routes are coordinated shapes a lone reroute would break. A ripped edge re-routes
+  // against penalty zones rebuilt from EVERYONE ELSE's final segments, and the new route is
+  // kept only when it strictly reduces the edge's crossings against the whole set AND
+  // lowers its A*-style cost (length + turns + crossings + shared-parallel).
+  const RIPUP_MAX_TRIALS = ROUTER_PARAMS.RIPUP_TRIALS;
+  if (RIPUP_MAX_TRIALS > 0 && !checkBudget() && routeStates.length > 1) {
+    const epById = new Map(edgeEndpoints.map((e) => [e.edge.id, e] as const));
+
+    const segLen = (segs: Segment[]) =>
+      segs.reduce((sum, s) => sum + Math.abs(s.x2 - s.x1) + Math.abs(s.y2 - s.y1), 0);
+    // Same-axis segments within 8px running together for >8px — the scorer's "shared" shape.
+    const sharedish = (a: Segment, b: Segment) => {
+      if (a.axis !== b.axis) return false;
+      const coordGap = a.axis === "v" ? Math.abs(a.x1 - b.x1) : Math.abs(a.y1 - b.y1);
+      if (coordGap >= 8) return false;
+      const [a1, a2, b1, b2] = a.axis === "v"
+        ? [a.y1, a.y2, b.y1, b.y2]
+        : [a.x1, a.x2, b.x1, b.x2];
+      return Math.min(Math.max(a1, a2), Math.max(b1, b2)) -
+        Math.max(Math.min(a1, a2), Math.min(b1, b2)) > 8;
+    };
+    /** Crossing + shared-parallel counts of a candidate geometry against every OTHER route. */
+    const fieldStats = (segs: Segment[], self: RouteState) => {
+      let cross = 0;
+      let shared = 0;
+      for (const o of routeStates) {
+        if (o === self) continue;
+        for (const so of o.segments) {
+          for (const s of segs) {
+            if (segmentsCross(s, so)) cross++;
+            else if (sharedish(s, so)) shared++;
+          }
+        }
+      }
+      return { cross, shared };
+    };
+    const ripCost = (segs: Segment[], st: { cross: number; shared: number }) =>
+      segLen(segs) / cellSize() +
+      (segs.length - 1) * ROUTING_PARAMS.TURN_PENALTY +
+      st.cross * ROUTING_PARAMS.CROSSING_PENALTY +
+      st.shared * ROUTING_PARAMS.OVERLAP_PENALTY;
+    const pairCrossings = (a: RouteState, b: RouteState) => {
+      let count = 0;
+      for (const sa of a.segments) {
+        for (const sb of b.segments) if (segmentsCross(sa, sb)) count++;
+      }
+      return count;
+    };
+
+    // Collect weaving pairs with at least one rip-eligible member, worst first.
+    const weavePairs: { a: RouteState; b: RouteState; count: number }[] = [];
+    for (let i = 0; i < routeStates.length; i++) {
+      for (let j = i + 1; j < routeStates.length; j++) {
+        if (!routeStates[i].ripupOk && !routeStates[j].ripupOk) continue;
+        const count = pairCrossings(routeStates[i], routeStates[j]);
+        if (count >= 2) weavePairs.push({ a: routeStates[i], b: routeStates[j], count });
+      }
+    }
+    weavePairs.sort((p, q) => q.count - p.count);
+
+    let trials = 0;
+    const ripped = new Set<RouteState>();
+    const contains = (r: Rect, x: number, y: number) =>
+      x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    for (const pair of weavePairs) {
+      if (trials >= RIPUP_MAX_TRIALS || checkBudget()) break;
+      // Earlier accepted reroutes may have already untangled this pair.
+      if (pairCrossings(pair.a, pair.b) < 2) continue;
+      for (const rs of [pair.a, pair.b]) {
+        if (!rs.ripupOk || ripped.has(rs) || !epById.has(rs.edgeId)) continue;
+        if (trials >= RIPUP_MAX_TRIALS || checkBudget()) break;
+        trials++;
+        const ep = epById.get(rs.edgeId)!;
+        // Everyone else's final geometry as penalty zones (the incremental runningPenalties
+        // can't subtract one edge's contribution), plus the allocator claims.
+        const pens: PenaltyZone[] = [...corridorClaimZones];
+        for (const o of routeStates) {
+          if (o === rs) continue;
+          for (const seg of o.segments) {
+            pens.push(seg.axis === "v"
+              ? { axis: "v", coordinate: px2g(seg.x1), rangeMin: px2g(Math.min(seg.y1, seg.y2)), rangeMax: px2g(Math.max(seg.y1, seg.y2)), signalType: o.signalType }
+              : { axis: "h", coordinate: px2g(seg.y1), rangeMin: px2g(Math.min(seg.x1, seg.x2)), rangeMax: px2g(Math.max(seg.x1, seg.x2)), signalType: o.signalType });
+          }
+        }
+        const foreignStubRects = stubPixelRects.filter((r) =>
+          r.nodeId !== ep.edge.source && r.nodeId !== ep.edge.target &&
+          !contains(r, ep.sourceX, ep.sourceY) && !contains(r, ep.targetX, ep.targetY));
+        const result = routeLeg(
+          ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
+          foreignStubRects.length > 0 ? [...obs.rects, ...foreignStubRects] : obs.rects,
+          ep.stubSpread, pens, rs.signalType, false, false,
+          undefined, undefined, ep.edge.source, ep.edge.target,
+          ep.sourceExitsRight, ep.targetEntersLeft, true,
+        );
+        if (!result) continue;
+        const segs = extractSegments(result.waypoints);
+        // Shape guards the cost function can't express: a repair that turns the edge into
+        // a snake (many extra turns) or adds a backward jog reads WORSE than the weave it
+        // removes, whatever the weighted sum says.
+        if (segs.length > rs.segments.length + 2) continue;
+        const backCount = (ss: Segment[]) =>
+          ep.targetX > ep.sourceX ? ss.filter((s) => s.axis === "h" && s.x2 < s.x1).length : 0;
+        if (backCount(segs) > backCount(rs.segments)) continue;
+        const before = fieldStats(rs.segments, rs);
+        const after = fieldStats(segs, rs);
+        if (after.cross >= before.cross) continue;
+        if (ripCost(segs, after) >= ripCost(rs.segments, before)) continue;
+        rs.waypoints = result.waypoints;
+        rs.segments = segs;
+        rs.svgPath = result.path;
+        rs.labelX = result.labelX;
+        rs.labelY = result.labelY;
+        rs.turns = "rip-up";
+        rs.status = "good";
+        ripped.add(rs);
+        break; // pair handled — move to the next weave
+      }
     }
   }
 
