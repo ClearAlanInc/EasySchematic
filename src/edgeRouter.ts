@@ -1793,6 +1793,7 @@ export function routeAllEdges(
     srcNodeId?: string, tgtNodeId?: string,
     srcExitsRight?: boolean, tgtEntersLeft?: boolean,
     localContext?: boolean,
+    relaxOwnRims?: boolean,
   ) => {
     const spatialIdx = localContext ? undefined : penaltySpatialIdx;
     const sharedGridRects = localContext ? undefined : precomputedGridRects;
@@ -1801,9 +1802,22 @@ export function routeAllEdges(
       for (let i = 1; i < wp.length; i++) len += Math.abs(wp[i].x - wp[i - 1].x) + Math.abs(wp[i].y - wp[i - 1].y);
       return len;
     };
+    const padPx = ROUTING_PARAMS.PAD * cellSize();
+    const shrinkRect = (r: Rect) =>
+      ({ ...r, left: r.left + padPx, top: r.top + padPx, right: r.right - padPx, bottom: r.bottom - padPx });
+    // Rim-relax mode (rip-up trials): the edge's OWN endpoint devices keep their body blocked
+    // but give up the pad rim, matching the allocator's "rim usable / body never" rule — the
+    // rim is the natural entry lane when every other lane at a crowded face is claimed, and
+    // hard-blocking it forces A* outside the whole entry field (the S005 braid). Foreign
+    // devices keep their full rim.
+    let baseRects = rects;
+    if (relaxOwnRims && (srcNodeId || tgtNodeId)) {
+      baseRects = rects.map((r) =>
+        r.nodeId && (r.nodeId === srcNodeId || r.nodeId === tgtNodeId) ? shrinkRect(r) : r);
+    }
     const manhattan = Math.abs(toX - fromX) + Math.abs(toY - fromY);
     let result = computeEdgePath(
-      fromX, fromY, toX, toY, rects, 0, spread,
+      fromX, fromY, toX, toY, baseRects, 0, spread,
       penalties, sigType, noSrcStub, noTgtStub,
       excludeStartDir, excludeEndDir,
       undefined, srcExitsRight, tgtEntersLeft,
@@ -1821,11 +1835,8 @@ export function routeAllEdges(
         // Relax the edge's OWN endpoint devices by stripping their pad rim only — the
         // wire may hug its own device but never cross the body. Removing the rects
         // entirely let failed corridor legs route straight through the device.
-        const padPx = ROUTING_PARAMS.PAD * cellSize();
-        const shrink = (r: Rect) =>
-          ({ ...r, left: r.left + padPx, top: r.top + padPx, right: r.right - padPx, bottom: r.bottom - padPx });
         const relaxed = rects.map((r) =>
-          r.nodeId && excludeSet.has(r.nodeId) ? shrink(r) : r,
+          r.nodeId && excludeSet.has(r.nodeId) ? shrinkRect(r) : r,
         );
         const rimResult = computeEdgePath(
           fromX, fromY, toX, toY, relaxed, 0, spread,
@@ -1845,7 +1856,7 @@ export function routeAllEdges(
             x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
           const unreachable = rects.filter((r) =>
             r.nodeId && excludeSet.has(r.nodeId) &&
-            (inside(shrink(r), fromX, fromY) || inside(shrink(r), toX, toY)));
+            (inside(shrinkRect(r), fromX, fromY) || inside(shrinkRect(r), toX, toY)));
           if (unreachable.length > 0) {
             const removedIds = new Set(unreachable.map((r) => r.nodeId));
             const opened = relaxed.filter((r) => !r.nodeId || !removedIds.has(r.nodeId));
@@ -2281,8 +2292,9 @@ export function routeAllEdges(
 
     const segLen = (segs: Segment[]) =>
       segs.reduce((sum, s) => sum + Math.abs(s.x2 - s.x1) + Math.abs(s.y2 - s.y1), 0);
-    // Same-axis segments within 8px running together for >8px — the scorer's "shared" shape.
-    const sharedish = (a: Segment, b: Segment) => {
+    // Same-axis segments within 8px running together for >minOverlap px — the scorer's
+    // "shared" shape.
+    const sharedish = (a: Segment, b: Segment, minOverlap = 8) => {
       if (a.axis !== b.axis) return false;
       const coordGap = a.axis === "v" ? Math.abs(a.x1 - b.x1) : Math.abs(a.y1 - b.y1);
       if (coordGap >= 8) return false;
@@ -2290,7 +2302,7 @@ export function routeAllEdges(
         ? [a.y1, a.y2, b.y1, b.y2]
         : [a.x1, a.x2, b.x1, b.x2];
       return Math.min(Math.max(a1, a2), Math.max(b1, b2)) -
-        Math.max(Math.min(a1, a2), Math.min(b1, b2)) > 8;
+        Math.max(Math.min(a1, a2), Math.min(b1, b2)) > minOverlap;
     };
     /** Crossing + shared-parallel counts of a candidate geometry against every OTHER route. */
     const fieldStats = (segs: Segment[], self: RouteState) => {
@@ -2319,33 +2331,62 @@ export function routeAllEdges(
       }
       return count;
     };
+    // Substantial colinear lane-sharing between two routes (>24px = 1.5 cells, so a pair of
+    // stacked-port approaches a full cell apart never qualifies).
+    const pairShared = (a: RouteState, b: RouteState) => {
+      let count = 0;
+      for (const sa of a.segments) {
+        for (const sb of b.segments) if (sharedish(sa, sb, 24)) count++;
+      }
+      return count;
+    };
 
-    // Collect weaving pairs with at least one rip-eligible member, worst first.
-    const weavePairs: { a: RouteState; b: RouteState; count: number }[] = [];
+    // Collect repair pairs with at least one rip-eligible member. Two defect classes, both
+    // born the same way (the earlier-routed member never saw the later one): WEAVES (2+
+    // mutual crossings) and SHARED-PARALLEL runs (a stray squatting on a lane another edge
+    // later claimed — e.g. an early free-A* edge riding what becomes a comb trunk column).
+    // Shared lanes are the worst defect in the aesthetic hierarchy, so they repair FIRST.
+    type RepairPair = { a: RouteState; b: RouteState; severity: number; kind: "weave" | "shared" };
+    const repairPairs: RepairPair[] = [];
     for (let i = 0; i < routeStates.length; i++) {
       for (let j = i + 1; j < routeStates.length; j++) {
         if (!routeStates[i].ripupOk && !routeStates[j].ripupOk) continue;
-        const count = pairCrossings(routeStates[i], routeStates[j]);
-        if (count >= 2) weavePairs.push({ a: routeStates[i], b: routeStates[j], count });
+        const a = routeStates[i], b = routeStates[j];
+        const shared = pairShared(a, b);
+        if (shared >= 1) { repairPairs.push({ a, b, severity: 1000 + shared, kind: "shared" }); continue; }
+        const count = pairCrossings(a, b);
+        if (count >= 2) repairPairs.push({ a, b, severity: count, kind: "weave" });
       }
     }
-    weavePairs.sort((p, q) => q.count - p.count);
+    repairPairs.sort((p, q) => q.severity - p.severity);
 
     const ripDbg = (globalThis as Record<string, unknown>).__dumpRipup
       ? (msg: string) => console.log(`[ripup] ${msg}`)
       : null;
-    ripDbg?.(`${weavePairs.length} weave pair(s), budget ${RIPUP_MAX_TRIALS}`);
+    // Debug capture: when a Map is installed at __ripupCapture, store each trial's exact
+    // penalty field + endpoints so headless probes can replay A*'s cost model offline.
+    const ripCapture = (globalThis as Record<string, unknown>).__ripupCapture as
+      | Map<string, { pens: PenaltyZone[]; ep: EdgeEndpoints; rects: Rect[] }>
+      | undefined;
+    ripDbg?.(
+      `${repairPairs.filter((p) => p.kind === "shared").length} shared + ` +
+      `${repairPairs.filter((p) => p.kind === "weave").length} weave pair(s), budget ${RIPUP_MAX_TRIALS}`);
 
     let trials = 0;
-    const ripped = new Set<RouteState>();
+    // One accepted rip per (edge, defect kind): a shared-lane repair must not lock the edge
+    // out of a later weave repair (each rip rebuilds the penalty field from everyone's
+    // CURRENT segments, so a second rip is coherent), but same-kind re-rips would thrash.
+    const ripped = new Map<RouteState, Set<"weave" | "shared">>();
     const contains = (r: Rect, x: number, y: number) =>
       x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-    for (const pair of weavePairs) {
+    for (const pair of repairPairs) {
       if (trials >= RIPUP_MAX_TRIALS || checkBudget()) break;
-      // Earlier accepted reroutes may have already untangled this pair.
-      if (pairCrossings(pair.a, pair.b) < 2) continue;
+      // Earlier accepted reroutes may have already cleaned this pair up.
+      if (pair.kind === "weave"
+        ? pairCrossings(pair.a, pair.b) < 2
+        : pairShared(pair.a, pair.b) < 1) continue;
       for (const rs of [pair.a, pair.b]) {
-        if (!rs.ripupOk || ripped.has(rs) || !epById.has(rs.edgeId)) continue;
+        if (!rs.ripupOk || ripped.get(rs)?.has(pair.kind) || !epById.has(rs.edgeId)) continue;
         if (trials >= RIPUP_MAX_TRIALS || checkBudget()) break;
         trials++;
         const ep = epById.get(rs.edgeId)!;
@@ -2363,12 +2404,14 @@ export function routeAllEdges(
         const foreignStubRects = stubPixelRects.filter((r) =>
           r.nodeId !== ep.edge.source && r.nodeId !== ep.edge.target &&
           !contains(r, ep.sourceX, ep.sourceY) && !contains(r, ep.targetX, ep.targetY));
+        const ripRects = foreignStubRects.length > 0 ? [...obs.rects, ...foreignStubRects] : obs.rects;
+        ripCapture?.set(rs.edgeId, { pens: [...pens], ep, rects: [...ripRects] });
         const result = routeLeg(
           ep.sourceX, ep.sourceY, ep.targetX, ep.targetY,
-          foreignStubRects.length > 0 ? [...obs.rects, ...foreignStubRects] : obs.rects,
+          ripRects,
           ep.stubSpread, pens, rs.signalType, false, false,
           undefined, undefined, ep.edge.source, ep.edge.target,
-          ep.sourceExitsRight, ep.targetEntersLeft, true,
+          ep.sourceExitsRight, ep.targetEntersLeft, true, true,
         );
         if (!result) { ripDbg?.(`${rs.edgeId}: A* null`); continue; }
         const segs = extractSegments(result.waypoints);
@@ -2381,9 +2424,23 @@ export function routeAllEdges(
         if (backCount(segs) > backCount(rs.segments)) { ripDbg?.(`${rs.edgeId}: backward jog`); continue; }
         const before = fieldStats(rs.segments, rs);
         const after = fieldStats(segs, rs);
-        if (after.cross >= before.cross) { ripDbg?.(`${rs.edgeId}: cross ${before.cross}->${after.cross} not better`); continue; }
-        if (ripCost(segs, after) >= ripCost(rs.segments, before)) { ripDbg?.(`${rs.edgeId}: cost not better`); continue; }
-        ripDbg?.(`${rs.edgeId}: ACCEPT cross ${before.cross}->${after.cross}`);
+        if (pair.kind === "weave") {
+          if (after.cross >= before.cross) { ripDbg?.(`${rs.edgeId}: cross ${before.cross}->${after.cross} not better`); continue; }
+          // Shared verticals outrank crossings in the aesthetic hierarchy — a repair that
+          // converts a weave into a parallel overlap is a downgrade the weighted cost can
+          // happily accept (2 crossings cost more than 1 shared). Never trade into shared.
+          if (after.shared > before.shared) { ripDbg?.(`${rs.edgeId}: shared ${before.shared}->${after.shared} worse`); continue; }
+          if (ripCost(segs, after) >= ripCost(rs.segments, before)) { ripDbg?.(`${rs.edgeId}: cost not better`); continue; }
+        } else {
+          // Shared-lane repair: removing the overlap is worth a couple of NEW crossings
+          // (shared is the worse defect), so the candidate-param ripCost gate doesn't get a
+          // vote — under a crossing-heavy candidate (e.g. cx30) the model PREFERS the squat
+          // it chose, which is exactly the defect being repaired. Explicit guards instead.
+          if (after.shared >= before.shared) { ripDbg?.(`${rs.edgeId}: shared ${before.shared}->${after.shared} not better`); continue; }
+          if (after.cross > before.cross + 2) { ripDbg?.(`${rs.edgeId}: shared fix costs ${after.cross - before.cross} crossings`); continue; }
+          if (segLen(segs) > segLen(rs.segments) + 8 * cellSize()) { ripDbg?.(`${rs.edgeId}: shared fix detours`); continue; }
+        }
+        ripDbg?.(`${rs.edgeId}: ACCEPT [${pair.kind}] cross ${before.cross}->${after.cross} shared ${before.shared}->${after.shared}`);
         rs.waypoints = result.waypoints;
         rs.segments = segs;
         rs.svgPath = result.path;
@@ -2391,8 +2448,10 @@ export function routeAllEdges(
         rs.labelY = result.labelY;
         rs.turns = "rip-up";
         rs.status = "good";
-        ripped.add(rs);
-        break; // pair handled — move to the next weave
+        const kinds = ripped.get(rs) ?? new Set<"weave" | "shared">();
+        kinds.add(pair.kind);
+        ripped.set(rs, kinds);
+        break; // pair handled — move to the next repair pair
       }
     }
   }
