@@ -1185,6 +1185,14 @@ export function routeAllEdges(
     ranges.push({ yMin, yMax });
   };
 
+  /** Release one claim previously made with claimColumn (for post-allocation moves). */
+  const unclaimColumn = (gx: number, yMin: number, yMax: number): void => {
+    const ranges = takenColumns.get(gx);
+    if (!ranges) return;
+    const i = ranges.findIndex((r) => r.yMin === yMin && r.yMax === yMax);
+    if (i >= 0) ranges.splice(i, 1);
+  };
+
   // X-range-aware ROW tracking — the horizontal mirror of takenColumns, used by the
   // loop-back U allocator for its shared return rows.
   const takenRows = new Map<number, { xMin: number; xMax: number }[]>();
@@ -1441,6 +1449,50 @@ export function routeAllEdges(
     upEdges.sort((a, b) => b.srcGY - a.srcGY || b.tgtGY - a.tgtGY);
     allocateBlock(downEdges, searchStart, searchEnd, endpointIds);
     allocateBlock(upEdges, searchStart, searchEnd, endpointIds);
+
+    // Cross-direction row collisions. A DOWN edge's source-row run can sit on the EXACT
+    // grid row of an UP edge's target-row approach (srcGY == tgtGY); when the DOWN
+    // corridor is also INSIDE (right of) the UP corridor, that run rides through the UP
+    // edge's corner and overlaps its final approach — an invisible shared segment, worse
+    // than any crossing. (Mirror case: UP source rows vs DOWN target rows.) No column
+    // order avoids the single crossing — source and target orders disagree (a VCG
+    // cycle) — but the OVERLAP is avoidable: move the riding edge just OUTSIDE the
+    // ridden one's column, so it leaves the shared row early and crosses once, cleanly.
+    const moveOutside = (rider: ColumnEdge, limitCol: number): void => {
+      const yMin = Math.min(rider.srcGY, rider.tgtGY);
+      const yMax = Math.max(rider.srcGY, rider.tgtGY);
+      for (let gx = limitCol - 1; gx >= searchEnd; gx--) {
+        if (!isColumnAvailable(gx, yMin, yMax)) continue;
+        if (!isColumnClear(gx, yMin, yMax, endpointIds)) continue;
+        unclaimColumn(rider.assignedCol as number, yMin, yMax);
+        rider.assignedCol = gx;
+        claimColumn(gx, yMin, yMax);
+        return;
+      }
+      // No room outside: keep the assignment (status-quo overlap beats unassigning).
+    };
+    const ridesThrough = (rider: ColumnEdge, ridden: ColumnEdge): boolean =>
+      rider.srcGY === ridden.tgtGY &&
+      rider.assignedCol !== null && ridden.assignedCol !== null &&
+      rider.assignedCol >= ridden.assignedCol &&
+      Math.max(rider.srcGX, ridden.assignedCol) <= Math.min(rider.assignedCol, ridden.tgtGX);
+    // Mutual riders (each one's source row IS the other's target row) are a true VCG
+    // cycle: whatever the column order, one of the two shared rows keeps the overlap —
+    // moving columns just leapfrogs it between rows. Only a dogleg (split trunk) fixes
+    // those; skip them and move one-directional riders only.
+    const mutual = (a: ColumnEdge, b: ColumnEdge): boolean =>
+      a.srcGY === b.tgtGY && b.srcGY === a.tgtGY;
+    for (let moved = true, guard = 0; moved && guard < 8; guard++) {
+      moved = false;
+      for (const d of downEdges) {
+        for (const u of upEdges) {
+          if (mutual(d, u)) continue;
+          if (ridesThrough(d, u)) { moveOutside(d, u.assignedCol as number); moved = true; }
+          else if (ridesThrough(u, d)) { moveOutside(u, d.assignedCol as number); moved = true; }
+        }
+      }
+    }
+
     if ((globalThis as Record<string, unknown>).__dumpColumnAlloc) {
       console.log(`[alloc] band ${searchEnd}..${searchStart} down=${downEdges.length} up=${upEdges.length}`);
       for (const ce of [...downEdges, ...upEdges]) {
@@ -1545,7 +1597,10 @@ export function routeAllEdges(
 
     const SCAN = 20; // max cells to scan outward for each lane
     for (const g of loopGroups.sort((a, b) => b.edges.length - a.edges.length || a.edges[0].ep.edge.id.localeCompare(b.edges[0].ep.edge.id))) {
-      if (g.edges.length < 2) continue; // singletons: free A* handles a lone wrap fine
+      // Singletons go through the allocator too: in dense regions a lone free-A* wrap
+      // rides the cumulative penalty field to the layout perimeter (a roller-coaster
+      // sharing the same far corridor as every other stray); the viability guard below
+      // already rejects brackets that would wrap too much content.
 
       // Return row must clear every member's endpoint devices (padded) plus port rows.
       let topMost = g.yMin;
@@ -1563,7 +1618,16 @@ export function routeAllEdges(
       const underBase = botMost + 1;
       const sumDist = (row: number) =>
         g.edges.reduce((s, ce) => s + Math.abs(ce.srcGY - row) + Math.abs(ce.tgtGY - row), 0);
-      const over = sumDist(overBase) <= sumDist(underBase);
+      const preferOver = sumDist(overBase) <= sumDist(underBase);
+
+      const dbg = (globalThis as Record<string, unknown>).__dumpColumnAlloc
+        ? (msg: string) => console.log(`[loopU] ${msg}`)
+        : null;
+
+      // Try the closer side first; if NOTHING allocates there (a device stack walls it
+      // off), retry the whole group on the far side. Never split a bracket family
+      // across sides — partial success on the preferred side commits the group.
+      const allocateSide = (over: boolean): number => {
       const base = over ? overBase : underBase;
       const step = over ? -1 : 1;
 
@@ -1575,42 +1639,48 @@ export function routeAllEdges(
         return (over ? ka - kb : kb - ka) || a.ep.edge.id.localeCompare(b.ep.edge.id);
       });
 
-      const dbg = (globalThis as Record<string, unknown>).__dumpColumnAlloc
-        ? (msg: string) => console.log(`[loopU] ${msg}`)
-        : null;
       dbg?.(`group n=${g.edges.length} side=${over ? "over" : "under"} base=${base} src=[${g.srcXMin},${g.srcXMax}] tgt=[${g.tgtXMin},${g.tgtXMax}]`);
+      let allocated = 0;
       let nextX1 = g.srcXMax + 1;
       let nextY = base;
       let nextX2 = g.tgtXMin - 1;
       for (const ce of order) {
         const ownSrc = new Set([ce.ep.edge.source]);
         const ownTgt = new Set([ce.ep.edge.target]);
-        const spanLo = nextX2 - SCAN;
-        const spanHi = nextX1 + SCAN;
 
-        // Return row: outward scan from the group base. (Null sentinels throughout —
-        // grid coordinates are routinely negative, so -1 is a real lane.)
+        // Joint row+column search: for each candidate return row (outward scan from
+        // the group base), pick this row's lanes FIRST, then validate the row over
+        // only the span the U actually occupies [x2..x1]. Pre-scanning the row over a
+        // SCAN-padded window rejected rows for devices far outside the bracket and
+        // starved dense groups into free A*. (Null sentinels throughout — grid
+        // coordinates are routinely negative, so -1 is a real lane.)
         let y: number | null = null;
-        for (let r = nextY; Math.abs(r - base) <= SCAN; r += step) {
-          if (isRowAvailable(r, spanLo, spanHi) && isHSegmentClear(r, spanLo, spanHi)) { y = r; break; }
-        }
-        if (y === null) { dbg?.(`${ce.ep.edge.id}: NO ROW (from ${nextY})`); continue; } // stays free-A*
-
-        // Exit column right of the source.
         let x1: number | null = null;
-        const x1Lo = Math.min(ce.srcGY, y), x1Hi = Math.max(ce.srcGY, y);
-        for (let c = nextX1; c <= nextX1 + SCAN; c++) {
-          if (isColumnAvailable(c, x1Lo, x1Hi) && isColumnClear(c, x1Lo, x1Hi, ownSrc)) { x1 = c; break; }
-        }
-        if (x1 === null) { dbg?.(`${ce.ep.edge.id}: NO X1 (from ${nextX1})`); continue; }
-
-        // Entry column left of the target.
         let x2: number | null = null;
-        const x2Lo = Math.min(y, ce.tgtGY), x2Hi = Math.max(y, ce.tgtGY);
-        for (let c = nextX2; c >= nextX2 - SCAN; c--) {
-          if (isColumnAvailable(c, x2Lo, x2Hi) && isColumnClear(c, x2Lo, x2Hi, ownTgt)) { x2 = c; break; }
+        for (let r = nextY; Math.abs(r - base) <= SCAN; r += step) {
+          // Exit column right of the source.
+          let cx1: number | null = null;
+          const rx1Lo = Math.min(ce.srcGY, r), rx1Hi = Math.max(ce.srcGY, r);
+          for (let c = nextX1; c <= nextX1 + SCAN; c++) {
+            if (isColumnAvailable(c, rx1Lo, rx1Hi) && isColumnClear(c, rx1Lo, rx1Hi, ownSrc)) { cx1 = c; break; }
+          }
+          if (cx1 === null) continue;
+
+          // Entry column left of the target.
+          let cx2: number | null = null;
+          const rx2Lo = Math.min(r, ce.tgtGY), rx2Hi = Math.max(r, ce.tgtGY);
+          for (let c = nextX2; c >= nextX2 - SCAN; c--) {
+            if (isColumnAvailable(c, rx2Lo, rx2Hi) && isColumnClear(c, rx2Lo, rx2Hi, ownTgt)) { cx2 = c; break; }
+          }
+          if (cx2 === null) continue;
+
+          if (!isRowAvailable(r, cx2, cx1) || !isHSegmentClear(r, cx2, cx1)) continue;
+          y = r; x1 = cx1; x2 = cx2;
+          break;
         }
-        if (x2 === null) { dbg?.(`${ce.ep.edge.id}: NO X2 (from ${nextX2})`); continue; }
+        if (y === null || x1 === null || x2 === null) { dbg?.(`${ce.ep.edge.id}: NO LANES (from ${nextY})`); continue; } // stays free-A*
+        const x1Lo = Math.min(ce.srcGY, y), x1Hi = Math.max(ce.srcGY, y);
+        const x2Lo = Math.min(y, ce.tgtGY), x2Hi = Math.max(y, ce.tgtGY);
 
         // Port-row horizontals must reach the lanes.
         if (!isHSegmentClear(ce.srcGY, ce.srcGX, x1, ownSrc)) { dbg?.(`${ce.ep.edge.id}: SRC ROW BLOCKED`); continue; }
@@ -1627,10 +1697,14 @@ export function routeAllEdges(
         claimColumn(x1, x1Lo, x1Hi);
         claimRow(y, x2, x1);
         claimColumn(x2, x2Lo, x2Hi);
+        allocated++;
         nextX1 = x1 + 1;
         nextY = y + step;
         nextX2 = x2 - 1;
       }
+      return allocated;
+      };
+      if (allocateSide(preferOver) === 0) allocateSide(!preferOver);
     }
   }
 
@@ -2257,6 +2331,11 @@ export function routeAllEdges(
     }
     weavePairs.sort((p, q) => q.count - p.count);
 
+    const ripDbg = (globalThis as Record<string, unknown>).__dumpRipup
+      ? (msg: string) => console.log(`[ripup] ${msg}`)
+      : null;
+    ripDbg?.(`${weavePairs.length} weave pair(s), budget ${RIPUP_MAX_TRIALS}`);
+
     let trials = 0;
     const ripped = new Set<RouteState>();
     const contains = (r: Rect, x: number, y: number) =>
@@ -2291,19 +2370,20 @@ export function routeAllEdges(
           undefined, undefined, ep.edge.source, ep.edge.target,
           ep.sourceExitsRight, ep.targetEntersLeft, true,
         );
-        if (!result) continue;
+        if (!result) { ripDbg?.(`${rs.edgeId}: A* null`); continue; }
         const segs = extractSegments(result.waypoints);
         // Shape guards the cost function can't express: a repair that turns the edge into
         // a snake (many extra turns) or adds a backward jog reads WORSE than the weave it
         // removes, whatever the weighted sum says.
-        if (segs.length > rs.segments.length + 2) continue;
+        if (segs.length > rs.segments.length + 2) { ripDbg?.(`${rs.edgeId}: snake (${segs.length} vs ${rs.segments.length})`); continue; }
         const backCount = (ss: Segment[]) =>
           ep.targetX > ep.sourceX ? ss.filter((s) => s.axis === "h" && s.x2 < s.x1).length : 0;
-        if (backCount(segs) > backCount(rs.segments)) continue;
+        if (backCount(segs) > backCount(rs.segments)) { ripDbg?.(`${rs.edgeId}: backward jog`); continue; }
         const before = fieldStats(rs.segments, rs);
         const after = fieldStats(segs, rs);
-        if (after.cross >= before.cross) continue;
-        if (ripCost(segs, after) >= ripCost(rs.segments, before)) continue;
+        if (after.cross >= before.cross) { ripDbg?.(`${rs.edgeId}: cross ${before.cross}->${after.cross} not better`); continue; }
+        if (ripCost(segs, after) >= ripCost(rs.segments, before)) { ripDbg?.(`${rs.edgeId}: cost not better`); continue; }
+        ripDbg?.(`${rs.edgeId}: ACCEPT cross ${before.cross}->${after.cross}`);
         rs.waypoints = result.waypoints;
         rs.segments = segs;
         rs.svgPath = result.path;
