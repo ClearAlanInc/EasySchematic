@@ -1822,6 +1822,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       let data = e.data;
       if (data?.linkedConnectionId) data = { ...data, linkedConnectionId: remapLink(data.linkedConnectionId) };
       if (data?.bundleId) data = { ...data, bundleId: remapBundle(data.bundleId) };
+      // A pasted connection is a NEW physical cable — it must get its own cable ID,
+      // not inherit the original's (IDs are permanent and label-printable).
+      if (data?.cableId) {
+        const { cableId: _omitCableId, ...rest } = data;
+        data = rest;
+      }
       newEdges.push({
         ...e,
         id: nextEdgeId([...existingEdges, ...newEdges]),
@@ -3791,7 +3797,25 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         if (map[pid]) { map[e.id] = map[pid]; break; }
       }
     }
-    set({ cableIdMap: map });
+    // Persist generated IDs onto the edges themselves. Cable IDs are PERMANENT once
+    // assigned — users print labels and reference them in pull sheets — so they ride
+    // the save file (edge.data.cableId) instead of being re-derived per session.
+    // Only edges MISSING an ID are written (stored/user-set IDs are never touched),
+    // so this is a no-op on every run after the first and can't loop the App effect
+    // that calls it. Not undo-tracked: assignment is derived bookkeeping, not an edit.
+    let persisted = false;
+    const edges = state.edges.map((e) => {
+      const id = map[e.id];
+      if (!id || !e.data || e.data.cableId) return e;
+      persisted = true;
+      return { ...e, data: { ...e.data, cableId: id } };
+    });
+    if (persisted) {
+      set({ cableIdMap: map, edges });
+      get().saveToLocalStorage();
+    } else {
+      set({ cableIdMap: map });
+    }
   },
 
   exportCustomTemplates: () => {

@@ -214,18 +214,34 @@ export function computeCableSchedule(
       };
     });
 
-  // Preserve edge array order (creation order) for stable cable numbering
+  // Preserve edge array order (creation order) for stable cable numbering.
+  //
+  // Stored cable IDs are PERMANENT (users print labels / reference them in paperwork —
+  // see recomputeCableIds in store.ts, which persists generated IDs onto edge data).
+  // Generated numbers must therefore never collide with a stored ID, and must not
+  // recycle a deleted cable's number into a gap: each prefix continues from the highest
+  // number in use (max+1), whether that number came from generation or a user edit.
+  const usedNumbers = new Map<string, number>();
+  const noteUsed = (prefix: string, n: number) => {
+    if (n > (usedNumbers.get(prefix) ?? 0)) usedNumbers.set(prefix, n);
+  };
+  for (const c of connections) {
+    const m = c.storedCableId?.match(/^([A-Z]+)(\d+)$/);
+    if (m) noteUsed(m[1], Number(m[2]));
+  }
+  const nextId = (prefix: string): string => {
+    const n = (usedNumbers.get(prefix) ?? 0) + 1;
+    noteUsed(prefix, n);
+    return `${prefix}${String(n).padStart(3, "0")}`;
+  };
 
   if (namingScheme === "type-prefix") {
     // Per-type counters for type-prefix naming (e.g. S001, S002, E001)
-    const counters = new Map<string, number>();
     return connections.map((c) => {
       const prefix = SIGNAL_PREFIX[c.rawSignalType] ?? "X";
-      const count = (counters.get(prefix) ?? 0) + 1;
-      counters.set(prefix, count);
       return {
         edgeId: c.edgeId,
-        cableId: c.storedCableId || `${prefix}${String(count).padStart(3, "0")}`,
+        cableId: c.storedCableId || nextId(prefix),
         sourceDevice: c.sourceDevice,
         sourcePort: c.sourcePort,
         sourceConnector: c.sourceConnector,
@@ -244,9 +260,9 @@ export function computeCableSchedule(
     });
   }
 
-  return connections.map((c, i) => ({
+  return connections.map((c) => ({
     edgeId: c.edgeId,
-    cableId: c.storedCableId || `C${String(i + 1).padStart(3, "0")}`,
+    cableId: c.storedCableId || nextId("C"),
     sourceDevice: c.sourceDevice,
     sourcePort: c.sourcePort,
     sourceConnector: c.sourceConnector,
