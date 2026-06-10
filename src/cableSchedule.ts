@@ -65,6 +65,7 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   gpio: "GP",
   "contact-closure": "CC",
   rs422: "RS",
+  rs485: "RS5",
   serial: "SL",
   thunderbolt: "TB",
   composite: "CO",

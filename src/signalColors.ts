@@ -24,6 +24,7 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   gpio: "#78716c",
   "contact-closure": "#57534e",
   rs422: "#6d28d9",
+  rs485: "#9333ea",
   serial: "#525252",
   thunderbolt: "#4f46e5",
   composite: "#ca8a04",

@@ -23,6 +23,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   gpio: "phoenix",
   "contact-closure": "phoenix",
   rs422: "db9",
+  rs485: "phoenix",
   serial: "db9",
   thunderbolt: "usb-c",
   composite: "bnc",
