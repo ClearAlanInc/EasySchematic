@@ -17,8 +17,8 @@ describe("bundle comb gather/fan", () => {
   function fixture() {
     const outs = Array.from({ length: 8 }, (_, i) => makePort(`Out ${i + 1}`, "analog-audio", "output"));
     const ins = Array.from({ length: 8 }, (_, i) => makePort(`In ${i + 1}`, "analog-audio", "input"));
-    const src = makeDevice({ id: "src", label: "Console", x: 0, y: 100, ports: outs });
-    const tgt = makeDevice({ id: "tgt", label: "Stage Box", x: 900, y: 100, ports: ins });
+    const src = makeDevice({ id: "src", label: "Console", x: 0, y: 80, ports: outs });
+    const tgt = makeDevice({ id: "tgt", label: "Stage Box", x: 720, y: 80, ports: ins });
     const nodes: SchematicNode[] = [src, tgt];
     const edges = outs.map((p, i) =>
       makeEdge({

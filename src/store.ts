@@ -1726,7 +1726,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     let minY = Infinity;
     let maxY = -Infinity;
     for (const n of selectedNodes) {
-      const h = n.measured?.height ?? 60;
+      const h = n.measured?.height ?? 48;
       minY = Math.min(minY, n.position.y);
       maxY = Math.max(maxY, n.position.y + h);
     }
@@ -2941,8 +2941,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     const nodeMap = new Map(state.nodes.map((n) => [n.id, n]));
     const isRoom = node.type === "room";
-    const nodeW = node.measured?.width ?? (isRoom ? 400 : 180);
-    const nodeH = node.measured?.height ?? (isRoom ? 300 : 60);
+    const nodeW = node.measured?.width ?? (isRoom ? 400 : 144);
+    const nodeH = node.measured?.height ?? (isRoom ? 300 : 48);
     const centerX = absolutePosition.x + nodeW / 2;
     const centerY = absolutePosition.y + nodeH / 2;
 
@@ -3014,8 +3014,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (node.type === "room" || node.type === "waypoint") continue;
 
       const absPos = getAbsolutePosition(node.id, nodeMap);
-      const nodeW = node.measured?.width ?? 180;
-      const nodeH = node.measured?.height ?? 60;
+      const nodeW = node.measured?.width ?? 144;
+      const nodeH = node.measured?.height ?? 48;
       const centerX = absPos.x + nodeW / 2;
       const centerY = absPos.y + nodeH / 2;
 
@@ -3360,15 +3360,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     const srcAbs = absPos(sourceNode);
     const tgtAbs = absPos(targetNode);
-    const srcW = sourceNode.measured?.width ?? 180;
-    const tgtW = targetNode.measured?.width ?? 180;
+    const srcW = sourceNode.measured?.width ?? 144;
+    const tgtW = targetNode.measured?.width ?? 144;
 
     // Midpoint between the right edge of the left device and left edge of the right device
     // (or just center-to-center if they're stacked vertically)
     const srcCenterX = srcAbs.x + srcW / 2;
     const tgtCenterX = tgtAbs.x + tgtW / 2;
-    const srcCenterY = srcAbs.y + (sourceNode.measured?.height ?? 60) / 2;
-    const tgtCenterY = tgtAbs.y + (targetNode.measured?.height ?? 60) / 2;
+    const srcCenterY = srcAbs.y + (sourceNode.measured?.height ?? 48) / 2;
+    const tgtCenterY = tgtAbs.y + (targetNode.measured?.height ?? 48) / 2;
 
     let idealX = Math.round(((srcCenterX + tgtCenterX) / 2) / GRID_SIZE) * GRID_SIZE;
     let idealY = Math.round(((srcCenterY + tgtCenterY) / 2) / GRID_SIZE) * GRID_SIZE;
@@ -3432,16 +3432,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     };
 
     // Nudge adapter position if it overlaps existing devices
-    const MIN_GAP = GRID_SIZE * 5; // 100px — enough for stubs + routing
-    const adapterW = 180; // approximate width before measurement
-    const adapterH = 60;
+    const MIN_GAP = GRID_SIZE * 5; // 80px — enough for stubs + routing
+    const adapterW = 144; // approximate width before measurement
+    const adapterH = 48;
     let posX = adapterNode.position.x;
     const posY = adapterNode.position.y;
     for (const other of state.nodes) {
       if (other.type !== "device") continue;
       if (other.parentId !== adapterParentId) continue;
-      const ow = other.measured?.width ?? 180;
-      const oh = other.measured?.height ?? 60;
+      const ow = other.measured?.width ?? 144;
+      const oh = other.measured?.height ?? 48;
       // Check AABB overlap with gap
       const overlapX = posX < other.position.x + ow + MIN_GAP && posX + adapterW + MIN_GAP > other.position.x;
       const overlapY = posY < other.position.y + oh && posY + adapterH > other.position.y;
@@ -5052,8 +5052,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (match) return { x: match.absX, y: match.absY, side: match.side };
       // Fallback: device vertical center on the appropriate edge.
       const dPos = absPos(deviceNode);
-      const w = (deviceNode.measured?.width as number | undefined) ?? 180;
-      const h = (deviceNode.measured?.height as number | undefined) ?? 60;
+      const w = (deviceNode.measured?.width as number | undefined) ?? 144;
+      const h = (deviceNode.measured?.height as number | undefined) ?? 48;
       const ports = (deviceNode.data as { ports?: Port[] }).ports ?? [];
       const baseId = (handleId ?? "").replace(/-(in|out|rear|front)$/, "");
       const port = ports.find((pp) => pp.id === baseId);

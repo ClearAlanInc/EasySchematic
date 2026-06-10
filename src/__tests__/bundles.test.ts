@@ -50,9 +50,9 @@ describe("estimateBundleJunctionPositions", () => {
     ];
     const members = [memberEdge("e1", "s1", "t1", "b1"), memberEdge("e2", "s2", "t2", "b1")];
     const pos = estimateBundleJunctionPositions(members, nodes)!;
-    expect(pos.in.x).toBe(200 + 40);  // max source right + gap
-    expect(pos.out.x).toBe(500 - 40); // min target left - gap
-    // Ys = [30,30,130,130] → median of 4 = round((30+130)/2) = 80
+    expect(pos.in.x).toBe(240);  // snapGrid(max source right 200 + 32 gap)
+    expect(pos.out.x).toBe(464); // snapGrid(min target left 500 - 32 gap)
+    // Ys = [30,30,130,130] → median of 4 = round((30+130)/2) = 80 (a 16-multiple)
     expect(pos.in.y).toBe(80);
     expect(pos.out.y).toBe(80);
   });
@@ -97,7 +97,7 @@ describe("estimateBundleJunctionPositions", () => {
       memberEdge("e2", "s1", "t1", "b1"),
     ];
     const pos = estimateBundleJunctionPositions(members, nodes, () => null)!;
-    expect(pos.in.y).toBe(40); // snapGrid(30) — same as the no-resolver estimate
+    expect(pos.in.y).toBe(32); // snapGrid(30) — same as the no-resolver estimate
   });
 });
 

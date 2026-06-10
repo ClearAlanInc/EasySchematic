@@ -24,23 +24,23 @@ const node = (id: string, type: string): SchematicNode =>
 
 describe("buildHandleSnapshot port-grid snapping", () => {
   it("snaps a device handle center with sub-grid DOM drift onto the grid", () => {
-    // Device at (4000, 2000); handle measured 1px high of the model row: center (4000, 2119).
+    // Device at (4000, 2000); handle measured 1px high of the model row: center (4000, 2095).
     const rf = rfWith("dev", "device", { x: 4000, y: 2000 }, [
-      { id: "p1-in", x: -5, y: 114, width: 10, height: 10 },
+      { id: "p1-in", x: -5, y: 90, width: 10, height: 10 },
     ]);
     const snap = buildHandleSnapshot([node("dev", "device")], rf);
     const h = snap.dev.source[0];
-    expect(snap.dev.positionAbsolute.y + h.y + h.height / 2).toBe(2120);
+    expect(snap.dev.positionAbsolute.y + h.y + h.height / 2).toBe(2096);
     expect(snap.dev.positionAbsolute.x + h.x + h.width / 2).toBe(4000);
   });
 
   it("leaves a handle alone when it is beyond noise range of a grid line", () => {
-    // Center y = 2110 — exactly between rows; must NOT be pulled to either.
+    // Center y = 2088 — exactly between rows; must NOT be pulled to either.
     const rf = rfWith("dev", "device", { x: 4000, y: 2000 }, [
-      { id: "p1-in", x: -5, y: 105, width: 10, height: 10 },
+      { id: "p1-in", x: -5, y: 83, width: 10, height: 10 },
     ]);
     const h = buildHandleSnapshot([node("dev", "device")], rf).dev.source[0];
-    expect(2000 + h.y + h.height / 2).toBe(2110);
+    expect(2000 + h.y + h.height / 2).toBe(2088);
   });
 
   it("does not snap stub-label handles", () => {
@@ -54,11 +54,12 @@ describe("buildHandleSnapshot port-grid snapping", () => {
   });
 
   it("keeps already-grid-aligned handles byte-identical (harness mock path)", () => {
-    const rf = rfWith("dev", "device", { x: 100, y: 200 }, [
-      { id: "p1", x: -5, y: 55, width: 10, height: 10 },
+    // Center (160, 368) — both exact 16-multiples.
+    const rf = rfWith("dev", "device", { x: 160, y: 320 }, [
+      { id: "p1", x: -5, y: 43, width: 10, height: 10 },
     ]);
     const h = buildHandleSnapshot([node("dev", "device")], rf).dev.source[0];
     expect(h.x).toBe(-5);
-    expect(h.y).toBe(55);
+    expect(h.y).toBe(43);
   });
 });

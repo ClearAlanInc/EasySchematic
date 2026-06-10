@@ -4,17 +4,16 @@
  * in edgeRouter.ts reads the ReactFlow instance). Here we synthesize the same
  * positions from the port list so routeAllEdges can run with no browser.
  *
- * Keep this in lockstep with src/components/DeviceNode.tsx. The geometry contract,
- * verified against real device nodes (e.g. device-33 in defaultSchematic.json,
- * measured.height 300):
+ * Keep this in lockstep with src/components/DeviceNode.tsx. The geometry contract
+ * (16px grid since schema v41):
  *
  *   device height = 1 (top border) + headerBand + 1 (header border-b)
- *                   + 8 (port-area pt) + rows*20 + 9 (port-area pb)
+ *                   + 6 (port-area pt) + rows*16 + 7 (port-area pb)
  *                   + footerBlock + 1 (bottom border)
- *                 = headerBand + rows*20 + 20 + footerBlock
+ *                 = headerBand + rows*16 + 16 + footerBlock
  *
- *   first handle center Y = 1 + headerBand + 1 + 8 + 10 = headerBand + 20
- *   row pitch = 20px (each port row is `h-5`)
+ *   first handle center Y = 1 + headerBand + 1 + 6 + 8 = headerBand + 16
+ *   row pitch = 16px (each port row is `h-4`)
  *
  * Row order in the port area mirrors DeviceNode's render order:
  *   I/O ports (sectioned = independent L/R columns, else paired rows)
@@ -32,13 +31,13 @@ import {
 } from "../auxiliaryData";
 import { resolveDeviceLabel } from "../displayName";
 
-const ROW_H = 20;
-const PORT_AREA_PT = 8;
-const PORT_AREA_PB = 9;
+const ROW_H = 16;
+const PORT_AREA_PT = 6;
+const PORT_AREA_PB = 7;
 const TOP_BORDER = 1;
 const HEADER_BORDER = 1;
 const BOTTOM_BORDER = 1;
-const DEFAULT_DEVICE_WIDTH = 180;
+const DEFAULT_DEVICE_WIDTH = 144;
 
 export interface DeviceHandle {
   /** Handle id as referenced by edge.sourceHandle/targetHandle. */
@@ -74,7 +73,7 @@ function labelZoneFor(data: DeviceData): number {
 /** Y (node-local) of the first port row's handle center. */
 export function firstHandleCenterY(data: DeviceData): number {
   const bandH = headerBandHeight(data.auxiliaryData, labelZoneFor(data));
-  return TOP_BORDER + bandH + HEADER_BORDER + PORT_AREA_PT + ROW_H / 2; // = bandH + 20
+  return TOP_BORDER + bandH + HEADER_BORDER + PORT_AREA_PT + ROW_H / 2; // = bandH + 16
 }
 
 /** Ports the device renders by default (respecting per-device hides, ignoring global toggles). */

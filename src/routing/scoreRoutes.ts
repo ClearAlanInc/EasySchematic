@@ -12,15 +12,17 @@
 
 import type { SchematicNode, ConnectionEdge } from "../types";
 import { extractSegments, segmentsCross } from "../edgeRouter";
+import { cellSize } from "../pathfinding";
 import { routingScore } from "./objective";
 
 type Seg = ReturnType<typeof extractSegments>[number];
 
-/** Harness-local geometry thresholds (pixels). */
-const SHARED_PX = 8; // parallel segments closer than this (and overlapping > this) are "shared"
-const CROSS_TYPE_PX = 16; // different-signal verticals closer than this are under-separated (R11)
-const SMEAR_PX = 16; // STRANGER verticals closer than this read as a bundled smear (half-pitch
-                     // lanes are reserved for same-family combs; see CELL_SIZE=10 post-mortem)
+/** Harness-local geometry thresholds, as fractions of the routing cell so they track the
+ *  active grid (same ratios as the original 20px-world values: 8 / 16 / 16 px). */
+const SHARED_FRAC = 0.4; // parallel segments closer than this (and overlapping > this) are "shared"
+const CROSS_TYPE_FRAC = 0.8; // different-signal verticals closer than this are under-separated (R11)
+const SMEAR_FRAC = 0.8; // STRANGER verticals closer than this read as a bundled smear (half-pitch
+                        // lanes are reserved for same-family combs; see CELL_SIZE=10 post-mortem)
 const DEVICE_INSET = 2; // shrink device body before testing interior intersection (handles sit on the edge)
 const MAX_OFFENDERS = 25;
 
@@ -51,8 +53,8 @@ function deviceRects(nodes: SchematicNode[], map: Map<string, SchematicNode>): D
   for (const n of nodes) {
     if (n.type !== "device") continue;
     const pos = absPos(n, map);
-    const w = n.measured?.width ?? 180;
-    const h = n.measured?.height ?? 60;
+    const w = n.measured?.width ?? 144;
+    const h = n.measured?.height ?? 48;
     rects.push({ id: n.id, left: pos.x, top: pos.y, right: pos.x + w, bottom: pos.y + h });
   }
   return rects;
@@ -80,18 +82,18 @@ function segmentEntersRect(seg: Seg, r: DeviceRect): boolean {
   }
 }
 
-function parallelOverlap(a: Seg, b: Seg, gap: number): boolean {
+function parallelOverlap(a: Seg, b: Seg, gap: number, minOverlap: number): boolean {
   if (a.axis !== b.axis) return false;
   if (a.axis === "v") {
     if (Math.abs(a.x1 - b.x1) >= gap) return false;
     const overlap = Math.min(Math.max(a.y1, a.y2), Math.max(b.y1, b.y2)) -
       Math.max(Math.min(a.y1, a.y2), Math.min(b.y1, b.y2));
-    return overlap > SHARED_PX;
+    return overlap > minOverlap;
   } else {
     if (Math.abs(a.y1 - b.y1) >= gap) return false;
     const overlap = Math.min(Math.max(a.x1, a.x2), Math.max(b.x1, b.x2)) -
       Math.max(Math.min(a.x1, a.x2), Math.min(b.x1, b.x2));
-    return overlap > SHARED_PX;
+    return overlap > minOverlap;
   }
 }
 
@@ -126,6 +128,11 @@ export function computeRoutingMetrics(
   for (const n of nodes) map.set(n.id, n);
   const rects = deviceRects(nodes, map);
   const rectById = new Map(rects.map((r) => [r.id, r] as const));
+
+  const cs = cellSize();
+  const sharedPx = SHARED_FRAC * cs;
+  const crossTypePx = CROSS_TYPE_FRAC * cs;
+  const smearPx = SMEAR_FRAC * cs;
 
   const geoms: EdgeGeom[] = [];
   const unrouted: string[] = [];
@@ -259,14 +266,14 @@ export function computeRoutingMetrics(
       let smear = false;
       for (const sa of a.segs) {
         for (const sb of b.segs) {
-          if (parallelOverlap(sa, sb, SHARED_PX)) shared = true;
+          if (parallelOverlap(sa, sb, sharedPx, sharedPx)) shared = true;
           if (segmentsCross(sa, sb)) crossCount++;
           if (
             sa.axis === "v" &&
             sb.axis === "v" &&
             a.signalType !== b.signalType &&
-            parallelOverlap(sa, sb, CROSS_TYPE_PX) &&
-            !parallelOverlap(sa, sb, SHARED_PX)
+            parallelOverlap(sa, sb, crossTypePx, sharedPx) &&
+            !parallelOverlap(sa, sb, sharedPx, sharedPx)
           ) {
             crossType = true;
           }
@@ -275,7 +282,7 @@ export function computeRoutingMetrics(
             sa.axis === "v" &&
             sb.axis === "v" &&
             Math.abs(sa.x1 - sb.x1) > 0.5 &&
-            parallelOverlap(sa, sb, SMEAR_PX)
+            parallelOverlap(sa, sb, smearPx, sharedPx)
           ) {
             smear = true;
           }
@@ -330,7 +337,7 @@ export function computeRoutingMetrics(
   for (const v of verticalSegs) {
     let c = 0;
     for (const w of verticalSegs) {
-      if (Math.abs(w.x - v.x) <= 40 && w.yMax >= v.yMin && w.yMin <= v.yMax) c++;
+      if (Math.abs(w.x - v.x) <= 2 * cs && w.yMax >= v.yMin && w.yMin <= v.yMax) c++;
     }
     channelDensity = Math.max(channelDensity, c);
   }

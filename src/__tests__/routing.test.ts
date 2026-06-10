@@ -130,7 +130,7 @@ describe("buildPenaltyZones", () => {
     const zones = buildPenaltyZones(goodEdges);
     expect(zones).toHaveLength(1);
     expect(zones[0].axis).toBe("v");
-    expect(zones[0].coordinate).toBe(3); // px2g(50) = Math.round(50/20) = 3
+    expect(zones[0].coordinate).toBe(3); // px2g(50) = Math.round(50/16) = 3
     expect(zones[0].signalType).toBe("sdi");
   });
 });
@@ -140,15 +140,15 @@ describe("buildPenaltyZones", () => {
 describe("buildObstacles", () => {
   it("creates padded rects for device nodes", () => {
     const nodes = [
-      { id: "n1", position: { x: 100, y: 100 }, measured: { width: 180, height: 60 }, type: "device" },
+      { id: "n1", position: { x: 96, y: 96 }, measured: { width: 144, height: 48 }, type: "device" },
     ];
     const getAbsPos = (n: { position: { x: number; y: number } }) => n.position;
     const { rects } = buildObstacles(nodes, [], getAbsPos);
     expect(rects).toHaveLength(1);
-    expect(rects[0].left).toBe(80); // 100 - 20 PAD
+    expect(rects[0].left).toBe(80); // 96 - 16 PAD
     expect(rects[0].top).toBe(80);
-    expect(rects[0].right).toBe(300); // 100 + 180 + 20
-    expect(rects[0].bottom).toBe(180); // 100 + 60 + 20
+    expect(rects[0].right).toBe(256); // 96 + 144 + 16
+    expect(rects[0].bottom).toBe(160); // 96 + 48 + 16
   });
 
   it("skips room nodes", () => {

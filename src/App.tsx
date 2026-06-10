@@ -1382,8 +1382,8 @@ function SchematicCanvas() {
     if (nodes.length === 0) return 0.1;
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
     for (const n of nodes) {
-      const w = n.measured?.width ?? 180;
-      const h = n.measured?.height ?? 60;
+      const w = n.measured?.width ?? 144;
+      const h = n.measured?.height ?? 48;
       left = Math.min(left, n.position.x);
       top = Math.min(top, n.position.y);
       right = Math.max(right, n.position.x + w);

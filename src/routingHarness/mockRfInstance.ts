@@ -80,7 +80,7 @@ export function createMockRfInstance(nodes: SchematicNode[]): ReactFlowInstance 
       n.measured ??
       (n.type === "stub-label"
         ? { width: STUB_W_EST, height: STUB_H_EST }
-        : { width: 180, height: 60 });
+        : { width: 144, height: 48 });
     internal.set(n.id, {
       id: n.id,
       type: n.type,

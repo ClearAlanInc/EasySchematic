@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useSchematicStore } from "../store";
+import { useSchematicStore, GRID_SIZE } from "../store";
 import { resolvePort } from "../packList";
 import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
@@ -69,7 +69,7 @@ export default function EdgeContextMenu() {
     if (!edge) return;
 
     store.pushSnapshot();
-    const GRID = 20;
+    const GRID = GRID_SIZE;
     const newPtSnapped = {
       x: Math.round(menu.flowX / GRID) * GRID,
       y: Math.round(menu.flowY / GRID) * GRID,

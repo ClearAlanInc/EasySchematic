@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 40;
+export const CURRENT_SCHEMA_VERSION = 41;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
@@ -528,6 +528,73 @@ const migrations: Record<number, Migration> = {
     data.version = 40;
     return data;
   },
+  40: (data) => {
+    // v40 → v41: THE 16px GRID. Every layout constant scaled x0.8 (20px snap grid → 16px;
+    // port row pitch 20→16; header band min 40→32; default device width 180→144), so every
+    // saved pixel coordinate rescales by exactly 0.8 — a 20-multiple maps onto a 16-multiple
+    // with zero rounding error, preserving all alignments. Text-sized objects (stub label
+    // boxes) keep their size; their position is rescaled around the CONNECTING HANDLE so
+    // they stay colinear with the partner port.
+    const s = 0.8;
+    const nodes: any[] = data.nodes ?? [];
+    const edges: any[] = data.edges ?? [];
+
+    // A stub-label's connecting side is the l/r handle its leg edge references.
+    const stubSideById = new Map<string, "l" | "r">();
+    for (const e of edges) {
+      if (e.sourceHandle === "l" || e.sourceHandle === "r") stubSideById.set(e.source, e.sourceHandle);
+      if (e.targetHandle === "l" || e.targetHandle === "r") stubSideById.set(e.target, e.targetHandle);
+    }
+
+    for (const n of nodes) {
+      if (!n.position) continue;
+      if (n.type === "stub-label") {
+        // Box size is text-driven (unscaled); rescale around the handle point. Works in
+        // parent-relative coords too — a scaled parent contributes uniformly.
+        const w = n.measured?.width ?? n.width ?? 80;
+        const h = n.measured?.height ?? n.height ?? 14;
+        const side = stubSideById.get(n.id) ?? "l";
+        const hx = (n.position.x ?? 0) + (side === "r" ? w : 0);
+        const hy = (n.position.y ?? 0) + h / 2;
+        n.position.x = Math.round(hx * s - (side === "r" ? w : 0));
+        n.position.y = Math.round(hy * s - h / 2);
+        continue;
+      }
+      n.position.x = (n.position.x ?? 0) * s;
+      n.position.y = (n.position.y ?? 0) * s;
+      if (typeof n.width === "number") n.width *= s;
+      if (typeof n.height === "number") n.height *= s;
+      if (n.style && typeof n.style.width === "number") n.style.width *= s;
+      if (n.style && typeof n.style.height === "number") n.style.height *= s;
+      if (n.measured) {
+        if (typeof n.measured.width === "number") n.measured.width *= s;
+        if (typeof n.measured.height === "number") n.measured.height *= s;
+      }
+    }
+
+    for (const e of edges) {
+      const d = e.data;
+      if (!d) continue;
+      if (Array.isArray(d.manualWaypoints)) {
+        d.manualWaypoints = d.manualWaypoints.map((p: any) => ({ ...p, x: p.x * s, y: p.y * s }));
+      }
+      if (typeof d.cableIdGap === "number") d.cableIdGap = Math.round(d.cableIdGap * s);
+      if (typeof d.cableIdMidOffset === "number") d.cableIdMidOffset = Math.round(d.cableIdMidOffset * s);
+    }
+
+    if (data.bundles) {
+      for (const b of Object.values(data.bundles) as any[]) {
+        if (Array.isArray(b?.trunkWaypoints)) {
+          b.trunkWaypoints = b.trunkWaypoints.map((p: any) => ({ ...p, x: p.x * s, y: p.y * s }));
+        }
+      }
+    }
+    if (typeof data.cableIdGap === "number") data.cableIdGap = Math.round(data.cableIdGap * s);
+    if (typeof data.cableIdMidOffset === "number") data.cableIdMidOffset = Math.round(data.cableIdMidOffset * s);
+
+    data.version = 41;
+    return data;
+  },
 };
 
 // ---------- v35 → v36 helpers ----------
@@ -682,7 +749,16 @@ function migrateStubsToNodes(data: any): void {
       schematicNodeMap,
     );
     const match = positions.find((p) => p.handleId === handleId);
-    if (match) return { x: match.absX, y: match.absY, side: match.side };
+    if (match) {
+      // FROZEN-WORLD CORRECTION: this migration runs on pre-v41 (20px-grid) data, but
+      // getPortAbsolutePositions is live code and computes the 16px-grid layout since
+      // v41. Every band/row constant scaled by exactly 0.8, so the legacy node-local
+      // port offset is the new offset x 1.25 (exact for default display settings;
+      // within a few px when header aux rows change the band rounding — close enough
+      // for stub placement, which only needs the port row).
+      const dTop = absPos(deviceNode).y;
+      return { x: match.absX, y: dTop + (match.absY - dTop) * 1.25, side: match.side };
+    }
     // Fallback for malformed handle ids.
     const dPos = absPos(deviceNode);
     const w = deviceNode.measured?.width ?? deviceNode.width ?? 180;

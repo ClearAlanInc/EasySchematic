@@ -22,6 +22,7 @@ import type {
 import { deviceContentHeight } from "./deviceHandleLayout";
 import { defaultStubPlacement, snapStubHandleY, STUB_W_EST, STUB_H_EST } from "../stubPlacement";
 import { reconcileBundleJunctions } from "../bundles";
+import { migrateSchematic } from "../migrations";
 import defaultSchematicJson from "../defaultSchematic.json";
 
 export interface Fixture {
@@ -39,7 +40,7 @@ function normalize(nodes: SchematicNode[]): SchematicNode[] {
   return nodes.map((n) => {
     const clean = { ...n, selected: false, dragging: false } as SchematicNode;
     if (clean.type === "device" && (!clean.measured || clean.measured.height == null)) {
-      const width = clean.measured?.width ?? 180;
+      const width = clean.measured?.width ?? 144;
       clean.measured = { width, height: deviceContentHeight({ data: clean.data as DeviceData, measured: { width } }) };
     }
     if (clean.type === "stub-label") {
@@ -70,10 +71,15 @@ export function makeFixture(
 
 /** Load a fixture from a JSON file (full schematic or thin {nodes,edges}). */
 export function loadFixture(path: string, name?: string): Fixture {
-  const raw = JSON.parse(readFileSync(path, "utf8")) as {
+  let raw = JSON.parse(readFileSync(path, "utf8")) as {
+    version?: number;
     nodes: SchematicNode[];
     edges: ConnectionEdge[];
   };
+  // Versioned exports run the app's migration chain (e.g. the v41 x0.8 grid rescale) so
+  // the harness measures exactly what the app would route. Thin {nodes,edges} fixtures
+  // carry no version and are assumed current-world.
+  if (typeof raw.version === "number") raw = migrateSchematic(raw);
   const base = name ?? path.replace(/^.*[\\/]/, "").replace(/\.json$/, "");
   return makeFixture(base, raw.nodes ?? [], raw.edges ?? []);
 }
@@ -88,7 +94,10 @@ export function loadFileFixtures(): Fixture[] {
 }
 
 export function defaultSchematicFixture(): Fixture {
-  const data = defaultSchematicJson as unknown as { nodes: SchematicNode[]; edges: ConnectionEdge[] };
+  // Clone before migrating — migrateSchematic mutates, and the JSON import is module-cached.
+  const data = migrateSchematic(
+    structuredClone(defaultSchematicJson),
+  ) as unknown as { nodes: SchematicNode[]; edges: ConnectionEdge[] };
   return makeFixture("defaultSchematic", data.nodes, data.edges);
 }
 
@@ -123,7 +132,7 @@ export function makeDevice(opts: {
     ports: opts.ports,
     auxiliaryData: opts.auxiliaryData,
   } as unknown as DeviceData;
-  const width = 180;
+  const width = 144;
   const height = deviceContentHeight({ data, measured: { width } });
   return {
     id: opts.id,

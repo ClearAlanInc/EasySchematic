@@ -62,11 +62,12 @@ interface GridNode {
  * Default grid cell size in pixels. All grid coordinates are multiples of the ACTIVE cell size.
  * The active size is overridable per routing run via `__routingParams.CELL_SIZE` (see `cellSize`),
  * which the portfolio uses as a search axis: a finer grid gives the column allocator more distinct
- * lanes in a tight band, which measurably cuts weaving on dense schematics (icdc weave 22→8, video
- * 27→14, ARKEMA 53→32) and reduces routes forced inside a tall hub's body — at the cost of more A*
- * cells (slower). 10 is the sweet spot; below ~8px corridors read as shared verticals and it backfires.
+ * lanes in a tight band, which measurably cuts weaving on dense schematics — at the cost of more A*
+ * cells (slower) and, below the port pitch, corridors that read as shared verticals (the failed
+ * CELL_SIZE=10 experiment). 16 since schema v41: matches GRID_SIZE and the 16px port row pitch —
+ * the routing grid and the port grid must agree or every endpoint picks up a sub-cell jog.
  */
-export const CELL_SIZE = 20;
+export const CELL_SIZE = 16;
 
 /**
  * Active grid cell size for the current routing run. Reads `__routingParams.CELL_SIZE` (the same
@@ -157,8 +158,8 @@ export function buildObstacles(
     ) continue;
     if (excludeIds.length > 0 && excludeIds.includes(n.id)) continue;
     const pos = getAbsPos(n);
-    const w = n.measured?.width ?? 180;
-    const h = n.measured?.height ?? 60;
+    const w = n.measured?.width ?? 144;
+    const h = n.measured?.height ?? 48;
     rects.push({
       left: pos.x - pad,
       top: pos.y - pad,

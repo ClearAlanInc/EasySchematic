@@ -29,8 +29,8 @@ function esc(s: string): string {
 }
 
 function nodeSize(n: SchematicNode): { w: number; h: number } {
-  const w = n.measured?.width ?? (n.type === "device" ? 180 : 120);
-  const h = n.measured?.height ?? (n.type === "device" ? 60 : 60);
+  const w = n.measured?.width ?? (n.type === "device" ? 144 : 120);
+  const h = n.measured?.height ?? (n.type === "device" ? 48 : 48);
   return { w, h };
 }
 

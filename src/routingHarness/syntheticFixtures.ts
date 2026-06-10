@@ -19,11 +19,11 @@ function handleAbs(node: SchematicNode, handleId: string): { x: number; y: numbe
 /** Source device with N outputs fanning to N stacked targets on the right. */
 function fanOutDense(): Fixture {
   const outs = Array.from({ length: 8 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
-  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 200, ports: outs });
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 160, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = outs.map((p, i) => {
     const tgtIn = makePort("In", "sdi", "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 700, y: i * 110, ports: [tgtIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 560, y: i * 88, ports: [tgtIn] });
     nodes.push(tgt);
     return makeEdge({ id: `e${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tgtIn.id, signalType: "sdi" });
   });
@@ -33,11 +33,11 @@ function fanOutDense(): Fixture {
 /** Targets sit to the LEFT of the source — every edge must route backward. */
 function backwardEdges(): Fixture {
   const outs = Array.from({ length: 5 }, (_, i) => makePort(`Out ${i + 1}`, "hdmi", "output"));
-  const src = makeDevice({ id: "src", label: "Source", x: 800, y: 150, ports: outs });
+  const src = makeDevice({ id: "src", label: "Source", x: 640, y: 120, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = outs.map((p, i) => {
     const tIn = makePort("In", "hdmi", "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Sink ${i + 1}`, x: 0, y: i * 130, ports: [tIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Sink ${i + 1}`, x: 0, y: i * 104, ports: [tIn] });
     nodes.push(tgt);
     return makeEdge({ id: `b${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tIn.id, signalType: "hdmi" });
   });
@@ -46,15 +46,15 @@ function backwardEdges(): Fixture {
 
 /** Devices nested in room nodes; edges cross room boundaries (rooms are not obstacles). */
 function nestedRooms(): Fixture {
-  const roomA = { id: "roomA", type: "room", position: { x: 0, y: 0 }, data: { label: "Booth" }, measured: { width: 400, height: 600 } } as unknown as SchematicNode;
-  const roomB = { id: "roomB", type: "room", position: { x: 700, y: 0 }, data: { label: "Stage" }, measured: { width: 400, height: 600 } } as unknown as SchematicNode;
+  const roomA = { id: "roomA", type: "room", position: { x: 0, y: 0 }, data: { label: "Booth" }, measured: { width: 320, height: 480 } } as unknown as SchematicNode;
+  const roomB = { id: "roomB", type: "room", position: { x: 560, y: 0 }, data: { label: "Stage" }, measured: { width: 320, height: 480 } } as unknown as SchematicNode;
   const aOut = makePort("Out", "dante", "output");
   const aOut2 = makePort("Out 2", "ndi", "output");
-  const devA = makeDevice({ id: "devA", label: "Mixer", x: 60, y: 80, ports: [aOut, aOut2], parentId: "roomA" });
+  const devA = makeDevice({ id: "devA", label: "Mixer", x: 48, y: 64, ports: [aOut, aOut2], parentId: "roomA" });
   const bIn = makePort("In", "dante", "input");
   const bIn2 = makePort("In", "ndi", "input");
-  const devB = makeDevice({ id: "devB", label: "Amp", x: 60, y: 100, ports: [bIn], parentId: "roomB" });
-  const devC = makeDevice({ id: "devC", label: "Decoder", x: 60, y: 360, ports: [bIn2], parentId: "roomB" });
+  const devB = makeDevice({ id: "devB", label: "Amp", x: 48, y: 80, ports: [bIn], parentId: "roomB" });
+  const devC = makeDevice({ id: "devC", label: "Decoder", x: 48, y: 288, ports: [bIn2], parentId: "roomB" });
   const edges = [
     makeEdge({ id: "n1", source: "devA", sourceHandle: aOut.id, target: "devB", targetHandle: bIn.id, signalType: "dante" }),
     makeEdge({ id: "n2", source: "devA", sourceHandle: aOut2.id, target: "devC", targetHandle: bIn2.id, signalType: "ndi" }),
@@ -66,11 +66,11 @@ function nestedRooms(): Fixture {
 function stubsSpread(): Fixture {
   const o1 = makePort("Out 1", "sdi", "output");
   const o2 = makePort("Out 2", "sdi", "output");
-  const src = makeDevice({ id: "src", label: "Camera", x: 0, y: 120, ports: [o1, o2] });
+  const src = makeDevice({ id: "src", label: "Camera", x: 0, y: 96, ports: [o1, o2] });
   const tIn1 = makePort("In", "sdi", "input");
   const tIn2 = makePort("In", "sdi", "input");
-  const tgt1 = makeDevice({ id: "tgt1", label: "Switcher A", x: 900, y: 60, ports: [tIn1] });
-  const tgt2 = makeDevice({ id: "tgt2", label: "Switcher B", x: 900, y: 360, ports: [tIn2] });
+  const tgt1 = makeDevice({ id: "tgt1", label: "Switcher A", x: 720, y: 48, ports: [tIn1] });
+  const tgt2 = makeDevice({ id: "tgt2", label: "Switcher B", x: 720, y: 288, ports: [tIn2] });
 
   const pair1 = makeStubPair({
     linkId: "lc1", signalType: "sdi",
@@ -94,11 +94,11 @@ function stubsSpread(): Fixture {
 function mixedSignalCorridor(): Fixture {
   const sigs: SignalType[] = ["sdi", "hdmi", "dante", "ndi", "aes", "usb"];
   const outs = sigs.map((s, i) => makePort(`Out ${i + 1}`, s, "output"));
-  const src = makeDevice({ id: "src", label: "Hub", x: 0, y: 300, ports: outs });
+  const src = makeDevice({ id: "src", label: "Hub", x: 0, y: 240, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = sigs.map((s, i) => {
     const tIn = makePort("In", s, "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Node ${i + 1}`, x: 600, y: i * 130, ports: [tIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Node ${i + 1}`, x: 480, y: i * 104, ports: [tIn] });
     nodes.push(tgt);
     return makeEdge({ id: `m${i}`, source: "src", sourceHandle: outs[i].id, target: `tgt${i}`, targetHandle: tIn.id, signalType: s });
   });
@@ -115,12 +115,12 @@ function mixedSignalCorridor(): Fixture {
 function multiSourceStack(): Fixture {
   const s1Outs = Array.from({ length: 3 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
   const s2Outs = Array.from({ length: 3 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
-  const s1 = makeDevice({ id: "s1", label: "Camera A", x: 0, y: 40, ports: s1Outs });
-  const s2 = makeDevice({ id: "s2", label: "Camera B", x: 0, y: 520, ports: s2Outs });
+  const s1 = makeDevice({ id: "s1", label: "Camera A", x: 0, y: 32, ports: s1Outs });
+  const s2 = makeDevice({ id: "s2", label: "Camera B", x: 0, y: 416, ports: s2Outs });
   const nodes: SchematicNode[] = [s1, s2];
   const tgts = Array.from({ length: 6 }, (_, i) => {
     const tin = makePort("In", "sdi", "input");
-    const t = makeDevice({ id: `t${i}`, label: `Monitor ${i + 1}`, x: 820, y: i * 130, ports: [tin] });
+    const t = makeDevice({ id: `t${i}`, label: `Monitor ${i + 1}`, x: 656, y: i * 104, ports: [tin] });
     nodes.push(t);
     return { t, tin };
   });
@@ -144,14 +144,14 @@ function multiSourceStack(): Fixture {
  */
 function fanThroughGap(): Fixture {
   const outs = Array.from({ length: 5 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
-  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 280, ports: outs });
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 224, ports: outs });
   // A tall wall device spanning the vertical extent, blocking direct horizontals.
   const wallPorts = Array.from({ length: 14 }, (_, i) => makePort(`P${i + 1}`, "sdi", i % 2 ? "output" : "input"));
-  const wall = makeDevice({ id: "wall", label: "Patch Wall", x: 420, y: 0, ports: wallPorts });
+  const wall = makeDevice({ id: "wall", label: "Patch Wall", x: 336, y: 0, ports: wallPorts });
   const nodes: SchematicNode[] = [src, wall];
   const edges = outs.map((p, i) => {
     const tin = makePort("In", "sdi", "input");
-    const t = makeDevice({ id: `t${i}`, label: `Display ${i + 1}`, x: 820, y: i * 150, ports: [tin] });
+    const t = makeDevice({ id: `t${i}`, label: `Display ${i + 1}`, x: 656, y: i * 120, ports: [tin] });
     nodes.push(t);
     return makeEdge({ id: `g${i}`, source: "src", sourceHandle: p.id, target: `t${i}`, targetHandle: tin.id, signalType: "sdi" });
   });
@@ -163,13 +163,13 @@ function crossingGrid(): Fixture {
   const nodes: SchematicNode[] = [];
   const lefts = Array.from({ length: 4 }, (_, i) => {
     const o = makePort("Out", "sdi", "output");
-    const d = makeDevice({ id: `L${i}`, label: `L${i}`, x: 0, y: i * 140, ports: [o] });
+    const d = makeDevice({ id: `L${i}`, label: `L${i}`, x: 0, y: i * 112, ports: [o] });
     nodes.push(d);
     return { d, o };
   });
   const rights = Array.from({ length: 4 }, (_, i) => {
     const inp = makePort("In", "sdi", "input");
-    const d = makeDevice({ id: `R${i}`, label: `R${i}`, x: 600, y: i * 140, ports: [inp] });
+    const d = makeDevice({ id: `R${i}`, label: `R${i}`, x: 480, y: i * 112, ports: [inp] });
     nodes.push(d);
     return { d, inp };
   });
@@ -183,11 +183,11 @@ function crossingGrid(): Fixture {
 /** 6 connections, one source region → one target region, all bundled onto one trunk. */
 function bundle6SamePair(): Fixture {
   const outs = Array.from({ length: 6 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
-  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 200, ports: outs });
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 160, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = outs.map((p, i) => {
     const tIn = makePort("In", "sdi", "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 700, y: i * 110, ports: [tIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 560, y: i * 88, ports: [tIn] });
     nodes.push(tgt);
     return makeEdge({
       id: `e${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tIn.id,
@@ -201,11 +201,11 @@ function bundle6SamePair(): Fixture {
 function bundleFanIn(): Fixture {
   const nodes: SchematicNode[] = [];
   const tIns = Array.from({ length: 3 }, (_, i) => makePort(`In ${i + 1}`, "sdi", "input"));
-  const tgt = makeDevice({ id: "tgt", label: "Switcher", x: 800, y: 200, ports: tIns });
+  const tgt = makeDevice({ id: "tgt", label: "Switcher", x: 640, y: 160, ports: tIns });
   nodes.push(tgt);
   const edges = tIns.map((tIn, i) => {
     const out = makePort("Out", "sdi", "output");
-    const src = makeDevice({ id: `src${i}`, label: `Camera ${i + 1}`, x: 0, y: i * 160, ports: [out] });
+    const src = makeDevice({ id: `src${i}`, label: `Camera ${i + 1}`, x: 0, y: i * 128, ports: [out] });
     nodes.push(src);
     return makeEdge({
       id: `f${i}`, source: `src${i}`, sourceHandle: out.id, target: "tgt", targetHandle: tIn.id,
@@ -219,11 +219,11 @@ function bundleFanIn(): Fixture {
 function bundleMixedSignal(): Fixture {
   const sigs: SignalType[] = ["sdi", "hdmi", "dante", "ndi"];
   const outs = sigs.map((s, i) => makePort(`Out ${i + 1}`, s, "output"));
-  const src = makeDevice({ id: "src", label: "Hub", x: 0, y: 250, ports: outs });
+  const src = makeDevice({ id: "src", label: "Hub", x: 0, y: 200, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = sigs.map((s, i) => {
     const tIn = makePort("In", s, "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Node ${i + 1}`, x: 650, y: i * 130, ports: [tIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Node ${i + 1}`, x: 520, y: i * 104, ports: [tIn] });
     nodes.push(tgt);
     return makeEdge({
       id: `x${i}`, source: "src", sourceHandle: outs[i].id, target: `tgt${i}`, targetHandle: tIn.id,
@@ -241,11 +241,11 @@ function bundleMixedSignal(): Fixture {
  */
 function bundleWithTraffic(): Fixture {
   const outs = Array.from({ length: 8 }, (_, i) => makePort(`Out ${i + 1}`, "sdi", "output"));
-  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 300, ports: outs });
+  const src = makeDevice({ id: "src", label: "Router", x: 0, y: 240, ports: outs });
   const nodes: SchematicNode[] = [src];
   const edges = outs.map((p, i) => {
     const tIn = makePort("In", "sdi", "input");
-    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 760, y: i * 100, ports: [tIn] });
+    const tgt = makeDevice({ id: `tgt${i}`, label: `Display ${i + 1}`, x: 608, y: i * 80, ports: [tIn] });
     nodes.push(tgt);
     return makeEdge({
       id: `e${i}`, source: "src", sourceHandle: p.id, target: `tgt${i}`, targetHandle: tIn.id,

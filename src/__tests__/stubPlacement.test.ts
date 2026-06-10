@@ -31,9 +31,9 @@ function snapshot(devY: number, portRelY: number, portHandleId: string, stubY: n
 
 describe("snapStubHandleY", () => {
   it("lands the handle (top + h/2) on the nearest grid line", () => {
-    expect(snapStubHandleY(100, 14) + 7).toBe(107 % 20 < 10 ? 100 : 120); // 107 → 100
-    expect(snapStubHandleY(93, 14)).toBe(93);   // handle already at 100
-    expect(snapStubHandleY(100, 14)).toBe(93);  // grid-aligned top → handle re-centered
+    expect(snapStubHandleY(100, 14) + 7).toBe(112); // handle 107 → nearest line 112
+    expect(snapStubHandleY(89, 14)).toBe(89);  // handle already at 96
+    expect(snapStubHandleY(96, 14)).toBe(89);  // grid-aligned top → handle re-centered
   });
 });
 

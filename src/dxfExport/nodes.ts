@@ -146,13 +146,13 @@ export function emitDevice(
   const data = node.data as DeviceData;
   const ax = internal.internals.positionAbsolute.x;
   const ay = internal.internals.positionAbsolute.y;
-  const w = node.measured?.width ?? 180;
-  const h = node.measured?.height ?? 80;
+  const w = node.measured?.width ?? 144;
+  const h = node.measured?.height ?? 64;
   const rect = toDxfRect(ax, ay, w, h);
 
   const handles = getHandlePositions(node, rfInstance);
 
-  // Header band — merged name strip + header aux rows. Height is 20-multiple (min 40),
+  // Header band — merged name strip + header aux rows. Height is 16-multiple (min 32),
   // matching DeviceNode's headerBandHeight() so the DXF export tracks the canvas layout.
   const headerRows = rowsInSlot(data.auxiliaryData, "header");
   const resolvedLabel = resolveDeviceLabel(data, schematicDefaults);

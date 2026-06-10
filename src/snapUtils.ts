@@ -54,18 +54,18 @@ function estimateDeviceHeight(node: SchematicNode): number {
   const right = ports.filter((p) => p.direction !== "bidirectional" && (p.direction === "output" ? !p.flipped : !!p.flipped)).length;
   const bidirs = ports.filter((p) => p.direction === "bidirectional").length;
   const portRows = Math.max(left, right) + bidirs;
-  // Base: 1px top border + 40px header band (min) + 1px header border-b
-  //     + 8px port-area pt + rows×20 + 9px port-area pb + 1px bottom border
-  //     = 60 + rows×20.
-  // totalAuxHeight adds (a) header band surplus above the 40-px baseline and (b) footer block height.
+  // Base: 1px top border + 32px header band (min) + 1px header border-b
+  //     + 6px port-area pt + rows×16 + 7px port-area pb + 1px bottom border
+  //     = 48 + rows×16.
+  // totalAuxHeight adds (a) header band surplus above the 32-px baseline and (b) footer block height.
   // Per-instance wrapLabel override is honored here; schematic-wide default is not threaded — React Flow's
   // measured height supersedes this estimate after the first render.
   const labelZone = data.wrapLabel ? HEADER_LABEL_ZONE_2_PX : HEADER_LABEL_ZONE_PX;
-  return 60 + portRows * 20 + totalAuxHeight(data.auxiliaryData, labelZone);
+  return 48 + portRows * 16 + totalAuxHeight(data.auxiliaryData, labelZone);
 }
 
 function nodeRect(node: SchematicNode): Rect {
-  const w = node.measured?.width ?? (node.width as number) ?? (node.style?.width as number) ?? (node.type === "room" ? 400 : 180);
+  const w = node.measured?.width ?? (node.width as number) ?? (node.style?.width as number) ?? (node.type === "room" ? 400 : 144);
   const h = node.measured?.height ?? (node.height as number) ?? (node.style?.height as number) ?? (node.type === "room" ? 300 : estimateDeviceHeight(node));
   return {
     left: node.position.x,
@@ -117,7 +117,7 @@ function absoluteNodePos(
 /** Node rect in absolute world coords. Single allocation per call (parent
  *  chain walk inlined; intermediate nodeRect/absoluteNodePos avoided). */
 function absRect(node: SchematicNode, nodeMap: Map<string, SchematicNode>): Rect {
-  const w = node.measured?.width ?? (node.width as number) ?? (node.style?.width as number) ?? (node.type === "room" ? 400 : 180);
+  const w = node.measured?.width ?? (node.width as number) ?? (node.style?.width as number) ?? (node.type === "room" ? 400 : 144);
   const h = node.measured?.height ?? (node.height as number) ?? (node.style?.height as number) ?? (node.type === "room" ? 300 : estimateDeviceHeight(node));
   let nx = node.position.x;
   let ny = node.position.y;
@@ -253,7 +253,7 @@ export function getPortAbsolutePositions(
   // port and stub on adjacent integers and produce a 1-px jog at the endpoint.
   const rawDeviceAbs = absoluteNodePos(device, nodeMap);
   const deviceAbs = { x: Math.round(rawDeviceAbs.x), y: Math.round(rawDeviceAbs.y) };
-  const deviceW = Math.round((device.measured?.width as number | undefined) ?? 180);
+  const deviceW = Math.round((device.measured?.width as number | undefined) ?? 144);
   const out: PortPosition[] = [];
 
   // Mirror DeviceNode's port partitioning (without the optional visibility
@@ -323,13 +323,13 @@ export function getPortAbsolutePositions(
   let cursor = lrBlockHeight + emptySlotsCount;
 
   // Y of a port row's vertical center. Layers from device top:
-  //   1px top border + headerBand + 1px header border-b + 8px port-area pt
-  // For headerBand a 20-multiple, the row center lands on `device.y + 20k`,
-  // i.e. exactly on the 20-px routing grid. (The `pt-8` in DeviceNode.tsx is
+  //   1px top border + headerBand + 1px header border-b + 6px port-area pt
+  // For headerBand a 16-multiple, the row center lands on `device.y + 16k`,
+  // i.e. exactly on the 16-px routing grid. (The `pt-[6px]` in DeviceNode.tsx is
   // intentional — it compensates for the header band's `border-b` so ports
-  // remain grid-aligned; using `pt-9` would push every row off-grid by 1px.)
-  const PORT_AREA_TOP = 1 + headerBand + 1 + 8;
-  const rowCenterY = (row: number) => deviceAbs.y + PORT_AREA_TOP + row * 20 + 10;
+  // remain grid-aligned; using 7px would push every row off-grid by 1px.)
+  const PORT_AREA_TOP = 1 + headerBand + 1 + 6;
+  const rowCenterY = (row: number) => deviceAbs.y + PORT_AREA_TOP + row * 16 + 8;
 
   // Passthrough block: one "Rear / Front" header row, then passthroughItems.
   if (passthroughPorts.length > 0) {
@@ -883,10 +883,10 @@ export function computeResizeSnap(
 
 // ---------- Minimum spacing enforcement ----------
 
-// Must match pathfinding.ts constants
-const STUB = 30;
-const PAD = 20;
-const ROUTING_GAP = 8; // Buffer so stubs land in the routing channel, not on obstacle boundary
+// Must match pathfinding.ts constants (px; scaled with the 16px grid in v41)
+const STUB = 24;
+const PAD = 16;
+const ROUTING_GAP = 6; // Buffer so stubs land in the routing channel, not on obstacle boundary
 const STUB_GAP = 6; // Must match OffsetEdge STUB_GAP
 
 /** Count ports on the right side (outputs + flipped inputs + bidirectional) */
@@ -1103,7 +1103,7 @@ export function speculativeReparent(
 ): SchematicNode {
   if (node.parentId) return node;
 
-  const nodeW = node.measured?.width ?? 180;
+  const nodeW = node.measured?.width ?? 144;
   const nodeH = node.measured?.height ?? estimateDeviceHeight(node);
   const centerX = node.position.x + nodeW / 2;
   const centerY = node.position.y + nodeH / 2;

@@ -1,4 +1,5 @@
 import type { ConnectionEdge, BundleMeta, SchematicNode, BundleJunctionNode } from "./types";
+import { GRID_SIZE } from "./gridConstants";
 
 /** React Flow node type for a bundle's break-in / break-out anchor. */
 export const BUNDLE_JUNCTION_TYPE = "bundle-junction" as const;
@@ -42,14 +43,13 @@ export function junctionNodeId(bundleId: string, role: "in" | "out"): string {
 }
 
 /** Gap (px) between a member device cluster and its break-in/out anchor — mirrors
- *  computeBundleTrunk's default. */
-const JUNCTION_GAP = 40;
+ *  computeBundleTrunk's default. Two routing cells. */
+const JUNCTION_GAP = 2 * GRID_SIZE;
 /** Match the waypoint-node z so junctions sit above (elevated) edges and stay clickable. */
 const JUNCTION_Z_INDEX = 100;
 /** Routing grid (px). Junction anchors are snapped to it so the drawn trunk — which the
  *  router A*-snaps to this grid — passes exactly through the handle (no few-px float). */
-const GRID = 20;
-const snapGrid = (v: number) => Math.round(v / GRID) * GRID;
+const snapGrid = (v: number) => Math.round(v / GRID_SIZE) * GRID_SIZE;
 
 /** Absolute bounding box (left/right edge + vertical center) of a node, walking the parent
  *  chain so devices nested in rooms resolve correctly. measured size supersedes the 180×60
@@ -68,8 +68,8 @@ function absNodeBox(
     y += p.position.y;
     pid = p.parentId;
   }
-  const w = (n.measured?.width as number | undefined) ?? (n.width as number | undefined) ?? 180;
-  const h = (n.measured?.height as number | undefined) ?? (n.height as number | undefined) ?? 60;
+  const w = (n.measured?.width as number | undefined) ?? (n.width as number | undefined) ?? 144;
+  const h = (n.measured?.height as number | undefined) ?? (n.height as number | undefined) ?? 48;
   return { left: x, right: x + w, centerY: y + h / 2 };
 }
 

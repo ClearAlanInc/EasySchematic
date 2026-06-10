@@ -56,9 +56,9 @@ describe("anchorRouteEndpoints", () => {
     expect(out[out.length - 1]).toEqual({ x: 300, y: 213 });
     expectOrthogonal(out);
     expect(out.length).toBe(4);
-    // Step parked one cell (20px) from the target pin.
-    expect(out[1].x).toBe(280);
-    expect(out[2].x).toBe(280);
+    // Step parked one cell (16px) from the target pin.
+    expect(out[1].x).toBe(284);
+    expect(out[2].x).toBe(284);
     // First and last segments stay horizontal (arrival rule).
     expect(out[0].y).toBe(out[1].y);
     expect(out[2].y).toBe(out[3].y);
@@ -87,8 +87,8 @@ describe("tuckSubgridSteps", () => {
     const out = tuckSubgridSteps(wps);
     expect(out).toEqual([
       { x: 366480, y: 114700 },
-      { x: 366500, y: 114700 },
-      { x: 366500, y: 114707 },
+      { x: 366496, y: 114700 },
+      { x: 366496, y: 114707 },
       { x: 366580, y: 114707 },
     ]);
     expectOrthogonal(out);
@@ -103,8 +103,8 @@ describe("tuckSubgridSteps", () => {
       { x: 600, y: 60 },
     ];
     const out = tuckSubgridSteps(wps);
-    expect(out[1]).toEqual({ x: 200, y: 310 });
-    expect(out[2]).toEqual({ x: 200, y: 320 });
+    expect(out[1]).toEqual({ x: 196, y: 310 });
+    expect(out[2]).toEqual({ x: 196, y: 320 });
     expect(out[0]).toEqual(wps[0]);
     expect(out[3]).toEqual(wps[3]);
     expectOrthogonal(out);

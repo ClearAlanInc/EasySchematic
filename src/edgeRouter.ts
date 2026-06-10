@@ -711,8 +711,8 @@ export function routeAllEdges(
     }
     const srcPos = srcNode ? getAbsPos(srcNode, nodeMap) : { x: 0, y: 0 };
     const tgtPos = tgtNode ? getAbsPos(tgtNode, nodeMap) : { x: 0, y: 0 };
-    const srcFallbackW = srcNode?.type === "stub-label" ? STUB_W_EST : 180;
-    const tgtFallbackW = tgtNode?.type === "stub-label" ? STUB_W_EST : 180;
+    const srcFallbackW = srcNode?.type === "stub-label" ? STUB_W_EST : 144;
+    const tgtFallbackW = tgtNode?.type === "stub-label" ? STUB_W_EST : 144;
     const srcCenterX = srcPos.x + (srcNode?.measured?.width ?? srcFallbackW) / 2;
     const tgtCenterX = tgtPos.x + (tgtNode?.measured?.width ?? tgtFallbackW) / 2;
 
