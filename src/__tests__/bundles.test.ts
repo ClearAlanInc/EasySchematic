@@ -10,17 +10,18 @@ import {
   splitMemberWaypoints,
   BUNDLE_JUNCTION_TYPE,
 } from "../bundles";
+import type { ConnectionEdge, SchematicNode } from "../types";
 
 const edge = (id: string, bundleId?: string) =>
-  ({ id, source: "a", target: "b", data: { signalType: "sdi", ...(bundleId ? { bundleId } : {}) } }) as any;
+  ({ id, source: "a", target: "b", data: { signalType: "sdi", ...(bundleId ? { bundleId } : {}) } }) as unknown as ConnectionEdge;
 
 // Member edge wired between two specific device nodes (for geometry-based heal tests).
 const memberEdge = (id: string, source: string, target: string, bundleId: string) =>
-  ({ id, source, target, data: { signalType: "sdi", bundleId } }) as any;
+  ({ id, source, target, data: { signalType: "sdi", bundleId } }) as unknown as ConnectionEdge;
 
 // Device node with explicit measured size at a position.
 const device = (id: string, x: number, y: number, w = 180, h = 60) =>
-  ({ id, type: "device", position: { x, y }, measured: { width: w, height: h }, data: {} }) as any;
+  ({ id, type: "device", position: { x, y }, measured: { width: w, height: h }, data: {} }) as unknown as SchematicNode;
 
 describe("gcBundles", () => {
   it("keeps bundles with >=2 members, dissolves the rest", () => {
@@ -172,7 +173,7 @@ describe("reconcileBundleJunctions", () => {
       type: BUNDLE_JUNCTION_TYPE,
       position: { x: 999, y: 999 },
       data: { bundleId: "b1", role: "in", placed: true },
-    } as any;
+    } as unknown as SchematicNode;
     const out = reconcileBundleJunctions([...nodes, dragged], liveBundleEdges());
     const { in: jin } = bundleJunctionsFor(out, "b1");
     expect(jin?.position).toEqual({ x: 999, y: 999 }); // not repositioned

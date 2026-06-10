@@ -536,8 +536,8 @@ const migrations: Record<number, Migration> = {
     // boxes) keep their size; their position is rescaled around the CONNECTING HANDLE so
     // they stay colinear with the partner port.
     const s = 0.8;
-    const nodes: any[] = data.nodes ?? [];
-    const edges: any[] = data.edges ?? [];
+    const nodes = data.nodes ?? [];
+    const edges = data.edges ?? [];
 
     // A stub-label's connecting side is the l/r handle its leg edge references.
     const stubSideById = new Map<string, "l" | "r">();
@@ -576,16 +576,16 @@ const migrations: Record<number, Migration> = {
       const d = e.data;
       if (!d) continue;
       if (Array.isArray(d.manualWaypoints)) {
-        d.manualWaypoints = d.manualWaypoints.map((p: any) => ({ ...p, x: p.x * s, y: p.y * s }));
+        d.manualWaypoints = d.manualWaypoints.map((p: { x: number; y: number }) => ({ ...p, x: p.x * s, y: p.y * s }));
       }
       if (typeof d.cableIdGap === "number") d.cableIdGap = Math.round(d.cableIdGap * s);
       if (typeof d.cableIdMidOffset === "number") d.cableIdMidOffset = Math.round(d.cableIdMidOffset * s);
     }
 
     if (data.bundles) {
-      for (const b of Object.values(data.bundles) as any[]) {
+      for (const b of Object.values(data.bundles) as { trunkWaypoints?: { x: number; y: number }[] }[]) {
         if (Array.isArray(b?.trunkWaypoints)) {
-          b.trunkWaypoints = b.trunkWaypoints.map((p: any) => ({ ...p, x: p.x * s, y: p.y * s }));
+          b.trunkWaypoints = b.trunkWaypoints.map((p) => ({ ...p, x: p.x * s, y: p.y * s }));
         }
       }
     }

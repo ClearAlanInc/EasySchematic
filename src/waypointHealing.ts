@@ -26,7 +26,7 @@ function buildAbsPos(nodes: SchematicNode[]) {
   const map = new Map<string, SchematicNode>();
   for (const n of nodes) map.set(n.id, n);
   return (id: string): { x: number; y: number } | null => {
-    let node = map.get(id);
+    const node = map.get(id);
     if (!node) return null;
     let x = node.position.x;
     let y = node.position.y;
