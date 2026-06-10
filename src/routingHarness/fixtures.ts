@@ -20,7 +20,7 @@ import type {
   BundleMeta,
 } from "../types";
 import { deviceContentHeight } from "./deviceHandleLayout";
-import { defaultStubPlacement, STUB_W_EST, STUB_H_EST } from "../stubPlacement";
+import { defaultStubPlacement, snapStubHandleY, STUB_W_EST, STUB_H_EST } from "../stubPlacement";
 import { reconcileBundleJunctions } from "../bundles";
 import defaultSchematicJson from "../defaultSchematic.json";
 
@@ -42,8 +42,14 @@ function normalize(nodes: SchematicNode[]): SchematicNode[] {
       const width = clean.measured?.width ?? 180;
       clean.measured = { width, height: deviceContentHeight({ data: clean.data as DeviceData, measured: { width } }) };
     }
-    if (clean.type === "stub-label" && !clean.measured) {
-      clean.measured = { width: STUB_W_EST, height: STUB_H_EST };
+    if (clean.type === "stub-label") {
+      if (!clean.measured) clean.measured = { width: STUB_W_EST, height: STUB_H_EST };
+      // Mirror the app's load heal: the connecting handle (box center) must sit on a
+      // grid line; legacy saves often have the box TOP grid-aligned → handle at +7.
+      clean.position = {
+        x: clean.position.x,
+        y: snapStubHandleY(clean.position.y, clean.measured.height),
+      };
     }
     return clean;
   });

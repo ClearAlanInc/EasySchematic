@@ -35,7 +35,7 @@ import type {
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
 import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
-import { defaultStubPlacement } from "./stubPlacement";
+import { defaultStubPlacement, snapStubHandleY } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_SHOW_ROOM, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
 import { pairKey } from "./roomDistance";
@@ -193,7 +193,14 @@ function applyWaypointHeal(nodes: SchematicNode[], edges: ConnectionEdge[]): Con
 
 function snapNodesToGrid(nodes: SchematicNode[]): SchematicNode[] {
   for (const n of nodes) {
-    if (n.type === "stub-label") continue;
+    if (n.type === "stub-label") {
+      // Stub boxes store sub-grid Y by design (handle = box CENTER must sit on a port
+      // row). Snap the handle center to the grid, not the top-left — a grid-aligned top
+      // puts the handle 7px off-grid and kinks the wire at the label. X is left alone
+      // (the wire is horizontal there; off-grid x can't produce a jog).
+      n.position.y = snapStubHandleY(n.position.y, n.measured?.height);
+      continue;
+    }
     n.position.x = Math.round(n.position.x / GRID_SIZE) * GRID_SIZE;
     n.position.y = Math.round(n.position.y / GRID_SIZE) * GRID_SIZE;
   }
