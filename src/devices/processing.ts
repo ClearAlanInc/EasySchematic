@@ -1383,4 +1383,21 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  {
+    id: "c0a80101-024c-4000-8000-000000000733",
+    deviceType: "capture-card",
+    label: "Magewell USB Capture SDI Gen 2",
+    manufacturer: "Magewell",
+    modelNumber: "USB Capture SDI Gen 2",
+    referenceUrl: "https://www.magewell.com/products/usb-capture-sdi-gen-2",
+    searchTerms: ["magewell", "usb capture", "sdi", "gen 2", "3g-sdi", "dongle"],
+    powerDrawW: 2.5, // USB bus-powered
+    heightMm: 12.3,
+    widthMm: 40.2,
+    depthMm: 92.2,
+    ports: [
+      port("3G-SDI In", "sdi", "input"),
+      port("USB 3.0", "usb", "output"),
+    ],
+  },
 ];

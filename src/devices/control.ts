@@ -117,4 +117,23 @@ export const templates: DeviceTemplate[] = [
       ...ports("MIDI Thru", "midi", "output", 4, "din-5"),
     ],
   },
+  {
+    id: "c0a80101-024b-4000-8000-000000000732",
+    deviceType: "ptz-controller",
+    label: "AIDA CCU-MINI",
+    manufacturer: "AIDA Imaging",
+    modelNumber: "CCU-MINI",
+    referenceUrl: "https://aidaimaging.com/ccu-mini/",
+    searchTerms: ["aida", "ccu-mini", "ptz", "controller", "visca", "joystick"],
+    heightMm: 101.6,
+    widthMm: 171.45,
+    depthMm: 139.7,
+    weightKg: 0.9,
+    ports: [
+      port("LAN (VISCA over IP)", "ethernet", "bidirectional"),
+      port("RS-422 (VISCA)", "rs422", "bidirectional", "rj45"),
+      port("RS-485 / RS-232", "rs485", "bidirectional", "phoenix"),
+      port("DC Power (12V)", "power", "input", "barrel"),
+    ],
+  },
 ];
