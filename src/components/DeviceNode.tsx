@@ -19,6 +19,14 @@ type ColumnItem =
   | { type: "port"; port: Port }
   | { type: "section"; name: string };
 
+/** Hover-tooltip suffix surfacing a USB-C port's Power Delivery rating, if set. */
+function usbcPowerSuffix(port: Port): string {
+  const parts: string[] = [];
+  if (port.usbcPowerSourceW != null) parts.push(`delivers ${port.usbcPowerSourceW}W`);
+  if (port.usbcPowerDrawW != null) parts.push(`draws ${port.usbcPowerDrawW}W`);
+  return parts.length ? ` — USB-C PD: ${parts.join(", ")}` : "";
+}
+
 /** Build a list of ports interleaved with section headers where section changes. */
 function buildColumnItems(ports: Port[]): ColumnItem[] {
   const items: ColumnItem[] = [];
@@ -268,7 +276,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         <span
           className="text-[10px] leading-4 truncate"
           style={{ color: SIGNAL_COLORS[port.signalType] }}
-          title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]})`}
+          title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]})${usbcPowerSuffix(port)}`}
         >
           {displayLabel(port.label)}
         </span>
@@ -536,7 +544,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                         <span
                           className="text-[10px] leading-4 truncate"
                           style={{ color: SIGNAL_COLORS[left.signalType] }}
-                          title={`${displayLabel(left.label)} (${SIGNAL_LABELS[left.signalType]})`}
+                          title={`${displayLabel(left.label)} (${SIGNAL_LABELS[left.signalType]})${usbcPowerSuffix(left)}`}
                         >
                           {displayLabel(left.label)}
                         </span>
@@ -549,7 +557,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                         <span
                           className="text-[10px] leading-4 truncate"
                           style={{ color: SIGNAL_COLORS[right.signalType] }}
-                          title={`${displayLabel(right.label)} (${SIGNAL_LABELS[right.signalType]})`}
+                          title={`${displayLabel(right.label)} (${SIGNAL_LABELS[right.signalType]})${usbcPowerSuffix(right)}`}
                         >
                           {displayLabel(right.label)}
                         </span>
@@ -653,7 +661,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                 <span
                   className="text-[10px] leading-4 truncate"
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
-                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — bidirectional`}
+                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — bidirectional${usbcPowerSuffix(port)}`}
                 >
                   ↔ {displayLabel(port.label)}
                 </span>

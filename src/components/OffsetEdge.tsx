@@ -5,7 +5,8 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 import { useSchematicStore } from "../store";
-import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle } from "../types";
+import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle, type DeviceData } from "../types";
+import { usbcPowerShortfallW } from "../connectorTypes";
 
 function OffsetEdgeComponent({
   id,
@@ -67,6 +68,24 @@ function OffsetEdgeComponent({
   const connectorMismatch = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.connectorMismatch === true;
+  });
+
+  // USB-C Power Delivery shortfall — derived live from the connected ports (wattage is
+  // edited after the connection exists, so it can't be a flag frozen at creation time).
+  // Returns the deficit in watts, or null when adequately supplied / not applicable.
+  const usbcShortfall = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    if (!edge) return null;
+    const resolvePort = (nodeId: string, handle: string | null | undefined) => {
+      const node = s.nodes.find((n) => n.id === nodeId);
+      if (!node || node.type !== "device") return undefined;
+      const portId = (handle ?? "").replace(/-(in|out|rear|front)$/, "");
+      return (node.data as DeviceData).ports?.find((p) => p.id === portId);
+    };
+    return usbcPowerShortfallW(
+      resolvePort(edge.source, edge.sourceHandle),
+      resolvePort(edge.target, edge.targetHandle),
+    );
   });
 
   // Check if this edge is hidden (part of a virtual pair, the secondary half)
@@ -234,6 +253,8 @@ function OffsetEdgeComponent({
           : LINE_STYLE_DASHARRAY[lineStyle]
             ? { strokeDasharray: LINE_STYLE_DASHARRAY[lineStyle] }
             : {}),
+        // USB-C power undersupply: amber dashed cue (yields to a gradient edge, which is rare here)
+        ...(usbcShortfall != null && !hasGradient ? { stroke: "#f59e0b", strokeDasharray: "5 3" } : {}),
         ...(hasGradient ? { stroke: `url(#${gradientId})` } : {}),
       }
     : { ...style, strokeWidth: 0, opacity: 0 };
@@ -520,6 +541,29 @@ function OffsetEdgeComponent({
     </>
   ) : null;
 
+  // USB-C power undersupply badge — amber pill at the midpoint stating the shortfall.
+  const usbcWarningBadge = usbcShortfall != null ? (
+    <div
+      key="usbc-undersupply"
+      title={`USB-C power undersupply: source delivers ${usbcShortfall}W less than the connected device draws`}
+      style={{
+        position: "absolute",
+        transform: `translate(-50%, -50%) translate(${customMidPt.x}px, ${customMidPt.y}px)`,
+        fontSize: 9,
+        fontWeight: 700,
+        lineHeight: 1.4,
+        color: "#fff",
+        background: "#f59e0b",
+        padding: "0 4px",
+        borderRadius: 4,
+        whiteSpace: "nowrap",
+        pointerEvents: "auto",
+      }}
+    >
+      ⚡ −{usbcShortfall}W
+    </div>
+  ) : null;
+
   // Visual-only reconnect circles + tooltip — rendered in HTML layer above cable labels.
   // Interaction is handled by RF's native SVG updater circles (pointer events pass through
   // labels since they have pointer-events: none). These HTML elements are purely decorative.
@@ -552,11 +596,12 @@ function OffsetEdgeComponent({
   ) : null;
 
   // All labels + reconnect visuals rendered via EdgeLabelRenderer (HTML layer above all SVG edges)
-  const hasPortalContent = customLabels || cableIdLabels || reconnectVisuals;
+  const hasPortalContent = customLabels || cableIdLabels || reconnectVisuals || usbcWarningBadge;
   const edgeLabelsPortal = hasPortalContent ? (
     <EdgeLabelRenderer>
       {cableIdLabels}
       {customLabels}
+      {usbcWarningBadge}
       {reconnectVisuals}
     </EdgeLabelRenderer>
   ) : null;

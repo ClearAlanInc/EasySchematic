@@ -184,6 +184,11 @@ export interface Port {
   notes?: string;
   /** PoE power draw in watts for this port (consumed when powered by switch) */
   poeDrawW?: number;
+  /** USB-C Power Delivery watts this port can DELIVER (source side — charger, dock, laptop).
+   *  Per-port, not a shared device budget: unlike PoE, USB-C doesn't pool power across ports. */
+  usbcPowerSourceW?: number;
+  /** USB-C Power Delivery watts this port CONSUMES (sink side — bus-powered device). */
+  usbcPowerDrawW?: number;
   /** Link speed for network ports */
   linkSpeed?: string;
   /** Stable link back to the template port this was cloned from — used for template-sync reconciliation. */

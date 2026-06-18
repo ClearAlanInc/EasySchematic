@@ -468,6 +468,30 @@ export function effectiveSignalType(
   );
 }
 
+/**
+ * USB-C Power Delivery shortfall (in watts) for a connection between two ports,
+ * or null when it doesn't apply (missing data) or the source covers the sink.
+ *
+ * Either end may be the source — USB-C PD's power role is independent of data
+ * direction — so both orientations are checked and the worst deficit wins.
+ */
+export function usbcPowerShortfallW(
+  a: Pick<Port, "usbcPowerSourceW" | "usbcPowerDrawW"> | undefined,
+  b: Pick<Port, "usbcPowerSourceW" | "usbcPowerDrawW"> | undefined,
+): number | null {
+  if (!a || !b) return null;
+  const deficits: number[] = [];
+  if (a.usbcPowerSourceW != null && b.usbcPowerDrawW != null) {
+    deficits.push(b.usbcPowerDrawW - a.usbcPowerSourceW);
+  }
+  if (b.usbcPowerSourceW != null && a.usbcPowerDrawW != null) {
+    deficits.push(a.usbcPowerDrawW - b.usbcPowerSourceW);
+  }
+  if (deficits.length === 0) return null;
+  const worst = Math.max(...deficits);
+  return worst > 0 ? worst : null;
+}
+
 /** Signal types that can have network configuration */
 export const NETWORK_SIGNAL_TYPES: Set<SignalType> = new Set([
   "ethernet", "ndi", "dante", "avb", "srt", "hdbaset", "aes67", "st2110",

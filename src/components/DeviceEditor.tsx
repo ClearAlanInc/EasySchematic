@@ -78,6 +78,8 @@ interface PortDraft {
   directAttach?: boolean;
   notes?: string;
   poeDrawW?: number;
+  usbcPowerSourceW?: number;
+  usbcPowerDrawW?: number;
   linkSpeed?: string;
   flipped?: boolean;
   // Passthrough-only fields
@@ -283,6 +285,8 @@ export default function DeviceEditor() {
       directAttach: p.directAttach,
       notes: p.notes,
       poeDrawW: p.poeDrawW,
+      usbcPowerSourceW: p.usbcPowerSourceW,
+      usbcPowerDrawW: p.usbcPowerDrawW,
       linkSpeed: p.linkSpeed,
       flipped: p.flipped,
       addressable: p.addressable,
@@ -620,6 +624,8 @@ export default function DeviceEditor() {
       directAttach: p.directAttach,
       notes: p.notes,
       poeDrawW: p.poeDrawW,
+      usbcPowerSourceW: p.usbcPowerSourceW,
+      usbcPowerDrawW: p.usbcPowerDrawW,
       linkSpeed: p.linkSpeed,
       flipped: p.flipped,
       addressable: p.addressable,
@@ -671,6 +677,8 @@ export default function DeviceEditor() {
       directAttach: p.directAttach,
       notes: p.notes,
       poeDrawW: p.poeDrawW,
+      usbcPowerSourceW: p.usbcPowerSourceW,
+      usbcPowerDrawW: p.usbcPowerDrawW,
       linkSpeed: p.linkSpeed,
       flipped: p.flipped,
       addressable: p.addressable,
@@ -2499,6 +2507,33 @@ function PortRow({
             />
           )}
         </>
+      )}
+
+      {/* USB-C Power Delivery (per-port — USB-C doesn't pool a shared budget like PoE) */}
+      {port.connectorType === "usb-c" && (
+        <div className="pl-6 mb-0.5 flex items-center gap-1.5">
+          <span className="text-[9px] text-[var(--color-text-muted)] shrink-0">USB-C PD (W):</span>
+          <input
+            className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
+            type="number"
+            value={port.usbcPowerSourceW ?? ""}
+            onChange={(e) => onUpdate({ usbcPowerSourceW: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="Delivers"
+            min={0}
+            onKeyDown={(e) => e.stopPropagation()}
+            title="Watts this port can deliver (source — charger, dock, laptop)"
+          />
+          <input
+            className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-blue-500"
+            type="number"
+            value={port.usbcPowerDrawW ?? ""}
+            onChange={(e) => onUpdate({ usbcPowerDrawW: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="Draws"
+            min={0}
+            onKeyDown={(e) => e.stopPropagation()}
+            title="Watts this port consumes (sink — bus-powered device)"
+          />
+        </div>
       )}
 
       {/* Capabilities (collapsible, only for video signal types) */}

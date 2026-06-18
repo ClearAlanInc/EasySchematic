@@ -99,6 +99,8 @@ function mergePort(templatePort: Port, devicePort: Port): Port {
   if (devicePort.notes) merged.notes = devicePort.notes;
   if (devicePort.activeConfig) merged.activeConfig = devicePort.activeConfig;
   if (devicePort.poeDrawW != null) merged.poeDrawW = devicePort.poeDrawW;
+  if (devicePort.usbcPowerSourceW != null) merged.usbcPowerSourceW = devicePort.usbcPowerSourceW;
+  if (devicePort.usbcPowerDrawW != null) merged.usbcPowerDrawW = devicePort.usbcPowerDrawW;
   if (devicePort.linkSpeed) merged.linkSpeed = devicePort.linkSpeed;
   if (devicePort.gender) merged.gender = devicePort.gender;
   return merged;

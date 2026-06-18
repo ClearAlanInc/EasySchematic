@@ -501,6 +501,13 @@ export default function DevicesAndPortsPage() {
         Network config is entered in the device editor under each port's settings. This data feeds
         into the <a href="/pack-list">Network Report</a>.
       </p>
+      <p>
+        <strong>USB-C Power Delivery.</strong> Ports with a USB-C connector get two per-port wattage
+        fields — how much the port <em>delivers</em> (a charger, dock, or laptop port) and how much it
+        <em>draws</em> (a bus-powered device). Unlike PoE, USB-C doesn't share one budget across ports,
+        so the rating lives on each port rather than the device. When a connection's source delivers
+        less than the connected device draws, the cable is flagged with an amber undersupply warning.
+      </p>
     </>
   );
 }
