@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, type DragEvent } from "react";
 import { useSchematicStore } from "../store";
+import { buildBulkSlots } from "../slotBulk";
 import {
   SIGNAL_LABELS,
   SIGNAL_COLORS,
@@ -1746,6 +1747,95 @@ function BulkAddForm({
   );
 }
 
+function BulkAddSlotsForm({
+  nodeId,
+  defaultStart,
+  onBulkAdd,
+  onClose,
+}: {
+  nodeId: string;
+  defaultStart: number;
+  onBulkAdd: (prefix: string, start: number, count: number, slotFamily: string) => void;
+  onClose: () => void;
+}) {
+  const [prefix, setPrefix] = useState("Slot");
+  const [start, setStart] = useState(defaultStart);
+  const [end, setEnd] = useState(defaultStart + 3);
+  const [slotFamily, setSlotFamily] = useState("");
+
+  const handleSubmit = () => {
+    const count = end - start + 1;
+    if (count < 1 || !prefix.trim()) return;
+    onBulkAdd(prefix.trim(), start, count, slotFamily.trim());
+    onClose();
+  };
+
+  return (
+    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded p-2 space-y-2">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <input
+          className="w-20 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          value={prefix}
+          onChange={(e) => setPrefix(e.target.value)}
+          placeholder="Prefix"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+        <div className="flex items-center gap-0.5">
+          <span className="text-[10px] text-[var(--color-text-muted)]">from</span>
+          <input
+            type="number"
+            className="w-12 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            value={start}
+            onChange={(e) => setStart(parseInt(e.target.value) || 1)}
+            min={0}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div className="flex items-center gap-0.5">
+          <span className="text-[10px] text-[var(--color-text-muted)]">to</span>
+          <input
+            type="number"
+            className="w-12 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+            value={end}
+            onChange={(e) => setEnd(parseInt(e.target.value) || 1)}
+            min={start}
+            max={999}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] text-[var(--color-text-muted)]">Family:</span>
+        <input
+          className="flex-1 bg-[var(--color-surface)] text-[var(--color-text-heading)] border border-[var(--color-border)] rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500"
+          value={slotFamily}
+          onChange={(e) => setSlotFamily(e.target.value)}
+          placeholder="(optional, e.g. yamaha-my)"
+          list={`slot-families-${nodeId}`}
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handleSubmit}
+          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors cursor-pointer"
+        >
+          Add {Math.max(0, end - start + 1)}
+        </button>
+        <button
+          onClick={onClose}
+          className="px-2 py-1 text-xs rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] border border-[var(--color-border)] transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <span className="text-[10px] text-[var(--color-text-muted)]">
+          {prefix} {start} … {prefix} {end}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function PortVisibilitySection({
   showAllPorts,
   setShowAllPorts,
@@ -2780,12 +2870,15 @@ function SlotEditSection({
 }) {
   const swapCard = useSchematicStore((s) => s.swapCard);
   const addSlot = useSchematicStore((s) => s.addSlot);
+  const addSlots = useSchematicStore((s) => s.addSlots);
   const updateSlot = useSchematicStore((s) => s.updateSlot);
   const removeSlot = useSchematicStore((s) => s.removeSlot);
   const edges = useSchematicStore((s) => s.edges);
   const customTemplates = useSchematicStore((s) => s.customTemplates);
 
   const [creatingCardForSlot, setCreatingCardForSlot] = useState<string | null>(null);
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const topLevelCount = installedSlots.filter((s) => !s.parentSlotId).length;
 
   const knownFamilies = useMemo(
     () => [
@@ -2803,16 +2896,35 @@ function SlotEditSection({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium">
-          Expansion Slots{installedSlots.length > 0 ? ` (${installedSlots.filter((s) => !s.parentSlotId).length})` : ""}
+          Expansion Slots{installedSlots.length > 0 ? ` (${topLevelCount})` : ""}
         </div>
-        <button
-          type="button"
-          onClick={() => addSlot(nodeId, { label: `Slot ${installedSlots.filter((s) => !s.parentSlotId).length + 1}`, slotFamily: "" })}
-          className="text-[10px] text-blue-600 hover:text-blue-700 cursor-pointer"
-        >
-          + Add Slot
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => addSlot(nodeId, { label: `Slot ${topLevelCount + 1}`, slotFamily: "" })}
+            className="text-[10px] text-blue-600 hover:text-blue-700 cursor-pointer"
+          >
+            + Add Slot
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowBulkAdd((v) => !v)}
+            className="text-[10px] text-blue-600 hover:text-blue-700 cursor-pointer"
+          >
+            + Bulk Add
+          </button>
+        </div>
       </div>
+      {showBulkAdd && (
+        <BulkAddSlotsForm
+          nodeId={nodeId}
+          defaultStart={topLevelCount + 1}
+          onBulkAdd={(prefix, start, count, slotFamily) =>
+            addSlots(nodeId, buildBulkSlots(prefix, start, count, slotFamily))
+          }
+          onClose={() => setShowBulkAdd(false)}
+        />
+      )}
       {installedSlots.length === 0 && (
         <div className="text-[10px] text-[var(--color-text-muted)] italic">
           No expansion slots. Add a slot for devices with modular card bays.

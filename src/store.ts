@@ -299,6 +299,7 @@ interface SchematicState {
   swapCard: (nodeId: string, slotId: string, cardTemplateId: string | null) => void;
   /** Add a new empty expansion slot to a device. */
   addSlot: (nodeId: string, slot: { label: string; slotFamily: string }) => void;
+  addSlots: (nodeId: string, slots: { label: string; slotFamily: string }[]) => void;
   /** Update label / slotFamily on an existing installed slot. */
   updateSlot: (nodeId: string, slotId: string, patch: { label?: string; slotFamily?: string; hidden?: boolean }) => void;
   /** Remove a slot, its ports, descendant slots, and any edges connected to their ports. */
@@ -2711,6 +2712,34 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const newNode = {
       ...node,
       data: { ...data, slots: [...slots, newSlot] },
+    } as DeviceNode;
+
+    set({ nodes: state.nodes.map((n, i) => (i === nodeIdx ? newNode : n)) });
+    get().saveToLocalStorage();
+  },
+
+  addSlots: (nodeId, slots) => {
+    if (slots.length === 0) return;
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    const nodeIdx = state.nodes.findIndex((n) => n.id === nodeId && n.type === "device");
+    if (nodeIdx === -1) return;
+    const node = state.nodes[nodeIdx] as DeviceNode;
+    const data = node.data;
+    const existing = data.slots ?? [];
+
+    const stamp = Date.now();
+    const newSlots: InstalledSlot[] = slots.map((s, i) => ({
+      slotId: `slot-${stamp}-${Math.random().toString(36).slice(2, 6)}-${i}`,
+      label: s.label,
+      slotFamily: s.slotFamily,
+      portIds: [],
+    }));
+
+    const newNode = {
+      ...node,
+      data: { ...data, slots: [...existing, ...newSlots] },
     } as DeviceNode;
 
     set({ nodes: state.nodes.map((n, i) => (i === nodeIdx ? newNode : n)) });

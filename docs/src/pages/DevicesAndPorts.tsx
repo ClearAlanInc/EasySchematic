@@ -137,6 +137,8 @@ export default function DevicesAndPortsPage() {
         <li>Each card contributes its own ports to the parent device</li>
         <li>Slots show the currently installed card name (or "Empty" if unoccupied)</li>
         <li>Swapping a card removes the old card's ports and adds the new card's ports</li>
+        <li>In the device editor, <strong>+ Add Slot</strong> adds one bay; <strong>+ Bulk Add</strong>
+          creates a numbered range at once (e.g. Slot 1–16) for large modular frames</li>
       </ul>
       <p>
         Some expansion cards have their own <strong>sub-slots</strong> — for example, a network

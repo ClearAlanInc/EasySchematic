@@ -292,3 +292,28 @@ test("#180 adding an expansion slot keeps the Device Name field", async ({ page 
     "the added slot should show up in the editor's slot list",
   ).toHaveValue("Slot 1");
 });
+
+// #194 — bulk-add expansion slots: one form adds a numbered range of slots in a
+// single step (the slot analog of bulk-add I/O), for large modular frames.
+test("#194 bulk-add creates a numbered range of expansion slots", async ({ page }) => {
+  await boot(page);
+  await page.locator(".react-flow__node").first().dblclick({ force: true });
+  await expect(page.getByPlaceholder("e.g. Camera 1")).toBeVisible({ timeout: 10_000 });
+
+  // Open the slots Bulk Add form — scope to the Expansion Slots controls so it
+  // doesn't pick up the I/O section's own "+ Bulk Add".
+  const slotControls = page
+    .locator("div")
+    .filter({ has: page.getByRole("button", { name: "+ Add Slot" }) })
+    .last();
+  await slotControls.getByRole("button", { name: "+ Bulk Add" }).click();
+
+  // Defaults add Slot 1..4 → the submit button reads "Add 4".
+  await page.getByRole("button", { name: "Add 4" }).click();
+  await page.waitForTimeout(300);
+
+  const slotLabels = page.locator('input[placeholder="Slot label"]');
+  await expect(slotLabels, "bulk add should create 4 slot rows").toHaveCount(4);
+  await expect(slotLabels.nth(0)).toHaveValue("Slot 1");
+  await expect(slotLabels.nth(3)).toHaveValue("Slot 4");
+});
