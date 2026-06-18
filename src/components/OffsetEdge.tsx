@@ -374,18 +374,21 @@ function OffsetEdgeComponent({
     border: `1px solid ${signalColor}`,
   };
 
+  // Custom labels match the cable-ID badge in size and color (font 9, signal-colored
+  // border) so the two read as one consistent set instead of the custom label being
+  // greyer and a touch larger. (#209)
   const customLabelStyle: React.CSSProperties = {
     position: "absolute",
     pointerEvents: "none",
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Inter, system-ui, sans-serif",
-    fontWeight: 500,
+    fontWeight: 600,
     color: "#374151",
     background: "rgba(255,255,255,0.92)",
-    padding: "1px 4px",
-    borderRadius: 3,
+    padding: "0 3px",
+    borderRadius: 2,
     whiteSpace: "nowrap",
-    border: "1px solid #e5e7eb",
+    border: `1px solid ${signalColor}`,
   };
 
   // Estimate badge width from text length (for offset positioning)
@@ -469,7 +472,7 @@ function OffsetEdgeComponent({
   // the route so the two render side by side instead of stacking on top of each other —
   // the custom label stays centered, the cable ID sits just past it (#175).
   const midPairOffset = showMidLabel
-    ? estimateBadgeWidth(edgeLabel, 10, 4) / 2 + estimateBadgeWidth(labelText, 9, 3) / 2 + 6
+    ? estimateBadgeWidth(edgeLabel, 9, 3) / 2 + estimateBadgeWidth(labelText, 9, 3) / 2 + 6
     : 0;
   const cidMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2 + cidMidOff + midPairOffset) : { x: lx, y: ly };
   const customMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2) : { x: lx, y: ly };
