@@ -781,14 +781,17 @@ function SchematicCanvas() {
         return;
       }
 
+      // Normalize letter keys so shortcuts still fire with Caps Lock on (#179):
+      // e.key is uppercase under Caps Lock, which broke the lowercase comparisons.
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (e.key === "Delete" || e.key === "Backspace") {
         removeSelected();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "c") {
         copySelected();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "v") {
         e.preventDefault();
         pasteClipboard();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "a") {
         e.preventDefault();
         useSchematicStore.getState().selectAll();
       }
@@ -1684,6 +1687,15 @@ export default function App() {
   const undo = useSchematicStore((s) => s.undo);
   const redo = useSchematicStore((s) => s.redo);
 
+  // Keep the browser tab title in sync with the current schematic name, so it
+  // reflects the active file (incl. after Save As / Open / rename). (#174)
+  const schematicName = useSchematicStore((s) => s.schematicName);
+  useEffect(() => {
+    document.title = schematicName
+      ? `${schematicName} — EasySchematic`
+      : "EasySchematic — AV Signal Flow Diagram Tool";
+  }, [schematicName]);
+
   // Handle /s/{token} URLs for shared schematics
   useEffect(() => {
     const match = window.location.pathname.match(/^\/s\/([a-f0-9-]+)$/);
@@ -1705,25 +1717,27 @@ export default function App() {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement).isContentEditable) return;
 
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Z") {
+      // Normalize letter keys so shortcuts still fire with Caps Lock on (#179).
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "z") {
         e.preventDefault();
         redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "z") {
         e.preventDefault();
         undo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "y") {
         e.preventDefault();
         redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "b") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "b") {
         e.preventDefault();
         useSchematicStore.getState().toggleDebugEdges();
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "S") {
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "s") {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("easyschematic:save-as"));
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "s") {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("easyschematic:save"));
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "o") {
+      } else if ((e.ctrlKey || e.metaKey) && k === "o") {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("easyschematic:open"));
       } else if (e.key === "F9") {

@@ -1,5 +1,6 @@
 import { type ReactFlowInstance, getViewportForBounds } from "@xyflow/react";
 import { toPng, toSvg } from "html-to-image";
+import { freezeSvgColors } from "./freezeSvgColors";
 
 const EXPORT_PADDING = 40;
 
@@ -53,6 +54,10 @@ export async function exportImage(
     requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
   );
 
+  // Freeze var(--color-…) strokes to concrete colors so Chromium's html-to-image
+  // clone keeps the connection lines (#173).
+  const restoreColors = freezeSvgColors(viewportEl);
+
   let dataUrl: string;
   try {
     dataUrl = await toImage(viewportEl, {
@@ -67,6 +72,7 @@ export async function exportImage(
       },
     });
   } finally {
+    restoreColors();
     CSSStyleDeclaration.prototype.getPropertyValue = origGetPropertyValue;
     document.documentElement.removeAttribute("data-export-capturing");
   }

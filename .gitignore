@@ -103,3 +103,6 @@ devices/src/**/*.js
 # Local dev
 start-dev.sh
 email-signature.html
+
+# Local QA test-report artifacts (test-report skill)
+test-reports/

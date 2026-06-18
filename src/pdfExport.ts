@@ -1,6 +1,7 @@
 import { type ReactFlowInstance } from "@xyflow/react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
+import { freezeSvgColors } from "./freezeSvgColors";
 import {
   type PaperSize,
   type Orientation,
@@ -731,6 +732,9 @@ export async function exportPdf(
         1,
         Math.min(TARGET_PIXEL_RATIO, MAX_RASTER_DIMENSION_PX / longestSidePx),
       );
+      // Freeze var(--color-…) strokes to concrete colors so Chromium's
+      // html-to-image clone keeps the connection lines (#173).
+      const restoreColors = freezeSvgColors(viewportEl);
       let dataUrl: string;
       try {
         dataUrl = await toPng(viewportEl, {
@@ -746,6 +750,7 @@ export async function exportPdf(
           },
         });
       } finally {
+        restoreColors();
         CSSStyleDeclaration.prototype.getPropertyValue = origGetPropertyValue;
       }
 

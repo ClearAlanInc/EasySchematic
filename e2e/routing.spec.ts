@@ -26,9 +26,13 @@ test("app boots and routes the canvas without console errors", async ({ page }) 
 
   await page.screenshot({ path: "e2e/screenshots/canvas.png" });
 
-  // Ignore known-benign noise unrelated to routing correctness.
+  // Ignore known-benign noise unrelated to routing correctness. The 401/403 resource
+  // errors are the logged-out session/cloud checks (/auth/me etc.) firing when a local
+  // API happens to be reachable — orthogonal to routing, and absent in CI where no API runs.
   const meaningful = errors.filter(
-    (e) => !/favicon|ResizeObserver loop|service worker|Manifest/i.test(e),
+    (e) =>
+      !/favicon|ResizeObserver loop|service worker|Manifest/i.test(e) &&
+      !/Failed to load resource.*status of (401|403)/i.test(e),
   );
   expect(meaningful, `console errors:\n${meaningful.join("\n")}`).toHaveLength(0);
 });

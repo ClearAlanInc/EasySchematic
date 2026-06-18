@@ -208,7 +208,12 @@ export default function DeviceEditor() {
   const [draggedPortId, setDraggedPortId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ direction: PortDirection; index: number } | null>(null);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- syncing props to local editor state */
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- syncing props to local editor state */
+  // Keyed on editingNodeId, NOT the node object: re-sync the form only when the
+  // editor opens a different device. Keying on `node` re-ran this on every store
+  // mutation to the node (e.g. adding an expansion slot), wiping unsaved edits to
+  // Name/Manufacturer/ports/etc. (#180). Slots render live from node.data.slots,
+  // so they still update without this effect re-firing.
   useEffect(() => {
     if (!node) return;
     const tpl = node.data.templateId
@@ -274,8 +279,8 @@ export default function DeviceEditor() {
     setAdapterVisibility(node.data.adapterVisibility ?? "default");
     setAuxiliaryData(normalizeAuxRows(node.data.auxiliaryData));
     setSearchTermsRaw((node.data.searchTerms ?? []).join(", "));
-  }, [node]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [editingNodeId]);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const close = useCallback(() => {
     // Read live store state — a stale closure here would make handleSave

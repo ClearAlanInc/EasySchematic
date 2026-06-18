@@ -527,17 +527,19 @@ export default function FacePlateEditor({ deviceData, onSave, onClose }: FacePla
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           e.stopPropagation();
+          // Normalize letter keys so shortcuts still fire with Caps Lock on (#179).
+          const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
           if (e.key === "Delete" || e.key === "Backspace") handleDeleteSelected();
           if (e.key === "Escape") { if (selectedIds.size > 0) setSelectedIds(new Set()); else onClose(); }
-          if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+          if (k === "a" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             setSelectedIds(new Set(portIds));
           }
-          if (e.key === "z" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+          if (k === "z" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
             e.preventDefault();
             handleUndo();
           }
-          if ((e.key === "z" && (e.ctrlKey || e.metaKey) && e.shiftKey) || (e.key === "y" && (e.ctrlKey || e.metaKey))) {
+          if ((k === "z" && (e.ctrlKey || e.metaKey) && e.shiftKey) || (k === "y" && (e.ctrlKey || e.metaKey))) {
             e.preventDefault();
             handleRedo();
           }

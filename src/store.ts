@@ -744,7 +744,10 @@ function syncRackCounters(pages: SchematicPage[]) {
     const pm = page.id.match(/^rackpage-(\d+)$/);
     if (pm) rackPageIdCounter = Math.max(rackPageIdCounter, Number(pm[1]));
     if (page.type === "print-sheet") {
-      for (const vp of page.viewports) {
+      // Arrays default to [] — an older/partial page missing these would throw
+      // "not iterable" here, AFTER importFromJSON already loaded the schematic,
+      // surfacing to callers as a false "Invalid schematic file." (#176)
+      for (const vp of page.viewports ?? []) {
         const vm = vp.id.match(/^viewport-(\d+)$/);
         if (vm) viewportIdCounter = Math.max(viewportIdCounter, Number(vm[1]));
         const sm = page.id.match(/^printsheet-(\d+)$/);
@@ -752,15 +755,15 @@ function syncRackCounters(pages: SchematicPage[]) {
       }
       continue;
     }
-    for (const rack of page.racks) {
+    for (const rack of page.racks ?? []) {
       const rm = rack.id.match(/^rack-(\d+)$/);
       if (rm) rackIdCounter = Math.max(rackIdCounter, Number(rm[1]));
     }
-    for (const p of page.placements) {
+    for (const p of page.placements ?? []) {
       const pm2 = p.id.match(/^rp-(\d+)$/);
       if (pm2) placementIdCounter = Math.max(placementIdCounter, Number(pm2[1]));
     }
-    for (const a of page.accessories) {
+    for (const a of page.accessories ?? []) {
       const am = a.id.match(/^ra-(\d+)$/);
       if (am) accessoryIdCounter = Math.max(accessoryIdCounter, Number(am[1]));
     }
@@ -4897,9 +4900,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       fileHandle: null,
       loadSeq: get().loadSeq + 1,
     });
-    if (data.pages?.length) syncRackCounters(data.pages);
-    saveCategoryOrder(data.categoryOrder ?? null);
-    get().saveToLocalStorage();
+    // Post-load side-effects (ID counters + persistence). The schematic is
+    // already committed to state above; a failure here must NOT propagate, or a
+    // caller's try/catch mislabels a successfully-loaded file as invalid (#176).
+    try {
+      if (data.pages?.length) syncRackCounters(data.pages);
+      saveCategoryOrder(data.categoryOrder ?? null);
+      get().saveToLocalStorage();
+    } catch (err) {
+      console.error("Post-import side-effect failed (schematic still loaded):", err);
+    }
   },
 
   importCsvData: (newNodes, newEdges) => {

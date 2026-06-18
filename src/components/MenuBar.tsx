@@ -353,11 +353,28 @@ export default function MenuBar() {
       }
       const reader = new FileReader();
       reader.onload = () => {
+        // Only a JSON-parse failure means the file is actually invalid. Importing
+        // is done separately so a post-load pipeline error (which can fire after
+        // the schematic is already on screen) isn't mislabeled "invalid". (#176)
+        let data: SchematicFile;
         try {
-          const data = JSON.parse(reader.result as string) as SchematicFile;
-          importFromJSON(data);
+          data = JSON.parse(reader.result as string) as SchematicFile;
         } catch {
           alert("Invalid schematic file.");
+          return;
+        }
+        // Shape check: a real schematic always carries a `nodes` array. Reject anything
+        // else (random JSON, the wrong file) here so it isn't silently loaded as an empty
+        // schematic that quietly wipes the canvas. This is distinct from a post-load
+        // pipeline error, which still goes to console only and isn't mislabeled. (#176)
+        if (!data || typeof data !== "object" || !Array.isArray(data.nodes)) {
+          alert("Invalid schematic file.");
+          return;
+        }
+        try {
+          importFromJSON(data);
+        } catch (err) {
+          console.error("Schematic import error (file parsed OK):", err);
         }
       };
       reader.readAsText(file, "UTF-8");

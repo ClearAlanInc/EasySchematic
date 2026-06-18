@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 
 interface Props {
   /** The label shown on the parent-menu row. */
@@ -9,7 +9,7 @@ interface Props {
   minWidth?: number;
 }
 
-const HOVER_CLOSE_GRACE_MS = 120;
+const HOVER_CLOSE_GRACE_MS = 250;
 const VIEWPORT_MARGIN = 8;
 
 /** Hover-to-open submenu used inside context menus. The submenu panel renders
@@ -40,11 +40,23 @@ export default function MenuSubmenu({ label, children, minWidth = 160 }: Props) 
     closeTimer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_GRACE_MS);
   };
 
+  // Close-on-leave that ignores movement BETWEEN the trigger and its submenu —
+  // the cursor crossing from one to the other must not close the flyout. The
+  // grace timer still covers the case where relatedTarget is null (e.g. a 1px
+  // gap, or leaving the window). (#177)
+  const maybeClose = (e: ReactMouseEvent) => {
+    const to = e.relatedTarget as Node | null;
+    if (to && (triggerRef.current?.contains(to) || submenuRef.current?.contains(to))) return;
+    scheduleClose();
+  };
+
   const openNow = () => {
     cancelClose();
-    // Reset ready synchronously on open so the panel hides until the layout
-    // effect re-measures — prevents a flash at the previous open's position.
-    setPos((p) => ({ ...p, ready: false }));
+    // Reset ready only when opening from closed so the panel hides until the
+    // layout effect re-measures (prevents a flash at the previous position).
+    // Re-entering the trigger while already open must NOT hide it — a hidden
+    // panel stops receiving pointer events and would then close on us.
+    if (!open) setPos((p) => ({ ...p, ready: false }));
     setOpen(true);
   };
 
@@ -87,7 +99,7 @@ export default function MenuSubmenu({ label, children, minWidth = 160 }: Props) 
         type="button"
         className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer flex items-center justify-between gap-2"
         onMouseEnter={openNow}
-        onMouseLeave={scheduleClose}
+        onMouseLeave={maybeClose}
         onClick={(e) => e.stopPropagation()}
       >
         <span>{label}</span>
@@ -106,7 +118,7 @@ export default function MenuSubmenu({ label, children, minWidth = 160 }: Props) 
             visibility: pos.ready ? "visible" : "hidden",
           }}
           onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
+          onMouseLeave={maybeClose}
           onClick={(e) => e.stopPropagation()}
         >
           {children}

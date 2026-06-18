@@ -1,5 +1,5 @@
 import { type DragEvent, type ChangeEvent, useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { getBundledTemplates, fetchTemplates } from "../templateApi";
+import { getBundledTemplates, fetchTemplates, isLibraryDegraded } from "../templateApi";
 import { SIGNAL_LABELS } from "../types";
 import type { DeviceTemplate, CustomTemplateGroup, OwnedGearFile, OwnedGearItem, SchematicNode, DeviceData } from "../types";
 import { useSchematicStore, CATEGORY_ORDER_DEFAULT } from "../store";
@@ -1132,9 +1132,29 @@ export default function DeviceLibrary() {
 
   const hasFilter = selectedCategories.size > 0 || selectedBrands.size > 0 || selectedSignalTypes.size > 0;
 
-  useEffect(() => {
-    fetchTemplates().then(setTemplates).catch(() => console.warn("Using bundled device library (API unavailable)"));
+  // Degraded = the library couldn't be fetched fresh and we're on cache/bundled.
+  // Surfaced as a banner so a fresh machine that can't reach the API isn't
+  // silently missing community devices. (#181)
+  const [libraryDegraded, setLibraryDegraded] = useState(false);
+  const [libraryRetrying, setLibraryRetrying] = useState(false);
+
+  const loadLibrary = useCallback(() => {
+    setLibraryRetrying(true);
+    fetchTemplates()
+      .then((t) => {
+        setTemplates(t);
+        setLibraryDegraded(isLibraryDegraded());
+      })
+      .catch(() => {
+        console.warn("Using bundled device library (API unavailable)");
+        setLibraryDegraded(true);
+      })
+      .finally(() => setLibraryRetrying(false));
   }, []);
+
+  useEffect(() => {
+    loadLibrary();
+  }, [loadLibrary]);
 
   const handleAddToOwned = useCallback((template: DeviceTemplate) => {
     addOwnedGear(template, 1);
@@ -1257,6 +1277,23 @@ export default function DeviceLibrary() {
           </svg>
         </button>
       </div>
+
+      {/* Degraded-library notice: the API fetch failed and we're on cache/bundled,
+          so community devices may be missing. Replaces the old silent fallback. (#181) */}
+      {libraryDegraded && (
+        <div className="px-3 py-2 border-b border-amber-300 bg-amber-50 text-[11px] text-amber-800">
+          <div className="leading-snug">
+            Couldn't load the full device library — some community devices may be missing.
+          </div>
+          <button
+            onClick={loadLibrary}
+            disabled={libraryRetrying}
+            className="mt-1 px-2 py-0.5 rounded bg-amber-600 text-white text-[10px] font-medium hover:bg-amber-500 disabled:opacity-60 cursor-pointer"
+          >
+            {libraryRetrying ? "Retrying…" : "Retry"}
+          </button>
+        </div>
+      )}
 
       {showOwnedGearPane && (
         <div className="px-2 py-1.5 border-b border-[var(--color-border)] flex gap-1">

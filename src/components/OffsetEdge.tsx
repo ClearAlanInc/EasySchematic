@@ -464,11 +464,17 @@ function OffsetEdgeComponent({
     ? cableIdGap + cableIdBadgeWidth + 3 // base gap + badge + 3px padding
     : CUSTOM_LABEL_GAP;
 
-  // Compute midpoint position along the path (for cable ID midpoint and custom midpoint label)
-  const cidMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2 + cidMidOff) : { x: lx, y: ly };
+  // Compute midpoint position along the path (for cable ID midpoint and custom midpoint label).
+  // When a custom middle label shares the midpoint, the cable ID is nudged further along
+  // the route so the two render side by side instead of stacking on top of each other —
+  // the custom label stays centered, the cable ID sits just past it (#175).
+  const midPairOffset = showMidLabel
+    ? estimateBadgeWidth(edgeLabel, 10, 4) / 2 + estimateBadgeWidth(labelText, 9, 3) / 2 + 6
+    : 0;
+  const cidMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2 + cidMidOff + midPairOffset) : { x: lx, y: ly };
   const customMidPt = totalLen > 0 ? pointAtDistance(totalLen / 2) : { x: lx, y: ly };
 
-  // Cable ID labels — at endpoints or midpoint depending on mode (unchanged)
+  // Cable ID labels — at endpoints or midpoint depending on mode.
   const cableIdLabels = showCableId ? (
     cableIdLabelMode === "endpoint" ? (
       <>

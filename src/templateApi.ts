@@ -1,10 +1,19 @@
 import type { DeviceTemplate } from "./types";
 import fallbackData from "./deviceLibrary.fallback.json";
+import { loadCachedTemplates, saveCachedTemplates } from "./templateCache";
 
 const API_URL =
   import.meta.env?.VITE_TEMPLATE_API_URL ?? "https://api.easyschematic.live";
 
 let cached: DeviceTemplate[] | null = null;
+
+// True when the in-memory library came from the IndexedDB cache or bundled
+// fallback rather than a fresh API fetch — the UI surfaces this so a fresh
+// machine that can't reach the API isn't silently missing community devices. (#181)
+let degraded = false;
+export function isLibraryDegraded(): boolean {
+  return degraded;
+}
 
 export function getBundledTemplates(): DeviceTemplate[] {
   return fallbackData as DeviceTemplate[];
@@ -272,12 +281,56 @@ export async function createSubmission(
   return res.json();
 }
 
-export async function fetchTemplates(): Promise<DeviceTemplate[]> {
-  if (cached) return effectiveTemplates();
+const TEMPLATE_FETCH_TIMEOUT_MS = 12_000;
+const TEMPLATE_FETCH_RETRIES = 2;
 
-  const res = await fetch(`${API_URL}/templates`);
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const data = (await res.json()) as DeviceTemplate[];
-  cached = data;
-  return effectiveTemplates();
+async function fetchTemplatesOnce(): Promise<DeviceTemplate[]> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TEMPLATE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_URL}/templates`, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    return (await res.json()) as DeviceTemplate[];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Fetch the community library, resiliently. On a fresh, non-degraded cache hit
+ * this is a no-op. Otherwise it retries the network a few times (with a timeout),
+ * then falls back to the last-good IndexedDB cache, and only throws if there's
+ * nothing cached — at which point the caller keeps the bundled subset and warns
+ * the user. The `degraded` flag tracks whether the result is fresh. (#181)
+ */
+export async function fetchTemplates(): Promise<DeviceTemplate[]> {
+  if (cached && !degraded) return effectiveTemplates();
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= TEMPLATE_FETCH_RETRIES; attempt++) {
+    try {
+      const data = await fetchTemplatesOnce();
+      cached = data;
+      degraded = false;
+      void saveCachedTemplates(data); // persist last-good full library for next time
+      return effectiveTemplates();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < TEMPLATE_FETCH_RETRIES) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
+  }
+
+  // Network failed every attempt — use the last-good cached library if present.
+  const cachedLib = await loadCachedTemplates();
+  if (cachedLib?.length) {
+    cached = cachedLib;
+    degraded = true;
+    return effectiveTemplates();
+  }
+
+  // Nothing cached either — caller keeps the bundled subset and surfaces a notice.
+  degraded = true;
+  throw lastErr instanceof Error ? lastErr : new Error("Failed to load device library");
 }
