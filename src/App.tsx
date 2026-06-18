@@ -53,7 +53,7 @@ import PageTabs from "./components/PageTabs";
 import RackPage from "./components/RackPage";
 import PrintSheetPage from "./components/PrintSheetPage";
 import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, type GuideLine } from "./snapUtils";
-import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, SchematicNode } from "./types";
+import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, SchematicNode, StubLabelData } from "./types";
 import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic, checkSession } from "./templateApi";
@@ -1375,6 +1375,44 @@ function SchematicCanvas() {
       if (draggedNode.type === "room") {
         reparentAllDevices({ skipUndo: true });
       }
+
+      // #182: keep stub labels glued to their device. When a device moves, re-anchor its
+      // connected (non-user-positioned) stubs to the moved port by clearing `placed` —
+      // StubLabelNode.tryPlace then re-runs and follows the device instead of leaving the
+      // stub stranded with a dogleg. When a stub itself is dragged, mark it `userMoved` so
+      // later device moves leave the user's placement alone.
+      if (draggedNode.type === "device") {
+        const st = useSchematicStore.getState();
+        const stubIds = new Set(st.nodes.filter((n) => n.type === "stub-label").map((n) => n.id));
+        const followStubs = new Set<string>();
+        for (const e of st.edges) {
+          const srcStub = stubIds.has(e.source);
+          const tgtStub = stubIds.has(e.target);
+          if (srcStub === tgtStub) continue; // not a stub leg
+          const devEnd = srcStub ? e.target : e.source;
+          if (devEnd === draggedNode.id) followStubs.add(srcStub ? e.source : e.target);
+        }
+        if (followStubs.size > 0) {
+          useSchematicStore.setState((prev) => ({
+            nodes: prev.nodes.map((n) => {
+              if (!followStubs.has(n.id) || n.type !== "stub-label") return n;
+              const d = n.data as StubLabelData;
+              if (d.userMoved || d.placed !== true) return n; // respect manual placement / pending
+              return { ...n, data: { ...d, placed: false } };
+            }),
+          }));
+        }
+      } else if (draggedNode.type === "stub-label") {
+        useSchematicStore.setState((prev) => ({
+          nodes: prev.nodes.map((n) =>
+            n.id === draggedNode.id && n.type === "stub-label"
+              ? { ...n, data: { ...(n.data as StubLabelData), userMoved: true, placed: true } }
+              : n,
+          ),
+        }));
+        useSchematicStore.getState().saveToLocalStorage();
+      }
+
       flushPendingSnapshot();
     },
     [reparentNode, reparentAllDevices, flushPendingSnapshot],

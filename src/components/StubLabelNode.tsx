@@ -149,7 +149,6 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const side = portPos.side;
       const deviceAbs = absolutePos(device, nodeMap);
       const deviceW = (device.measured?.width as number | undefined) ?? 180;
-      const deviceRight = deviceAbs.x + deviceW;
       const portAbsX = portPos.absX;
       const portAbsY = portPos.absY;
 
@@ -159,24 +158,26 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       const desiredAbsY = centerY - stubH / 2;
 
       const stubCurAbs = absolutePos(stub, nodeMap);
-      const overlapsX = stubCurAbs.x < deviceRight && stubCurAbs.x + stubW > deviceAbs.x;
 
-      let desiredAbsX = stubCurAbs.x;
-      if (overlapsX) {
-        desiredAbsX = side === "right"
-          ? portAbsX + STUB_GAP
-          : portAbsX - STUB_GAP - stubW;
-      }
+      // Anchor the box edge facing the device STUB_GAP from the port — unconditionally,
+      // not just when it overlaps. This is what lets a re-placement (e.g. after the device
+      // is moved, see App.tsx onNodeDragStop) follow the device instead of stranding the
+      // stub at its old X with a dogleg. On first placement this equals the creation
+      // position from defaultStubPlacement, so it's a no-op there. (#182)
+      const desiredAbsX = side === "right"
+        ? portAbsX + STUB_GAP
+        : portAbsX - STUB_GAP - stubW;
 
       // Stubs always connect via left or right — figure out which side faces the device
-      // using the stub's resolved position (after any overlap correction above).
+      // using the stub's resolved (re-anchored) position.
       const desiredHandle: "l" | "r" =
         (desiredAbsX + stubW / 2) <= (deviceAbs.x + deviceW / 2) ? "r" : "l";
       const currentHandle = data.side === "source" ? ownEdge.targetHandle : ownEdge.sourceHandle;
       const handleNeedsFix = currentHandle !== desiredHandle;
 
+      const xOff = Math.abs(stubCurAbs.x - desiredAbsX) > 0.5;
       const yOff = Math.abs(stubCurAbs.y - desiredAbsY) > 0.5;
-      const posChanges = overlapsX || yOff;
+      const posChanges = xOff || yOff;
 
       const parent = stub.parentId ? nodeMap.get(stub.parentId) : null;
       const parentAbs = parent ? absolutePos(parent, nodeMap) : { x: 0, y: 0 };

@@ -5298,18 +5298,48 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   clearManualWaypoints: (edgeId) => {
     const state = get();
     const edge = state.edges.find((e) => e.id === edgeId);
-    if (!edge?.data?.manualWaypoints) return;
+    if (!edge) return;
+
+    const hasManual = !!edge.data?.manualWaypoints;
+
+    // If this is a leg of a stubbed connection, "Reset Route" should also re-place its
+    // stub labels: clear `placed`/`userMoved` so StubLabelNode.tryPlace re-anchors them
+    // to their ports. This is the escape hatch for #182 — a stub frozen out of alignment
+    // (e.g. left behind after a device move) previously couldn't be corrected because
+    // Reset Route only touched edge waypoints (and bailed entirely when there were none).
+    const linkedId = edge.data?.linkedConnectionId;
+    const stubIdsToReset = new Set<string>();
+    if (linkedId) {
+      for (const n of state.nodes) {
+        if (n.type !== "stub-label") continue;
+        const d = n.data as import("./types").StubLabelData;
+        if (d.linkedConnectionId !== linkedId) continue;
+        if (d.placed === true || d.userMoved === true) stubIdsToReset.add(n.id);
+      }
+    }
+
+    if (!hasManual && stubIdsToReset.size === 0) return;
+
     pushUndo({ nodes: state.nodes, edges: state.edges });
-    const { manualWaypoints: _, ...restData } = edge.data;
-    const newEdges = state.edges.map((e) =>
-      e.id === edgeId
-        ? { ...e, data: restData as ConnectionEdge["data"] }
-        : e,
-    );
-    set({
-      edges: newEdges,
-      nodes: reconcileWaypointNodes(state.nodes, newEdges),
-    });
+
+    const newEdges = hasManual
+      ? state.edges.map((e) => {
+          if (e.id !== edgeId) return e;
+          const { manualWaypoints: _mw, ...restData } = e.data!;
+          return { ...e, data: restData as ConnectionEdge["data"] };
+        })
+      : state.edges;
+
+    let newNodes = hasManual ? reconcileWaypointNodes(state.nodes, newEdges) : state.nodes;
+    if (stubIdsToReset.size > 0) {
+      newNodes = newNodes.map((n) => {
+        if (!stubIdsToReset.has(n.id) || n.type !== "stub-label") return n;
+        const d = n.data as import("./types").StubLabelData;
+        return { ...n, data: { ...d, placed: false, userMoved: false } };
+      });
+    }
+
+    set({ edges: newEdges, nodes: newNodes });
     get().saveToLocalStorage();
   },
 

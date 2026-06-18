@@ -373,6 +373,10 @@ export interface StubLabelData {
    *  survive page refresh. New stubs from convertEdgeToStubs get auto-placed once and
    *  flipped to true; legacy stubs are flipped true wholesale by the v33→v34 migration. */
   placed?: boolean;
+  /** True once the user has dragged this stub to a custom position. Such stubs are NOT
+   *  auto-re-placed when their device moves (the user's placement wins); cleared by
+   *  "Reset Route" so the stub re-anchors to its port. (#182) */
+  userMoved?: boolean;
 }
 
 export type StubLabelNode = Node<StubLabelData, "stub-label">;
