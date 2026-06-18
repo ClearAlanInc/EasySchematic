@@ -154,6 +154,69 @@ test("#173 SVG export keeps connection-line colors (no unresolved var() strokes)
   expect(svg, "exported SVG should carry concrete stroke colors").toMatch(/stroke\s*[:=]\s*["']?\s*(rgb\(|#)/i);
 });
 
+// #176 (File→Open path) — the showOpenFilePicker "Open..." path must also reject
+// non-schematic JSON. This was the real gap: it had no shape check AND a catch that
+// swallowed errors silently, so junk files showed no error at all.
+test("#176 File→Open of non-schematic JSON shows the Invalid alert (picker path)", async ({ page }) => {
+  // Mock the File System Access picker before load — return valid-but-non-schematic JSON.
+  await page.addInitScript(() => {
+    // @ts-expect-error test shim
+    window.showOpenFilePicker = async () => [{
+      name: "junk.json",
+      getFile: async () =>
+        new File([JSON.stringify({ hello: "world" })], "junk.json", { type: "application/json" }),
+    }];
+  });
+  await boot(page);
+
+  const before = await page.locator(".react-flow__node").count();
+  expect(before).toBeGreaterThan(0);
+
+  const dialogs: string[] = [];
+  page.on("dialog", async (d) => { dialogs.push(d.message()); await d.dismiss(); });
+
+  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("button", { name: /^Open\.\.\./ }).click();
+  await page.waitForTimeout(600);
+
+  expect(dialogs.join(" | "), "File→Open of junk JSON should alert").toContain("Invalid schematic file.");
+  expect(await page.locator(".react-flow__node").count(), "junk Open must not wipe the canvas").toBe(before);
+});
+
+// #180 (regression from the first fix) — installing an expansion card must add ports
+// that SURVIVE Apply. The editor's local port state went stale after swapCard, so Apply
+// wrote the old list back and the card's ports vanished. The fix re-syncs ports on the
+// live port-id signature.
+test("#180 installing a card adds ports that survive Apply", async ({ page }) => {
+  await boot(page);
+  await page.locator(".react-flow__node").first().dblclick({ force: true });
+  await expect(page.getByPlaceholder("e.g. Camera 1")).toBeVisible({ timeout: 10_000 });
+
+  const portRows = page.locator('input[placeholder="Port label"]');
+  const initial = await portRows.count();
+
+  await page.getByRole("button", { name: "+ Add Slot" }).click();
+  await page.locator('input[placeholder="family"]').first().fill("disguise-vfc");
+  await page.waitForTimeout(300);
+
+  // Install a bundled card from that family — its ports should appear in the editor.
+  const cardSelect = page.locator("select").filter({ has: page.locator('option[value="vfc-card-hdmi20"]') });
+  await cardSelect.selectOption("vfc-card-hdmi20");
+  await page.waitForTimeout(400);
+
+  const afterInstall = await portRows.count();
+  expect(afterInstall, "card ports should show in the editor after install").toBeGreaterThan(initial);
+
+  // Apply (handleSave) — the regression clobbered the card's ports here.
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  await page.waitForTimeout(400);
+
+  // Reopen — the card's ports must still be present.
+  await page.locator(".react-flow__node").first().dblclick({ force: true });
+  await expect(page.getByPlaceholder("e.g. Camera 1")).toBeVisible({ timeout: 10_000 });
+  expect(await portRows.count(), "card ports must persist after Apply (#180)").toBe(afterInstall);
+});
+
 // #180 — adding an expansion slot in the device editor must NOT wipe the other fields.
 test("#180 adding an expansion slot keeps the Device Name field", async ({ page }) => {
   await boot(page);

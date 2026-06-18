@@ -83,6 +83,13 @@ function MenuItem({
   );
 }
 
+/** A parsed object is an importable schematic only if it's an object carrying a `nodes`
+ *  array. Guards every import path so junk/non-schematic JSON is rejected with a clear
+ *  alert instead of being silently loaded as an empty schematic that wipes the canvas. (#176) */
+function looksLikeSchematic(data: unknown): data is SchematicFile {
+  return !!data && typeof data === "object" && Array.isArray((data as SchematicFile).nodes);
+}
+
 function MenuDropdown({ items, onClose }: { items: MenuEntry[]; onClose: () => void }) {
   return (
     <div className="absolute top-full left-0 mt-0.5 min-w-[220px] bg-white border border-[var(--color-border)] rounded-lg shadow-lg p-1 z-50">
@@ -316,27 +323,45 @@ export default function MenuBar() {
 
   const handleOpen = useCallback(async () => {
     if ("showOpenFilePicker" in window) {
+      let handle: FileSystemFileHandle;
       try {
-        const [handle] = await window.showOpenFilePicker({
+        [handle] = await window.showOpenFilePicker({
           types: [{ description: "EasySchematic files", accept: { "application/json": [".json"] } }],
           multiple: false,
         });
-        const file = await handle.getFile();
-        if (file.size > 10 * 1024 * 1024) {
-          alert("File is too large (max 10 MB). Please use a smaller schematic file.");
-          return;
-        }
-        const text = await file.text();
-        const data = JSON.parse(text) as SchematicFile;
-        importFromJSON(data);
-        // Store the handle so future saves go back to this file
-        useSchematicStore.getState().setFileHandle(handle);
-        // Update name to match file
-        const name = handle.name.replace(/\.json$/i, "");
-        if (name) useSchematicStore.getState().setSchematicName(name);
       } catch {
-        // User cancelled or read error — ignore
+        return; // user cancelled the picker
       }
+      const file = await handle.getFile();
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File is too large (max 10 MB). Please use a smaller schematic file.");
+        return;
+      }
+      const text = await file.text();
+      // Mirror handleImport: only a JSON-parse failure or a non-schematic shape is
+      // "invalid"; a post-load pipeline error goes to console, not an alert. Previously
+      // this path swallowed everything silently, so junk files showed no error. (#176)
+      let data: SchematicFile;
+      try {
+        data = JSON.parse(text) as SchematicFile;
+      } catch {
+        alert("Invalid schematic file.");
+        return;
+      }
+      if (!looksLikeSchematic(data)) {
+        alert("Invalid schematic file.");
+        return;
+      }
+      try {
+        importFromJSON(data);
+      } catch (err) {
+        console.error("Schematic import error (file parsed OK):", err);
+      }
+      // Store the handle so future saves go back to this file
+      useSchematicStore.getState().setFileHandle(handle);
+      // Update name to match file
+      const name = handle.name.replace(/\.json$/i, "");
+      if (name) useSchematicStore.getState().setSchematicName(name);
     } else {
       fileInputRef.current?.click();
     }
@@ -363,11 +388,10 @@ export default function MenuBar() {
           alert("Invalid schematic file.");
           return;
         }
-        // Shape check: a real schematic always carries a `nodes` array. Reject anything
-        // else (random JSON, the wrong file) here so it isn't silently loaded as an empty
-        // schematic that quietly wipes the canvas. This is distinct from a post-load
-        // pipeline error, which still goes to console only and isn't mislabeled. (#176)
-        if (!data || typeof data !== "object" || !Array.isArray(data.nodes)) {
+        // Shape check: reject non-schematic JSON here so it isn't silently loaded as an
+        // empty schematic that wipes the canvas. Distinct from a post-load pipeline error,
+        // which still goes to console only and isn't mislabeled "invalid". (#176)
+        if (!looksLikeSchematic(data)) {
           alert("Invalid schematic file.");
           return;
         }

@@ -231,35 +231,7 @@ export default function DeviceEditor() {
     setCategory(node.data.category ?? tpl?.category ?? "");
     setColor(node.data.color);
     setHeaderColor(node.data.headerColor);
-    setPorts(
-      node.data.ports.map((p) => ({
-        id: p.id,
-        label: p.label,
-        signalType: p.signalType,
-        direction: p.direction,
-        section: p.section,
-        connectorType: p.connectorType,
-        gender: p.gender,
-        networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
-        capabilities: p.capabilities ? { ...p.capabilities } : undefined,
-        isMulticable: p.isMulticable,
-        channelCount: p.channelCount,
-        multiConnect: p.multiConnect,
-        directAttach: p.directAttach,
-        notes: p.notes,
-        poeDrawW: p.poeDrawW,
-        linkSpeed: p.linkSpeed,
-        flipped: p.flipped,
-        addressable: p.addressable,
-        rearConnectorType: p.rearConnectorType,
-        rearGender: p.rearGender,
-        frontConnectorType: p.frontConnectorType,
-        frontGender: p.frontGender,
-        inheritsSignal: p.inheritsSignal,
-      })),
-    );
     setShowAllPorts(node.data.showAllPorts ?? false);
-    setHiddenPorts(node.data.hiddenPorts ?? []);
     setPortVisOpen(false);
     setDhcpServer(node.data.dhcpServer ? { ...node.data.dhcpServer } : undefined);
     setPowerDrawW(node.data.powerDrawW);
@@ -280,6 +252,53 @@ export default function DeviceEditor() {
     setAuxiliaryData(normalizeAuxRows(node.data.auxiliaryData));
     setSearchTermsRaw((node.data.searchTerms ?? []).join(", "));
   }, [editingNodeId]);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+  // Ports + hiddenPorts sync on a SEPARATE effect keyed on the live port-id signature,
+  // not just editingNodeId. Slot/card operations (swapCard/addSlot/removeSlot) mutate
+  // node.data.ports directly in the store; without re-syncing here the editor's local
+  // `ports` went stale and handleSave wrote the old list back, wiping a freshly-installed
+  // card's ports (#180). Keeping this off editingNodeId-only also preserves the original
+  // #180 fix — adding a slot adds no ports, so the signature is unchanged and in-progress
+  // text edits (Name/etc., synced above) survive. Unsaved draft ports are carried across
+  // re-syncs of the same device so a card install mid-edit doesn't drop them.
+  const portSignature = node ? node.data.ports.map((p) => p.id).join("|") : "";
+  const syncedPortsNodeRef = useRef<string | null>(null);
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- syncing store ports to local editor state */
+  useEffect(() => {
+    if (!node) return;
+    const synced = node.data.ports.map((p) => ({
+      id: p.id,
+      label: p.label,
+      signalType: p.signalType,
+      direction: p.direction,
+      section: p.section,
+      connectorType: p.connectorType,
+      gender: p.gender,
+      networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
+      capabilities: p.capabilities ? { ...p.capabilities } : undefined,
+      isMulticable: p.isMulticable,
+      channelCount: p.channelCount,
+      multiConnect: p.multiConnect,
+      directAttach: p.directAttach,
+      notes: p.notes,
+      poeDrawW: p.poeDrawW,
+      linkSpeed: p.linkSpeed,
+      flipped: p.flipped,
+      addressable: p.addressable,
+      rearConnectorType: p.rearConnectorType,
+      rearGender: p.rearGender,
+      frontConnectorType: p.frontConnectorType,
+      frontGender: p.frontGender,
+      inheritsSignal: p.inheritsSignal,
+    }));
+    const sameNode = syncedPortsNodeRef.current === editingNodeId;
+    syncedPortsNodeRef.current = editingNodeId;
+    setPorts((prev) =>
+      sameNode ? [...synced, ...prev.filter((p) => p.id.startsWith("draft-"))] : synced,
+    );
+    setHiddenPorts(node.data.hiddenPorts ?? []);
+  }, [editingNodeId, portSignature]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const close = useCallback(() => {
