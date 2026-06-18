@@ -174,7 +174,8 @@ export default function DevicesAndPortsPage() {
           <tr><td>XLR-5</td><td>XLR-5</td></tr>
           <tr><td>Mini XLR</td><td>Mini XLR</td></tr>
           <tr><td>XLR/TRS Combo</td><td>XLR</td></tr>
-          <tr><td>{"1/4\" TRS"}</td><td>{"1/4\" TRS"}</td></tr>
+          <tr><td>{"1/4\" TRS (6.35mm)"}</td><td>{"1/4\" TRS"}</td></tr>
+          <tr><td>{"1/4\" TS (6.35mm)"}</td><td>{"1/4\" TS"}</td></tr>
           <tr><td>3.5mm TRS</td><td>3.5mm TRS</td></tr>
           <tr><td>RCA</td><td>RCA</td></tr>
           <tr><td>TOSLINK</td><td>TOSLINK</td></tr>

@@ -2,7 +2,7 @@ import type { Node, Edge } from "@xyflow/react";
 
 export type ConnectorType =
   | "bnc" | "hdmi" | "displayport" | "vga"
-  | "xlr-3" | "xlr-4" | "xlr-5" | "trs-quarter" | "trs-eighth" | "combo-xlr-trs"
+  | "xlr-3" | "xlr-4" | "xlr-5" | "trs-quarter" | "ts-quarter" | "trs-eighth" | "combo-xlr-trs"
   | "rj45" | "ethercon" | "sfp" | "lc" | "sc"
   | "usb-a" | "usb-b" | "usb-c"
   | "db7w2" | "db9" | "db15" | "db25" | "din-5" | "phoenix" | "terminal-block" | "powercon" | "edison" | "iec" | "iec-c5" | "iec-c7" | "iec-c15" | "iec-c20"
@@ -950,7 +950,8 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "xlr-3": "XLR-3",
   "xlr-4": "XLR-4",
   "xlr-5": "XLR-5",
-  "trs-quarter": '1/4" TRS',
+  "trs-quarter": '1/4" TRS (6.35mm)',
+  "ts-quarter": '1/4" TS (6.35mm)',
   "trs-eighth": '3.5mm TRS',
   "combo-xlr-trs": "XLR/TRS Combo",
   rj45: "RJ45",
@@ -1126,7 +1127,7 @@ export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
 /** Connector types organized by functional group (for searchable dropdowns) */
 export const CONNECTOR_GROUPS: Record<string, ConnectorType[]> = {
   "Video": ["bnc", "hdmi", "mini-hdmi", "displayport", "mini-displayport", "dvi", "vga"],
-  "Audio": ["xlr-3", "xlr-4", "xlr-5", "mini-xlr", "combo-xlr-trs", "trs-quarter", "trs-eighth", "trs-2.5mm", "rca", "din-5", "mini-din-4", "mini-din-7", "mini-din-8", "toslink"],
+  "Audio": ["xlr-3", "xlr-4", "xlr-5", "mini-xlr", "combo-xlr-trs", "trs-quarter", "ts-quarter", "trs-eighth", "trs-2.5mm", "rca", "din-5", "mini-din-4", "mini-din-7", "mini-din-8", "toslink"],
   "Network / Data": ["rj45", "ethercon", "sfp", "lc", "sc", "opticalcon", "qsfp", "qsfp28", "mpo", "rj11", "rj12"],
   "USB": ["usb-a", "usb-b", "usb-c", "usb-mini", "usb-micro"],
   "D-Sub / Serial": ["db9", "db15", "db25", "db37", "db7w2", "lemo-5pin"],

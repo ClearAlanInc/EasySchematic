@@ -465,6 +465,7 @@ const CONNECTOR_SPECS: Partial<Record<ConnectorType, ConnectorSpec>> = {
     },
   },
   "trs-quarter":    { widthMm: 15.9,  heightMm: 15.9,  render: (p) => renderCircle(15.9, p) },
+  "ts-quarter":     { widthMm: 15.9,  heightMm: 15.9,  render: (p) => renderCircle(15.9, p) },
   "trs-eighth":     { widthMm: 10.0,  heightMm: 10.0,  render: (p) => renderCircle(10.0, p) },
   "trs-2.5mm":      { widthMm: 8.0,   heightMm: 8.0,   render: (p) => renderCircle(8.0, p) },
 
