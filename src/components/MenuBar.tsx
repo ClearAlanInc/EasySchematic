@@ -632,6 +632,15 @@ export default function MenuBar() {
       },
       {
         type: "item",
+        label: "Minimap",
+        checked: useSchematicStore.getState().showMinimap,
+        onClick: () => {
+          const s = useSchematicStore.getState();
+          s.setShowMinimap(!s.showMinimap);
+        },
+      },
+      {
+        type: "item",
         label: "Auto-Route Edges",
         checked: useSchematicStore.getState().autoRoute,
         onClick: () => useSchematicStore.getState().toggleAutoRoute(),

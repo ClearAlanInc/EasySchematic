@@ -217,6 +217,24 @@ test("#180 installing a card adds ports that survive Apply", async ({ page }) =>
   expect(await portRows.count(), "card ports must persist after Apply (#180)").toBe(afterInstall);
 });
 
+// #210 — the minimap is optional: an ✕ hides it, and View ▸ Minimap restores it
+// (preference persisted to localStorage).
+test("#210 minimap hides via ✕ and restores from the View menu", async ({ page }) => {
+  await boot(page);
+
+  const minimap = page.locator(".react-flow__minimap");
+  await expect(minimap).toBeVisible();
+
+  // Dismiss via the ✕ button on the minimap.
+  await page.getByRole("button", { name: "Hide minimap" }).click();
+  await expect(minimap).toHaveCount(0);
+
+  // Bring it back from View ▸ Minimap.
+  await page.getByRole("button", { name: "View", exact: true }).click();
+  await page.getByRole("button", { name: /Minimap/ }).click();
+  await expect(page.locator(".react-flow__minimap")).toBeVisible();
+});
+
 // #180 — adding an expansion slot in the device editor must NOT wipe the other fields.
 test("#180 adding an expansion slot keeps the Device Name field", async ({ page }) => {
   await boot(page);

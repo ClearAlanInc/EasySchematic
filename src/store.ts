@@ -95,6 +95,17 @@ const STORAGE_KEY = "easyschematic-autosave";
 const TEMPLATES_KEY = "easyschematic-custom-templates";
 const TEMPLATE_META_KEY = "easyschematic-custom-template-meta";
 const CATEGORY_ORDER_KEY = "easyschematic-category-order";
+const MINIMAP_PREF_KEY = "easyschematic-show-minimap";
+
+/** Minimap visibility is an editor preference (not document data), persisted to
+ *  localStorage and shared across schematics/sessions. Default visible. (#210) */
+function loadShowMinimap(): boolean {
+  try {
+    return localStorage.getItem(MINIMAP_PREF_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
 
 export const CATEGORY_ORDER_DEFAULT: string[] = [
   "Sources",
@@ -556,6 +567,10 @@ interface SchematicState {
   // Line jumps (#18)
   showLineJumps: boolean;
   setShowLineJumps: (show: boolean) => void;
+
+  /** Canvas minimap visibility — editor preference, persisted to localStorage. (#210) */
+  showMinimap: boolean;
+  setShowMinimap: (show: boolean) => void;
 
   /** Rack: show connector-level face-plate detail (default off; advanced) */
   showFacePlateDetail: boolean;
@@ -1263,6 +1278,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   labelCase: DEFAULT_LABEL_CASE,
   currency: "USD",
   showLineJumps: true,
+  showMinimap: loadShowMinimap(),
   showFacePlateDetail: false,
   showConnectionLabels: true,
   showCableIdLabels: true,
@@ -3711,6 +3727,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   setShowLineJumps: (show) => {
     set({ showLineJumps: show });
     get().saveToLocalStorage();
+  },
+
+  setShowMinimap: (show) => {
+    // Persisted to localStorage (editor preference), not the schematic file. (#210)
+    try { localStorage.setItem(MINIMAP_PREF_KEY, show ? "1" : "0"); } catch { /* ignore */ }
+    set({ showMinimap: show });
   },
 
   setShowFacePlateDetail: (show) => {

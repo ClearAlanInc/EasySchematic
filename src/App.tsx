@@ -4,6 +4,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  Panel,
   BackgroundVariant,
   ConnectionLineType,
   ConnectionMode,
@@ -545,6 +546,8 @@ function SchematicCanvas() {
   const isDragging = useSchematicStore((s) => s.isDragging);
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const printView = useSchematicStore((s) => s.printView);
+  const showMinimap = useSchematicStore((s) => s.showMinimap);
+  const setShowMinimap = useSchematicStore((s) => s.setShowMinimap);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const hideAdapters = useSchematicStore((s) => s.hideAdapters);
   const adapterVisibilityDigest = useSchematicStore((s) =>
@@ -1640,12 +1643,45 @@ function SchematicCanvas() {
       <Controls position="bottom-right" />
       <AutoRouteChip />
       <AutoRouteConfirmDialog />
-      <MiniMap
-        position="bottom-left"
-        pannable
-        zoomable
-        nodeColor={(node) => node.type === "room" ? (isDark ? "#334155" : "#e5e7eb") : "#3b82f6"}
-      />
+      {showMinimap && (
+        <>
+          <MiniMap
+            position="bottom-left"
+            pannable
+            zoomable
+            style={{ width: 200, height: 150 }}
+            nodeColor={(node) => node.type === "room" ? (isDark ? "#334155" : "#e5e7eb") : "#3b82f6"}
+          />
+          {/* ✕ to dismiss the minimap; restore via View ▸ Minimap. Sits at the
+              minimap's top-right corner (both anchored bottom-left, 15px margin;
+              the 200×150 box puts its top-right at +182/-132 from that origin). (#210) */}
+          <Panel position="bottom-left">
+            <button
+              onClick={() => setShowMinimap(false)}
+              title="Hide minimap (restore via View ▸ Minimap)"
+              aria-label="Hide minimap"
+              style={{
+                transform: "translate(182px, -132px)",
+                width: 18,
+                height: 18,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                borderRadius: 4,
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface)",
+                color: "var(--color-text)",
+                fontSize: 12,
+                lineHeight: 1,
+                cursor: "pointer",
+              }}
+            >
+              ✕
+            </button>
+          </Panel>
+        </>
+      )}
       <RoutingDebugOverlay />
     </ReactFlow>
     <RoutingTuningPanel />
