@@ -103,8 +103,33 @@ export function computePowerReport(
   const distros: PowerReportDistro[] = [];
   const connectedToDistro = new Set<string>();
 
-  // Build adjacency: for power edges, from output side to input side
-  const powerEdges = edges.filter((e) => e.data?.signalType === "power");
+  // Build adjacency: for power edges, from output side to input side.
+  // Stubbed connections split the original A→B edge into two legs joined by a
+  // shared linkedConnectionId, each terminating at a stub-label node (A→stubA,
+  // stubB→B). The stub node isn't a device, so a naive walk dead-ends there and
+  // the load goes uncounted (#172). Collapse the legs back to logical A→B edges.
+  const stubNodeIds = new Set(
+    nodes.filter((n) => n.type === "stub-label").map((n) => n.id),
+  );
+  const powerEdges: { source: string; target: string }[] = [];
+  const stubLegsByLink = new Map<string, { source?: string; target?: string }>();
+  for (const e of edges) {
+    if (e.data?.signalType !== "power") continue;
+    const link = e.data.linkedConnectionId;
+    if (!link) {
+      powerEdges.push({ source: e.source, target: e.target });
+      continue;
+    }
+    // Reassemble the two stub legs: the source-side leg keeps the real source
+    // (its target is the stub node); the target-side leg keeps the real target.
+    const entry = stubLegsByLink.get(link) ?? {};
+    if (stubNodeIds.has(e.target)) entry.source = e.source;
+    if (stubNodeIds.has(e.source)) entry.target = e.target;
+    stubLegsByLink.set(link, entry);
+  }
+  for (const { source, target } of stubLegsByLink.values()) {
+    if (source != null && target != null) powerEdges.push({ source, target });
+  }
 
   // Get devices downstream from a distro node by following power output edges
   function getDownstreamLoad(distroId: string, visited: Set<string>): number {
