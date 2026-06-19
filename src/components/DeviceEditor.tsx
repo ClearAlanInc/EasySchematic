@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo, type DragEvent } from "react";
 import { useSchematicStore } from "../store";
 import { buildBulkSlots } from "../slotBulk";
+import { autoNamePorts } from "../portNaming";
 import {
   SIGNAL_LABELS,
   SIGNAL_COLORS,
@@ -316,16 +317,23 @@ export default function DeviceEditor() {
       undo();
       setCreatingNodeId(null);
     }
+    // Reset the port-sync session marker so REOPENING this device does a clean
+    // replace from the store instead of merging stale `draft-` ports back in.
+    // The mid-edit draft-carry (#180) only needs the marker WITHIN one session
+    // (a card install while the editor is open); across close/reopen, any drafts
+    // were already either committed (under new IDs) or discarded, so re-merging
+    // them duplicates ports on every Apply→reopen cycle.
+    syncedPortsNodeRef.current = null;
     setEditingNodeId(null);
   }, [undo, setCreatingNodeId, setEditingNodeId]);
 
   const handleSave = useCallback(() => {
     if (!editingNodeId) return;
 
-    // Build old→new ID map for draft ports
+    // Build old→new ID map for draft ports. Unnamed ports are auto-named (not
+    // dropped) so a row you added never silently vanishes on Apply.
     const idMap = new Map<string, string>();
-    const finalPorts: Port[] = ports
-      .filter((p) => p.label.trim())
+    const finalPorts: Port[] = autoNamePorts(ports)
       .map((p, i) => {
         const newId = p.id.startsWith("draft-") ? `p${Date.now()}-${i}` : p.id;
         if (newId !== p.id) idMap.set(p.id, newId);

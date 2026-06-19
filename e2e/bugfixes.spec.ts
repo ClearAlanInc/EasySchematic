@@ -217,6 +217,46 @@ test("#180 installing a card adds ports that survive Apply", async ({ page }) =>
   expect(await portRows.count(), "card ports must persist after Apply (#180)").toBe(afterInstall);
 });
 
+// Port duplication: adding a port then Apply→reopen used to clone it. A just-saved
+// draft port lingered in local editor state and got merged back in on every reopen,
+// so the count grew by one each Apply→reopen cycle (1 → 2 → 3 …).
+test("adding a port does not duplicate it on Apply→reopen", async ({ page }) => {
+  await boot(page);
+  await page.locator(".react-flow__node").first().dblclick({ force: true });
+  await expect(page.getByPlaceholder("e.g. Camera 1")).toBeVisible({ timeout: 10_000 });
+
+  const portRows = page.locator('input[placeholder="Port label"]');
+  const initial = await portRows.count();
+
+  // Add an input port and name it (unnamed ports are dropped on save). The new row
+  // lands inside the Inputs section, not necessarily last in the DOM, so name the
+  // freshly-added empty-valued row rather than `.last()`.
+  await page.getByRole("button", { name: "+ Add", exact: true }).first().click();
+  await expect(portRows).toHaveCount(initial + 1);
+  const count = await portRows.count();
+  let named = false;
+  for (let i = 0; i < count; i++) {
+    if ((await portRows.nth(i).inputValue()) === "") {
+      await portRows.nth(i).fill("DupProbe");
+      named = true;
+      break;
+    }
+  }
+  expect(named, "a fresh empty port row should exist to name").toBe(true);
+
+  // Apply + reopen twice — the bug added one extra copy on every cycle.
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
+    await page.waitForTimeout(300);
+    await page.locator(".react-flow__node").first().dblclick({ force: true });
+    await expect(page.getByPlaceholder("e.g. Camera 1")).toBeVisible({ timeout: 10_000 });
+    expect(
+      await portRows.count(),
+      "the added port must persist exactly once, not duplicate on reopen",
+    ).toBe(initial + 1);
+  }
+});
+
 // #211 — an empty expansion slot renders a "(empty)" bay on the device, and the
 // slot's eye toggle in the editor hides that bay from the canvas.
 test("#211 empty-slot bay shows on the device and can be hidden via the slot toggle", async ({ page }) => {
