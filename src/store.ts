@@ -41,7 +41,7 @@ import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, D
 import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
-import { CURRENT_SCHEMA_VERSION, migrateSchematic } from "./migrations";
+import { CURRENT_SCHEMA_VERSION, STUB_LABEL_Z_INDEX, migrateSchematic } from "./migrations";
 import { healStaleWaypoints } from "./waypointHealing";
 import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor, splitMemberWaypoints } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
@@ -5193,6 +5193,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       type: "stub-label",
       position: { x: srcStubAbs.x - srcParentAbs.x, y: srcStubAbs.y - srcParentAbs.y },
       ...(srcParentId ? { parentId: srcParentId } : {}),
+      zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
       data: { signalType: sigType, linkedConnectionId, side: "source" },
     } as SchematicNode;
     const tgtStubNode: SchematicNode = {
@@ -5200,6 +5201,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       type: "stub-label",
       position: { x: tgtStubAbs.x - tgtParentAbs.x, y: tgtStubAbs.y - tgtParentAbs.y },
       ...(tgtParentId ? { parentId: tgtParentId } : {}),
+      zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
       data: { signalType: sigType, linkedConnectionId, side: "target" },
     } as SchematicNode;
 

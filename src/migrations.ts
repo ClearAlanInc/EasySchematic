@@ -18,6 +18,10 @@ import type { SchematicNode } from "./types";
 
 export const CURRENT_SCHEMA_VERSION = 41;
 
+/** Stub-label nodes paint at this z-index so connection lines render UNDER their
+ *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
+export const STUB_LABEL_Z_INDEX = 100;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Migration = (data: any) => any;
 
@@ -949,6 +953,24 @@ export function migrateSchematic(data: any): any {
     }
     data = migrate(data);
     version = data.version;
+  }
+
+  // Version-independent invariant: stub-label nodes must paint ABOVE connection
+  // lines. React Flow elevates edges whose endpoints sit inside a room, so a
+  // z-index-less stub tag ends up under those lines — the cable then renders over
+  // the tag (and the target-leg tail overlaps it). A fixed z-index above edge z
+  // (matching waypoints/junctions) fixes both, and re-applies on every load so
+  // pre-existing files are healed too. (#178)
+  if (Array.isArray(data.nodes)) {
+    let changed = false;
+    const nodes = data.nodes.map((n: any) => {
+      if (n?.type === "stub-label" && n.zIndex !== STUB_LABEL_Z_INDEX) {
+        changed = true;
+        return { ...n, zIndex: STUB_LABEL_Z_INDEX };
+      }
+      return n;
+    });
+    if (changed) data = { ...data, nodes };
   }
 
   return data;

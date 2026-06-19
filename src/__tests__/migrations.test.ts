@@ -1,5 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { migrateSchematic, CURRENT_SCHEMA_VERSION } from "../migrations";
+import { migrateSchematic, CURRENT_SCHEMA_VERSION, STUB_LABEL_Z_INDEX } from "../migrations";
+
+describe("stub-label z-index normalization (#178)", () => {
+  it("stamps a z-index on a stub-label node that lacks one (current-version file)", () => {
+    const out = migrateSchematic({
+      version: CURRENT_SCHEMA_VERSION,
+      nodes: [
+        { id: "s1", type: "stub-label", position: { x: 0, y: 0 }, data: {} },
+        { id: "d1", type: "device", position: { x: 0, y: 0 }, data: {} },
+      ],
+      edges: [],
+    });
+    const stub = out.nodes.find((n: { id: string }) => n.id === "s1");
+    const device = out.nodes.find((n: { id: string }) => n.id === "d1");
+    expect(stub.zIndex).toBe(STUB_LABEL_Z_INDEX);
+    expect(device.zIndex).toBeUndefined(); // only stub-labels are touched
+  });
+
+  it("leaves an already-correct z-index untouched (no needless rewrite)", () => {
+    const nodes = [{ id: "s1", type: "stub-label", position: { x: 0, y: 0 }, zIndex: STUB_LABEL_Z_INDEX, data: {} }];
+    const out = migrateSchematic({ version: CURRENT_SCHEMA_VERSION, nodes, edges: [] });
+    expect(out.nodes).toBe(nodes); // same reference — nothing changed
+  });
+});
 
 describe("v39→v40 bundles migration", () => {
   it("adds an empty bundles map and bumps version", () => {
