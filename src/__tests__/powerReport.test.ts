@@ -38,6 +38,13 @@ const stubNode = (id: string, link: string, side: "source" | "target"): Schemati
 const powerEdge = (id: string, source: string, target: string): ConnectionEdge =>
   ({ id, source, target, data: { signalType: "power" } } as unknown as ConnectionEdge);
 
+/** A 3-phase feed: five parallel cam-lok conductors (L1/L2/L3/N/G) src → tgt. */
+const threePhaseFeed = (baseId: string, source: string, target: string): ConnectionEdge[] =>
+  ["power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"].map(
+    (sig, i) =>
+      ({ id: `${baseId}-${i}`, source, target, data: { signalType: sig } } as unknown as ConnectionEdge),
+  );
+
 /** Two legs of a stubbed power connection src → tgt, joined by linkedConnectionId. */
 const stubbedPowerLegs = (
   baseId: string,
@@ -122,6 +129,29 @@ describe("computePowerReport — distro loading", () => {
     const db = distros.find((d) => d.label === "DB-100")!;
     expect(db.loadW).toBe(150);
     expect(cs.loadW).toBe(150); // upstream distro sees the same load through the chain
+  });
+
+  it("counts load across a 3-phase feed without multiplying by conductor count", () => {
+    // Company switch → DB-100 over 5 cam-lok conductors → adapter → Mac Studio.
+    // The 5 parallel power-l*/neutral/ground edges are ONE feed; the 150W load
+    // must be counted once, not ×5 (and the per-conductor signal types must be
+    // recognized as power at all).
+    const nodes = [
+      distro("company-switch", 144000),
+      distro("DB-100", 20800),
+      passthrough("adapter"),
+      device("mac", 150),
+    ];
+    const edges = [
+      ...threePhaseFeed("feed", "company-switch", "DB-100"),
+      powerEdge("e1", "DB-100", "adapter"),
+      powerEdge("e2", "adapter", "mac"),
+    ];
+    const { distros } = computePowerReport(nodes, edges);
+    const cs = distros.find((d) => d.label === "company-switch")!;
+    const db = distros.find((d) => d.label === "DB-100")!;
+    expect(cs.loadW).toBe(150); // not 750 (=150×5)
+    expect(db.loadW).toBe(150);
   });
 
   it("does not mark a stubbed device as unconnected power", () => {

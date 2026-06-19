@@ -3,6 +3,7 @@ import type {
   ConnectionEdge,
   DeviceData,
 } from "./types";
+import { SIGNAL_GROUPS } from "./types";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 import { csvRow, groupBy, getRoomLabel } from "./packList";
@@ -45,6 +46,13 @@ export interface PowerReportData {
 // ─── Helpers ───
 
 
+
+// Every power signal type — single-phase "power" plus the per-conductor 3-phase
+// legs (L1/L2/L3/neutral/ground). A 3-phase feed is drawn as several parallel
+// cam-lok edges between the same two devices; the walk must recognize them all
+// (else a 3-phase distro like a company switch reads as feeding nothing) without
+// counting the same downstream load once per conductor.
+const POWER_SIGNALS = new Set<string>(SIGNAL_GROUPS.Power);
 
 function getDistroStatus(loadPercent: number): "OK" | "Warning" | "Overloaded" {
   if (loadPercent > 100) return "Overloaded";
@@ -114,7 +122,7 @@ export function computePowerReport(
   const powerEdges: { source: string; target: string }[] = [];
   const stubLegsByLink = new Map<string, { source?: string; target?: string }>();
   for (const e of edges) {
-    if (e.data?.signalType !== "power") continue;
+    if (!e.data || !POWER_SIGNALS.has(e.data.signalType)) continue;
     const link = e.data.linkedConnectionId;
     if (!link) {
       powerEdges.push({ source: e.source, target: e.target });
@@ -144,18 +152,21 @@ export function computePowerReport(
   }
 
   // Sum every device's draw downstream of a node by following power output edges,
-  // recursing through passthroughs and daisy-chained distros alike.
+  // recursing through passthroughs and daisy-chained distros alike. Each node is
+  // counted at most once (gated by `visited`): parallel conductors of one feed
+  // (3-phase L1/L2/L3/N/G), and any diamond/cycle, contribute their load a single
+  // time. Seed `visited` with the root distro so a back-edge to it is ignored.
   function getDownstreamLoad(fromId: string, visited: Set<string>): number {
-    if (visited.has(fromId)) return 0;
-    visited.add(fromId);
-
     let load = 0;
     for (const edge of powerEdges) {
       if (edge.source !== fromId) continue; // follow power output → target
-      if (!drawById.has(edge.target)) continue; // target isn't a device node
-      connectedToDistro.add(edge.target);
-      load += drawById.get(edge.target) ?? 0; // the node's own draw (0 for adapters/distros)
-      load += getDownstreamLoad(edge.target, visited); // everything behind it
+      const target = edge.target;
+      if (!drawById.has(target)) continue; // target isn't a device node
+      if (visited.has(target)) continue; // already counted (parallel conductor / diamond)
+      visited.add(target);
+      connectedToDistro.add(target);
+      load += drawById.get(target) ?? 0; // the node's own draw (0 for adapters/distros)
+      load += getDownstreamLoad(target, visited); // everything behind it
     }
     return load;
   }
@@ -166,7 +177,7 @@ export function computePowerReport(
     if (data.powerCapacityW == null || data.powerCapacityW <= 0) continue;
 
     const capacityW = data.powerCapacityW;
-    const loadW = getDownstreamLoad(node.id, new Set());
+    const loadW = getDownstreamLoad(node.id, new Set([node.id]));
     const loadPercent = capacityW > 0 ? Math.round((loadW / capacityW) * 100) : 0;
 
     distros.push({
