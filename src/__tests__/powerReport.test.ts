@@ -18,6 +18,15 @@ const device = (id: string, powerDrawW: number): SchematicNode =>
     data: { label: id, model: id, deviceType: "amp", powerDrawW },
   } as unknown as SchematicNode);
 
+/** An in-line passthrough (e.g. an L5-20→Edison adapter): conducts power, draws 0, no capacity. */
+const passthrough = (id: string): SchematicNode =>
+  ({
+    id,
+    type: "device",
+    position: { x: 0, y: 0 },
+    data: { label: id, model: id, deviceType: "adapter", powerDrawW: 0 },
+  } as unknown as SchematicNode);
+
 const stubNode = (id: string, link: string, side: "source" | "target"): SchematicNode =>
   ({
     id,
@@ -87,6 +96,32 @@ describe("computePowerReport — distro loading", () => {
     ];
     const { distros } = computePowerReport(nodes, edges);
     expect(distros[0].loadW).toBe(550);
+  });
+
+  it("counts load through an in-line passthrough adapter (distro → adapter → device)", () => {
+    // The default schematic wires a Mac Studio behind an L5-20→Edison adapter:
+    // the walk must pass THROUGH the adapter, not dead-end at its 0W draw.
+    const nodes = [distro("DB-100", 20800), passthrough("adapter"), device("mac", 150)];
+    const edges = [
+      powerEdge("e1", "DB-100", "adapter"),
+      powerEdge("e2", "adapter", "mac"),
+    ];
+    const { distros, unconnectedPowerW } = computePowerReport(nodes, edges);
+    expect(distros[0].loadW).toBe(150);
+    expect(unconnectedPowerW).toBe(0);
+  });
+
+  it("counts load through daisy-chained distros (distro → distro → device)", () => {
+    const nodes = [distro("company-switch", 144000), distro("DB-100", 20800), device("mac", 150)];
+    const edges = [
+      powerEdge("e1", "company-switch", "DB-100"),
+      powerEdge("e2", "DB-100", "mac"),
+    ];
+    const { distros } = computePowerReport(nodes, edges);
+    const cs = distros.find((d) => d.label === "company-switch")!;
+    const db = distros.find((d) => d.label === "DB-100")!;
+    expect(db.loadW).toBe(150);
+    expect(cs.loadW).toBe(150); // upstream distro sees the same load through the chain
   });
 
   it("does not mark a stubbed device as unconnected power", () => {

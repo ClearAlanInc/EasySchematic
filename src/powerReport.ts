@@ -131,27 +131,31 @@ export function computePowerReport(
     if (source != null && target != null) powerEdges.push({ source, target });
   }
 
-  // Get devices downstream from a distro node by following power output edges
-  function getDownstreamLoad(distroId: string, visited: Set<string>): number {
-    if (visited.has(distroId)) return 0;
-    visited.add(distroId);
+  // Power can flow THROUGH intermediate nodes that aren't distros — in-line
+  // adapters (e.g. an L5-20→Edison adapter), passive power strips, daisy-chained
+  // distros. The walk must pass through them to reach the real load behind them;
+  // otherwise everything downstream of a passthrough reads as 0W. Build a draw
+  // lookup over ALL device nodes, including cable accessories (which draw 0 but
+  // still conduct power), so traversal never dead-ends at a passthrough.
+  const drawById = new Map<string, number>();
+  for (const node of nodes) {
+    if (node.type !== "device") continue;
+    drawById.set(node.id, (node.data as DeviceData).powerDrawW ?? 0);
+  }
+
+  // Sum every device's draw downstream of a node by following power output edges,
+  // recursing through passthroughs and daisy-chained distros alike.
+  function getDownstreamLoad(fromId: string, visited: Set<string>): number {
+    if (visited.has(fromId)) return 0;
+    visited.add(fromId);
 
     let load = 0;
     for (const edge of powerEdges) {
-      // Distro outputs power → target receives it
-      if (edge.source === distroId) {
-        const targetData = nodeDataMap.get(edge.target);
-        if (!targetData) continue;
-
-        connectedToDistro.add(edge.target);
-
-        // If the target is also a distro, recurse (daisy chain)
-        if (targetData.data.powerCapacityW != null && targetData.data.powerCapacityW > 0) {
-          load += getDownstreamLoad(edge.target, visited);
-        } else {
-          load += targetData.data.powerDrawW ?? 0;
-        }
-      }
+      if (edge.source !== fromId) continue; // follow power output → target
+      if (!drawById.has(edge.target)) continue; // target isn't a device node
+      connectedToDistro.add(edge.target);
+      load += drawById.get(edge.target) ?? 0; // the node's own draw (0 for adapters/distros)
+      load += getDownstreamLoad(edge.target, visited); // everything behind it
     }
     return load;
   }
