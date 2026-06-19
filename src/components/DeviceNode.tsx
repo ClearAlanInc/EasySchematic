@@ -17,7 +17,8 @@ import { resolveDeviceLabel } from "../displayName";
 
 type ColumnItem =
   | { type: "port"; port: Port }
-  | { type: "section"; name: string };
+  | { type: "section"; name: string }
+  | { type: "divider" };
 
 /** Hover-tooltip suffix surfacing a USB-C port's Power Delivery rating, if set. */
 function usbcPowerSuffix(port: Port): string {
@@ -34,6 +35,12 @@ function buildColumnItems(ports: Port[]): ColumnItem[] {
   for (const port of ports) {
     if (port.section && port.section !== lastSection) {
       items.push({ type: "section", name: port.section });
+    } else if (!port.section && lastSection) {
+      // A section just ended into unsectioned ports — emit a closing divider so
+      // the following ports don't read as part of the section. (A section
+      // followed by ANOTHER section needs nothing; that section's own header is
+      // the boundary.)
+      items.push({ type: "divider" });
     }
     items.push({ type: "port", port });
     lastSection = port.section;
@@ -250,6 +257,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   const passthroughItems = useMemo(
     () => buildColumnItems(passthroughPorts),
     [passthroughPorts],
+  );
+
+  /** A thin closing line marking the end of a section that runs into unsectioned ports. */
+  const renderDivider = (key: string) => (
+    <div key={key} className="h-1.5 flex items-center px-2" aria-hidden>
+      <div className="border-b border-[var(--color-border)]/30 w-full" />
+    </div>
   );
 
   /** Render a port row for a column (left or right). */
@@ -502,6 +516,8 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       {item.name}
                     </span>
                   </div>
+                ) : item.type === "divider" ? (
+                  renderDivider(`ldiv-${i}`)
                 ) : renderColumnPort(item.port, "left"),
               )}
             </div>
@@ -515,6 +531,8 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                       {item.name}
                     </span>
                   </div>
+                ) : item.type === "divider" ? (
+                  renderDivider(`rdiv-${i}`)
                 ) : renderColumnPort(item.port, "right"),
               )}
             </div>
@@ -616,6 +634,8 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                   {item.name}
                 </span>
               </div>
+            ) : item.type === "divider" ? (
+              renderDivider(`pdiv-${i}`)
             ) : renderPassthroughPort(item.port),
           )}
         </div>
@@ -633,6 +653,9 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                   </span>
                 </div>
               );
+            }
+            if (item.type === "divider") {
+              return renderDivider(`bdiv-${i}`);
             }
 
             const port = item.port;

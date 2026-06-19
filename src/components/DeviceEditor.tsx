@@ -2120,6 +2120,15 @@ function PortSection({
                   }}
                 />
               ))}
+              {/* Close a section that runs into unsectioned ports, so the next
+                  port doesn't read as part of this section. A following section
+                  needs nothing — its own header is the boundary. */}
+              {group.section && groups[gi + 1] && !groups[gi + 1].section && (
+                <div
+                  className="border-b border-[var(--color-border)]/30 mx-1 mt-1 mb-0.5"
+                  aria-hidden
+                />
+              )}
             </div>
           );
         })}
