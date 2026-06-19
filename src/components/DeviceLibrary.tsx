@@ -1153,6 +1153,7 @@ export default function DeviceLibrary() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical load-on-mount; loadLibrary sets state as it fetches
     loadLibrary();
   }, [loadLibrary]);
 

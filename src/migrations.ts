@@ -963,6 +963,7 @@ export function migrateSchematic(data: any): any {
   // pre-existing files are healed too. (#178)
   if (Array.isArray(data.nodes)) {
     let changed = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed migration node
     const nodes = data.nodes.map((n: any) => {
       if (n?.type === "stub-label" && n.zIndex !== STUB_LABEL_Z_INDEX) {
         changed = true;
