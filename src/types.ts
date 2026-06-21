@@ -274,6 +274,14 @@ export interface DeviceData {
   poeDrawW?: number;
   /** Unit cost in dollars (optional, for BOM/quoting) */
   unitCost?: number;
+  /** Per-instance serial number, carried into the pack list / device report (#P2-025) */
+  serialNumber?: string;
+  /** Free-text device-level note, carried into the pack list / device report (#P2-032) */
+  note?: string;
+  /** Marks this device as a (cold) spare — flagged in reports, not part of the active signal path (#P2-014) */
+  isSpare?: boolean;
+  /** Where this device is coming from — own stock, being procured, or another contractor (#P2-028) */
+  procurementSource?: "stock" | "procuring" | "contractor";
   isVenueProvided?: boolean;
   /** Physical height in millimeters — reserved for future rack management */
   heightMm?: number;
@@ -342,6 +350,8 @@ export interface NoteData {
   [key: string]: unknown;
   /** HTML content from contentEditable */
   html: string;
+  /** Background color for the note card (#P3-013). Defaults to the standard yellow note style. */
+  color?: string;
 }
 
 export type NoteNode = Node<NoteData, "note">;
@@ -475,6 +485,16 @@ export interface ConnectionData {
   lineStyle?: LineStyle;
   /** Per-connection color override (CSS color). Falls back to signal-type color. Ignored for direct-attach. */
   color?: string;
+  /** Whether this cable is a patch lead or part of the fixed field / infrastructure install (#P2-019) */
+  cableUse?: "patch" | "field";
+  /** Conductor gauge in AWG — free text to allow values like "12", "18", "2/0" (#P2-015) */
+  gaugeAwg?: string;
+  /** Alternate / contractor name for this cable, shown alongside the internal cable ID (#P2-023) */
+  cableAlias?: string;
+  /** Marks the cable as tested / certified (#P2-031) */
+  tested?: boolean;
+  /** ISO date (YYYY-MM-DD) the cable was tested / certified (#P2-031) */
+  testedDate?: string;
 }
 
 export type ConnectionEdge = Edge<ConnectionData>;
@@ -615,6 +635,8 @@ export interface RackData {
   /** Position on the rack page canvas */
   position: { x: number; y: number };
   linkedRoomId?: string;
+  /** Unit cost of the rack enclosure itself, so it appears as a purchasable line item (#P2-024) */
+  unitCost?: number;
 }
 
 export interface RackDevicePlacement {
@@ -748,6 +770,8 @@ export interface SchematicFile {
   favoriteTemplates?: string[];
   // Report layout preferences (pack list PDF, etc.) keyed by report ID
   reportLayouts?: Record<string, unknown>;
+  // Per-table hidden-column preferences keyed by table ID (e.g. "cableSchedule")
+  reportHiddenColumns?: Record<string, string[]>;
   globalReportHeaderLayout?: TitleBlockLayout;
   globalReportFooterLayout?: TitleBlockLayout;
   /** @deprecated Use scrollConfig instead. Kept for backwards compatibility on import. */
@@ -819,7 +843,17 @@ export interface SchematicFile {
   /** Wrap long device labels across two lines instead of truncating with ellipsis.
    *  New files default true; undefined on loaded files = legacy single-line truncate. */
   wrapDeviceLabels?: boolean;
+  /** Project lifecycle status, surfaced in project metadata / file lists (#P2-007) */
+  status?: ProjectStatus;
 }
+
+export type ProjectStatus = "active" | "dormant" | "cancelled" | "pending";
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  active: "Active",
+  dormant: "Dormant",
+  cancelled: "Cancelled",
+  pending: "Pending",
+};
 
 export type LabelCaseMode = "as-typed" | "uppercase" | "lowercase" | "capitalize";
 export const DEFAULT_LABEL_CASE: LabelCaseMode = "as-typed";

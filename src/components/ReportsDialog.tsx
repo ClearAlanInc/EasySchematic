@@ -4,6 +4,7 @@ import { computeNetworkReport, computeDhcpServerSummary, computePoeBudget, type 
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps, computeDhcpWarnings, computeSubnetConflicts, type DhcpWarning } from "../networkValidation";
 import {
   computePackList,
+  computeDocumentSummary,
   mergeDevicesByModel,
   mergeCablesByType,
   exportPackListCsv,
@@ -99,9 +100,10 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
       const data = computePowerReport(nodes, edges);
       exportPowerReportCsv(data, schematicName);
     } else {
-      const data = computePackList(nodes, edges);
+      const pages = useSchematicStore.getState().pages;
+      const data = computePackList(nodes, edges, pages);
       const cableCosts = useSchematicStore.getState().cableCosts;
-      exportPackListCsv(data, schematicName, cableCosts);
+      exportPackListCsv(data, schematicName, cableCosts, computeDocumentSummary(nodes, edges, pages));
     }
   }, [tab, nodes, edges, schematicName]);
 
@@ -232,7 +234,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           defaultLayout={defaultLayout}
           titleBlock={titleBlock}
           getTableData={(layout) =>
-            getPackListTableData(computePackList(nodes, edges), layout, useSchematicStore.getState().cableCosts)
+            getPackListTableData(computePackList(nodes, edges, useSchematicStore.getState().pages), layout, useSchematicStore.getState().cableCosts)
           }
           onClose={() => setShowPreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Pack List.pdf`}
@@ -304,6 +306,30 @@ const thClass =
 const tdClass = "py-1 px-2 text-xs text-[var(--color-text)]";
 const rowClass = (i: number) =>
   i % 2 === 1 ? "bg-[var(--color-surface)]" : "";
+
+// Cable Schedule columns in DOM order. The `id` is the gate key shared by the
+// header <th> and its matching body cell for show/hide toggling.
+const CABLE_COLUMNS: { id: string; label: string }[] = [
+  { id: "label", label: "Label" },
+  { id: "cableId", label: "Cable ID" },
+  { id: "sourceDevice", label: "Source" },
+  { id: "sourcePort", label: "Src Port" },
+  { id: "sourceConnector", label: "Src Conn" },
+  { id: "targetDevice", label: "Target" },
+  { id: "targetPort", label: "Tgt Port" },
+  { id: "targetConnector", label: "Tgt Conn" },
+  { id: "cableType", label: "Cable Type" },
+  { id: "signalType", label: "Signal" },
+  { id: "cableLength", label: "Length" },
+  { id: "computedLength", label: "Est. Length" },
+  { id: "gaugeAwg", label: "Gauge" },
+  { id: "cableAlias", label: "Alias" },
+  { id: "tested", label: "Tested" },
+  { id: "cableUse", label: "Use" },
+  { id: "sourceRoom", label: "Src Room" },
+  { id: "targetRoom", label: "Tgt Room" },
+  { id: "multicableLabel", label: "Snake" },
+];
 
 // ─── Network Report Tab ────────────────────────────────────────
 
@@ -1464,13 +1490,15 @@ const DeviceRow = memo(function DeviceRow({
 
 // ─── Cable Schedule Tab ────────────────────────────────────────
 
-type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector" | "targetDevice" | "targetPort" | "targetConnector" | "cableType" | "signalType" | "cableLength" | "computedLength" | "sourceRoom" | "targetRoom" | "multicableLabel";
-type CableGroupBy = "" | "sourceRoom" | "signalType" | "cableType" | "multicableLabel";
+type CableSortKey = "cableId" | "sourceDevice" | "sourcePort" | "sourceConnector" | "targetDevice" | "targetPort" | "targetConnector" | "cableType" | "signalType" | "cableLength" | "computedLength" | "gaugeAwg" | "cableAlias" | "tested" | "cableUse" | "sourceRoom" | "targetRoom" | "multicableLabel";
+type CableGroupBy = "" | "sourceRoom" | "signalType" | "cableType" | "multicableLabel" | "cableUse";
 
 const cableScheduleColumns: SpreadsheetColumn<CableScheduleRow>[] = [
   { id: "label", header: "Label", getValue: () => "", editable: false },
   { id: "cableId", header: "Cable ID", getValue: (r) => r.cableId, editable: true, fillType: "deviceName" },
   { id: "cableLength", header: "Length", getValue: (r) => r.cableLength, editable: true },
+  { id: "gaugeAwg", header: "Gauge", getValue: (r) => r.gaugeAwg, editable: true },
+  { id: "cableAlias", header: "Alias", getValue: (r) => r.cableAlias, editable: true, fillType: "deviceName" },
 ];
 
 function CableScheduleTabInline() {
@@ -1483,6 +1511,20 @@ function CableScheduleTabInline() {
   const [sortKey, setSortKey] = useState<CableSortKey>("cableId");
   const [sortAsc, setSortAsc] = useState(true);
   const [groupByKey, setGroupByKey] = useState<CableGroupBy>("");
+  const [colMenu, setColMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // Hidden-column prefs persist in the file (per table id) so they survive reopening
+  // the reports window and reloading the project.
+  const hiddenColsArr = useSchematicStore((s) => s.reportHiddenColumns["cableSchedule"]);
+  const setReportHiddenColumns = useSchematicStore((s) => s.setReportHiddenColumns);
+  const hiddenCols = useMemo(() => new Set(hiddenColsArr ?? []), [hiddenColsArr]);
+  const toggleCol = useCallback((id: string) => {
+    const next = new Set(hiddenCols);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setReportHiddenColumns("cableSchedule", [...next]);
+  }, [hiddenCols, setReportHiddenColumns]);
+  const showAllCols = useCallback(() => setReportHiddenColumns("cableSchedule", []), [setReportHiddenColumns]);
 
   const cableNamingScheme = useSchematicStore((s) => s.cableNamingScheme);
   const roomDistances = useSchematicStore((s) => s.roomDistances);
@@ -1539,11 +1581,16 @@ function CableScheduleTabInline() {
     (rowIndex: number, columnId: string, value: string) => {
       const row = sorted[rowIndex];
       if (!row) return;
+      const v = value.trim();
       if (columnId === "cableLength") {
-        patchEdgeData(row.edgeId, { cableLength: value.trim() });
+        patchEdgeData(row.edgeId, { cableLength: v });
+      } else if (columnId === "gaugeAwg") {
+        patchEdgeData(row.edgeId, { gaugeAwg: v || undefined });
+      } else if (columnId === "cableAlias") {
+        patchEdgeData(row.edgeId, { cableAlias: v || undefined });
       } else {
         // Empty value clears the override → reverts to auto-generated ID
-        patchEdgeData(row.edgeId, { cableId: value.trim() || undefined });
+        patchEdgeData(row.edgeId, { cableId: v || undefined });
       }
     },
     [sorted, patchEdgeData],
@@ -1555,11 +1602,18 @@ function CableScheduleTabInline() {
         .map((c) => {
           const row = sorted[c.rowIndex];
           if (!row) return null;
+          const v = c.value.trim();
           if (c.columnId === "cableLength") {
-            return { edgeId: row.edgeId, patch: { cableLength: c.value.trim() } };
+            return { edgeId: row.edgeId, patch: { cableLength: v } };
+          }
+          if (c.columnId === "gaugeAwg") {
+            return { edgeId: row.edgeId, patch: { gaugeAwg: v || undefined } };
+          }
+          if (c.columnId === "cableAlias") {
+            return { edgeId: row.edgeId, patch: { cableAlias: v || undefined } };
           }
           // Empty value clears the override → reverts to auto-generated ID
-          return { edgeId: row.edgeId, patch: { cableId: c.value.trim() || undefined } };
+          return { edgeId: row.edgeId, patch: { cableId: v || undefined } };
         })
         .filter((c) => c !== null) as { edgeId: string; patch: Partial<ConnectionData> }[];
       if (edgeChanges.length > 0) {
@@ -1579,6 +1633,8 @@ function CableScheduleTabInline() {
       const row = sorted[rowIndex];
       if (!row) return "";
       if (columnId === "cableLength") return row.cableLength;
+      if (columnId === "gaugeAwg") return row.gaugeAwg;
+      if (columnId === "cableAlias") return row.cableAlias;
       return row.cableId;
     },
     [sorted],
@@ -1613,6 +1669,53 @@ function CableScheduleTabInline() {
       } else {
         const row = sorted[rowIndex];
         if (row) patchEdgeData(row.edgeId, { hideCableId: newValue });
+      }
+    },
+    [sorted, spreadsheet.selectedCells, patchEdgeData, batchPatchEdgeData],
+  );
+
+  // Toggle the tested/certified flag for one row (or all selected rows). Stamps today's
+  // date when marking tested; clears both flag and date when un-marking (#P2-031).
+  const onToggleTested = useCallback(
+    (rowIndex: number, currentTested: boolean) => {
+      const patch: Partial<ConnectionData> = currentTested
+        ? { tested: undefined, testedDate: undefined }
+        : { tested: true, testedDate: new Date().toISOString().slice(0, 10) };
+      const selectedRows = new Set<number>();
+      for (const key of spreadsheet.selectedCells) {
+        selectedRows.add(Number(key.slice(0, key.indexOf(":"))));
+      }
+      if (selectedRows.size > 1 && selectedRows.has(rowIndex)) {
+        const changes = Array.from(selectedRows)
+          .map((ri) => sorted[ri])
+          .filter(Boolean)
+          .map((r) => ({ edgeId: r.edgeId, patch }));
+        if (changes.length > 0) batchPatchEdgeData(changes);
+      } else {
+        const row = sorted[rowIndex];
+        if (row) patchEdgeData(row.edgeId, patch);
+      }
+    },
+    [sorted, spreadsheet.selectedCells, patchEdgeData, batchPatchEdgeData],
+  );
+
+  // Set patch/field use for one row (or all selected rows when this row is in a multi-selection) (#P2-019).
+  const onSetCableUse = useCallback(
+    (rowIndex: number, value: "patch" | "field" | "") => {
+      const patch: Partial<ConnectionData> = { cableUse: value || undefined };
+      const selectedRows = new Set<number>();
+      for (const key of spreadsheet.selectedCells) {
+        selectedRows.add(Number(key.slice(0, key.indexOf(":"))));
+      }
+      if (selectedRows.size > 1 && selectedRows.has(rowIndex)) {
+        const changes = Array.from(selectedRows)
+          .map((ri) => sorted[ri])
+          .filter(Boolean)
+          .map((r) => ({ edgeId: r.edgeId, patch }));
+        if (changes.length > 0) batchPatchEdgeData(changes);
+      } else {
+        const row = sorted[rowIndex];
+        if (row) patchEdgeData(row.edgeId, patch);
       }
     },
     [sorted, spreadsheet.selectedCells, patchEdgeData, batchPatchEdgeData],
@@ -1675,32 +1778,82 @@ function CableScheduleTabInline() {
           <option value="signalType">Signal Type</option>
           <option value="cableType">Cable Type</option>
           <option value="multicableLabel">Snake</option>
+          <option value="cableUse">Patch / Field</option>
         </select>
+        <button
+          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none cursor-pointer hover:text-[var(--color-text)] whitespace-nowrap"
+          title="Show / hide columns"
+          onClick={(e) => setColMenu({ x: e.clientX, y: e.clientY })}
+        >
+          Columns ▾
+        </button>
       </div>
       <div {...spreadsheet.getContainerProps()}>
         <table className="w-full border-collapse">
           <thead>
-            <tr>
-              <th className={thClass} style={{ width: 28, textAlign: "center" }} title="Show label on schematic">Label</th>
-              <th className={thClass} onClick={() => toggleSort("cableId")}>Cable ID{sortArrow("cableId")}</th>
-              <th className={thClass} onClick={() => toggleSort("sourceDevice")}>Source{sortArrow("sourceDevice")}</th>
-              <th className={thClass} onClick={() => toggleSort("sourcePort")}>Src Port{sortArrow("sourcePort")}</th>
-              <th className={thClass} onClick={() => toggleSort("sourceConnector")}>Src Conn{sortArrow("sourceConnector")}</th>
-              <th className={thClass} onClick={() => toggleSort("targetDevice")}>Target{sortArrow("targetDevice")}</th>
-              <th className={thClass} onClick={() => toggleSort("targetPort")}>Tgt Port{sortArrow("targetPort")}</th>
-              <th className={thClass} onClick={() => toggleSort("targetConnector")}>Tgt Conn{sortArrow("targetConnector")}</th>
-              <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
-              <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
-              <th className={thClass} onClick={() => toggleSort("cableLength")}>Length{sortArrow("cableLength")}</th>
-              <th className={thClass} onClick={() => toggleSort("computedLength")} title="Estimated length from room-to-room distance + slack">Est. Length{sortArrow("computedLength")}</th>
-              <th className={thClass} onClick={() => toggleSort("sourceRoom")}>Src Room{sortArrow("sourceRoom")}</th>
-              <th className={thClass} onClick={() => toggleSort("targetRoom")}>Tgt Room{sortArrow("targetRoom")}</th>
-              <th className={thClass} onClick={() => toggleSort("multicableLabel")}>Snake{sortArrow("multicableLabel")}</th>
+            <tr onContextMenu={(e) => { e.preventDefault(); setColMenu({ x: e.clientX, y: e.clientY }); }}>
+              {!hiddenCols.has("label") && (
+                <th className={thClass} style={{ width: 28, textAlign: "center" }} title="Show label on schematic">Label</th>
+              )}
+              {!hiddenCols.has("cableId") && (
+                <th className={thClass} onClick={() => toggleSort("cableId")}>Cable ID{sortArrow("cableId")}</th>
+              )}
+              {!hiddenCols.has("sourceDevice") && (
+                <th className={thClass} onClick={() => toggleSort("sourceDevice")}>Source{sortArrow("sourceDevice")}</th>
+              )}
+              {!hiddenCols.has("sourcePort") && (
+                <th className={thClass} onClick={() => toggleSort("sourcePort")}>Src Port{sortArrow("sourcePort")}</th>
+              )}
+              {!hiddenCols.has("sourceConnector") && (
+                <th className={thClass} onClick={() => toggleSort("sourceConnector")}>Src Conn{sortArrow("sourceConnector")}</th>
+              )}
+              {!hiddenCols.has("targetDevice") && (
+                <th className={thClass} onClick={() => toggleSort("targetDevice")}>Target{sortArrow("targetDevice")}</th>
+              )}
+              {!hiddenCols.has("targetPort") && (
+                <th className={thClass} onClick={() => toggleSort("targetPort")}>Tgt Port{sortArrow("targetPort")}</th>
+              )}
+              {!hiddenCols.has("targetConnector") && (
+                <th className={thClass} onClick={() => toggleSort("targetConnector")}>Tgt Conn{sortArrow("targetConnector")}</th>
+              )}
+              {!hiddenCols.has("cableType") && (
+                <th className={thClass} onClick={() => toggleSort("cableType")}>Cable Type{sortArrow("cableType")}</th>
+              )}
+              {!hiddenCols.has("signalType") && (
+                <th className={thClass} onClick={() => toggleSort("signalType")}>Signal{sortArrow("signalType")}</th>
+              )}
+              {!hiddenCols.has("cableLength") && (
+                <th className={thClass} onClick={() => toggleSort("cableLength")}>Length{sortArrow("cableLength")}</th>
+              )}
+              {!hiddenCols.has("computedLength") && (
+                <th className={thClass} onClick={() => toggleSort("computedLength")} title="Estimated length from room-to-room distance + slack">Est. Length{sortArrow("computedLength")}</th>
+              )}
+              {!hiddenCols.has("gaugeAwg") && (
+                <th className={thClass} onClick={() => toggleSort("gaugeAwg")} title="Conductor gauge (AWG)">Gauge{sortArrow("gaugeAwg")}</th>
+              )}
+              {!hiddenCols.has("cableAlias") && (
+                <th className={thClass} onClick={() => toggleSort("cableAlias")} title="Alternate / contractor cable name">Alias{sortArrow("cableAlias")}</th>
+              )}
+              {!hiddenCols.has("tested") && (
+                <th className={thClass} style={{ textAlign: "center" }} onClick={() => toggleSort("tested")} title="Tested / certified">Tested{sortArrow("tested")}</th>
+              )}
+              {!hiddenCols.has("cableUse") && (
+                <th className={thClass} style={{ minWidth: 64 }} onClick={() => toggleSort("cableUse")} title="Patch lead vs fixed field / infrastructure cable">Use{sortArrow("cableUse")}</th>
+              )}
+              {!hiddenCols.has("sourceRoom") && (
+                <th className={thClass} onClick={() => toggleSort("sourceRoom")}>Src Room{sortArrow("sourceRoom")}</th>
+              )}
+              {!hiddenCols.has("targetRoom") && (
+                <th className={thClass} onClick={() => toggleSort("targetRoom")}>Tgt Room{sortArrow("targetRoom")}</th>
+              )}
+              {!hiddenCols.has("multicableLabel") && (
+                <th className={thClass} onClick={() => toggleSort("multicableLabel")}>Snake{sortArrow("multicableLabel")}</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {grouped
-              ? renderGroupedCableSchedule(grouped, spreadsheet, onToggleLabel)
+              ? renderGroupedCableSchedule(grouped, spreadsheet, onToggleLabel, onToggleTested, onSetCableUse, hiddenCols)
               : sorted.map((r, i) => (
                   <CableScheduleRow_
                     key={r.edgeId}
@@ -1709,6 +1862,9 @@ function CableScheduleTabInline() {
                     altClass={rowClass(i)}
                     spreadsheet={spreadsheet}
                     onToggleLabel={onToggleLabel}
+                    onToggleTested={onToggleTested}
+                    onSetCableUse={onSetCableUse}
+                    hiddenCols={hiddenCols}
                   />
                 ))
             }
@@ -1724,6 +1880,43 @@ function CableScheduleTabInline() {
           onApply={(values) => spreadsheet.applyFillSeries(values)}
           onClose={() => spreadsheet.dismissFillSeries()}
         />
+      )}
+
+      {colMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setColMenu(null)} />
+          <div
+            className="fixed z-50 bg-white border border-[var(--color-border)] rounded shadow-lg py-1 text-xs max-h-[70vh] overflow-y-auto"
+            style={{ left: colMenu.x, top: colMenu.y }}
+          >
+            <div className="flex items-center justify-between gap-3 px-3 py-1">
+              <span className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+                Columns
+              </span>
+              <button
+                onClick={showAllCols}
+                disabled={hiddenCols.size === 0}
+                className="text-[10px] text-blue-600 hover:text-blue-500 disabled:text-[var(--color-text-muted)] disabled:opacity-50 disabled:cursor-default cursor-pointer"
+              >
+                Show all
+              </button>
+            </div>
+            {CABLE_COLUMNS.map((c) => (
+              <label
+                key={c.id}
+                className="flex items-center gap-2 px-3 py-1 hover:bg-[var(--color-surface)] cursor-pointer whitespace-nowrap"
+              >
+                <input
+                  type="checkbox"
+                  checked={!hiddenCols.has(c.id)}
+                  onChange={() => toggleCol(c.id)}
+                  className="w-3 h-3 accent-blue-500 cursor-pointer"
+                />
+                {c.label}
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </>
   );
@@ -1773,12 +1966,18 @@ const CableScheduleRow_ = memo(function CableScheduleRow_({
   altClass,
   spreadsheet,
   onToggleLabel,
+  onToggleTested,
+  onSetCableUse,
+  hiddenCols,
 }: {
   row: CableScheduleRow;
   rowIndex: number;
   altClass: string;
   spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>;
   onToggleLabel: (rowIndex: number, currentHideLabel: boolean) => void;
+  onToggleTested: (rowIndex: number, currentTested: boolean) => void;
+  onSetCableUse: (rowIndex: number, value: "patch" | "field" | "") => void;
+  hiddenCols: Set<string>;
 }) {
   const labelProps = spreadsheet.getCellProps(rowIndex, "label");
   const cableIdProps = spreadsheet.getCellProps(rowIndex, "cableId");
@@ -1788,38 +1987,82 @@ const CableScheduleRow_ = memo(function CableScheduleRow_({
     const edge = s.edges.find((e) => e.id === row.edgeId);
     return edge?.data?.hideCableId === true;
   });
+  const tested = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === row.edgeId);
+    return edge?.data?.tested === true;
+  });
 
   return (
     <tr className={hasSelection ? "bg-blue-50" : altClass}>
-      <td
-        className={`${tdClass} ${labelProps.isSelected ? "bg-blue-100 ring-1 ring-inset ring-blue-300" : ""}`}
-        style={{ textAlign: "center" }}
-        onMouseDown={labelProps.onMouseDown}
-        onMouseEnter={labelProps.onMouseEnter}
-      >
-        <input
-          type="checkbox"
-          checked={!hideLabel}
-          onChange={() => onToggleLabel(rowIndex, hideLabel)}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="w-3 h-3 accent-blue-500 cursor-pointer"
-          title={hideLabel ? "Show label" : "Hide label"}
-        />
-      </td>
-      <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableId" value={row.cableId} />
-      <td className={tdClass}>{row.sourceDevice}</td>
-      <td className={tdClass}>{row.sourcePort}</td>
-      <td className={tdClass}>{row.sourceConnector}</td>
-      <td className={tdClass}>{row.targetDevice}</td>
-      <td className={tdClass}>{row.targetPort}</td>
-      <td className={tdClass}>{row.targetConnector}</td>
-      <td className={tdClass}>{row.cableType}</td>
-      <td className={tdClass}>{row.signalType}</td>
-      <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableLength" value={row.cableLength} />
-      <td className={`${tdClass} text-[var(--color-text-muted)]`}>{row.computedLength ?? ""}</td>
-      <td className={tdClass}>{row.sourceRoom}</td>
-      <td className={tdClass}>{row.targetRoom}</td>
-      <td className={tdClass}>{row.multicableLabel}</td>
+      {!hiddenCols.has("label") && (
+        <td
+          className={`${tdClass} ${labelProps.isSelected ? "bg-blue-100 ring-1 ring-inset ring-blue-300" : ""}`}
+          style={{ textAlign: "center" }}
+          onMouseDown={labelProps.onMouseDown}
+          onMouseEnter={labelProps.onMouseEnter}
+        >
+          <input
+            type="checkbox"
+            checked={!hideLabel}
+            onChange={() => onToggleLabel(rowIndex, hideLabel)}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+            title={hideLabel ? "Show label" : "Hide label"}
+          />
+        </td>
+      )}
+      {!hiddenCols.has("cableId") && (
+        <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableId" value={row.cableId} />
+      )}
+      {!hiddenCols.has("sourceDevice") && <td className={tdClass}>{row.sourceDevice}</td>}
+      {!hiddenCols.has("sourcePort") && <td className={tdClass}>{row.sourcePort}</td>}
+      {!hiddenCols.has("sourceConnector") && <td className={tdClass}>{row.sourceConnector}</td>}
+      {!hiddenCols.has("targetDevice") && <td className={tdClass}>{row.targetDevice}</td>}
+      {!hiddenCols.has("targetPort") && <td className={tdClass}>{row.targetPort}</td>}
+      {!hiddenCols.has("targetConnector") && <td className={tdClass}>{row.targetConnector}</td>}
+      {!hiddenCols.has("cableType") && <td className={tdClass}>{row.cableType}</td>}
+      {!hiddenCols.has("signalType") && <td className={tdClass}>{row.signalType}</td>}
+      {!hiddenCols.has("cableLength") && (
+        <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableLength" value={row.cableLength} />
+      )}
+      {!hiddenCols.has("computedLength") && (
+        <td className={`${tdClass} text-[var(--color-text-muted)]`}>{row.computedLength ?? ""}</td>
+      )}
+      {!hiddenCols.has("gaugeAwg") && (
+        <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="gaugeAwg" value={row.gaugeAwg} />
+      )}
+      {!hiddenCols.has("cableAlias") && (
+        <EditableCell spreadsheet={spreadsheet} rowIndex={rowIndex} columnId="cableAlias" value={row.cableAlias} />
+      )}
+      {!hiddenCols.has("tested") && (
+        <td className={tdClass} style={{ textAlign: "center" }} title={row.tested || "Not tested"}>
+          <input
+            type="checkbox"
+            checked={tested}
+            onChange={() => onToggleTested(rowIndex, tested)}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-3 h-3 accent-green-600 cursor-pointer"
+          />
+        </td>
+      )}
+      {!hiddenCols.has("cableUse") && (
+        <td className={`${tdClass} p-0.5`} style={{ minWidth: 64 }}>
+          <select
+            value={row.cableUse}
+            onChange={(e) => onSetCableUse(rowIndex, e.target.value as "patch" | "field" | "")}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full min-w-[3.5rem] bg-transparent border-none text-[10px] outline-none cursor-pointer"
+            title="Patch lead vs fixed field / infrastructure cable"
+          >
+            <option value="">—</option>
+            <option value="patch">Patch</option>
+            <option value="field">Field</option>
+          </select>
+        </td>
+      )}
+      {!hiddenCols.has("sourceRoom") && <td className={tdClass}>{row.sourceRoom}</td>}
+      {!hiddenCols.has("targetRoom") && <td className={tdClass}>{row.targetRoom}</td>}
+      {!hiddenCols.has("multicableLabel") && <td className={tdClass}>{row.multicableLabel}</td>}
     </tr>
   );
 });
@@ -1827,7 +2070,7 @@ const CableScheduleRow_ = memo(function CableScheduleRow_({
 function groupCableScheduleRows(rows: CableScheduleRow[], key: CableGroupBy): Map<string, CableScheduleRow[]> {
   const map = new Map<string, CableScheduleRow[]>();
   for (const r of rows) {
-    const groupKey = key === "sourceRoom" ? r.sourceRoom : key === "signalType" ? r.signalType : key === "multicableLabel" ? (r.multicableLabel || "Ungrouped") : r.cableType;
+    const groupKey = key === "sourceRoom" ? r.sourceRoom : key === "signalType" ? r.signalType : key === "multicableLabel" ? (r.multicableLabel || "Ungrouped") : key === "cableUse" ? (r.cableUse ? r.cableUse.charAt(0).toUpperCase() + r.cableUse.slice(1) : "Unspecified") : r.cableType;
     const arr = map.get(groupKey);
     if (arr) arr.push(r);
     else map.set(groupKey, [r]);
@@ -1839,14 +2082,18 @@ function renderGroupedCableSchedule(
   groups: Map<string, CableScheduleRow[]>,
   spreadsheet: ReturnType<typeof useSpreadsheetSelection<CableScheduleRow>>,
   onToggleLabel: (rowIndex: number, currentHideLabel: boolean) => void,
+  onToggleTested: (rowIndex: number, currentTested: boolean) => void,
+  onSetCableUse: (rowIndex: number, value: "patch" | "field" | "") => void,
+  hiddenCols: Set<string>,
 ) {
   const elements: React.ReactNode[] = [];
+  const visibleColCount = CABLE_COLUMNS.length - hiddenCols.size;
   let idx = 0;
   for (const [group, rows] of groups) {
     elements.push(
       <tr key={`h-${group}`}>
         <td
-          colSpan={15}
+          colSpan={visibleColCount}
           className="pt-3 pb-1 px-2 text-xs font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)]"
         >
           {group}
@@ -1862,6 +2109,9 @@ function renderGroupedCableSchedule(
           altClass={rowClass(idx)}
           spreadsheet={spreadsheet}
           onToggleLabel={onToggleLabel}
+          onToggleTested={onToggleTested}
+          onSetCableUse={onSetCableUse}
+          hiddenCols={hiddenCols}
         />,
       );
       idx++;
@@ -2159,7 +2409,7 @@ function PackListTabInline() {
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
 
-  type SubTab = "devices" | "cables" | "accessories";
+  type SubTab = "devices" | "cables" | "accessories" | "racks";
   const [subTab, setSubTab] = useState<SubTab>("devices");
   const [groupDevicesByRoom, setGroupDevicesByRoom] = useState(false);
   type CableGrouping = "" | "path" | "category";
@@ -2169,7 +2419,9 @@ function PackListTabInline() {
   const setCableCost = useSchematicStore((s) => s.setCableCost);
   const currency = useSchematicStore((s) => s.currency);
 
-  const data = useMemo(() => computePackList(nodes, edges), [nodes, edges]);
+  const pages = useSchematicStore((s) => s.pages);
+  const data = useMemo(() => computePackList(nodes, edges, pages), [nodes, edges, pages]);
+  const docSummary = useMemo(() => computeDocumentSummary(nodes, edges, pages), [nodes, edges, pages]);
 
   const totalCost = useMemo(() => {
     let sum = 0;
@@ -2182,6 +2434,8 @@ function PackListTabInline() {
       const uc = cableCosts?.[cableCostKey(s.cableType, s.signalType, s.cableLength)] ?? 0;
       sum += uc * s.count;
     }
+    // Include rack enclosure costs (#P2-024)
+    for (const r of data.racks) sum += (r.unitCost ?? 0) * r.count;
     return sum;
   }, [data, cableCosts]);
 
@@ -2197,6 +2451,9 @@ function PackListTabInline() {
 
   return (
     <>
+      <p className="mb-2 text-[11px] text-[var(--color-text-muted)] italic" title="Auto-generated document summary (#P3-019)">
+        {docSummary}
+      </p>
       <div className="flex items-center gap-2 mb-3">
         <button className={subTabClass("devices")} onClick={() => setSubTab("devices")}>
           Devices
@@ -2207,6 +2464,11 @@ function PackListTabInline() {
         {data.accessories.length > 0 && (
           <button className={subTabClass("accessories")} onClick={() => setSubTab("accessories")}>
             Accessories
+          </button>
+        )}
+        {data.racks.length > 0 && (
+          <button className={subTabClass("racks")} onClick={() => setSubTab("racks")}>
+            Racks
           </button>
         )}
         <div className="flex-1" />
@@ -2395,6 +2657,46 @@ function PackListTabInline() {
                     <td className={tdClass}>{a.room}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+
+      {subTab === "racks" && (
+        <>
+          {data.racks.length === 0 ? (
+            <div className="text-sm text-[var(--color-text-muted)] text-center py-8">
+              No racks in this project.
+            </div>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className={plThClass}>Qty</th>
+                  <th className={plThClass}>Rack</th>
+                  <th className={plThClass}>Type</th>
+                  <th className={plThClass}>Height</th>
+                  <th className={plThClass}>Room</th>
+                  <th className={plThClass}>Unit Cost</th>
+                  <th className={plThClass}>Ext. Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.racks.map((r, i) => {
+                  const ext = r.unitCost > 0 ? r.unitCost * r.count : 0;
+                  return (
+                    <tr key={i} className={rowClass(i)}>
+                      <td className={tdClass}>{r.count}&times;</td>
+                      <td className={tdClass}>{r.label}</td>
+                      <td className={tdClass}>{r.rackType}</td>
+                      <td className={tdClass}>{r.heightU}U</td>
+                      <td className={tdClass}>{r.room}</td>
+                      <td className={tdClass}>{r.unitCost > 0 ? formatCurrency(r.unitCost, currency) : "—"}</td>
+                      <td className={tdClass}>{ext > 0 ? formatCurrency(ext, currency) : "—"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

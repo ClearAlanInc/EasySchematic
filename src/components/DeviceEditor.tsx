@@ -171,6 +171,12 @@ export default function DeviceEditor() {
   // Cost
   const [unitCost, setUnitCost] = useState<number | undefined>(undefined);
 
+  // Commercial / logistics metadata
+  const [serialNumber, setSerialNumber] = useState("");
+  const [note, setNote] = useState("");
+  const [isSpare, setIsSpare] = useState(false);
+  const [procurementSource, setProcurementSource] = useState<DeviceData["procurementSource"]>(undefined);
+
   // Physical dimensions
   const [heightMm, setHeightMm] = useState<number | undefined>(undefined);
   const [widthMm, setWidthMm] = useState<number | undefined>(undefined);
@@ -245,6 +251,10 @@ export default function DeviceEditor() {
     setPoeBudgetW(node.data.poeBudgetW);
     setPoeDrawW(node.data.poeDrawW);
     setUnitCost(node.data.unitCost);
+    setSerialNumber(node.data.serialNumber ?? "");
+    setNote(node.data.note ?? "");
+    setIsSpare(node.data.isSpare ?? false);
+    setProcurementSource(node.data.procurementSource);
     setHeightMm(node.data.heightMm);
     setWidthMm(node.data.widthMm);
     setDepthMm(node.data.depthMm);
@@ -376,6 +386,10 @@ export default function DeviceEditor() {
       ...(voltage ? { voltage } : {}),
       ...(thermalBtuh != null ? { thermalBtuh } : {}),
       ...(unitCost != null ? { unitCost } : {}),
+      ...(serialNumber.trim() ? { serialNumber: serialNumber.trim() } : {}),
+      ...(note.trim() ? { note: note.trim() } : {}),
+      ...(isSpare ? { isSpare: true } : {}),
+      ...(procurementSource ? { procurementSource } : {}),
       ...(heightMm != null ? { heightMm } : {}),
       ...(widthMm != null ? { widthMm } : {}),
       ...(depthMm != null ? { depthMm } : {}),
@@ -395,7 +409,7 @@ export default function DeviceEditor() {
     updateDevice(editingNodeId, data);
     setCreatingNodeId(null); // commit the node — close won't undo it
     close();
-  }, [editingNodeId, ports, label, shortName, useShortName, wrapLabel, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
+  }, [editingNodeId, ports, label, shortName, useShortName, wrapLabel, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, updateDevice, close, setCreatingNodeId, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, serialNumber, note, isSpare, procurementSource, heightMm, widthMm, depthMm, weightKg, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
 
   // Ctrl+Enter anywhere in the editor → Apply & Close
   const onCtrlEnter = useCallback((e: React.KeyboardEvent) => {
@@ -1353,25 +1367,81 @@ export default function DeviceEditor() {
             </div>
           </details>
 
-          {/* Cost */}
+          {/* Cost & Procurement */}
           <details className="text-xs">
             <summary className="cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text)] select-none py-1">
-              Cost
+              Cost & Procurement
             </summary>
-            <div className="pt-1 pl-2" style={{ maxWidth: "50%" }}>
-              <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
-                Unit Cost ({currency})
+            <div className="pt-1 pl-2 flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                    Unit Cost ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    value={unitCost ?? ""}
+                    onChange={(e) => setUnitCost(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="0.00"
+                    min={0}
+                    step={0.01}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                    Serial Number
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    value={serialNumber}
+                    onChange={(e) => setSerialNumber(e.target.value)}
+                    placeholder="e.g. SN-00123"
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Source
+                </label>
+                <select
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500 cursor-pointer"
+                  value={procurementSource ?? ""}
+                  onChange={(e) => setProcurementSource((e.target.value || undefined) as DeviceData["procurementSource"])}
+                >
+                  <option value="">—</option>
+                  <option value="stock">Own stock</option>
+                  <option value="procuring">Being procured</option>
+                  <option value="contractor">Other contractor</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-1.5 text-[11px] text-[var(--color-text)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSpare}
+                  onChange={(e) => setIsSpare(e.target.checked)}
+                />
+                Cold spare
               </label>
-              <input
-                type="number"
-                className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
-                value={unitCost ?? ""}
-                onChange={(e) => setUnitCost(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="0.00"
-                min={0}
-                step={0.01}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-0.5">
+                  Note
+                </label>
+                <textarea
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500 resize-y"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Free-text note"
+                  rows={2}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Shows in the pack list / device report.
+                </p>
+              </div>
             </div>
           </details>
 

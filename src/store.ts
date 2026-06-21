@@ -34,7 +34,7 @@ import type {
   BundleMeta,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode } from "./types";
+import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode, ProjectStatus } from "./types";
 import { defaultStubPlacement, healStubPortAlignment } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_LABEL_CASE, DEFAULT_DISTANCE_SETTINGS, DEFAULT_PAN_MODE, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_SHOW_ROOM, DEFAULT_STUB_LABEL_PAGE_MODE } from "./types";
@@ -498,6 +498,8 @@ interface SchematicState {
   // Report layouts (pack list PDF settings, etc.)
   reportLayouts: Record<string, unknown>;
   setReportLayout: (key: string, layout: unknown) => void;
+  reportHiddenColumns: Record<string, string[]>;
+  setReportHiddenColumns: (tableId: string, columnIds: string[]) => void;
   globalReportHeaderLayout: TitleBlockLayout | null;
   globalReportFooterLayout: TitleBlockLayout | null;
   setGlobalReportHeaderLayout: (layout: TitleBlockLayout) => void;
@@ -543,6 +545,10 @@ interface SchematicState {
   // ISO 4217 currency code for cost display in reports (#158).
   currency: string;
   setCurrency: (code: string) => void;
+
+  // Project lifecycle status (#P2-007). undefined = treated as Active.
+  status: ProjectStatus | undefined;
+  setProjectStatus: (status: ProjectStatus | undefined) => void;
 
   // Incompatible connection dialog (#6)
   pendingIncompatibleConnection: {
@@ -1265,6 +1271,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   signalColors: undefined,
   signalLineStyles: undefined,
   reportLayouts: {},
+  reportHiddenColumns: {},
   globalReportHeaderLayout: null,
   globalReportFooterLayout: null,
   hiddenSignalTypes: "",
@@ -1278,6 +1285,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cableNamingScheme: "type-prefix" as "sequential" | "type-prefix",
   labelCase: DEFAULT_LABEL_CASE,
   currency: "USD",
+  status: undefined,
   showLineJumps: true,
   showMinimap: loadShowMinimap(),
   showFacePlateDetail: false,
@@ -3690,6 +3698,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setReportHiddenColumns: (tableId, columnIds) => {
+    set({ reportHiddenColumns: { ...get().reportHiddenColumns, [tableId]: columnIds } });
+    get().saveToLocalStorage();
+  },
+
   setGlobalReportHeaderLayout: (layout) => {
     set({ globalReportHeaderLayout: layout });
     get().saveToLocalStorage();
@@ -3751,6 +3764,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   setCurrency: (code) => {
     set({ currency: code });
+    get().saveToLocalStorage();
+  },
+
+  setProjectStatus: (status) => {
+    set({ status });
     get().saveToLocalStorage();
   },
 
@@ -4561,12 +4579,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
+      reportHiddenColumns: Object.keys(state.reportHiddenColumns).length > 0 ? state.reportHiddenColumns : undefined,
       globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
       currency: state.currency !== "USD" ? state.currency : undefined,
+      status: state.status,
       panMode: state.panMode !== "select-first" ? state.panMode : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showFacePlateDetail: state.showFacePlateDetail ? true : undefined,
@@ -4655,12 +4675,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             templatePresets: data.templatePresets ?? {},
             favoriteTemplates: data.favoriteTemplates ?? [],
             reportLayouts: data.reportLayouts ?? {},
+            reportHiddenColumns: data.reportHiddenColumns ?? {},
             globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
             globalReportFooterLayout: data.globalReportFooterLayout ?? null,
             scrollConfig: resolveScrollConfig(data),
             cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
             labelCase: resolveLabelCase(data.labelCase),
             currency: data.currency ?? "USD",
+            status: data.status,
             panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
             showLineJumps: data.showLineJumps ?? true,
             showFacePlateDetail: data.showFacePlateDetail ?? false,
@@ -4736,12 +4758,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         templatePresets: data.templatePresets ?? {},
         favoriteTemplates: data.favoriteTemplates ?? [],
         reportLayouts: data.reportLayouts ?? {},
+        reportHiddenColumns: data.reportHiddenColumns ?? {},
         globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
         globalReportFooterLayout: data.globalReportFooterLayout ?? null,
         scrollConfig: resolveScrollConfig(data),
         cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
         labelCase: resolveLabelCase(data.labelCase),
         currency: data.currency ?? "USD",
+        status: data.status,
         panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
         showLineJumps: data.showLineJumps ?? true,
         showFacePlateDetail: data.showFacePlateDetail ?? false,
@@ -4814,12 +4838,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
       reportLayouts: Object.keys(state.reportLayouts).length > 0 ? state.reportLayouts : undefined,
+      reportHiddenColumns: Object.keys(state.reportHiddenColumns).length > 0 ? state.reportHiddenColumns : undefined,
       globalReportHeaderLayout: state.globalReportHeaderLayout ?? undefined,
       globalReportFooterLayout: state.globalReportFooterLayout ?? undefined,
       scrollConfig: isDefaultScrollConfig(state.scrollConfig) ? undefined : state.scrollConfig,
       cableNamingScheme: state.cableNamingScheme !== "type-prefix" ? state.cableNamingScheme : undefined,
       labelCase: state.labelCase !== "as-typed" ? state.labelCase : undefined,
       currency: state.currency !== "USD" ? state.currency : undefined,
+      status: state.status,
       panMode: state.panMode !== "select-first" ? state.panMode : undefined,
       showLineJumps: !state.showLineJumps ? false : undefined,
       showFacePlateDetail: state.showFacePlateDetail ? true : undefined,
@@ -4910,12 +4936,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       templatePresets: data.templatePresets ?? {},
       favoriteTemplates: data.favoriteTemplates ?? [],
       reportLayouts: data.reportLayouts ?? {},
+      reportHiddenColumns: data.reportHiddenColumns ?? {},
       globalReportHeaderLayout: data.globalReportHeaderLayout ?? null,
       globalReportFooterLayout: data.globalReportFooterLayout ?? null,
       scrollConfig: resolveScrollConfig(data),
       cableNamingScheme: data.cableNamingScheme ?? "type-prefix",
       labelCase: resolveLabelCase(data.labelCase),
       currency: data.currency ?? "USD",
+      status: data.status,
       panMode: (data.panMode === "pan-first" ? "pan-first" : "select-first") as PanMode,
       showLineJumps: data.showLineJumps ?? true,
       showFacePlateDetail: data.showFacePlateDetail ?? false,
@@ -5017,6 +5045,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         templatePresets: {},
         favoriteTemplates: [],
         reportLayouts: {},
+        reportHiddenColumns: {},
         globalReportHeaderLayout: null,
         globalReportFooterLayout: null,
         scrollConfig: { ...DEFAULT_SCROLL_CONFIG },

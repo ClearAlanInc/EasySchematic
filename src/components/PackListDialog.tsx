@@ -32,7 +32,8 @@ function PackListDialog({ onClose }: PackListDialogProps) {
   const [groupCablesByPath, setGroupCablesByPath] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  const data = useMemo(() => computePackList(nodes, edges), [nodes, edges]);
+  const pages = useSchematicStore((s) => s.pages);
+  const data = useMemo(() => computePackList(nodes, edges, pages), [nodes, edges, pages]);
 
   const defaultLayout = useMemo(() => createDefaultPackListLayout(), []);
 

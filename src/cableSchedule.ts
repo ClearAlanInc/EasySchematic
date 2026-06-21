@@ -39,6 +39,14 @@ export interface CableScheduleRow {
   /** Bundle display name (custom label, else "Bundle N") — blank if not bundled. Each
    *  bundled member stays its own row; bundling never collapses physical cable counts. */
   bundle: string;
+  /** Conductor gauge in AWG, free text (#P2-015). */
+  gaugeAwg: string;
+  /** Alternate / contractor cable name (#P2-023). */
+  cableAlias: string;
+  /** "✓" when the cable is marked tested/certified, with optional date appended (#P2-031). */
+  tested: string;
+  /** Raw cable use: "patch" | "field" | "" (#P2-019). */
+  cableUse: string;
 }
 
 /** Prefix letter for each signal type when using type-prefix cable naming */
@@ -199,6 +207,12 @@ export function computeCableSchedule(
         rawSignalType: signalType,
         storedCableId: e.data?.cableId as string | undefined,
         storedCableLength: (e.data?.cableLength as string | undefined) ?? "",
+        gaugeAwg: (e.data?.gaugeAwg as string | undefined) ?? "",
+        cableAlias: (e.data?.cableAlias as string | undefined) ?? "",
+        cableUse: (e.data?.cableUse as string | undefined) ?? "",
+        tested: e.data?.tested
+          ? (e.data?.testedDate ? `✓ ${e.data.testedDate as string}` : "✓")
+          : "",
         multicableLabel: (e.data?.multicableLabel as string) ?? "",
         bundle: bundleOf(e),
         sourceDevice,
@@ -257,6 +271,10 @@ export function computeCableSchedule(
         targetRoom: c.targetRoom,
         multicableLabel: c.multicableLabel,
         bundle: c.bundle,
+        gaugeAwg: c.gaugeAwg,
+        cableAlias: c.cableAlias,
+        tested: c.tested,
+        cableUse: c.cableUse,
       };
     });
   }
@@ -278,6 +296,10 @@ export function computeCableSchedule(
     targetRoom: c.targetRoom,
     multicableLabel: c.multicableLabel,
     bundle: c.bundle,
+    gaugeAwg: c.gaugeAwg,
+    cableAlias: c.cableAlias,
+    tested: c.tested,
+    cableUse: c.cableUse,
   }));
 }
 
@@ -308,6 +330,7 @@ export function exportCableScheduleCsv(
     "Cable ID", "Source", "Src Port", "Src Conn",
     "Target", "Tgt Port", "Tgt Conn",
     "Cable Type", "Signal", "Length", "Est. Length",
+    "Gauge (AWG)", "Alias", "Tested", "Use",
     "Src Room", "Tgt Room", "Snake", "Bundle",
   ]));
   for (const r of rows) {
@@ -315,11 +338,13 @@ export function exportCableScheduleCsv(
       r.cableId, r.sourceDevice, r.sourcePort, r.sourceConnector,
       r.targetDevice, r.targetPort, r.targetConnector,
       r.cableType, r.signalType, r.cableLength, r.computedLength ?? "",
+      r.gaugeAwg, r.cableAlias, r.tested,
+      r.cableUse ? r.cableUse.charAt(0).toUpperCase() + r.cableUse.slice(1) : "",
       r.sourceRoom, r.targetRoom, r.multicableLabel, r.bundle,
     ]));
   }
 
-  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -346,6 +371,10 @@ export function getCableScheduleTableData(
     signalType: r.signalType,
     cableLength: r.cableLength,
     computedLength: r.computedLength ?? "",
+    gaugeAwg: r.gaugeAwg,
+    cableAlias: r.cableAlias,
+    tested: r.tested,
+    cableUse: r.cableUse ? r.cableUse.charAt(0).toUpperCase() + r.cableUse.slice(1) : "",
     sourceRoom: r.sourceRoom,
     targetRoom: r.targetRoom,
     multicableLabel: r.multicableLabel,

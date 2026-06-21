@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 41;
+export const CURRENT_SCHEMA_VERSION = 42;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -597,6 +597,14 @@ const migrations: Record<number, Migration> = {
     if (typeof data.cableIdMidOffset === "number") data.cableIdMidOffset = Math.round(data.cableIdMidOffset * s);
 
     data.version = 41;
+    return data;
+  },
+  41: (data) => {
+    // v41 → v42: project-management metadata batch. All purely additive optional fields —
+    // device serialNumber/note/isSpare/procurementSource, connection gaugeAwg/cableAlias/
+    // tested/testedDate, file-level status, rack unitCost, note color. No transform needed;
+    // absent fields read as undefined on the new code paths.
+    data.version = 42;
     return data;
   },
 };

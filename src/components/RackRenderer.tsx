@@ -1062,10 +1062,12 @@ function EditRackInlineDialog({
   onSave: (patch: Partial<RackData>) => void;
   onClose: () => void;
 }) {
+  const currency = useSchematicStore((s) => s.currency);
   const [label, setLabel] = useState(rack.label);
   const [rackType, setRackType] = useState(rack.rackType);
   const [heightU, setHeightU] = useState(rack.heightU);
   const [depthMm, setDepthMm] = useState(rack.depthMm);
+  const [unitCost, setUnitCost] = useState<number | undefined>(rack.unitCost);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1074,6 +1076,7 @@ function EditRackInlineDialog({
       rackType,
       heightU: Math.max(2, Math.min(60, Math.round(heightU))),
       depthMm: Math.max(100, Math.min(2000, Math.round(depthMm))),
+      unitCost,
     });
   };
 
@@ -1130,6 +1133,19 @@ function EditRackInlineDialog({
             />
           </label>
         </div>
+        <label className="block mb-3">
+          <span className="text-neutral-600">Rack cost ({currency})</span>
+          <input
+            type="number"
+            className="mt-0.5 w-full border border-neutral-300 rounded px-2 py-1 outline-none focus:border-blue-400"
+            value={unitCost ?? ""}
+            min={0}
+            step={0.01}
+            placeholder="—"
+            onChange={(e) => setUnitCost(e.target.value ? Number(e.target.value) : undefined)}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </label>
         <div className="flex justify-end gap-2">
           <button type="button" className="px-3 py-1 rounded border border-neutral-300 hover:bg-neutral-50" onClick={onClose}>Cancel</button>
           <button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>

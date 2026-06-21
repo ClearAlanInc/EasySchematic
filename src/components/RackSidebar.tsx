@@ -300,10 +300,12 @@ export default function RackSidebar({ page }: RackSidebarProps) {
 
 function EditRackDialog({ pageId, rack, onClose }: { pageId: string; rack: RackData; onClose: () => void }) {
   const updateRack = useSchematicStore((s) => s.updateRack);
+  const currency = useSchematicStore((s) => s.currency);
   const [label, setLabel] = useState(rack.label);
   const [rackType, setRackType] = useState<RackType>(rack.rackType);
   const [heightU, setHeightU] = useState(rack.heightU);
   const [depthMm, setDepthMm] = useState(rack.depthMm);
+  const [unitCost, setUnitCost] = useState<number | undefined>(rack.unitCost);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -314,9 +316,10 @@ function EditRackDialog({ pageId, rack, onClose }: { pageId: string; rack: RackD
       rackType,
       heightU: cleanH,
       depthMm: cleanD,
+      unitCost,
     });
     onClose();
-  }, [pageId, rack.id, rack.label, label, rackType, heightU, depthMm, updateRack, onClose]);
+  }, [pageId, rack.id, rack.label, label, rackType, heightU, depthMm, unitCost, updateRack, onClose]);
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={onClose}>
@@ -374,6 +377,20 @@ function EditRackDialog({ pageId, rack, onClose }: { pageId: string; rack: RackD
             />
           </label>
         </div>
+
+        <label className="block mb-3">
+          <span className="text-neutral-600">Rack cost ({currency})</span>
+          <input
+            type="number"
+            className="mt-0.5 w-full border border-neutral-300 rounded px-2 py-1 outline-none focus:border-blue-400"
+            value={unitCost ?? ""}
+            onChange={(e) => setUnitCost(e.target.value ? Number(e.target.value) : undefined)}
+            onKeyDown={(e) => e.stopPropagation()}
+            placeholder="0.00"
+            min={0}
+            step={0.01}
+          />
+        </label>
 
         <p className="text-neutral-400 text-[10px] mb-3">
           Reducing the U height does not delete devices already placed at higher U positions —

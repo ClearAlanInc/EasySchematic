@@ -4,8 +4,9 @@ import type {
   DeviceData,
   RoomData,
   SignalType,
+  SchematicPage,
 } from "./types";
-import { SIGNAL_LABELS } from "./types";
+import { SIGNAL_LABELS, RACK_TYPE_LABELS } from "./types";
 import { getCableType } from "./cableTypes";
 import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
@@ -94,6 +95,12 @@ export interface PackListDevice {
   cards: PackListDeviceCard[];
   powerDrawW: number;
   unitCost: number;
+  /** Per-instance serial numbers collected across the grouped devices (#P2-025). */
+  serialNumbers: string[];
+  /** Distinct device-level notes across the grouped devices (#P2-032). */
+  notes: string[];
+  /** How many of the grouped devices are flagged as (cold) spares (#P2-014). */
+  spareCount: number;
 }
 
 export interface PackListCable {
@@ -132,12 +139,23 @@ export interface PackListAdapter {
   modelNumber: string;
 }
 
+/** A rack enclosure as a purchasable BOQ line item (#P2-024). */
+export interface PackListRack {
+  label: string;
+  rackType: string;
+  heightU: number;
+  room: string;
+  count: number;
+  unitCost: number;
+}
+
 export interface PackListData {
   devices: PackListDevice[];
   cables: PackListCable[];
   summary: PackListSummaryRow[];
   accessories: PackListAccessory[];
   adapters: PackListAdapter[];
+  racks: PackListRack[];
 }
 
 /** Merge summary rows by (cableType, signalType, cableLength), dropping route (for non-room-grouped views) */
@@ -165,6 +183,9 @@ export function mergeDevicesByModel(devices: PackListDevice[]): PackListDevice[]
     const existing = map.get(key);
     if (existing) {
       existing.count += d.count;
+      existing.serialNumbers.push(...d.serialNumbers);
+      for (const note of d.notes) if (!existing.notes.includes(note)) existing.notes.push(note);
+      existing.spareCount += d.spareCount;
       // Merge cards
       for (const card of d.cards) {
         const ec = existing.cards.find(
@@ -174,7 +195,14 @@ export function mergeDevicesByModel(devices: PackListDevice[]): PackListDevice[]
         else existing.cards.push({ ...card });
       }
     } else {
-      map.set(key, { ...d, room: "", cards: d.cards.map((c) => ({ ...c })), powerDrawW: d.powerDrawW });
+      map.set(key, {
+        ...d,
+        room: "",
+        cards: d.cards.map((c) => ({ ...c })),
+        powerDrawW: d.powerDrawW,
+        serialNumbers: [...d.serialNumbers],
+        notes: [...d.notes],
+      });
     }
   }
   return [...map.values()].sort(
@@ -223,6 +251,7 @@ export function resolvePort(
 export function computePackList(
   nodes: SchematicNode[],
   edges: ConnectionEdge[],
+  pages: SchematicPage[] = [],
 ): PackListData {
   // Devices — grouped by (model, room) with counts (excluding cable accessories and passive adapters)
   const deviceMap = new Map<string, PackListDevice>();
@@ -270,10 +299,17 @@ export function computePackList(
       continue;
     }
 
+    const serial = (data.serialNumber ?? "").trim();
+    const note = (data.note ?? "").trim();
+    const isSpare = data.isSpare === true;
+
     const key = `${model}|${room}`;
     const existing = deviceMap.get(key);
     if (existing) {
       existing.count++;
+      if (serial) existing.serialNumbers.push(serial);
+      if (note && !existing.notes.includes(note)) existing.notes.push(note);
+      if (isSpare) existing.spareCount++;
     } else {
       deviceMap.set(key, {
         model,
@@ -285,6 +321,9 @@ export function computePackList(
         cards: [],
         powerDrawW: data.powerDrawW ?? 0,
         unitCost: data.unitCost ?? 0,
+        serialNumbers: serial ? [serial] : [],
+        notes: note ? [note] : [],
+        spareCount: isSpare ? 1 : 0,
       });
     }
 
@@ -400,12 +439,79 @@ export function computePackList(
       a.cableType.localeCompare(b.cableType),
   );
 
-  return { devices, cables, summary, accessories, adapters };
+  // Racks — each rack enclosure is a purchasable line item (#P2-024). Group identical
+  // racks (same label, type, height, room) into a single counted row.
+  const rackMap = new Map<string, PackListRack>();
+  for (const page of pages) {
+    if (page.type !== "rack-elevation") continue;
+    for (const rack of page.racks ?? []) {
+      const room = rack.linkedRoomId ? getRoomLabel(nodes, rack.linkedRoomId) : "Unassigned";
+      const label = transformLabelNow(rack.label || "Rack");
+      const rackType = RACK_TYPE_LABELS[rack.rackType] ?? rack.rackType;
+      const key = `${label}|${rack.rackType}|${rack.heightU}|${room}|${rack.unitCost ?? 0}`;
+      const existing = rackMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        rackMap.set(key, {
+          label,
+          rackType,
+          heightU: rack.heightU,
+          room,
+          count: 1,
+          unitCost: rack.unitCost ?? 0,
+        });
+      }
+    }
+  }
+  const racks = [...rackMap.values()].sort(
+    (a, b) => a.room.localeCompare(b.room) || a.label.localeCompare(b.label),
+  );
+
+  return { devices, cables, summary, accessories, adapters, racks };
 }
 
 /** Generate a lookup key for cable costs: "cableType|signalType|cableLength" */
 export function cableCostKey(cableType: string, signalType: string, cableLength: string): string {
   return `${cableType}|${signalType}|${cableLength}`;
+}
+
+/** Auto-generated "this document contains…" summary line for report headers (#P3-019). */
+export function computeDocumentSummary(
+  nodes: SchematicNode[],
+  edges: ConnectionEdge[],
+  pages: SchematicPage[] = [],
+): string {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const devices = nodes.filter(
+    (n) => n.type === "device" && !(n.data as DeviceData).isCableAccessory,
+  ).length;
+  const rooms = nodes.filter((n) => n.type === "room").length;
+  const connections = edges.filter((e) => e.data?.signalType).length;
+  let patch = 0;
+  let field = 0;
+  for (const e of edges) {
+    if (e.data?.cableUse === "patch") patch++;
+    else if (e.data?.cableUse === "field") field++;
+  }
+  let racks = 0;
+  for (const p of pages) {
+    if (p.type === "rack-elevation") racks += p.racks?.length ?? 0;
+  }
+
+  const parts: string[] = [plural(devices, "device")];
+  let conn = plural(connections, "connection");
+  if (patch || field) conn += ` (${patch} patch / ${field} field)`;
+  parts.push(conn);
+  parts.push(plural(rooms, "room"));
+  if (racks) parts.push(plural(racks, "rack"));
+
+  // Join with commas, "and" before the last part.
+  const text =
+    parts.length > 1
+      ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
+      : parts[0];
+  return `This document contains ${text}.`;
 }
 
 // --------------- CSV Export ---------------
@@ -425,16 +531,18 @@ export function exportPackListCsv(
   data: PackListData,
   schematicName: string,
   cableCosts?: Record<string, number>,
+  summary?: string,
 ): void {
   const lines: string[] = [];
 
   lines.push(`Pack List — ${schematicName}`);
   lines.push(`Generated ${new Date().toLocaleDateString()}`);
+  if (summary) lines.push(summary);
   lines.push("");
 
   // Device List
   lines.push("DEVICE LIST");
-  lines.push(csvRow(["Qty", "Device", "Manufacturer", "Model #", "Type", "Room", "Unit Cost", "Extended Cost"]));
+  lines.push(csvRow(["Qty", "Device", "Manufacturer", "Model #", "Type", "Room", "Unit Cost", "Extended Cost", "Serial #", "Spare", "Note"]));
   let deviceTotal = 0;
   for (const d of data.devices) {
     const extCost = d.unitCost > 0 ? d.unitCost * d.count : 0;
@@ -443,6 +551,9 @@ export function exportPackListCsv(
       `${d.count}`, d.model, d.manufacturer, d.modelNumber, d.deviceType, d.room,
       d.unitCost > 0 ? d.unitCost.toFixed(2) : "",
       extCost > 0 ? extCost.toFixed(2) : "",
+      d.serialNumbers.join(", "),
+      d.spareCount > 0 ? `${d.spareCount}` : "",
+      d.notes.join(" | "),
     ]));
     for (const c of d.cards) {
       const cardExt = c.cardUnitCost > 0 ? c.cardUnitCost * c.count : 0;
@@ -475,6 +586,26 @@ export function exportPackListCsv(
     lines.push(csvRow(["Qty", "Adapter", "Manufacturer", "Model #", "Room"]));
     for (const a of data.adapters) {
       lines.push(csvRow([`${a.count}`, a.model, a.manufacturer, a.modelNumber, a.room]));
+    }
+    lines.push("");
+  }
+
+  // Racks (#P2-024)
+  if (data.racks.length > 0) {
+    lines.push("RACKS");
+    lines.push(csvRow(["Qty", "Rack", "Type", "Height (U)", "Room", "Unit Cost", "Extended Cost"]));
+    let rackTotal = 0;
+    for (const r of data.racks) {
+      const ext = r.unitCost > 0 ? r.unitCost * r.count : 0;
+      rackTotal += ext;
+      lines.push(csvRow([
+        `${r.count}`, r.label, r.rackType, `${r.heightU}`, r.room,
+        r.unitCost > 0 ? r.unitCost.toFixed(2) : "",
+        ext > 0 ? ext.toFixed(2) : "",
+      ]));
+    }
+    if (rackTotal > 0) {
+      lines.push(csvRow(["", "", "", "", "", "TOTAL", rackTotal.toFixed(2)]));
     }
     lines.push("");
   }
@@ -546,6 +677,9 @@ export function getPackListTableData(
       powerDrawW: d.powerDrawW > 0 ? `${d.powerDrawW}` : "",
       unitCost: d.unitCost > 0 ? `$${d.unitCost.toFixed(2)}` : "",
       extCost: d.unitCost > 0 ? `$${(d.unitCost * d.count).toFixed(2)}` : "",
+      serialNumber: d.serialNumbers.join(", "),
+      note: d.notes.join(" | "),
+      spare: d.spareCount > 0 ? `${d.spareCount}` : "",
     });
     for (const c of d.cards) {
       deviceRows.push({
@@ -685,6 +819,23 @@ export function getPackListTableData(
     accessoryGroupedRows = groupBy(sortedAccessoryRows, (r) => r.room);
   }
 
+  // Racks table (#P2-024)
+  const racksTableDef = layout.tables.find((t) => t.id === "racks");
+  const rackRows = data.racks.map((r) => ({
+    count: `${r.count}x`,
+    label: r.label,
+    rackType: r.rackType,
+    heightU: `${r.heightU}U`,
+    room: r.room,
+    unitCost: r.unitCost > 0 ? `$${r.unitCost.toFixed(2)}` : "",
+    extCost: r.unitCost > 0 ? `$${(r.unitCost * r.count).toFixed(2)}` : "",
+  }));
+  const sortedRackRows = sortRows(rackRows, racksTableDef?.sortBy, racksTableDef?.sortDir);
+  let rackGroupedRows: Map<string, Record<string, string>[]> | undefined;
+  if (racksTableDef?.groupBy === "room") {
+    rackGroupedRows = groupBy(sortedRackRows, (r) => r.room);
+  }
+
   return [
     {
       id: "devices",
@@ -700,6 +851,11 @@ export function getPackListTableData(
       id: "accessories",
       rows: sortedAccessoryRows,
       groupedRows: accessoryGroupedRows,
+    },
+    {
+      id: "racks",
+      rows: sortedRackRows,
+      groupedRows: rackGroupedRows,
     },
   ];
 }

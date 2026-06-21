@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSchematicStore } from "../store";
-import { DEFAULT_SCROLL_CONFIG, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE } from "../types";
-import type { LabelCaseMode, PanMode, ScrollAction, ScrollConfig, StubLabelPageMode } from "../types";
+import { DEFAULT_SCROLL_CONFIG, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE, PROJECT_STATUS_LABELS } from "../types";
+import type { LabelCaseMode, PanMode, ProjectStatus, ScrollAction, ScrollConfig, StubLabelPageMode } from "../types";
 
 const AUTOROUTE_PREF_KEY = "easyschematic-autoroute-pref";
 
@@ -87,6 +87,8 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setLabelCase = useSchematicStore((s) => s.setLabelCase);
   const currency = useSchematicStore((s) => s.currency);
   const setCurrency = useSchematicStore((s) => s.setCurrency);
+  const status = useSchematicStore((s) => s.status);
+  const setProjectStatus = useSchematicStore((s) => s.setProjectStatus);
   const panMode = useSchematicStore((s) => s.panMode);
   const setPanMode = useSchematicStore((s) => s.setPanMode);
   const stubLabelShowPort = useSchematicStore((s) => s.stubLabelShowPort);
@@ -414,6 +416,33 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 </p>
               </div>
 
+              {/* Project */}
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Project
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-[var(--color-text)]">Status</span>
+                  <select
+                    className={selectClass}
+                    value={status ?? ""}
+                    onChange={(e) =>
+                      setProjectStatus(e.target.value === "" ? undefined : (e.target.value as ProjectStatus))
+                    }
+                  >
+                    <option value="">Active (default)</option>
+                    {(Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]).map((key) => (
+                      <option key={key} value={key}>
+                        {PROJECT_STATUS_LABELS[key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Lifecycle status for this project. Stored in the file and shown in project metadata.
+                </p>
+              </div>
+
               {/* Costs */}
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
@@ -439,6 +468,7 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                     <option value="DKK">DKK — Danish Krone (kr.)</option>
                     <option value="CNY">CNY — Chinese Yuan (¥)</option>
                     <option value="INR">INR — Indian Rupee (₹)</option>
+                    <option value="AED">AED — United Arab Emirates Dirham (د.إ)</option>
                   </select>
                 </div>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">

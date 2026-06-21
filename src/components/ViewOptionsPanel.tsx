@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { SIGNAL_LABELS, SIGNAL_COLORS, LINE_STYLE_DASHARRAY, type SignalType, type LineStyle, type Port } from "../types";
+import { SIGNAL_LABELS, SIGNAL_COLORS, LINE_STYLE_DASHARRAY, SIGNAL_GROUPS, type SignalType, type LineStyle, type Port } from "../types";
 import { useSchematicStore } from "../store";
 import { DEFAULT_SIGNAL_COLORS, loadSignalColors } from "../signalColors";
 
@@ -88,6 +88,40 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   );
 
   const anyHidden = hiddenSet.size > 0 || hiddenPinSet.size > 0;
+
+  // Discipline group toggles — each group scoped to the currently displayed
+  // signal types so the buttons match the list shown below.
+  const displayedSet = useMemo(() => new Set(displayedSignalTypes), [displayedSignalTypes]);
+  const signalGroups = useMemo(
+    () =>
+      (Object.entries(SIGNAL_GROUPS) as [string, SignalType[]][])
+        .map(([label, types]) => ({
+          label,
+          types: types.filter((t) => displayedSet.has(t)),
+        }))
+        .filter((g) => g.types.length > 0)
+        .map((g) => {
+          const hiddenCount = g.types.filter((t) => hiddenSet.has(t)).length;
+          const allHidden = hiddenCount === g.types.length;
+          const allVisible = hiddenCount === 0;
+          return { ...g, allHidden, allVisible, mixed: !allHidden && !allVisible };
+        }),
+    [displayedSet, hiddenSet],
+  );
+
+  const toggleSignalGroup = useCallback(
+    (types: SignalType[]) => {
+      // Show all if any are hidden; otherwise hide all.
+      const anyTypeHidden = types.some((t) => hiddenSet.has(t));
+      for (const t of types) {
+        const isHidden = hiddenSet.has(t);
+        // We want to reach: show-all when anyTypeHidden, else hide-all.
+        const shouldBeHidden = anyTypeHidden ? false : true;
+        if (isHidden !== shouldBeHidden) toggleSignalTypeVisibility(t);
+      }
+    },
+    [hiddenSet, toggleSignalTypeVisibility],
+  );
   const hasCustomizations = !!(signalColors && Object.keys(signalColors).length > 0) ||
     !!(signalLineStyles && Object.keys(signalLineStyles).length > 0);
 
@@ -232,6 +266,30 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
             )}
           </div>
         </div>
+        {signalGroups.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1.5 px-0.5">
+            {signalGroups.map((g) => (
+              <button
+                key={g.label}
+                onClick={() => toggleSignalGroup(g.types)}
+                title={
+                  g.allVisible
+                    ? `Hide all ${g.label} signals`
+                    : `Show all ${g.label} signals`
+                }
+                className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                  g.allVisible
+                    ? "border-blue-500 bg-blue-500/15 text-[var(--color-text)]"
+                    : g.mixed
+                      ? "border-blue-500/40 border-dashed text-[var(--color-text-muted)]"
+                      : "border-[var(--color-border)] text-[var(--color-text-muted)] opacity-60"
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+        )}
         {displayedSignalTypes.length === 0 ? (
           <div className="text-[10px] text-[var(--color-text-muted)] italic px-1 py-1">
             No signal types in schematic
