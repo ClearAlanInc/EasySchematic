@@ -8,24 +8,43 @@ import { checkRateLimit, cleanupExpiredRateLimits } from "./rateLimiter";
 
 const app = new Hono<Env>();
 
-app.use(
-  "*",
-  cors({
-    origin: [
-      "https://easyschematic.live",
-      "https://www.easyschematic.live",
-      "https://beta.easyschematic.live",
-      "https://devices.easyschematic.live",
-      "http://localhost:4173",
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-    ],
-    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Authorization", "Content-Type"],
-    credentials: true,
-  })
-);
+// Credentialed CORS for everything that can carry a session cookie or admin token:
+// echoes back only official hosts and loopback (see corsOrigin), never a wildcard.
+const credentialedCors = cors({
+  origin: corsOrigin,
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowHeaders: ["Authorization", "Content-Type"],
+  credentials: true,
+});
+
+// Open, credential-less CORS for the public community library reads. These return the
+// same session-invariant public data to everyone (all gated on flagged_for_deletion = 0),
+// so any origin may read them — that's what lets self-hosters (Docker on any port, or
+// behind a reverse proxy at any domain) load the live library instead of the bundled
+// subset. Safety: a wildcard ACAO cannot carry credentials, so no cookie/token rides
+// along and nothing private is exposed. Per-id and write routes deliberately stay on the
+// credentialed CORS above — GET /templates/:id varies by role (mods see flagged rows).
+const PUBLIC_LIBRARY_READS = new Set([
+  "/templates",
+  "/templates/summary",
+  "/templates/categories",
+  "/templates/device-types",
+  "/templates/manufacturers",
+  "/templates/search-terms",
+]);
+const publicLibraryCors = cors({
+  origin: "*",
+  allowMethods: ["GET", "OPTIONS"],
+  allowHeaders: ["Content-Type"],
+});
+
+app.use("*", (c, next) => {
+  // On a preflight the real method is in Access-Control-Request-Method, not the OPTIONS verb.
+  const requested =
+    c.req.method === "OPTIONS" ? c.req.header("Access-Control-Request-Method") ?? "" : c.req.method;
+  const isPublicLibraryRead = requested === "GET" && PUBLIC_LIBRARY_READS.has(c.req.path);
+  return (isPublicLibraryRead ? publicLibraryCors : credentialedCors)(c, next);
+});
 
 // Security response headers
 app.use("*", async (c, next) => {
@@ -70,19 +89,30 @@ function getClientIP(c: { req: { header: (name: string) => string | undefined } 
   return c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() || "unknown";
 }
 
-const ALLOWED_ORIGINS = [
+const STATIC_ALLOWED_ORIGINS = [
   "https://easyschematic.live",
   "https://www.easyschematic.live",
   "https://beta.easyschematic.live",
   "https://devices.easyschematic.live",
-  "http://localhost:4173",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
 ];
 
+// Any loopback origin, on any port. Self-hosters run the Docker image on arbitrary
+// ports (prod image defaults to 8080, dev to 5173) and need to read the public
+// community library — a fixed port allowlist silently broke that and fell the app
+// back to the bundled device subset. Loopback is the user's own machine, so echoing
+// it back (even with credentials, for login/cloud) is safe.
+const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+
+/** CORS origin resolver: echoes an origin back iff it's an official host or loopback. */
+function corsOrigin(origin: string): string | null {
+  if (!origin) return null;
+  if (STATIC_ALLOWED_ORIGINS.includes(origin)) return origin;
+  if (LOOPBACK_ORIGIN.test(origin)) return origin;
+  return null;
+}
+
 function isAllowedOrigin(url: string): boolean {
-  try { return ALLOWED_ORIGINS.includes(new URL(url).origin); }
+  try { return corsOrigin(new URL(url).origin) !== null; }
   catch { return false; }
 }
 
