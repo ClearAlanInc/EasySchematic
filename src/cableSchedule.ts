@@ -121,6 +121,7 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   pots: "PT",
   "blu-link": "BL",
   cresnet: "CN",
+  nlight: "NL",
   sensor: "SNS",
   custom: "X",
 };

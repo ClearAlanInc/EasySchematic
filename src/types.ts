@@ -11,11 +11,11 @@ export type ConnectorType =
   | "l5-20" | "l6-20" | "l6-30" | "l21-30" | "cam-lok" | "powercon-true1"
   | "qsfp" | "qsfp28" | "mpo" | "digilink" | "pcie-6pin"
   | "mini-din-4" | "mini-din-7" | "mini-din-8"
-  | "mini-hdmi" | "mini-displayport"
+  | "mini-hdmi" | "micro-hdmi" | "mini-displayport"
   | "rj11" | "rj12" | "usb-mini" | "usb-micro" | "trs-2.5mm"
   | "reverse-tnc" | "sma" | "db37"
   | "d-tap" | "v-mount" | "f-connector"
-  | "lemo-2pin" | "lemo-4pin" | "lemo-5pin"
+  | "lemo-2pin" | "lemo-4pin" | "lemo-5pin" | "kycon-4pin"
   | "wireless"
   | "solder-cup" | "punch-down-110" | "punch-down-66" | "krone-idc" | "d-hole-insert"
   | "none" | "other";
@@ -121,6 +121,7 @@ export type SignalType =
   | "pots"
   | "blu-link"
   | "cresnet"
+  | "nlight"
   | "sensor"
   | "custom";
 
@@ -977,6 +978,7 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   pots: "var(--color-pots)",
   "blu-link": "var(--color-blu-link)",
   cresnet: "var(--color-cresnet)",
+  nlight: "var(--color-nlight)",
   sensor: "var(--color-sensor)",
   custom: "var(--color-custom)",
 };
@@ -1029,6 +1031,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "mini-din-7": "Mini-DIN 7-pin",
   "mini-din-8": "Mini-DIN 8-pin",
   "mini-hdmi": "Mini HDMI",
+  "micro-hdmi": "Micro HDMI",
   "mini-displayport": "Mini DisplayPort",
   "mini-xlr": "Mini XLR",
   opticalcon: "Fiber - opticalCON",
@@ -1048,6 +1051,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   "lemo-2pin": "LEMO 2-pin",
   "lemo-4pin": "LEMO 4-pin",
   "lemo-5pin": "LEMO 5-pin",
+  "kycon-4pin": "Kycon 4-pin",
   "usb-mini": "Mini USB",
   "usb-micro": "Micro USB",
   "trs-2.5mm": "2.5mm TRS",
@@ -1146,6 +1150,7 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   pots: "POTS",
   "blu-link": "BLU link",
   cresnet: "Cresnet",
+  nlight: "nLight",
   sensor: "Sensor",
   custom: "Custom",
 };
@@ -1156,7 +1161,7 @@ export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
   "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink", "extron-exp", "pots", "blu-link"],
   "Network": ["ethernet", "fiber"],
-  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "rs485", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink", "ebus", "control-voltage", "cresnet", "sensor"],
+  "Control / Data": ["dmx", "artnet", "sacn", "rs422", "rs485", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink", "ebus", "control-voltage", "cresnet", "nlight", "sensor"],
   "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],
   "Power": ["power", "power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"],
   "Streaming": ["rtmp", "rtsp", "mpeg-ts", "rf"],
@@ -1165,12 +1170,12 @@ export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
 
 /** Connector types organized by functional group (for searchable dropdowns) */
 export const CONNECTOR_GROUPS: Record<string, ConnectorType[]> = {
-  "Video": ["bnc", "hdmi", "mini-hdmi", "displayport", "mini-displayport", "dvi", "vga"],
+  "Video": ["bnc", "hdmi", "mini-hdmi", "micro-hdmi", "displayport", "mini-displayport", "dvi", "vga"],
   "Audio": ["xlr-3", "xlr-4", "xlr-5", "mini-xlr", "combo-xlr-trs", "trs-quarter", "ts-quarter", "trs-eighth", "trs-2.5mm", "rca", "din-5", "mini-din-4", "mini-din-7", "mini-din-8", "toslink"],
   "Network / Data": ["rj45", "ethercon", "sfp", "lc", "sc", "opticalcon", "qsfp", "qsfp28", "mpo", "rj11", "rj12"],
   "USB": ["usb-a", "usb-b", "usb-c", "usb-mini", "usb-micro"],
   "D-Sub / Serial": ["db9", "db15", "db25", "db37", "db7w2", "lemo-5pin"],
-  "Power": ["iec", "iec-c5", "iec-c7", "iec-c15", "iec-c20", "powercon", "powercon-true1", "edison", "barrel", "l5-20", "l6-20", "l6-30", "l21-30", "cam-lok", "socapex", "pcie-6pin", "lemo-2pin", "lemo-4pin", "d-tap", "v-mount"],
+  "Power": ["iec", "iec-c5", "iec-c7", "iec-c15", "iec-c20", "powercon", "powercon-true1", "edison", "barrel", "l5-20", "l6-20", "l6-30", "l21-30", "cam-lok", "socapex", "pcie-6pin", "lemo-2pin", "lemo-4pin", "kycon-4pin", "d-tap", "v-mount"],
   "Speaker": ["speakon", "banana", "binding-post", "binding-post-banana"],
   "Terminal": ["phoenix", "terminal-block", "multipin", "solder-cup", "punch-down-110", "punch-down-66", "krone-idc"],
   "RF": ["reverse-tnc", "sma", "f-connector"],

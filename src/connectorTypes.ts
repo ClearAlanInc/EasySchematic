@@ -72,6 +72,7 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   pots: "rj11",
   "blu-link": "rj45",
   cresnet: "terminal-block",
+  nlight: "rj45",
   sensor: "phoenix",
   custom: "other",
 };
@@ -216,6 +217,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "binding-post-banana": "Speaker Wire",
   dvi: "DVI",
   "mini-hdmi": "Mini HDMI",
+  "micro-hdmi": "Micro HDMI",
   "mini-displayport": "Mini DisplayPort",
   "mini-xlr": "Mini XLR",
   opticalcon: "opticalCON Fiber",
@@ -238,6 +240,7 @@ export const CONNECTOR_TO_CABLE: Record<ConnectorType, string> = {
   "lemo-2pin": "LEMO 2-pin",
   "lemo-4pin": "LEMO 4-pin",
   "lemo-5pin": "LEMO 5-pin",
+  "kycon-4pin": "Kycon 4-pin",
   "solder-cup": "Bare Wire",
   "punch-down-110": "Bulk Cable",
   "punch-down-66": "Bulk Cable",

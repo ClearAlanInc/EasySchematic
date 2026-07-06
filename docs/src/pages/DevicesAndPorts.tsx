@@ -87,6 +87,7 @@ export default function DevicesAndPortsPage() {
           <tr><td><strong>Tally</strong></td><td>Rose</td><td>Tally/status indicators</td></tr>
           <tr><td><strong>Art-Net</strong></td><td>Amber</td><td>Lighting network protocol (Ethernet)</td></tr>
           <tr><td><strong>sACN</strong></td><td>Yellow</td><td>Streaming ACN lighting protocol</td></tr>
+          <tr><td><strong>nLight</strong></td><td>Golden Amber</td><td>Acuity nLight architectural lighting control bus (over Cat5/RJ45)</td></tr>
           <tr><td><strong>IR</strong></td><td>Orange</td><td>Infrared control</td></tr>
           <tr><td><strong>DX Link</strong></td><td>Blue</td><td>AMX/Harman control network</td></tr>
           <tr><td><strong>eBUS</strong></td><td>Slate</td><td>Crestron eBUS control bus</td></tr>
@@ -168,6 +169,7 @@ export default function DevicesAndPortsPage() {
           <tr><td>DisplayPort</td><td>DisplayPort</td></tr>
           <tr><td>DVI</td><td>DVI</td></tr>
           <tr><td>Mini HDMI</td><td>Mini HDMI</td></tr>
+          <tr><td>Micro HDMI</td><td>Micro HDMI</td></tr>
           <tr><td>Mini DisplayPort</td><td>Mini DisplayPort</td></tr>
           <tr><td>VGA (DB15)</td><td>VGA</td></tr>
 
@@ -232,6 +234,7 @@ export default function DevicesAndPortsPage() {
           <tr><td>Cam-Lok</td><td>Cam-Lok</td></tr>
           <tr><td>Socapex</td><td>Socapex</td></tr>
           <tr><td>DC Barrel</td><td>DC Barrel</td></tr>
+          <tr><td>Kycon 4-pin</td><td>Kycon 4-pin (locking DC power)</td></tr>
 
           <tr><td colSpan={2}><strong>Speaker</strong></td></tr>
           <tr><td>Banana</td><td>Speaker Wire</td></tr>
