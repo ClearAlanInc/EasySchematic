@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import type { Port, SlotDefinition, DeviceTemplate } from "../../../src/types";
-import { fetchTemplate, fetchSearchTerms, fetchTemplates, fetchDraft, fetchManufacturers, fetchSubmission } from "../api";
+import { fetchTemplate, fetchSearchTerms, loadAllTemplates, fetchDraft, fetchManufacturers, fetchSubmission } from "../api";
 import { linkClick } from "../navigate";
 import PortEditor from "./PortEditor";
 import AutocompleteInput from "./AutocompleteInput";
@@ -96,7 +96,7 @@ export default function DeviceForm({ id, draftId, cloneId, pendingSubmissionId, 
   useEffect(() => {
     fetchSearchTerms().then(setKnownSearchTerms);
     fetchManufacturers().then(setKnownManufacturers);
-    fetchTemplates().then(setAllTemplates).catch(() => {});
+    loadAllTemplates().then(setAllTemplates).catch(() => {});
   }, []);
 
   // Auto-populate category from device type

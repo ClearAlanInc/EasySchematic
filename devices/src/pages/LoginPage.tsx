@@ -17,6 +17,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Where to send the user after they authenticate. LoginRedirect passes the
+  // original destination as ?returnTo=; fall back to this page's URL otherwise.
+  const returnTo = (() => {
+    const rt = new URLSearchParams(window.location.search).get("returnTo");
+    return rt ? new URL(rt, window.location.origin).href : window.location.href;
+  })();
+
   // Check for error param from failed verify/OAuth redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -34,7 +41,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await requestMagicLink(email.trim(), window.location.href);
+      await requestMagicLink(email.trim(), returnTo);
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send login link");
@@ -61,7 +68,7 @@ export default function LoginPage() {
             Don't see it? Check your spam folder. Some corporate email systems may block it
             — <button
               type="button"
-              onClick={() => { window.location.href = `${API_URL}/auth/google/start?returnTo=${encodeURIComponent(window.location.href)}`; }}
+              onClick={() => { window.location.href = `${API_URL}/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`; }}
               className="underline text-blue-500 hover:text-blue-700"
             >try Google sign-in instead</button>.
           </p>
@@ -83,7 +90,7 @@ export default function LoginPage() {
         <p className="text-sm text-slate-500 mb-4">Sign in to submit devices and manage your account.</p>
         <button
           type="button"
-          onClick={() => { window.location.href = `${API_URL}/auth/google/start?returnTo=${encodeURIComponent(window.location.href)}`; }}
+          onClick={() => { window.location.href = `${API_URL}/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`; }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">

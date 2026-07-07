@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { createSubmission, updateSubmission, fetchTemplateSummaries, type TemplateSummary } from "../api";
+import { createSubmission, updateSubmission, loadTemplateSummaries, type TemplateSummary } from "../api";
 import DeviceForm, { type DeviceFormData } from "../components/DeviceForm";
 import { linkClick } from "../navigate";
 
@@ -89,7 +89,7 @@ function CloneSearch({ cloneId, onSelect }: { cloneId?: string; onSelect: (id?: 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchTemplateSummaries().then(setTemplates).catch(() => {});
+    loadTemplateSummaries().then(({ data }) => setTemplates(data)).catch(() => {});
   }, []);
 
   // Resolve label for URL-based cloneId

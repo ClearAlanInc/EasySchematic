@@ -1,6 +1,37 @@
 import type { DeviceTemplate, SignalType } from "../../src/types";
+import {
+  saveSummaries,
+  loadSummaries,
+  saveFullLibrary,
+  loadFullLibrary,
+  saveTemplate,
+  loadTemplate,
+  deleteCachedTemplate,
+  getFullLibraryMeta,
+} from "./templateCache";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.easyschematic.live";
+
+/**
+ * Error carrying an HTTP status, so callers can tell a real server response
+ * (404/500 — should surface as an error) apart from a network failure (fetch
+ * rejecting with a TypeError — should fall back to the offline cache).
+ */
+export class ApiError extends Error {
+  constructor(public status: number, message?: string) {
+    super(message ?? `API ${status}`);
+    this.name = "ApiError";
+  }
+}
+
+/**
+ * True when the failure is network-shaped rather than an HTTP response: fetch
+ * rejecting (no ApiError) or the browser reporting itself offline. Only these
+ * warrant serving stale cache — an HTTP error means the server answered.
+ */
+function isNetworkFailure(err: unknown): boolean {
+  return !(err instanceof ApiError) || !navigator.onLine;
+}
 
 // ==================== TEMPLATES (public) ====================
 
@@ -20,13 +51,13 @@ export interface TemplateSummary {
 
 export async function fetchTemplateSummaries(): Promise<TemplateSummary[]> {
   const res = await fetch(`${API_URL}/templates/summary`);
-  if (!res.ok) throw new Error(`Failed to fetch templates: ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, `Failed to fetch templates: ${res.status}`);
   return res.json();
 }
 
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {
   const res = await fetch(`${API_URL}/templates`);
-  if (!res.ok) throw new Error(`Failed to fetch templates: ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, `Failed to fetch templates: ${res.status}`);
   return res.json();
 }
 
@@ -34,7 +65,7 @@ export async function fetchTemplate(id: string): Promise<DeviceTemplate> {
   // Include credentials so logged-in mods/admins can view flagged-for-deletion
   // templates via the standard endpoint (non-mods still get 404 for flagged rows).
   const res = await fetch(`${API_URL}/templates/${id}`, { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to fetch template: ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, `Failed to fetch template: ${res.status}`);
   return res.json();
 }
 
@@ -60,6 +91,123 @@ export async function fetchManufacturers(): Promise<string[]> {
   const res = await fetch(`${API_URL}/templates/manufacturers`);
   if (!res.ok) return [];
   return res.json();
+}
+
+// ==================== OFFLINE-AWARE LIBRARY LOADERS ====================
+// These wrap the raw fetchers above with an IndexedDB fallback so the public
+// browse/detail pages keep working with no network after one online visit.
+// API responses ship no-cache headers, so this app-level cache is the right
+// layer (HTTP/SW response caching is unreliable here).
+
+export interface LibraryResult<T> {
+  data: T;
+  /** True when the network fetch failed and we served from the IndexedDB cache. */
+  offline: boolean;
+  /** When the served data was last saved (ms epoch), or null when fresh from network. */
+  savedAt: number | null;
+}
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+let prefetchStarted = false;
+
+// One shared in-flight full-library download, so a background prefetch and a
+// detail page's slot lookup never fetch the multi-MB list concurrently.
+let inFlightFullLibrary: Promise<DeviceTemplate[]> | null = null;
+function fetchFullLibraryShared(): Promise<DeviceTemplate[]> {
+  if (!inFlightFullLibrary) {
+    inFlightFullLibrary = fetchTemplates().finally(() => { inFlightFullLibrary = null; });
+  }
+  return inFlightFullLibrary;
+}
+
+/** Browse list: network-first, persist on success, fall back to cache only on network failure. */
+export async function loadTemplateSummaries(): Promise<LibraryResult<TemplateSummary[]>> {
+  try {
+    const summaries = await fetchTemplateSummaries();
+    void saveSummaries(summaries);
+    // We're online and know the library size — kick off the background full-library
+    // prefetch here so callers don't have to orchestrate it.
+    prefetchFullLibrary(summaries.length);
+    return { data: summaries, offline: false, savedAt: null };
+  } catch (err) {
+    if (isNetworkFailure(err)) {
+      const cached = await loadSummaries();
+      if (cached) return { data: cached.summaries, offline: true, savedAt: cached.savedAt };
+    }
+    throw err; // real HTTP error, or nothing cached — let the page show its error state
+  }
+}
+
+/** Detail page: network-first for one template, warm the cache, fall back only offline. */
+export async function loadDeviceTemplate(id: string): Promise<LibraryResult<DeviceTemplate>> {
+  try {
+    const template = await fetchTemplate(id);
+    void saveTemplate(template);
+    return { data: template, offline: false, savedAt: null };
+  } catch (err) {
+    // Gone upstream (deleted / flagged) — evict it so a stale copy can't linger.
+    if (err instanceof ApiError && err.status === 404) {
+      void deleteCachedTemplate(id);
+      throw err;
+    }
+    if (isNetworkFailure(err)) {
+      const cached = await loadTemplate(id);
+      if (cached) return { data: cached, offline: true, savedAt: null };
+    }
+    throw err;
+  }
+}
+
+/**
+ * Full library, used by the detail page's slot section and the submit form.
+ * Fresh cache (< 24h, complete) is served without any network. Otherwise it
+ * downloads (sharing the in-flight prefetch), and offline it returns the cached
+ * library ONLY if a complete full-library save exists — never a partial store
+ * of a few deep-linked records (which would render a wrong "compatible cards"
+ * list). Never throws.
+ */
+export async function loadAllTemplates(): Promise<DeviceTemplate[]> {
+  const meta = await getFullLibraryMeta();
+  const fresh = meta != null && Date.now() - meta.savedAt < ONE_DAY_MS;
+  if (fresh) {
+    const cached = await loadFullLibrary();
+    if (cached && cached.length === meta.count) return cached;
+  }
+  try {
+    const all = await fetchFullLibraryShared();
+    void saveFullLibrary(all);
+    return all;
+  } catch {
+    if (meta) {
+      const cached = await loadFullLibrary();
+      if (cached && cached.length === meta.count) return cached;
+    }
+    return [];
+  }
+}
+
+/**
+ * Background prefetch of the FULL library so EVERY detail page works offline,
+ * not just previously-visited ones. Fires once per session, low-priority, and
+ * skips the fetch when the cache is already fresh (< 24h old and same count as
+ * the summary the user just loaded). Never blocks or throws.
+ */
+export function prefetchFullLibrary(summaryCount: number): void {
+  if (prefetchStarted) return;
+  prefetchStarted = true;
+  void (async () => {
+    try {
+      const meta = await getFullLibraryMeta();
+      const fresh = meta != null && Date.now() - meta.savedAt < ONE_DAY_MS && meta.count === summaryCount;
+      if (fresh) return;
+      const all = await fetchFullLibraryShared();
+      await saveFullLibrary(all);
+    } catch {
+      // offline / transient — release the latch so a later summary load this
+      // session can retry, and let detail pages fall back to whatever's cached.
+      prefetchStarted = false;
+    }
+  })();
 }
 
 // ==================== DRAFTS ====================
@@ -161,6 +309,9 @@ export async function fetchCurrentUser(): Promise<User | null> {
   const res = await fetch(`${API_URL}/auth/me`, {
     credentials: "include",
   });
+  // A real 401/error means "logged out". A network failure rejects the fetch and
+  // propagates — App treats that as offline (not a false logout) so it won't
+  // redirect a signed-in user to /login and lose their return URL.
   if (res.status === 401) return null;
   if (!res.ok) return null;
   return res.json();

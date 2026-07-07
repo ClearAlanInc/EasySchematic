@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { SIGNAL_LABELS } from "../../../src/types";
 import type { SignalType } from "../../../src/types";
-import { fetchTemplateSummaries } from "../api";
+import { loadTemplateSummaries } from "../api";
 import type { TemplateSummary } from "../api";
 import SearchBar from "../components/SearchBar";
 import CategoryFilter from "../components/CategoryFilter";
 import DeviceCard from "../components/DeviceCard";
+import OfflineBanner from "../components/OfflineBanner";
 
 function SkeletonCard() {
   return (
@@ -30,6 +31,8 @@ export default function BrowsePage() {
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [offline, setOffline] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
@@ -39,8 +42,12 @@ export default function BrowsePage() {
   const [signalsOpen, setSignalsOpen] = useState(false);
 
   useEffect(() => {
-    fetchTemplateSummaries()
-      .then(setTemplates)
+    loadTemplateSummaries()
+      .then(({ data, offline, savedAt }) => {
+        setTemplates(data);
+        setOffline(offline);
+        setSavedAt(savedAt);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -135,6 +142,7 @@ export default function BrowsePage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+      {offline && <OfflineBanner savedAt={savedAt} />}
       <div className="mb-6">
         <SearchBar value={search} onChange={setSearch} resultCount={filtered.length} totalCount={templates.length} />
       </div>

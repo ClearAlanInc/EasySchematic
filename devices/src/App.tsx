@@ -15,6 +15,7 @@ import PendingDeletionsPage from "./pages/PendingDeletionsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContributorsPage from "./pages/ContributorsPage";
 import UserMenu from "./components/UserMenu";
+import UpdatePill from "./components/UpdatePill";
 import { navigateTo, linkClick } from "./navigate";
 import { useTheme } from "./hooks/useTheme";
 
@@ -56,6 +57,8 @@ export default function App() {
   const [route, setRoute] = useState(parseRoute);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // /auth/me couldn't be reached (offline), as opposed to a confirmed logout.
+  const [authOffline, setAuthOffline] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -86,9 +89,17 @@ export default function App() {
           // Token invalid/expired — fall through to normal session check
         }
       }
-      const u = await fetchCurrentUser();
-      setUser(u);
-      setAuthLoading(false);
+      try {
+        const u = await fetchCurrentUser();
+        setUser(u);
+      } catch {
+        // Network failure (offline), not a confirmed logout — flag it so
+        // gated routes show "needs connection" instead of bouncing to /login
+        // and dropping the return URL (incl. ?draft=).
+        setAuthOffline(true);
+      } finally {
+        setAuthLoading(false);
+      }
     };
     init();
   }, []);
@@ -243,39 +254,53 @@ export default function App() {
         {route.page === "device" && route.id && <DeviceDetailPage id={route.id} currentUser={user} />}
         {route.page === "login" && <LoginPage />}
         {route.page === "submit" && (
-          authLoading ? null : user ? <SubmitPage id={route.id} draftId={route.draft} cloneId={route.clone} pendingSubmissionId={route.pendingId} /> : <LoginRedirect />
+          authLoading ? null : authOffline ? <NeedsConnection /> : user ? <SubmitPage id={route.id} draftId={route.draft} cloneId={route.clone} pendingSubmissionId={route.pendingId} /> : <LoginRedirect />
         )}
         {route.page === "my-submissions" && (
-          authLoading ? null : user ? <MySubmissionsPage /> : <LoginRedirect />
+          authLoading ? null : authOffline ? <NeedsConnection /> : user ? <MySubmissionsPage /> : <LoginRedirect />
         )}
         {route.page === "review" && (
-          isMod ? <ReviewQueuePage /> : <NoAccess />
+          authOffline ? <NeedsConnection /> : isMod ? <ReviewQueuePage /> : <NoAccess />
         )}
         {route.page === "review-detail" && route.id && (
-          isMod ? <ReviewDetailPage id={route.id} currentUserId={user?.id} /> : <NoAccess />
+          authOffline ? <NeedsConnection /> : isMod ? <ReviewDetailPage id={route.id} currentUserId={user?.id} /> : <NoAccess />
         )}
         {route.page === "profile" && (
-          authLoading ? null : user ? <ProfilePage user={user} onUpdate={setUser} /> : <LoginRedirect />
+          authLoading ? null : authOffline ? <NeedsConnection /> : user ? <ProfilePage user={user} onUpdate={setUser} /> : <LoginRedirect />
         )}
         {route.page === "contributors" && <ContributorsPage />}
         {route.page === "admin-users" && (
-          isAdmin ? <AdminUsersPage /> : <NoAccess />
+          authOffline ? <NeedsConnection /> : isAdmin ? <AdminUsersPage /> : <NoAccess />
         )}
         {route.page === "admin-activity" && (
-          isMod ? <AdminActivityPage currentUser={user} /> : <NoAccess />
+          authOffline ? <NeedsConnection /> : isMod ? <AdminActivityPage currentUser={user} /> : <NoAccess />
         )}
         {route.page === "admin-pending-deletions" && (
-          isAdmin ? <PendingDeletionsPage /> : <NoAccess />
+          authOffline ? <NeedsConnection /> : isAdmin ? <PendingDeletionsPage /> : <NoAccess />
         )}
         {route.page === "admin-edit" && <AdminEditorPage id={route.id} currentUser={user} />}
       </main>
+      <UpdatePill />
     </div>
   );
 }
 
 function LoginRedirect() {
-  useEffect(() => { navigateTo("/login"); }, []);
+  useEffect(() => {
+    // Preserve where the user was headed (incl. query like ?draft=) so login can
+    // return them there.
+    const returnTo = window.location.pathname + window.location.search;
+    navigateTo(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }, []);
   return null;
+}
+
+function NeedsConnection() {
+  return (
+    <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+      This page needs an internet connection. Reconnect and try again.
+    </div>
+  );
 }
 
 function NoAccess() {

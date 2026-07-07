@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import type { DeviceTemplate, SlotDefinition } from "../../../src/types";
 import { CONNECTOR_LABELS } from "../../../src/types";
 import {
-  fetchTemplate,
-  fetchTemplates,
+  loadDeviceTemplate,
+  loadAllTemplates,
   fetchTemplateAdmin,
   addTemplateNote,
   editTemplateNote,
@@ -16,8 +16,10 @@ import {
 } from "../api";
 import type { User, TemplateAdminView, TemplateNote } from "../api";
 import SignalBadge from "../components/SignalBadge";
+import OfflineBanner from "../components/OfflineBanner";
 import { linkClick, navigateTo } from "../navigate";
 import { effectiveThermalBtuh } from "../thermal";
+import { formatDateTime as formatDate } from "../format";
 
 type TemplateWithAttribution = DeviceTemplate & {
   submittedBy?: { name: string };
@@ -31,16 +33,25 @@ export default function DeviceDetailPage({ id, currentUser }: { id: string; curr
   const [adminView, setAdminView] = useState<TemplateAdminView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [offline, setOffline] = useState(false);
 
   const isMod = currentUser?.role === "moderator" || currentUser?.role === "admin";
 
   useEffect(() => {
     let cancelled = false;
-    fetchTemplate(id)
-      .then((data) => { if (!cancelled) setTemplate(data); })
+    loadDeviceTemplate(id)
+      .then(({ data, offline }) => {
+        if (cancelled) return;
+        setTemplate(data);
+        setOffline(offline);
+        // Only the slot section needs the full library — skip the multi-MB
+        // download entirely for slot-less devices.
+        if (data.slots?.length) {
+          loadAllTemplates().then((t) => { if (!cancelled) setAllTemplates(t); }).catch(() => {});
+        }
+      })
       .catch((e) => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    fetchTemplates().then((t) => { if (!cancelled) setAllTemplates(t); }).catch(() => {});
     if (isMod) {
       fetchTemplateAdmin(id)
         .then((view) => { if (!cancelled) setAdminView(view); })
@@ -95,6 +106,7 @@ export default function DeviceDetailPage({ id, currentUser }: { id: string; curr
       <div className="mb-4">
         <a href="/" onClick={linkClick} className="text-sm text-blue-600 hover:text-blue-800">&larr; All Devices</a>
       </div>
+      {offline && <OfflineBanner />}
       {needsReview && (
         <div className="mb-4 border border-amber-300 dark:border-amber-700 rounded-lg p-3 bg-amber-50 dark:bg-amber-900/30 text-sm text-amber-800 dark:text-amber-200">
           <strong>Under review:</strong> A moderator flagged this device for re-review — specs may be inaccurate.
@@ -590,12 +602,6 @@ function ModeratorPanel({
       </div>
     </div>
   );
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso.endsWith("Z") ? iso : iso + "Z");
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 function DeletionFlagBanner({

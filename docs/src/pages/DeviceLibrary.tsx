@@ -119,6 +119,11 @@ export default function DeviceLibraryPage() {
           <em>Clone existing device</em> option; pick any current template and the form prefills with its ports,
           connectors, and metadata. Tweak what's different (a sibling model, a regional variant) and submit — the
           moderation queue gets a much cleaner diff than a freshly typed-out form</li>
+        <li><strong>Works offline</strong> — visit the devices site once while online and it keeps working without a
+          connection: browsing, search, filters, and every device page are served from a locally saved copy of the
+          library. An "offline" banner shows when you're seeing the saved copy, and it refreshes automatically the
+          next time you're online. You can also install the site as an app from your browser, same as the main
+          EasySchematic app</li>
       </ul>
     </>
   );

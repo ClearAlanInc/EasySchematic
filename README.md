@@ -155,6 +155,7 @@ Paper-based layout pages for composing rack viewports into a printable drawing.
 ### Community Device Database
 
 - **[devices.easyschematic.live](https://devices.easyschematic.live)** — browse, search, and submit device templates
+- **Works offline** — the devices site is an installable PWA; visit once online and browsing, search, and every device page keep working without a connection, with the saved library refreshing automatically when you're back online
 - **Community submissions** — submit new devices or suggest edits to existing templates via magic-link email auth
 - **Submit from the canvas** — right-click any device and choose "Submit to Community" to seed a submission with all the fields you've already filled in, instead of re-entering them on the devices site
 - **Moderation workflow** — submissions are reviewed by moderators before going live
