@@ -3,6 +3,7 @@ import type { Port, SlotDefinition, DeviceTemplate } from "../../../src/types";
 import { fetchTemplate, fetchSearchTerms, loadAllTemplates, fetchDraft, fetchManufacturers, fetchSubmission } from "../api";
 import { linkClick } from "../navigate";
 import PortEditor from "./PortEditor";
+import DevicePreview from "./DevicePreview";
 import AutocompleteInput from "./AutocompleteInput";
 import SearchableSelect from "./SearchableSelect";
 import TagInput from "./TagInput";
@@ -88,6 +89,7 @@ export default function DeviceForm({ id, draftId, cloneId, pendingSubmissionId, 
   const [showWarnings, setShowWarnings] = useState(false);
   const [customDeviceType, setCustomDeviceType] = useState(false);
   const [customDeviceTypeText, setCustomDeviceTypeText] = useState("");
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(true);
   const [knownSearchTerms, setKnownSearchTerms] = useState<string[]>([]);
   const [knownManufacturers, setKnownManufacturers] = useState<string[]>([]);
   const [allTemplates, setAllTemplates] = useState<DeviceTemplate[]>([]);
@@ -328,8 +330,38 @@ export default function DeviceForm({ id, draftId, cloneId, pendingSubmissionId, 
 
   const isGenericMfr = manufacturer.trim().toLowerCase() === "generic";
 
+  const previewDeviceType = customDeviceType ? toKebab(customDeviceTypeText) : deviceType;
+  const preview = (
+    <DevicePreview
+      label={label}
+      deviceType={previewDeviceType}
+      ports={ports}
+    />
+  );
+
   return (
     <>
+      {/* Live preview — collapsible, above the form at every width. A right-hand
+          side rail squeezed the form fields too hard; centered-on-top keeps both
+          the preview and the inputs readable (playtest feedback, 2026-07-09).
+          items-start stops the flex row from clamping the card's height to the
+          scroll container, which visually cut the node off on long port lists. */}
+      <div className="mb-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+        <button
+          type="button"
+          onClick={() => setMobilePreviewOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300"
+        >
+          <span>Node preview</span>
+          <span className={`text-[10px] text-slate-400 dark:text-slate-500 transition-transform ${mobilePreviewOpen ? "rotate-90" : ""}`}>▶</span>
+        </button>
+        {mobilePreviewOpen && (
+          <div className="px-4 pb-4 flex justify-center items-start max-h-[60vh] overflow-auto">
+            {preview}
+          </div>
+        )}
+      </div>
+
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-sm">{error}</div>
       )}

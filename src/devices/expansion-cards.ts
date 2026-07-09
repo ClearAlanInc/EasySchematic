@@ -640,6 +640,7 @@ export const templates: DeviceTemplate[] = [
   // Allen & Heath SQ SLink Card
   {
     id: "ah-sq-slink-card",
+    version: 2, // v2: SLink port signal corrected fiber → slink
     deviceType: "expansion-card",
     slotFamily: "ah-sq-slink",
     label: "SQ SLink Card",
@@ -648,7 +649,7 @@ export const templates: DeviceTemplate[] = [
     referenceUrl: "https://www.allen-heath.com/hardware/audio-networking/sq-slink/",
     searchTerms: ["allen heath", "sq", "slink", "expansion", "card"],
     ports: [
-      port("SLink", "fiber", "bidirectional"),
+      port("SLink", "slink", "bidirectional"),
     ],
   },
   // Ross Ultrix I/O Cards

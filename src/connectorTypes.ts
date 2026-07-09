@@ -140,6 +140,22 @@ export function areSignalsCompatibleViaConnector(
   );
 }
 
+/** Signal pairs that interconnect natively regardless of connector — no adapter needed.
+ *  An Allen & Heath SLink port auto-senses dSNAKE, DX and gigaACE, so an SLink jack mates
+ *  directly with any of those stageboxes/consoles. These all ride ethercon/rj45, which
+ *  areConnectorsCompatible already treats as interchangeable. */
+export const SIGNAL_COMPAT_PAIRS: ReadonlyArray<readonly [SignalType, SignalType]> = [
+  ["slink", "dsnake"],
+  ["slink", "dx5"],
+  ["slink", "gigaace"],
+];
+
+export function areSignalPairsCompatible(a: SignalType, b: SignalType): boolean {
+  return SIGNAL_COMPAT_PAIRS.some(
+    ([s1, s2]) => (s1 === a && s2 === b) || (s1 === b && s2 === a),
+  );
+}
+
 /** Check if two connector types are compatible (same type or one accepts the other) */
 export function areConnectorsCompatible(a: ConnectorType | undefined, b: ConnectorType | undefined): boolean {
   if (!a || !b) return true; // missing connector info = no mismatch

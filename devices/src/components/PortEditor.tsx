@@ -7,6 +7,8 @@ const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "avb", "srt", 
 import PortRow from "./PortRow";
 import SearchableSelect from "./SearchableSelect";
 
+const MIME = "application/easyschematic-port";
+
 interface PortEditorProps {
   ports: Port[];
   onChange: (ports: Port[]) => void;
@@ -31,6 +33,10 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
   // Bulk edit toolbar state
   const [findText, setFindText] = useState("");
   const [replaceText, setReplaceText] = useState("");
+
+  // Drag state — which port is being dragged and where it would drop
+  const [draggedPortId, setDraggedPortId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ direction: PortDirection; index: number } | null>(null);
 
   const grouped = {
     input: ports.filter((p) => p.direction === "input"),
@@ -174,10 +180,63 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
     onChange(next);
   };
 
+  // Drag-and-drop: move a port to a new position, optionally changing its direction group
+  const movePortTo = useCallback(
+    (portId: string, targetDirection: PortDirection, targetIndex: number) => {
+      const port = ports.find((p) => p.id === portId);
+      if (!port) return;
+
+      const without = ports.filter((p) => p.id !== portId);
+      const updated = { ...port, direction: targetDirection };
+
+      const sectionPorts = without.filter((p) => p.direction === targetDirection);
+
+      if (sectionPorts.length === 0 || targetIndex === 0) {
+        const firstOfSection = without.findIndex((p) => p.direction === targetDirection);
+        if (firstOfSection === -1) {
+          onChange([...without, updated]);
+          return;
+        }
+        without.splice(firstOfSection, 0, updated);
+        onChange([...without]);
+        return;
+      }
+
+      const insertAfterId = sectionPorts[targetIndex - 1]?.id;
+      const insertAfterIdx = without.findIndex((p) => p.id === insertAfterId);
+      without.splice(insertAfterIdx + 1, 0, updated);
+      onChange([...without]);
+    },
+    [ports, onChange],
+  );
+
+  const handleDragEnd = useCallback(() => {
+    if (draggedPortId && dropTarget) {
+      movePortTo(draggedPortId, dropTarget.direction, dropTarget.index);
+    }
+    setDraggedPortId(null);
+    setDropTarget(null);
+  }, [draggedPortId, dropTarget, movePortTo]);
+
   const selectedCount = selected.size;
 
   const renderSection = (direction: PortDirection, label: string) => (
-    <div className="mb-6">
+    <div
+      className="mb-6"
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        // Rows set their own precise target (and stop propagation); the section
+        // only needs to claim the drop when it's empty.
+        if (grouped[direction].length === 0) setDropTarget({ direction, index: 0 });
+      }}
+      onDrop={(e) => { e.preventDefault(); handleDragEnd(); }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node) && dropTarget?.direction === direction) {
+          setDropTarget(null);
+        }
+      }}
+    >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{label}</h3>
         <div className="flex gap-2">
@@ -253,13 +312,26 @@ export default function PortEditor({ ports, onChange, deviceType }: PortEditorPr
         </div>
       )}
       {grouped[direction].length === 0 ? (
-        <p className="text-sm text-slate-400 dark:text-slate-500 italic">No {label.toLowerCase()}</p>
+        dropTarget?.direction === direction ? (
+          <div className="h-0.5 bg-blue-500 rounded-full my-2" />
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No {label.toLowerCase()} — or drag a port here</p>
+        )
       ) : (
         <div className="space-y-1">
-          {grouped[direction].map((port) => (
+          {grouped[direction].map((port, i) => (
             <PortRow
               key={port.id}
               port={port}
+              index={i}
+              direction={direction}
+              isLast={i === grouped[direction].length - 1}
+              mime={MIME}
+              isDragging={draggedPortId === port.id}
+              dropTarget={dropTarget}
+              setDropTarget={setDropTarget}
+              setDraggedPortId={setDraggedPortId}
+              onDragEnd={handleDragEnd}
               selected={selected.has(port.id)}
               onSelect={(e) => handlePortClick(port.id, e)}
               onChange={(updates) => updatePort(port.id, updates)}

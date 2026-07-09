@@ -50,7 +50,7 @@ import { requestRoutes, setRoutingResultHandler, type RoutingResult } from "./ro
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
-import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, effectiveSignalType } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, areSignalPairsCompatible, effectiveSignalType } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
@@ -1426,7 +1426,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         const canSource = srcPort.direction === "output" || srcPort.direction === "bidirectional";
         const canTarget = tgtPort.direction === "input" || tgtPort.direction === "bidirectional";
         const networkBypass = NETWORK_SIGNAL_TYPES.has(srcPort.signalType) && NETWORK_SIGNAL_TYPES.has(tgtPort.signalType);
-        if ((canSource && canTarget || networkBypass) && srcPort.signalType !== tgtPort.signalType) {
+        if ((canSource && canTarget || networkBypass) && srcPort.signalType !== tgtPort.signalType && !areSignalPairsCompatible(srcPort.signalType, tgtPort.signalType)) {
           // Auto-insert if exactly one adapter matches
           const allTemplates = [...DEVICE_TEMPLATES, ...state.customTemplates];
           const adapterMatches = findAdaptersForSignalBridge(srcPort.signalType, tgtPort.signalType, allTemplates);
@@ -2060,7 +2060,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         const netBypass = NETWORK_SIGNAL_TYPES.has(srcSignal) && NETWORK_SIGNAL_TYPES.has(tgtSignal);
         const bareBypass = BARE_WIRE_CONNECTORS.has(srcConnector ?? "none" as never) ||
           BARE_WIRE_CONNECTORS.has(tgtConnector ?? "none" as never);
-        if (!netBypass && !bareBypass) return false;
+        const pairBypass = areSignalPairsCompatible(srcSignal, tgtSignal);
+        if (!netBypass && !bareBypass && !pairBypass) return false;
       }
 
       // Duplicate-handle guard (same as non-passthrough below)
@@ -2090,7 +2091,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const signalBypass = areSignalsCompatibleViaConnector(
       sourcePort.signalType, sourcePort.connectorType,
       targetPort.signalType, targetPort.connectorType,
-    );
+    ) || areSignalPairsCompatible(sourcePort.signalType, targetPort.signalType);
     if (!networkBypass && !bareWireBypass) {
       const canSource = sourcePort.direction === "output" || sourcePort.direction === "bidirectional";
       const canTarget = targetPort.direction === "input" || targetPort.direction === "bidirectional";

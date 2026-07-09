@@ -422,6 +422,7 @@ export const templates: DeviceTemplate[] = [
   },
   {
     id: "c0a80101-0093-4000-8000-000000000147",
+    version: 2, // v2: SLink-as-fiber ports corrected to gigaACE + DX
     deviceType: "audio-mixer",
     label: "A&H dLive S7000",
     manufacturer: "Allen & Heath",
@@ -439,9 +440,10 @@ export const templates: DeviceTemplate[] = [
     depthMm: 729,
     weightKg: 41,
     ports: [
-      port("SLink 1", "fiber", "bidirectional"),
-      port("SLink 2", "fiber", "bidirectional"),
-      port("SLink 3", "fiber", "bidirectional"),
+      port("gigaACE Primary", "gigaace", "bidirectional"),
+      port("gigaACE Secondary", "gigaace", "bidirectional"),
+      port("DX 1", "dx5", "bidirectional"),
+      port("DX 2", "dx5", "bidirectional"),
       port("Word Clock", "genlock", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("AC Power", "power", "input"),
@@ -491,6 +493,7 @@ export const templates: DeviceTemplate[] = [
   },
   {
     id: "c0a80101-0094-4000-8000-000000000148",
+    version: 2, // v2: SLink port signal corrected fiber → slink
     deviceType: "audio-mixer",
     label: "A&H SQ-7",
     manufacturer: "Allen & Heath",
@@ -508,7 +511,7 @@ export const templates: DeviceTemplate[] = [
     ports: [
       ...ports("Analog In", "analog-audio", "input", 32),
       ...ports("Analog Out", "analog-audio", "output", 12),
-      port("SLink", "fiber", "bidirectional"),
+      port("SLink", "slink", "bidirectional"),
       port("USB", "usb", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("AC Power", "power", "input"),
@@ -530,6 +533,7 @@ export const templates: DeviceTemplate[] = [
   },
   {
     id: "c0a80101-0095-4000-8000-000000000149",
+    version: 2, // v2: SLink port signal corrected fiber → slink
     deviceType: "audio-mixer",
     label: "A&H SQ-5",
     manufacturer: "Allen & Heath",
@@ -547,7 +551,7 @@ export const templates: DeviceTemplate[] = [
     ports: [
       ...ports("Analog In", "analog-audio", "input", 16),
       ...ports("Analog Out", "analog-audio", "output", 12),
-      port("SLink", "fiber", "bidirectional"),
+      port("SLink", "slink", "bidirectional"),
       port("USB", "usb", "bidirectional"),
       port("Ethernet", "ethernet", "bidirectional"),
       port("AC Power", "power", "input"),

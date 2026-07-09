@@ -1,4 +1,5 @@
-import type { Gender, Port, SignalType, ConnectorType } from "../../../src/types";
+import { useRef } from "react";
+import type { Gender, Port, PortDirection, SignalType, ConnectorType } from "../../../src/types";
 import { SIGNAL_LABELS, CONNECTOR_LABELS, SIGNAL_GROUPS, CONNECTOR_GROUPS } from "../../../src/types";
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, resolvePortGender } from "../../../src/connectorTypes";
 import SearchableSelect from "./SearchableSelect";
@@ -7,6 +8,15 @@ const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "avb", "srt", 
 
 interface PortRowProps {
   port: Port;
+  index: number;
+  direction: PortDirection;
+  isLast: boolean;
+  mime: string;
+  isDragging: boolean;
+  dropTarget: { direction: PortDirection; index: number } | null;
+  setDropTarget: (target: { direction: PortDirection; index: number } | null) => void;
+  setDraggedPortId: (id: string | null) => void;
+  onDragEnd: () => void;
   selected?: boolean;
   onSelect?: (e: React.MouseEvent) => void;
   onChange: (updates: Partial<Port>) => void;
@@ -38,8 +48,37 @@ function GenderSelect({ connectorType, value, onChange }: {
   );
 }
 
-export default function PortRow({ port, selected, onSelect, onChange, onRemove, onMoveUp, onMoveDown }: PortRowProps) {
+export default function PortRow({ port, index, direction, isLast, mime, isDragging, dropTarget, setDropTarget, setDraggedPortId, onDragEnd, selected, onSelect, onChange, onRemove, onMoveUp, onMoveDown }: PortRowProps) {
   const isPassthrough = port.direction === "passthrough";
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData(mime, port.id);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedPortId(port.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    const rect = rowRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const midY = rect.top + rect.height / 2;
+    const insertIndex = e.clientY < midY ? index : index + 1;
+    setDropTarget({ direction, index: insertIndex });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDragEnd();
+  };
+
+  const showIndicatorBefore =
+    dropTarget?.direction === direction && dropTarget.index === index;
+  const showIndicatorAfter =
+    isLast && dropTarget?.direction === direction && dropTarget.index === index + 1;
 
   const handleSignalChange = (newSignal: SignalType) => {
     const updates: Partial<Port> = { signalType: newSignal, inheritsSignal: false };
@@ -57,14 +96,31 @@ export default function PortRow({ port, selected, onSelect, onChange, onRemove, 
   const selectClass = "px-2 py-1 rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[100px]";
 
   return (
-    <div
-      onClick={onSelect}
-      className={`flex items-center gap-2 p-2 rounded-lg border transition-colors cursor-pointer ${
-        selected
-          ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-300 dark:ring-indigo-700"
-          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-      }`}
-    >
+    <>
+      {showIndicatorBefore && <div className="h-0.5 bg-blue-500 rounded-full my-0.5" />}
+      <div
+        ref={rowRef}
+        onClick={onSelect}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`flex items-center gap-2 p-2 rounded-lg border transition-colors cursor-pointer ${
+          isDragging ? "opacity-30" : ""
+        } ${
+          selected
+            ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-300 dark:ring-indigo-700"
+            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+        }`}
+      >
+      <span
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={() => { setDraggedPortId(null); setDropTarget(null); }}
+        onClick={(e) => e.stopPropagation()}
+        className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing text-sm leading-none select-none shrink-0"
+        title="Drag to reorder"
+      >
+        &#10303;
+      </span>
       <span
         className="w-3 h-3 rounded-full shrink-0"
         style={{ backgroundColor: `var(--color-${port.signalType})` }}
@@ -210,6 +266,8 @@ export default function PortRow({ port, selected, onSelect, onChange, onRemove, 
           &times;
         </button>
       </div>
-    </div>
+      </div>
+      {showIndicatorAfter && <div className="h-0.5 bg-blue-500 rounded-full my-0.5" />}
+    </>
   );
 }

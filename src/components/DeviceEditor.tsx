@@ -21,7 +21,7 @@ import {
   type SlotDefinition,
 } from "../types";
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
-import { getBundledTemplates, getCardsByFamily, checkSession, createDraft, createHandoff } from "../templateApi";
+import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
 import { getTemplateDrift } from "../templateSync";
 import LoginDialog from "./LoginDialog";
 import CardCreatorDialog from "./CardCreatorDialog";
@@ -141,6 +141,12 @@ export default function DeviceEditor() {
   // freshly-synced node.data. The effect is keyed on editingNodeId (which doesn't change
   // on sync), so without this the form keeps its pre-sync values and Save clobbers the sync.
   const [syncNonce, setSyncNonce] = useState(0);
+  // Bumped once the community library resolves so template lookups (dirty-check,
+  // spec-sheet link, slot defs) re-evaluate against the warm cache. Community
+  // (API-only) templates aren't in the bundled fallback, so without warming the
+  // cache a device placed from one finds no source template and the "Submit to
+  // Community"/"Revert to Template" affordances never appear.
+  const [templatesLoaded, setTemplatesLoaded] = useState(0);
   const [label, setLabel] = useState("");
   const [shortName, setShortName] = useState("");
   /** Tri-state per-instance toggle: undefined = inherit schematic default. */
@@ -231,7 +237,7 @@ export default function DeviceEditor() {
   useEffect(() => {
     if (!node) return;
     const tpl = node.data.templateId
-      ? getBundledTemplates().find((t) => t.id === node.data.templateId)
+      ? getTemplateById(node.data.templateId, customTemplates)
       : undefined;
     setLabel(node.data.label);
     setShortName(node.data.shortName ?? "");
@@ -320,6 +326,19 @@ export default function DeviceEditor() {
     setHiddenPorts(node.data.hiddenPorts ?? []);
   }, [editingNodeId, portSignature]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+  // Warm the community library when the editor opens so template-backed lookups
+  // resolve even if the DeviceLibrary sidebar never mounted (e.g. editing from the
+  // rack page) or hasn't finished fetching yet. fetchTemplates is idempotent and
+  // returns immediately on a warm, non-degraded cache, so this is cheap.
+  useEffect(() => {
+    if (!editingNodeId) return;
+    let cancelled = false;
+    fetchTemplates()
+      .then(() => { if (!cancelled) setTemplatesLoaded((n) => n + 1); })
+      .catch(() => { /* degraded — lookups fall back to bundled/custom */ });
+    return () => { cancelled = true; };
+  }, [editingNodeId]);
 
   const close = useCallback(() => {
     // Read live store state — a stale closure here would make handleSave
@@ -632,8 +651,7 @@ export default function DeviceEditor() {
     if (!node) return;
     const templateId = node.data.templateId;
     const tpl = templateId
-      ? getBundledTemplates().find((t) => t.id === templateId) ??
-        customTemplates.find((t) => t.id === templateId)
+      ? getTemplateById(templateId, customTemplates)
       : undefined;
     if (!tpl) return;
 
@@ -806,8 +824,10 @@ export default function DeviceEditor() {
   const { dirtyVsPreset, dirtyVsTemplate } = useMemo(() => {
     if (!templateId) return { dirtyVsPreset: false, dirtyVsTemplate: false };
 
-    const tpl = getBundledTemplates().find((t) => t.id === templateId) ??
-      customTemplates.find((t) => t.id === templateId);
+    // getTemplateById reads the module-level community-library cache, so this memo
+    // must recompute when the library finishes loading, not just when props change.
+    void templatesLoaded;
+    const tpl = getTemplateById(templateId, customTemplates);
     const preset = templatePresets[templateId];
 
     const portsMatch = (a: PortDraft[], b: Port[]) => {
@@ -858,7 +878,7 @@ export default function DeviceEditor() {
     );
 
     return { dirtyVsPreset, dirtyVsTemplate };
-  }, [templateId, ports, hiddenPorts, color, templatePresets, customTemplates, label, manufacturer, modelNumber, referenceUrl, category, hostname, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided]);
+  }, [templateId, ports, hiddenPorts, color, templatePresets, customTemplates, label, manufacturer, modelNumber, referenceUrl, category, hostname, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, heightMm, widthMm, depthMm, weightKg, isVenueProvided, templatesLoaded]);
 
   if (!editingNodeId || !node) return null;
 
@@ -1023,7 +1043,7 @@ export default function DeviceEditor() {
 
           {(() => {
             const tpl = node.data.templateId
-              ? getBundledTemplates().find((t) => t.id === node.data.templateId)
+              ? getTemplateById(node.data.templateId, customTemplates)
               : undefined;
             const url = referenceUrl.trim() || tpl?.referenceUrl;
             return url ? (
@@ -1286,7 +1306,7 @@ export default function DeviceEditor() {
           {/* Expansion Slots */}
           {(() => {
             const templateDef = node.data.templateId
-              ? getBundledTemplates().find((t) => t.id === node.data.templateId)
+              ? getTemplateById(node.data.templateId, customTemplates)
               : undefined;
             const slotDefs = templateDef?.slots ?? [];
             return (
