@@ -20,8 +20,10 @@ export default function DevicesAndPortsPage() {
       <h2>Signal types</h2>
       <p>
         Every port has a <strong>signal type</strong> that determines its color and connection compatibility. You can
-        only connect ports of the <strong>same signal type</strong>. EasySchematic includes 68 built-in signal types
-        covering video, audio, data, power, and control:
+        only connect ports of the <strong>same signal type</strong>, with exceptions where the real hardware
+        interoperates: an Allen &amp; Heath <strong>SLink</strong> port connects directly to <strong>dSnake</strong>,
+        <strong> DX5</strong>, and <strong>GigaACE</strong> ports, since SLink auto-senses all three protocols.
+        EasySchematic includes 68 built-in signal types covering video, audio, data, power, and control:
       </p>
       <table>
         <thead>
