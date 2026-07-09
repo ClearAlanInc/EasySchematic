@@ -1399,8 +1399,14 @@ app.get("/templates/search-terms", async (c) => {
     .all();
   const allTerms = new Set<string>();
   for (const row of results) {
-    const terms = JSON.parse((row as { search_terms: string }).search_terms) as string[];
-    for (const t of terms) allTerms.add(t.toLowerCase());
+    let terms: unknown;
+    try {
+      terms = JSON.parse((row as { search_terms: string }).search_terms);
+    } catch {
+      continue; // skip a row with malformed JSON rather than 500 the whole endpoint
+    }
+    if (!Array.isArray(terms)) continue;
+    for (const t of terms) if (typeof t === "string") allTerms.add(t.toLowerCase());
   }
   const sorted = [...allTerms].sort();
   return c.json(sorted, 200, CACHE_HEADERS);

@@ -154,9 +154,26 @@ export interface TemplateSummaryOutput {
   slotCount: number;
 }
 
+/** Parse a JSON-array column defensively — a single row with malformed JSON
+ *  (e.g. a comma-joined string from a bad import) must not throw and 500 an
+ *  entire list endpoint. Falls back to an empty array. */
+function parseJsonArray(raw: string | null | undefined): unknown[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function rowToSummary(row: TemplateRow): TemplateSummaryOutput {
-  const ports = JSON.parse(row.ports) as { signalType: string }[];
-  const slots = row.slots ? JSON.parse(row.slots) as unknown[] : [];
+  // Keep only well-formed port objects so a valid-but-junk array element (e.g. a
+  // null in `[null]`) can't throw on p.signalType and 500 the list endpoint.
+  const ports = (parseJsonArray(row.ports) as unknown[]).filter(
+    (p): p is { signalType?: unknown } => !!p && typeof p === "object",
+  );
+  const slots = parseJsonArray(row.slots);
   return {
     id: row.id,
     label: row.label,
@@ -166,9 +183,9 @@ export function rowToSummary(row: TemplateRow): TemplateSummaryOutput {
     ...(row.manufacturer && { manufacturer: row.manufacturer }),
     ...(row.model_number && { modelNumber: row.model_number }),
     ...(row.color && { color: row.color }),
-    ...(row.search_terms && { searchTerms: JSON.parse(row.search_terms) as string[] }),
+    ...(row.search_terms && { searchTerms: parseJsonArray(row.search_terms) as string[] }),
     portCount: ports.length,
-    signalTypes: [...new Set(ports.map((p) => p.signalType))],
+    signalTypes: [...new Set(ports.map((p) => p.signalType).filter((s): s is string => typeof s === "string"))],
     slotCount: slots.length,
   };
 }
@@ -187,9 +204,9 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.color && { color: row.color }),
     ...(row.image_url && { imageUrl: row.image_url }),
     ...(row.reference_url && { referenceUrl: row.reference_url }),
-    ...(row.search_terms && { searchTerms: JSON.parse(row.search_terms) as string[] }),
-    ports: JSON.parse(row.ports) as unknown[],
-    ...(row.slots && { slots: JSON.parse(row.slots) as unknown[] }),
+    ...(row.search_terms && { searchTerms: parseJsonArray(row.search_terms) as string[] }),
+    ports: parseJsonArray(row.ports),
+    ...(row.slots && { slots: parseJsonArray(row.slots) }),
     ...(row.slot_family && { slotFamily: row.slot_family }),
     ...(row.power_draw_w != null && { powerDrawW: row.power_draw_w }),
     ...(row.power_capacity_w != null && { powerCapacityW: row.power_capacity_w }),
@@ -203,6 +220,6 @@ export function rowToTemplate(row: TemplateRow): TemplateOutput {
     ...(row.width_mm != null && { widthMm: row.width_mm }),
     ...(row.depth_mm != null && { depthMm: row.depth_mm }),
     ...(row.weight_kg != null && { weightKg: row.weight_kg }),
-    ...(row.auxiliary_data && { auxiliaryData: JSON.parse(row.auxiliary_data) as AuxRow[] }),
+    ...(row.auxiliary_data && { auxiliaryData: parseJsonArray(row.auxiliary_data) as AuxRow[] }),
   };
 }

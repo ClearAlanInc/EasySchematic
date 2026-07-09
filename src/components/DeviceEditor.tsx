@@ -137,6 +137,10 @@ export default function DeviceEditor() {
 
   const node = nodes.find((n) => n.id === editingNodeId && n.type === "device") as DeviceNode | undefined;
 
+  // Bumped after an in-editor template sync so the metadata effect below re-reads the
+  // freshly-synced node.data. The effect is keyed on editingNodeId (which doesn't change
+  // on sync), so without this the form keeps its pre-sync values and Save clobbers the sync.
+  const [syncNonce, setSyncNonce] = useState(0);
   const [label, setLabel] = useState("");
   const [shortName, setShortName] = useState("");
   /** Tri-state per-instance toggle: undefined = inherit schematic default. */
@@ -265,7 +269,7 @@ export default function DeviceEditor() {
     setAdapterVisibility(node.data.adapterVisibility ?? "default");
     setAuxiliaryData(normalizeAuxRows(node.data.auxiliaryData));
     setSearchTermsRaw((node.data.searchTerms ?? []).join(", "));
-  }, [editingNodeId]);
+  }, [editingNodeId, syncNonce]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   // Ports + hiddenPorts sync on a SEPARATE effect keyed on the live port-id signature,
@@ -633,26 +637,44 @@ export default function DeviceEditor() {
       : undefined;
     if (!tpl) return;
 
-    setPorts(tpl.ports.map((p) => ({
-      id: p.id,
-      label: p.label,
-      signalType: p.signalType,
-      direction: p.direction,
-      section: p.section,
-      connectorType: p.connectorType,
-      gender: p.gender,
-      networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
-      capabilities: p.capabilities ? { ...p.capabilities } : undefined,
-      multiConnect: p.multiConnect,
-      directAttach: p.directAttach,
-      notes: p.notes,
-      poeDrawW: p.poeDrawW,
-      usbcPowerSourceW: p.usbcPowerSourceW,
-      usbcPowerDrawW: p.usbcPowerDrawW,
-      linkSpeed: p.linkSpeed,
-      flipped: p.flipped,
-      addressable: p.addressable,
-    })));
+    // Reuse the device-side port id for any template port that still matches an
+    // existing port (by templatePortId, else label), so connections to surviving
+    // ports stay attached — edges reference device-side handles, and adopting the
+    // template's ids wholesale would orphan every connection. Ports the template no
+    // longer has are dropped along with their edges (revert is a reset to template).
+    const existingPorts = node.data.ports ?? [];
+    const usedDeviceIds = new Set<string>();
+    const matchDeviceId = (tp: { id: string; label: string }): string | undefined => {
+      const byId = existingPorts.find((dp) => dp.templatePortId === tp.id && !usedDeviceIds.has(dp.id));
+      if (byId) return byId.id;
+      const byLabel = existingPorts.find((dp) => !dp.templatePortId && dp.label === tp.label && !usedDeviceIds.has(dp.id));
+      return byLabel?.id;
+    };
+    setPorts(tpl.ports.map((p) => {
+      const deviceId = matchDeviceId(p);
+      if (deviceId) usedDeviceIds.add(deviceId);
+      return {
+        id: deviceId ?? p.id,
+        templatePortId: p.id,
+        label: p.label,
+        signalType: p.signalType,
+        direction: p.direction,
+        section: p.section,
+        connectorType: p.connectorType,
+        gender: p.gender,
+        networkConfig: p.networkConfig ? { ...p.networkConfig } : undefined,
+        capabilities: p.capabilities ? { ...p.capabilities } : undefined,
+        multiConnect: p.multiConnect,
+        directAttach: p.directAttach,
+        notes: p.notes,
+        poeDrawW: p.poeDrawW,
+        usbcPowerSourceW: p.usbcPowerSourceW,
+        usbcPowerDrawW: p.usbcPowerDrawW,
+        linkSpeed: p.linkSpeed,
+        flipped: p.flipped,
+        addressable: p.addressable,
+      };
+    }));
     setHiddenPorts([]);
     setColor(tpl.color);
 
@@ -1711,6 +1733,9 @@ export default function DeviceEditor() {
           edges={edges}
           onConfirm={() => {
             syncDeviceFromTemplate(editingNodeId);
+            // Re-sync the metadata form from the just-updated node.data, otherwise
+            // Save would rebuild DeviceData from stale fields and overwrite the sync.
+            setSyncNonce((n) => n + 1);
             setShowSyncDialog(false);
           }}
           onCancel={() => setShowSyncDialog(false)}

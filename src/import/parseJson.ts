@@ -39,7 +39,9 @@ export function parseJsonImport(raw: string): ParseResult {
 
 function normalizeTemplate(raw: Record<string, unknown>): Partial<DeviceTemplate> {
   const ports = Array.isArray(raw.ports)
-    ? (raw.ports as Array<Record<string, unknown>>).map((p, i) => normalizePort(p, i))
+    ? raw.ports
+        .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
+        .map((p, i) => normalizePort(p, i))
     : [];
 
   // Derive category from deviceType if not provided (or if user gave a freeform value)
