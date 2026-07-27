@@ -1,9 +1,15 @@
 import type { DeviceTemplate } from "./types";
 import fallbackData from "./deviceLibrary.fallback.json";
 import { loadCachedTemplates, saveCachedTemplates } from "./templateCache";
+import { API_URL, CLOUD_ENABLED } from "./selfHosted";
 
-const API_URL =
-  import.meta.env?.VITE_TEMPLATE_API_URL ?? "https://api.easyschematic.live";
+/** Chokepoint guard: every mutating cloud call throws in a self-hosted build with
+ *  no API configured. UI that reaches these is hidden too — this is defense in depth. */
+function assertCloudEnabled(): void {
+  if (!CLOUD_ENABLED) {
+    throw new Error("Cloud features are disabled in this self-hosted build");
+  }
+}
 
 let cached: DeviceTemplate[] | null = null;
 
@@ -46,6 +52,7 @@ export function getCardsByFamily(family: string, extra: DeviceTemplate[] = []): 
 // ==================== AUTH & DRAFTS ====================
 
 export async function checkSession(): Promise<{ id: string; email: string; name: string | null } | null> {
+  if (!CLOUD_ENABLED) return null; // self-hosted offline build: never contact an auth server
   try {
     const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
     if (!res.ok) return null;
@@ -56,6 +63,7 @@ export async function checkSession(): Promise<{ id: string; email: string; name:
 }
 
 export async function requestLogin(email: string, returnTo?: string): Promise<void> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -69,6 +77,7 @@ export async function requestLogin(email: string, returnTo?: string): Promise<vo
 }
 
 export async function createDraft(data: unknown): Promise<string> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/drafts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -84,6 +93,7 @@ export async function createDraft(data: unknown): Promise<string> {
 }
 
 export async function createHandoff(): Promise<string> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/auth/handoff`, {
     method: "POST",
     credentials: "include",
@@ -97,6 +107,7 @@ export async function createHandoff(): Promise<string> {
 }
 
 export async function logout(): Promise<void> {
+  if (!CLOUD_ENABLED) return; // nothing to log out of
   await fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     credentials: "include",
@@ -117,6 +128,7 @@ export interface CloudSchematic {
 }
 
 export async function saveSchematicToCloud(data: unknown): Promise<CloudSchematic> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -131,6 +143,7 @@ export async function saveSchematicToCloud(data: unknown): Promise<CloudSchemati
 }
 
 export async function updateSchematicInCloud(id: string, data: unknown): Promise<CloudSchematic> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -145,6 +158,7 @@ export async function updateSchematicInCloud(id: string, data: unknown): Promise
 }
 
 export async function listCloudSchematics(): Promise<CloudSchematic[]> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics`, { credentials: "include" });
   if (!res.ok) {
     const err = (await res.json()) as { error: string };
@@ -154,6 +168,7 @@ export async function listCloudSchematics(): Promise<CloudSchematic[]> {
 }
 
 export async function loadCloudSchematic(id: string): Promise<unknown> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}`, { credentials: "include" });
   if (!res.ok) {
     const err = (await res.json()) as { error: string };
@@ -163,6 +178,7 @@ export async function loadCloudSchematic(id: string): Promise<unknown> {
 }
 
 export async function deleteCloudSchematic(id: string): Promise<void> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}`, {
     method: "DELETE",
     credentials: "include",
@@ -174,6 +190,7 @@ export async function deleteCloudSchematic(id: string): Promise<void> {
 }
 
 export async function toggleSchematicSharing(id: string, shared: boolean): Promise<CloudSchematic> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}/share`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -188,6 +205,7 @@ export async function toggleSchematicSharing(id: string, shared: boolean): Promi
 }
 
 export async function loadSharedSchematic(token: string): Promise<unknown> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/shared/${token}`, { credentials: "include" });
   if (!res.ok) {
     const err = (await res.json()) as { error: string };
@@ -197,6 +215,7 @@ export async function loadSharedSchematic(token: string): Promise<unknown> {
 }
 
 export async function renameCloudSchematic(id: string, name: string): Promise<CloudSchematic> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}/rename`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -211,6 +230,7 @@ export async function renameCloudSchematic(id: string, name: string): Promise<Cl
 }
 
 export async function setSchematicAsTemplate(id: string): Promise<void> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/${id}/set-template`, {
     method: "PUT",
     credentials: "include",
@@ -222,6 +242,7 @@ export async function setSchematicAsTemplate(id: string): Promise<void> {
 }
 
 export async function clearSchematicTemplate(): Promise<void> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/schematics/template`, {
     method: "DELETE",
     credentials: "include",
@@ -233,6 +254,7 @@ export async function clearSchematicTemplate(): Promise<void> {
 }
 
 export async function loadSchematicTemplate(): Promise<unknown | null> {
+  if (!CLOUD_ENABLED) return null; // no cloud template to load in a self-hosted build
   const res = await fetch(`${API_URL}/schematics/template`, { credentials: "include" });
   if (res.status === 404) return null;
   if (!res.ok) {
@@ -252,6 +274,7 @@ export async function createSubmission(
   submitterNote?: string,
   source?: "manual" | "bulk-json" | "bulk-csv",
 ): Promise<{ id: string }> {
+  assertCloudEnabled();
   const res = await fetch(`${API_URL}/submissions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -305,6 +328,16 @@ async function fetchTemplatesOnce(): Promise<DeviceTemplate[]> {
  */
 export async function fetchTemplates(): Promise<DeviceTemplate[]> {
   if (cached && !degraded) return effectiveTemplates();
+
+  // Self-hosted offline build: the bundled library (plus any last-good IndexedDB
+  // cache from a previous online-capable build) IS the full library. Never fetch,
+  // and never mark degraded — there is nothing fresher to retry for.
+  if (!CLOUD_ENABLED) {
+    const cachedLib = await loadCachedTemplates().catch(() => null);
+    if (cachedLib?.length) cached = cachedLib;
+    degraded = false;
+    return effectiveTemplates();
+  }
 
   let lastErr: unknown;
   for (let attempt = 0; attempt <= TEMPLATE_FETCH_RETRIES; attempt++) {

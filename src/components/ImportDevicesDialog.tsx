@@ -5,6 +5,7 @@ import { parseJsonImport } from "../import/parseJson";
 import { parseCsvImport } from "../import/parseCsv";
 import type { ParsedTemplate } from "../import/types";
 import { createSubmission } from "../templateApi";
+import { SUBMIT_ENABLED } from "../selfHosted";
 
 type Tab = "json" | "csv";
 
@@ -259,7 +260,7 @@ export default function ImportDevicesDialog({ open, onClose }: Props) {
             </div>
           )}
 
-          {selectedTemplates.length > 0 && (
+          {SUBMIT_ENABLED && selectedTemplates.length > 0 && (
             <div>
               <label className="block text-[10px] uppercase tracking-wide text-[var(--color-text-muted)] mb-1">
                 Submitter note (optional, used if you submit to community)
@@ -283,14 +284,16 @@ export default function ImportDevicesDialog({ open, onClose }: Props) {
           >
             Cancel
           </button>
-          <button
-            onClick={handleAddAndSubmit}
-            disabled={selectedTemplates.length === 0 || submitting}
-            className="px-3 py-1.5 rounded border border-blue-300 bg-white text-xs text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            title="Adds to your library AND submits to the community library for review"
-          >
-            {submitting ? "Submitting…" : `Add & Submit (${selectedTemplates.length})`}
-          </button>
+          {SUBMIT_ENABLED && (
+            <button
+              onClick={handleAddAndSubmit}
+              disabled={selectedTemplates.length === 0 || submitting}
+              className="px-3 py-1.5 rounded border border-blue-300 bg-white text-xs text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              title="Adds to your library AND submits to the community library for review"
+            >
+              {submitting ? "Submitting…" : `Add & Submit (${selectedTemplates.length})`}
+            </button>
+          )}
           <button
             onClick={handleAddToLibrary}
             disabled={selectedTemplates.length === 0 || submitting}

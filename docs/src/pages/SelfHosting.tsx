@@ -238,11 +238,54 @@ make dev`}</code>
 
       <p>
         The production nginx container does not read <code>.env</code> at
-        runtime; the API URL is baked in at build time. To change it for
-        production self-hosting you would need to pass{" "}
-        <code>VITE_TEMPLATE_API_URL</code> as a build argument when building the
-        image, or rebuild after setting it in the environment used by{" "}
-        <code>npm run build</code>.
+        runtime; the API URL is baked in at build time. The Dockerfile accepts
+        it as a build argument:
+      </p>
+
+      <pre>
+        <code>docker build --build-arg VITE_TEMPLATE_API_URL=https://api.example.test -t easyschematic .</code>
+      </pre>
+
+      <p>
+        With <code>docker compose</code>, set the variable in your environment
+        or a <code>.env</code> file next to <code>compose.yml</code> — it is
+        forwarded to the build automatically.
+      </p>
+
+      <h2>Fully-offline mode (no cloud, no external services)</h2>
+
+      <p>
+        Build with <code>VITE_SELF_HOSTED=true</code> and the app makes{" "}
+        <strong>zero automatic external requests</strong>: no session checks, no
+        cloud sync, no community-library fetch (the bundled device library is
+        used), and no external images. Cloud save, login, sharing, and
+        &ldquo;Submit to Community&rdquo; are hidden from the UI entirely.
+        Everything else — schematics, racks, reports, exports, the local MCP
+        bridge — works unchanged, entirely from your machine.
+      </p>
+
+      <pre>
+        <code>VITE_SELF_HOSTED=true docker compose up -d --build</code>
+      </pre>
+
+      <p>Or without Docker:</p>
+
+      <pre>
+        <code>npm run build:selfhosted</code>
+      </pre>
+
+      <p>
+        The offline Docker image also ships a locked-down{" "}
+        <code>Content-Security-Policy</code> (<code>default-src 'self'</code>)
+        so the browser itself refuses any external request — the guarantee is
+        enforced, not just intended. Localhost WebSockets stay allowed for the
+        MCP bridge.
+      </p>
+
+      <p>
+        Setting <code>VITE_SELF_HOSTED=true</code> <em>together with</em>{" "}
+        <code>VITE_TEMPLATE_API_URL</code> re-enables cloud features against
+        your own self-hosted API while keeping all other external defaults off.
       </p>
 
       <h2>Changing the port</h2>

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { checkSession, createDraft, createHandoff } from "../templateApi";
+import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
 
 const STORAGE_KEY = "easyschematic-pending-submission";
 const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
-
-const DEVICES_URL =
-  import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
 
 export default function PendingSubmissionBanner() {
   const [visible, setVisible] = useState(false);
@@ -13,6 +11,10 @@ export default function PendingSubmissionBanner() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Self-hosted build: community submission is disabled — never auto-submit or
+    // open the devices site. (Gated before the effect body: this is the only
+    // component that contacts the network with zero user interaction.)
+    if (!SUBMIT_ENABLED) return;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
 
@@ -48,7 +50,7 @@ export default function PendingSubmissionBanner() {
     }
   }, []);
 
-  if (!visible) return null;
+  if (!SUBMIT_ENABLED || !visible) return null;
 
   const handleSubmit = async () => {
     const raw = localStorage.getItem(STORAGE_KEY);

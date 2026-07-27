@@ -27,8 +27,10 @@
   ],
   "scripts": {
     "dev": "vite",
+    "dev:selfhosted": "vite --mode selfhosted",
     "generate-fallback": "npx tsx api/seed/generate-fallback.ts",
     "build": "npm run generate-fallback && tsc -b && vite build",
+    "build:selfhosted": "npm run generate-fallback && tsc -b && vite build --mode selfhosted",
     "build:dev-reference": "typedoc",
     "lint": "eslint .",
     "db:sync": "cd api && npm run seed:remote",
@@ -43,6 +45,7 @@
     "reports:check": "npx tsx src/reportsHarness/run.ts --check",
     "reports:baseline": "npx tsx src/reportsHarness/run.ts --update-baselines",
     "test:e2e": "playwright test",
+    "test:e2e:selfhosted": "playwright test --config playwright.selfhosted.config.ts",
     "test:e2e:install": "playwright install chromium"
   },
   "overrides": {

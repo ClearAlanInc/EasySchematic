@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { checkSession, logout } from "../templateApi";
 import { clearCache } from "../cloudCache";
+import { CLOUD_ENABLED, DEVICES_URL } from "../selfHosted";
 import LoginDialog from "./LoginDialog";
 
 interface User {
@@ -17,6 +18,7 @@ export default function UserMenuButton() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!CLOUD_ENABLED) return; // self-hosted: no accounts, button never renders
     checkSession().then((u) => {
       setUser(u);
       setLoaded(true);
@@ -47,7 +49,7 @@ export default function UserMenuButton() {
     setDropdownOpen(false);
   };
 
-  if (!loaded) return null;
+  if (!CLOUD_ENABLED || !loaded) return null;
 
   if (!user) {
     return (
@@ -87,16 +89,18 @@ export default function UserMenuButton() {
           <div className="px-3 py-2 border-b" style={{ borderColor: "var(--color-border)" }}>
             <p className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>{user.email}</p>
           </div>
-          <a
-            href="https://devices.easyschematic.live"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setDropdownOpen(false)}
-            className="block px-3 py-2 text-xs hover:bg-[var(--color-surface-hover)] transition-colors"
-            style={{ color: "var(--color-text)" }}
-          >
-            Device Library ↗
-          </a>
+          {DEVICES_URL && (
+            <a
+              href={DEVICES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setDropdownOpen(false)}
+              className="block px-3 py-2 text-xs hover:bg-[var(--color-surface-hover)] transition-colors"
+              style={{ color: "var(--color-text)" }}
+            >
+              Device Library ↗
+            </a>
+          )}
           <button
             onClick={handleLogout}
             className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors cursor-pointer"

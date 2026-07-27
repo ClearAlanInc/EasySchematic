@@ -63,6 +63,7 @@ import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnect
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic, checkSession } from "./templateApi";
 import { refreshCloudCache } from "./cloudSync";
+import { CLOUD_ENABLED } from "./selfHosted";
 import { useTheme } from "./hooks/useTheme";
 
 /** Darkens the canvas area left of x=0 and above y=0, marking the printable origin. */
@@ -519,6 +520,10 @@ function SchematicCanvas() {
 
   // Online/offline detection + cloud cache sync
   useEffect(() => {
+    // Self-hosted build with no API: skip entirely — no session checks, no cloud
+    // cache refresh, and no 3s online-poll. (isOnline stays at its initial value;
+    // its only consumers are cloud UI, which is hidden in this mode.)
+    if (!CLOUD_ENABLED) return;
     const store = useSchematicStore.getState();
     const goOnline = () => {
       store.setIsOnline(true);
@@ -1818,6 +1823,7 @@ export default function App() {
 
   // Handle /s/{token} URLs for shared schematics
   useEffect(() => {
+    if (!CLOUD_ENABLED) return; // shared links need the (self-hosted or hosted) API
     const match = window.location.pathname.match(/^\/s\/([a-f0-9-]+)$/);
     if (match) {
       loadSharedSchematic(match[1]).then((data) => {

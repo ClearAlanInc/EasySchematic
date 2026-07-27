@@ -3,6 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Set VITE_SELF_HOSTED=true in your environment (or a .env file next to
+        # this compose file) for a fully-offline build with no cloud features.
+        VITE_SELF_HOSTED: ${VITE_SELF_HOSTED:-}
+        VITE_TEMPLATE_API_URL: ${VITE_TEMPLATE_API_URL:-}
+        VITE_DEVICES_URL: ${VITE_DEVICES_URL:-}
     ports:
       - "8080:80"
     restart: unless-stopped

@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { requestLogin } from "../templateApi";
-
-const API_URL =
-  import.meta.env?.VITE_TEMPLATE_API_URL ?? "https://api.easyschematic.live";
+import { API_URL, CLOUD_ENABLED } from "../selfHosted";
 
 interface Props {
   open: boolean;
@@ -16,7 +14,9 @@ export default function LoginDialog({ open, onClose }: Props) {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
 
-  if (!open) return null;
+  // Defensive: no accounts in a self-hosted build — the Google button below is a
+  // page navigation that no fetch-level guard could intercept.
+  if (!CLOUD_ENABLED || !open) return null;
 
   const handleSend = async () => {
     const trimmed = email.trim().toLowerCase();

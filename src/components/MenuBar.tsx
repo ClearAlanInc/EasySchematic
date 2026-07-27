@@ -18,6 +18,7 @@ import UserMenuButton from "./UserMenuButton";
 import SchematicBrowser from "./SchematicBrowser";
 import LoginDialog from "./LoginDialog";
 import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
+import { CLOUD_ENABLED, DEVICES_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
 import CsvImportWizard from "./CsvImportWizard";
@@ -156,8 +157,9 @@ export default function MenuBar() {
   const [cloudSaving, setCloudSaving] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Check login state on mount
+  // Check login state on mount (checkSession no-ops to null when cloud is disabled)
   useEffect(() => {
+    if (!CLOUD_ENABLED) return;
     checkSession().then((u) => setIsLoggedIn(!!u));
   }, []);
 
@@ -257,8 +259,10 @@ export default function MenuBar() {
   const handleSave = useCallback(async () => {
     const store = useSchematicStore.getState();
 
-    // Cloud-backed schematic: update cloud (local file handle still used if present)
-    if (store.cloudSchematicId && store.isOnline) {
+    // Cloud-backed schematic: update cloud (local file handle still used if present).
+    // In a self-hosted build a stale cloudSchematicId (from a previous hosted session's
+    // autosave) is ignored so Ctrl+S falls through to a real local save.
+    if (CLOUD_ENABLED && store.cloudSchematicId && store.isOnline) {
       checkSession().then((session) => {
         if (!session) return;
         const data = store.exportToJSON();
@@ -283,7 +287,7 @@ export default function MenuBar() {
     }
 
     // If cloud-backed but no local handle, cloud save is enough
-    if (store.cloudSchematicId) return;
+    if (CLOUD_ENABLED && store.cloudSchematicId) return;
 
     // No handle, no cloud — first save. Use File System Access API if available.
     if ("showSaveFilePicker" in window) {
@@ -576,9 +580,12 @@ export default function MenuBar() {
       { type: "item", label: "Save As...", shortcut: "Ctrl+Shift+S", onClick: handleSaveAs },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
       { type: "separator" },
-      { type: "item", label: cloudSaving ? "Saving..." : isOnline ? "Save to Cloud" : "Save to Cloud (Offline)", disabled: cloudSaving || !isOnline, onClick: handleCloudSave },
-      { type: "item", label: "My Schematics...", disabled: !isLoggedIn, title: isLoggedIn ? undefined : "Must be logged in", onClick: () => setShowSchematicBrowser(true) },
-      { type: "separator" },
+      // Cloud items are hidden entirely (not just disabled) in a self-hosted build
+      ...(CLOUD_ENABLED ? [
+        { type: "item", label: cloudSaving ? "Saving..." : isOnline ? "Save to Cloud" : "Save to Cloud (Offline)", disabled: cloudSaving || !isOnline, onClick: handleCloudSave },
+        { type: "item", label: "My Schematics...", disabled: !isLoggedIn, title: isLoggedIn ? undefined : "Must be logged in", onClick: () => setShowSchematicBrowser(true) },
+        { type: "separator" },
+      ] satisfies MenuEntry[] : []),
       { type: "item", label: "Save Device Archive", onClick: handleSaveArchive },
       { type: "item", label: "Import Device Archive...", onClick: handleOpenArchive },
       { type: "item", label: "Import Cable Schedule...", onClick: () => setShowCsvImport(true) },
@@ -680,11 +687,11 @@ export default function MenuBar() {
         label: "Documentation \u2197",
         onClick: () => window.open("https://docs.easyschematic.live", "_blank", "noopener,noreferrer"),
       },
-      {
+      ...(DEVICES_URL ? [{
         type: "item",
         label: "Device Database \u2197",
-        onClick: () => window.open("https://devices.easyschematic.live", "_blank", "noopener,noreferrer"),
-      },
+        onClick: () => window.open(DEVICES_URL, "_blank", "noopener,noreferrer"),
+      } satisfies MenuEntry] : []),
       { type: "separator" },
       {
         type: "item",
@@ -813,7 +820,7 @@ export default function MenuBar() {
               >
                 {schematicName}
               </span>
-              {cloudSchematicId && (
+              {CLOUD_ENABLED && cloudSchematicId && (
                 <span
                   title={
                     !isOnline ? "Offline — cloud sync paused" :
@@ -825,14 +832,14 @@ export default function MenuBar() {
                   </svg>
                 </span>
               )}
-              {fileHandle && !cloudSchematicId && (
+              {fileHandle && !(CLOUD_ENABLED && cloudSchematicId) && (
                 <span title={`Saving to: ${fileHandle.name}`}>
                   <svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v18l7-5 7 5V3H5z" />
                   </svg>
                 </span>
               )}
-              {!isOnline && (
+              {CLOUD_ENABLED && !isOnline && (
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700"
                   title="No internet connection. Editing works normally — save to your computer via File → Save."

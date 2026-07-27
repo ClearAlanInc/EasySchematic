@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { sponsors } from "../sponsors";
+import { IS_SELF_HOSTED } from "../selfHosted";
 
 const features = [
   {
@@ -137,11 +138,17 @@ export default function LandingPage() {
                 rel="noopener noreferrer"
                 title={s.name}
               >
-                <img
-                  src={s.logo}
-                  alt={s.name}
-                  className="h-16 rounded-lg"
-                />
+                {/* Self-hosted builds render text-only — the logo is an external asset
+                    and would be this page's only automatic external request. */}
+                {s.logo && !IS_SELF_HOSTED ? (
+                  <img
+                    src={s.logo}
+                    alt={s.name}
+                    className="h-16 rounded-lg"
+                  />
+                ) : (
+                  <span className="text-sm font-semibold text-slate-600">{s.name}</span>
+                )}
               </a>
             ))}
           </div>

@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env*
+# Mode preset for self-hosted builds — no secrets, must ship with the repo
+!.env.selfhosted
 
 # Claude Code
 CLAUDE.md
@@ -72,6 +74,7 @@ src/__tests__/fixtures/reports/baselines/*
 # Playwright
 e2e/test-results/
 e2e/screenshots/
+e2e-selfhosted/test-results/
 playwright-report/
 .playwright/
 

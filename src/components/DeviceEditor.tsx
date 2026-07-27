@@ -24,6 +24,7 @@ import {
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
 import { rackUnitLabel } from "../rackUtils";
 import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
+import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
 import { getTemplateDrift } from "../templateSync";
 import { templateIdentityPatch } from "../inventoryKey";
 import LoginDialog from "./LoginDialog";
@@ -641,7 +642,7 @@ export default function DeviceEditor() {
       ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     };
 
-    const devicesUrl = import.meta.env.VITE_DEVICES_URL ?? "https://devices.easyschematic.live";
+    const devicesUrl = DEVICES_URL;
 
     const user = await checkSession();
     if (!user) {
@@ -1780,7 +1781,7 @@ export default function DeviceEditor() {
           >
             Save as User Template
           </button>
-          {(!templateId || dirtyVsTemplate || customTemplates.some((t) => t.id === templateId)) && ports.some((p) => p.label.trim()) && (
+          {SUBMIT_ENABLED && (!templateId || dirtyVsTemplate || customTemplates.some((t) => t.id === templateId)) && ports.some((p) => p.label.trim()) && (
             <button
               onClick={handleSubmitToCommunity}
               className="px-3 py-1.5 text-xs rounded bg-[var(--color-surface)] text-[var(--color-text)] hover:text-[var(--color-text-heading)] border border-[var(--color-border)] transition-colors cursor-pointer"
