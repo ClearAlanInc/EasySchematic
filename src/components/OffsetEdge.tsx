@@ -140,6 +140,15 @@ function OffsetEdgeComponent({
   const globalCableIdMidOffset = useSchematicStore((s) => s.cableIdMidOffset);
   const globalCableIdLabelMode = useSchematicStore((s) => s.cableIdLabelMode);
   const cableId = useSchematicStore((s) => s.cableIdMap[id] ?? "");
+  // Virtual (tcp/udp) connections show their port number where the cable ID would go —
+  // the port *is* the identity of a logical stream, and it has no physical cable to number.
+  const virtualPortLabel = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    const st = edge?.data?.signalType;
+    if (st !== "tcp" && st !== "udp") return "";
+    const port = edge?.data?.networkPort as number | undefined;
+    return port != null ? `${st.toUpperCase()} ${port}` : "";
+  });
   const hideCableId = useSchematicStore((s) => {
     const edge = s.edges.find((e) => e.id === id);
     return edge?.data?.hideCableId === true || edge?.data?.hideLabel === true;
@@ -353,7 +362,7 @@ function OffsetEdgeComponent({
 
   // --- Label rendering (#5, #61, #114) ---
   const signalColor = (style?.stroke as string) ?? "#6b7280";
-  const labelText = cableId;
+  const labelText = virtualPortLabel || cableId;
   const cableIdGap = edgeCableIdGap ?? globalCableIdGap;
   const cableIdLabelMode = edgeCableIdLabelMode ?? globalCableIdLabelMode;
   const cidMidOff = edgeCableIdMidOffset ?? globalCableIdMidOffset;

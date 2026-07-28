@@ -13,6 +13,8 @@ export const SIGNAL_TO_CABLE: Record<SignalType, string> = {
   dante: "Ethernet",
   avb: "Ethernet",
   ethernet: "Ethernet",
+  tcp: "Ethernet",
+  udp: "Ethernet",
   srt: "Ethernet",
   hdbaset: "Ethernet",
   "analog-audio": "Analog Audio",

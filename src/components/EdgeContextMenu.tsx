@@ -221,7 +221,7 @@ export default function EdgeContextMenu() {
     useSchematicStore.setState({ edgeContextMenu: null });
   }, [menu]);
 
-  const [editingLabel, setEditingLabel] = useState<false | "label" | "multicable" | "source" | "target" | "length">(false);
+  const [editingLabel, setEditingLabel] = useState<false | "label" | "multicable" | "source" | "target" | "length" | "netport">(false);
   const [labelValue, setLabelValue] = useState("");
 
   // When opened directly into length-edit mode (double-click on the length label,
@@ -279,6 +279,15 @@ export default function EdgeContextMenu() {
     setEditingLabel("length");
   }, [menu]);
 
+  const setNetworkPort = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const edge = store.edges.find((e) => e.id === menu.edgeId);
+    const port = edge?.data?.networkPort as number | undefined;
+    setLabelValue(port != null ? String(port) : "");
+    setEditingLabel("netport");
+  }, [menu]);
+
   const setSourceEndLabel = useCallback(() => {
     if (!menu) return;
     const store = useSchematicStore.getState();
@@ -298,6 +307,16 @@ export default function EdgeContextMenu() {
   const commitLabel = useCallback(() => {
     if (!menu) return;
     const store = useSchematicStore.getState();
+    if (editingLabel === "netport") {
+      const raw = labelValue.trim();
+      const n = Number(raw);
+      // Out-of-range or non-numeric input clears rather than storing nonsense.
+      const valid = raw !== "" && Number.isInteger(n) && n >= 1 && n <= 65535;
+      store.patchEdgeData(menu.edgeId, { networkPort: valid ? n : undefined });
+      useSchematicStore.setState({ edgeContextMenu: null });
+      setEditingLabel(false);
+      return;
+    }
     const field =
       editingLabel === "multicable" ? "multicableLabel"
       : editingLabel === "source" ? "sourceLabel"
@@ -467,6 +486,11 @@ export default function EdgeContextMenu() {
     if (patchEdge) s.clearEdgePatchHops(patchEdge.id);
     useSchematicStore.setState({ edgeContextMenu: null });
   };
+  // Virtual connections (tcp/udp) carry a port number instead of a cable ID.
+  const virtualKind = (edge?.data?.signalType === "tcp" || edge?.data?.signalType === "udp")
+    ? (edge.data.signalType as "tcp" | "udp")
+    : undefined;
+
   const bundleId = edge?.data?.bundleId;
   const inBundle = !!bundleId && (store.bundles[bundleId]?.id != null
     || store.edges.filter((e) => e.data?.bundleId === bundleId).length >= 2);
@@ -528,6 +552,7 @@ export default function EdgeContextMenu() {
             : editingLabel === "source" ? "Source-end Label"
             : editingLabel === "target" ? "Target-end Label"
             : editingLabel === "length" ? "Cable Length"
+            : editingLabel === "netport" ? `${virtualKind ? virtualKind.toUpperCase() + " " : ""}Port (1-65535)`
             : "Midpoint Label"}
         </div>
         <input
@@ -545,8 +570,10 @@ export default function EdgeContextMenu() {
           placeholder={
             editingLabel === "multicable" ? "e.g. Audio Snake A"
             : editingLabel === "length" ? "e.g. 50 ft"
+            : editingLabel === "netport" ? "e.g. 1710"
             : "e.g. Program Feed"
           }
+          inputMode={editingLabel === "netport" ? "numeric" : undefined}
           autoFocus
         />
         <div className="flex justify-end gap-1 mt-1.5">
@@ -591,6 +618,13 @@ export default function EdgeContextMenu() {
         </>
       )}
       <div className="h-px bg-gray-200 my-1" />
+      {virtualKind && (
+        <MenuItem
+          label={`Set ${virtualKind.toUpperCase()} Port...`}
+          onClick={setNetworkPort}
+          title="Shown on the connection in place of the cable ID"
+        />
+      )}
       <MenuItem label="Set Source-end Label..." onClick={setSourceEndLabel} />
       <MenuItem label="Set Midpoint Label..." onClick={setConnectionLabel} />
       <MenuItem label="Set Target-end Label..." onClick={setTargetEndLabel} />
@@ -703,11 +737,12 @@ export default function EdgeContextMenu() {
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function MenuItem({ label, onClick, title }: { label: string; onClick: () => void; title?: string }) {
   return (
     <button
       className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
       onClick={onClick}
+      title={title}
     >
       {label}
     </button>

@@ -23,6 +23,8 @@
   --color-madi: #059669;      /* emerald — multi-channel digital audio */
   --color-usb: #db2777;       /* pink — ubiquitous connector */
   --color-ethernet: #0891b2;  /* teal — networking */
+  --color-tcp: #0e7490;       /* deep teal — logical stream riding ethernet */
+  --color-udp: #22a5c0;       /* light teal — logical datagram riding ethernet */
   --color-fiber: #d97706;     /* amber — industry standard for fiber */
   --color-displayport: #0d9488; /* dark teal — video alt */
   --color-hdbaset: #9333ea;   /* violet — HDMI-over-cat, distinct from HDMI red */

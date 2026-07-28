@@ -16,6 +16,8 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   madi: "#059669",
   usb: "#db2777",
   ethernet: "#0891b2",
+  tcp: "#0e7490",
+  udp: "#22a5c0",
   fiber: "#d97706",
   displayport: "#0d9488",
   hdbaset: "#9333ea",

@@ -15,6 +15,8 @@ export const DEFAULT_CONNECTOR: Record<SignalType, ConnectorType> = {
   madi: "bnc",
   usb: "usb-a",
   ethernet: "rj45",
+  tcp: "rj45",
+  udp: "rj45",
   fiber: "lc",
   displayport: "displayport",
   hdbaset: "rj45",
@@ -148,6 +150,10 @@ export function areSignalsCompatibleViaConnector(
  *  directly with any of those stageboxes/consoles. These all ride ethercon/rj45, which
  *  areConnectorsCompatible already treats as interchangeable. */
 export const SIGNAL_COMPAT_PAIRS: ReadonlyArray<readonly [SignalType, SignalType]> = [
+  // TCP/UDP are logical streams carried over a physical ethernet link, so they mate
+  // with plain ethernet ports (and each other) without an adapter.
+  ["tcp", "ethernet"],
+  ["udp", "ethernet"],
   ["slink", "dsnake"],
   ["slink", "dx5"],
   ["slink", "gigaace"],
@@ -516,7 +522,7 @@ export function usbcPowerShortfallW(
 
 /** Signal types that can have network configuration */
 export const NETWORK_SIGNAL_TYPES: Set<SignalType> = new Set([
-  "ethernet", "ndi", "dante", "avb", "srt", "hdbaset", "aes67", "st2110",
+  "ethernet", "tcp", "udp", "ndi", "dante", "avb", "srt", "hdbaset", "aes67", "st2110",
 ]);
 
 /** Signal types that can have video capabilities */

@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 47;
+export const CURRENT_SCHEMA_VERSION = 48;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -636,6 +636,12 @@ const migrations: Record<number, Migration> = {
     // v46 → v47: adds optional DeviceData.sshKey, enciphered at rest alongside
     // password. Purely additive.
     data.version = 47;
+    return data;
+  },
+  47: (data) => {
+    // v47 → v48: adds the "tcp" and "udp" virtual signal types and the optional
+    // ConnectionData.networkPort they display. Purely additive.
+    data.version = 48;
     return data;
   },
 };

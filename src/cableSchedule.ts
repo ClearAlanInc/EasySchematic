@@ -73,6 +73,8 @@ const SIGNAL_PREFIX: Record<SignalType, string> = {
   madi: "MA",
   usb: "U",
   ethernet: "E",
+  tcp: "TCP",
+  udp: "UDP",
   fiber: "F",
   displayport: "DP",
   hdbaset: "HB",

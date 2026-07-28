@@ -74,6 +74,8 @@ export type SignalType =
   | "madi"
   | "usb"
   | "ethernet"
+  | "tcp"
+  | "udp"
   | "fiber"
   | "displayport"
   | "hdbaset"
@@ -572,6 +574,10 @@ export interface ConnectionData {
   cableUse?: "patch" | "field";
   /** Conductor gauge in AWG — free text to allow values like "12", "18", "2/0" (#P2-015) */
   gaugeAwg?: string;
+  /** TCP/UDP port for a virtual (tcp/udp) connection, e.g. 1710 for Q-SYS QRC.
+   *  Rendered on the wire in place of the cable ID. Only meaningful when the
+   *  connection's signalType is "tcp" or "udp". */
+  networkPort?: number;
   /** Alternate / contractor name for this cable, shown alongside the internal cable ID (#P2-023) */
   cableAlias?: string;
   /** Marks the cable as tested / certified (#P2-031) */
@@ -1032,6 +1038,8 @@ export const SIGNAL_COLORS: Record<SignalType, string> = {
   madi: "var(--color-madi)",
   usb: "var(--color-usb)",
   ethernet: "var(--color-ethernet)",
+  tcp: "var(--color-tcp)",
+  udp: "var(--color-udp)",
   fiber: "var(--color-fiber)",
   displayport: "var(--color-displayport)",
   hdbaset: "var(--color-hdbaset)",
@@ -1204,6 +1212,8 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   madi: "MADI",
   usb: "USB",
   ethernet: "Ethernet",
+  tcp: "TCP",
+  udp: "UDP",
   fiber: "Fiber",
   displayport: "DisplayPort",
   hdbaset: "HDBaseT",
@@ -1271,7 +1281,7 @@ export const SIGNAL_GROUPS: Record<string, SignalType[]> = {
   "Video": ["sdi", "hdmi", "displayport", "dvi", "composite", "component-video", "s-video", "vga"],
   "Video over IP": ["ndi", "srt", "hdbaset", "st2110"],
   "Audio": ["analog-audio", "speaker-level", "bluetooth", "aes", "dante", "avb", "aes67", "madi", "spdif", "adat", "ultranet", "aes50", "stageconnect", "ydif", "soundgrid", "gigaace", "dx5", "dsnake", "slink", "fibreace", "digilink", "extron-exp", "pots", "blu-link"],
-  "Network": ["ethernet", "fiber"],
+  "Network": ["ethernet", "tcp", "udp", "fiber"],
   "Control / Data": ["dmx", "artnet", "sacn", "rs422", "rs485", "serial", "gpio", "contact-closure", "ir", "midi", "tally", "usb", "thunderbolt", "dxlink", "ebus", "control-voltage", "cresnet", "nlight", "sensor"],
   "Sync / Clock": ["genlock", "wordclock", "timecode", "dars", "gps"],
   "Power": ["power", "power-l1", "power-l2", "power-l3", "power-neutral", "power-ground"],
