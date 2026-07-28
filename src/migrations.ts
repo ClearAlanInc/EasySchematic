@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 48;
+export const CURRENT_SCHEMA_VERSION = 49;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -642,6 +642,12 @@ const migrations: Record<number, Migration> = {
     // v47 → v48: adds the "tcp" and "udp" virtual signal types and the optional
     // ConnectionData.networkPort they display. Purely additive.
     data.version = 48;
+    return data;
+  },
+  48: (data) => {
+    // v48 → v49: adds optional Port.parentPortId, marking a port as a virtual
+    // TCP/UDP sub-handle of a network port. Purely additive.
+    data.version = 49;
     return data;
   },
 };

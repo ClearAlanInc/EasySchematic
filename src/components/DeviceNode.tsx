@@ -70,6 +70,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   );
 
   const globalHideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
+  const hideVirtual = useSchematicStore((s) => s.hideVirtualConnections);
   // Effective filter = global view toggle OR this device's per-device toggle (#135).
   const hideUnconnectedPorts = globalHideUnconnectedPorts || !!data.showOnlyConnectedPorts;
   const showPortCounts = useSchematicStore((s) => s.showPortCounts);
@@ -134,22 +135,25 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
 
   const visiblePorts = useMemo(() => {
     if (data.showAllPorts) {
+      const shown = hideVirtual ? data.ports.filter((p) => !p.parentPortId) : data.ports;
       return hiddenPinSignalTypes
-        ? data.ports.filter((p) => !hiddenPinSignalTypes.has(p.signalType))
-        : data.ports;
+        ? shown.filter((p) => !hiddenPinSignalTypes.has(p.signalType))
+        : shown;
     }
 
     const tplHidden = templateHiddenStr ? new Set(templateHiddenStr.split(",")) : null;
     const devHiddenPorts = data.hiddenPorts?.length ? new Set(data.hiddenPorts) : null;
 
     return data.ports.filter((p) => {
+      // Sub-handles are purely virtual; drop them when that layer is hidden.
+      if (hideVirtual && p.parentPortId) return false;
       if (hiddenPinSignalTypes?.has(p.signalType)) return false;
       if (tplHidden?.has(p.signalType)) return false;
       if (devHiddenPorts?.has(p.id)) return false;
       if (hideUnconnectedPorts && !isPortConnected(p, connectedHandles)) return false;
       return true;
     });
-  }, [data.ports, data.showAllPorts, data.hiddenPorts,
+  }, [data.ports, data.showAllPorts, data.hiddenPorts, hideVirtual,
       hiddenPinSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
 
   const headerAuxRows = useMemo(
@@ -697,7 +701,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
                   title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — bidirectional${usbcPowerSuffix(port)}`}
                 >
-                  ↔ {displayLabel(port.label)}
+                  {port.parentPortId ? "└ " : "↔ "}{displayLabel(port.label)}
                 </span>
                 <Handle
                   type="source"

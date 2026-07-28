@@ -24,6 +24,7 @@ import {
 } from "../types";
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
 import { findManagementHost, findManagementPort, describeSshKey, describeManagementGap } from "../managementUrl";
+import { isVirtualSignal } from "../connectorTypes";
 import { rackUnitLabel } from "../rackUtils";
 import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
 import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
@@ -90,6 +91,8 @@ interface PortDraft {
   usbcPowerDrawW?: number;
   linkSpeed?: string;
   flipped?: boolean;
+  /** Set on virtual TCP/UDP sub-handles: the id of the network port they hang off. */
+  parentPortId?: string;
   // Passthrough-only fields
   rearConnectorType?: ConnectorType;
   rearGender?: Gender;
@@ -849,7 +852,36 @@ export default function DeviceEditor() {
   };
 
   const removePort = (id: string) => {
-    setPorts(ports.filter((p) => p.id !== id));
+    // Sub-handles belong to their parent port — removing the jack removes its streams.
+    setPorts(ports.filter((p) => p.id !== id && p.parentPortId !== id));
+  };
+
+  /** Add a virtual TCP/UDP sub-handle to a network port, inserted after the parent
+   *  and its existing sub-handles so the group stays together. */
+  const addSubHandle = (parentId: string, kind: "tcp" | "udp") => {
+    setPorts((prev) => {
+      const parent = prev.find((p) => p.id === parentId);
+      if (!parent) return prev;
+      // Number per transport, so a port's TCP and UDP streams count independently.
+      const siblings = prev.filter((p) => p.parentPortId === parentId && p.signalType === kind);
+      const draft: PortDraft = {
+        id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        label: `${kind.toUpperCase()} ${siblings.length + 1}`,
+        signalType: kind,
+        direction: parent.direction === "input" || parent.direction === "output"
+          ? parent.direction
+          : "bidirectional",
+        connectorType: "none",
+        parentPortId: parentId,
+        section: parent.section,
+      };
+      // Insert after the parent's last sub-handle (or the parent itself).
+      let idx = prev.findIndex((p) => p.id === parentId);
+      for (let i = idx + 1; i < prev.length && prev[i].parentPortId === parentId; i++) idx = i;
+      const next = [...prev];
+      next.splice(idx + 1, 0, draft);
+      return next;
+    });
   };
 
   // Duplicate a port row, copying every property and inserting the clone right
@@ -1232,6 +1264,7 @@ export default function DeviceEditor() {
             onRemove={removePort}
             onDuplicate={duplicatePort}
             onUpdate={updatePort}
+            onAddSubHandle={addSubHandle}
             draggedPortId={draggedPortId}
             setDraggedPortId={setDraggedPortId}
             dropTarget={dropTarget}
@@ -1251,6 +1284,7 @@ export default function DeviceEditor() {
             onRemove={removePort}
             onDuplicate={duplicatePort}
             onUpdate={updatePort}
+            onAddSubHandle={addSubHandle}
             draggedPortId={draggedPortId}
             setDraggedPortId={setDraggedPortId}
             dropTarget={dropTarget}
@@ -1271,6 +1305,7 @@ export default function DeviceEditor() {
               onRemove={removePort}
               onDuplicate={duplicatePort}
               onUpdate={updatePort}
+              onAddSubHandle={addSubHandle}
               draggedPortId={draggedPortId}
               setDraggedPortId={setDraggedPortId}
               dropTarget={dropTarget}
@@ -1292,6 +1327,7 @@ export default function DeviceEditor() {
               onRemove={removePort}
               onDuplicate={duplicatePort}
               onUpdate={updatePort}
+              onAddSubHandle={addSubHandle}
               draggedPortId={draggedPortId}
               setDraggedPortId={setDraggedPortId}
               dropTarget={dropTarget}
@@ -2385,6 +2421,7 @@ function PortSection({
   onRemove,
   onDuplicate,
   onUpdate,
+  onAddSubHandle,
   draggedPortId,
   setDraggedPortId,
   dropTarget,
@@ -2402,6 +2439,7 @@ function PortSection({
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
   onUpdate: (id: string, updates: Partial<PortDraft>) => void;
+  onAddSubHandle: (parentId: string, kind: "tcp" | "udp") => void;
   draggedPortId: string | null;
   setDraggedPortId: (id: string | null) => void;
   dropTarget: { direction: PortDirection; index: number } | null;
@@ -2516,6 +2554,7 @@ function PortSection({
                   onRemove={() => onRemove(port.id)}
                   onDuplicate={() => onDuplicate(port.id)}
                   onUpdate={(u) => onUpdate(port.id, u)}
+                  onAddSubHandle={onAddSubHandle}
                   isDragging={draggedPortId === port.id}
                   setDraggedPortId={setDraggedPortId}
                   dropTarget={dropTarget}
@@ -2557,6 +2596,7 @@ function PortRow({
   onRemove,
   onDuplicate,
   onUpdate,
+  onAddSubHandle,
   isDragging,
   setDraggedPortId,
   dropTarget,
@@ -2573,6 +2613,7 @@ function PortRow({
   onRemove: () => void;
   onDuplicate: () => void;
   onUpdate: (updates: Partial<PortDraft>) => void;
+  onAddSubHandle: (parentId: string, kind: "tcp" | "udp") => void;
   isDragging: boolean;
   setDraggedPortId: (id: string | null) => void;
   dropTarget: { direction: PortDirection; index: number } | null;
@@ -3016,8 +3057,32 @@ function PortRow({
         </div>
       )}
 
+      {/* Virtual sub-handles: one per logical TCP/UDP stream over this physical link.
+          Each gets its own handle, so several streams can run to the same device. */}
+      {NETWORK_SIGNAL_TYPES.has(port.signalType) && !isVirtualSignal(port.signalType) && !port.parentPortId && (
+        <div className="pl-6 mb-0.5 flex items-center gap-2">
+          <span className="text-[9px] text-[var(--color-text-muted)]">Virtual:</span>
+          <button
+            type="button"
+            className="text-[9px] text-blue-600 hover:text-blue-500 cursor-pointer"
+            onClick={() => onAddSubHandle(port.id, "tcp")}
+            title="Add a TCP stream carried over this port"
+          >
+            + TCP
+          </button>
+          <button
+            type="button"
+            className="text-[9px] text-blue-600 hover:text-blue-500 cursor-pointer"
+            onClick={() => onAddSubHandle(port.id, "udp")}
+            title="Add a UDP stream carried over this port"
+          >
+            + UDP
+          </button>
+        </div>
+      )}
+
       {/* Network Config (collapsible, only for addressable network signal types) */}
-      {NETWORK_SIGNAL_TYPES.has(port.signalType) && (
+      {NETWORK_SIGNAL_TYPES.has(port.signalType) && !port.parentPortId && (
         <>
           <label className="pl-6 flex items-center gap-1 text-[9px] text-[var(--color-text-muted)]">
             <input

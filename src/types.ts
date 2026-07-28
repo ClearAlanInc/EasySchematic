@@ -206,6 +206,12 @@ export interface Port {
   linkSpeed?: string;
   /** Stable link back to the template port this was cloned from — used for template-sync reconciliation. */
   templatePortId?: string;
+  /** Marks this port as a virtual sub-handle of the network port with this id.
+   *  A sub-handle carries one logical TCP/UDP stream over its parent's physical
+   *  link: it has its own handle (so several streams can run between the same two
+   *  devices), renders indented under the parent, and is removed with it. Only
+   *  meaningful when signalType is a virtual type. */
+  parentPortId?: string;
 }
 
 export interface SlotDefinition {
