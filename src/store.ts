@@ -2230,6 +2230,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
     if (!sourcePort || !targetPort) return false;
 
+    // TCP and UDP are distinct transports: a stream is one or the other, never both.
+    // Checked ahead of every other rule (including the network bypass below, which
+    // would otherwise wave any two network types through) so it can't be sidestepped.
+    // A virtual wire may still land on a plain ethernet port — only virtual-to-virtual
+    // has to agree on the transport.
+    if (
+      isVirtualSignal(sourcePort.signalType) &&
+      isVirtualSignal(targetPort.signalType) &&
+      sourcePort.signalType !== targetPort.signalType
+    ) {
+      return false;
+    }
+
     // ── Passthrough port handling ────────────────────────────────────────
     const srcIsPassthrough = sourcePort.direction === "passthrough";
     const tgtIsPassthrough = targetPort.direction === "passthrough";

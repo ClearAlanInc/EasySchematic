@@ -82,12 +82,28 @@ describe("virtual sub-handles", () => {
     expect(types.filter((t) => !isVirtualSignal(t))).toHaveLength(1);
   });
 
-  it("connects a TCP sub-handle to a UDP one only through matching transports", () => {
+  it("mates TCP with TCP and UDP with UDP", () => {
     const s = useSchematicStore.getState();
-    // tcp -> tcp is fine
     expect(s.isValidConnection({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0t1-in" })).toBe(true);
-    // tcp -> udp is not the same transport, but both are network types so the app
-    // allows it and the wire type decides — documented behaviour, asserted here.
-    expect(s.isValidConnection({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0u1-in" })).toBe(true);
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0t2-in" })).toBe(true);
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0u1-out", target: "b", targetHandle: "b0u1-in" })).toBe(true);
+  });
+
+  it("refuses to mate TCP with UDP, in either direction", () => {
+    const s = useSchematicStore.getState();
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0u1-in" })).toBe(false);
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0u1-out", target: "b", targetHandle: "b0t1-in" })).toBe(false);
+  });
+
+  it("never creates a TCP-to-UDP wire even if onConnect is called directly", () => {
+    const s = useSchematicStore.getState();
+    s.onConnect({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0u1-in" });
+    expect(useSchematicStore.getState().edges).toHaveLength(0);
+  });
+
+  it("still lets a virtual wire land on a plain ethernet port", () => {
+    const s = useSchematicStore.getState();
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0t1-out", target: "b", targetHandle: "b0-in" })).toBe(true);
+    expect(s.isValidConnection({ source: "a", sourceHandle: "a0u1-out", target: "b", targetHandle: "b0-in" })).toBe(true);
   });
 });
