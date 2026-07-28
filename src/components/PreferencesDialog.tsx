@@ -511,7 +511,7 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                   />
                 </label>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
-                  Connects this tab to the EasySchematic MCP server running on your computer, so an AI assistant (Claude) can add devices, set properties, and make connections live. Off by default; your drawing is only reachable while this is on.
+                  Connects this tab to the caDesign MCP server running on your computer, so an AI assistant (Claude) can add devices, set properties, and make connections live. Off by default; your drawing is only reachable while this is on.
                 </p>
 
                 <div className="flex items-center justify-between py-1 mt-3">

@@ -84,7 +84,7 @@ export default function LandingPage() {
       <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
           <img src="/favicon.svg" alt="" className="w-10 h-10 rounded-lg" />
-          <span className="text-xl font-bold tracking-tight text-white">EasySchematic</span>
+          <span className="text-xl font-bold tracking-tight text-white">caDesign</span>
         </div>
       </nav>
 
@@ -116,7 +116,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 py-12">
           <img
             src="/landing-screenshot.png"
-            alt="EasySchematic editor showing a signal flow diagram with Thunderbolt, HDMI, SDI, and USB connections between Mac Studios, adapters, video wall controllers, and converters"
+            alt="caDesign editor showing a signal flow diagram with Thunderbolt, HDMI, SDI, and USB connections between Mac Studios, adapters, video wall controllers, and converters"
             className="w-full rounded-lg shadow-lg border border-slate-200"
             loading="eager"
           />
@@ -222,7 +222,7 @@ export default function LandingPage() {
           <p className="text-center text-gray-600 max-w-2xl mx-auto mb-10">
             Whether you're drawing a broadcast truck block diagram, documenting a
             corporate AV install, or building hook-up sheets for a live event,
-            EasySchematic helps you create clean, readable AV schematics.
+            caDesign helps you create clean, readable AV schematics.
           </p>
           <div className="grid md:grid-cols-3 gap-6 text-center">
             {[
@@ -277,7 +277,7 @@ export default function LandingPage() {
           <a href="https://devices.easyschematic.live" className="hover:text-white transition-colors">
             Device Database
           </a>
-          <a href="https://github.com/duremovich/EasySchematic" className="hover:text-white transition-colors">
+          <a href="https://github.com/duremovich/caDesign" className="hover:text-white transition-colors">
             GitHub
           </a>
           <a href="https://discord.gg/dxXn3Jk2a6" className="hover:text-white transition-colors">

@@ -33,7 +33,7 @@ export default function MobileGate() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-6">
       <div className="max-w-sm rounded-lg bg-white p-8 text-center shadow-xl">
         <h1 className="mb-4 text-xl font-bold text-gray-900">
-          EasySchematic is designed for desktop browsers.
+          caDesign is designed for desktop browsers.
         </h1>
         <p className="mb-6 text-sm leading-relaxed text-gray-600">
           This tool works best with a keyboard, mouse, and a screen wide enough

@@ -49,8 +49,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'EasySchematic — AV Signal Flow Diagram Tool',
-        short_name: 'EasySchematic',
+        name: 'caDesign — AV Signal Flow Diagram Tool',
+        short_name: 'caDesign',
         description: 'Design audio/video signal flow diagrams for broadcast, live production, and AV integration.',
         theme_color: '#0f172a',
         background_color: '#0f172a',

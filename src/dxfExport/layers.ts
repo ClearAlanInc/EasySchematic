@@ -36,16 +36,16 @@ export function rgbToAci(r: number, g: number, b: number): number {
 
 export const CANONICAL_LAYERS = {
   DEFAULT: "0",
-  ROOMS: "EasySchematic-Rooms",
-  ROOMS_FILL: "EasySchematic-Rooms-Fill",
-  DEVICES: "EasySchematic-Devices",
-  DEVICES_HEADER: "EasySchematic-Devices-Header",
-  LABELS: "EasySchematic-Labels",
-  PORTS: "EasySchematic-Ports",
-  ANNOTATIONS: "EasySchematic-Annotations",
-  ANNOTATIONS_FILL: "EasySchematic-Annotations-Fill",
-  TITLE_BLOCK: "EasySchematic-TitleBlock",
-  LEGEND: "EasySchematic-Legend",
+  ROOMS: "caDesign-Rooms",
+  ROOMS_FILL: "caDesign-Rooms-Fill",
+  DEVICES: "caDesign-Devices",
+  DEVICES_HEADER: "caDesign-Devices-Header",
+  LABELS: "caDesign-Labels",
+  PORTS: "caDesign-Ports",
+  ANNOTATIONS: "caDesign-Annotations",
+  ANNOTATIONS_FILL: "caDesign-Annotations-Fill",
+  TITLE_BLOCK: "caDesign-TitleBlock",
+  LEGEND: "caDesign-Legend",
 } as const;
 
 export type LineStyleName = "CONTINUOUS" | "ES_DASHED" | "ES_DOTTED" | "ES_DASHDOT" | "ES_MISMATCH";
@@ -71,7 +71,7 @@ export const LTYPE_DEFS: LtypeDef[] = [
 /** Layer name for a specific signal-type connection. */
 export function signalLayerName(sig: SignalType): string {
   const sanitized = sanitizeName(sig);
-  return `EasySchematic-Connections-${sanitized}`;
+  return `caDesign-Connections-${sanitized}`;
 }
 
 /**

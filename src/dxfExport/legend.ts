@@ -6,7 +6,7 @@ import { cssFontPxToDxfHeight, rgbToTrueColor } from "./units";
 
 /**
  * Emit the signal color key / legend near the drawing extents.
- * The layer EasySchematic-Legend can be frozen if the user prefers their own.
+ * The layer caDesign-Legend can be frozen if the user prefers their own.
  *
  * All coordinates in inches.
  */
