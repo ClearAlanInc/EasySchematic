@@ -107,3 +107,72 @@ describe("virtual sub-handles", () => {
     expect(s.isValidConnection({ source: "a", sourceHandle: "a0u1-out", target: "b", targetHandle: "b0-in" })).toBe(true);
   });
 });
+
+/** Mirrors the editor's groupSubHandles normalization. */
+function groupSubHandles(list: Port[]): Port[] {
+  const byId = new Map(list.map((p) => [p.id, p]));
+  const parents: Port[] = [];
+  const children = new Map<string, Port[]>();
+  let lastNetwork: string | undefined;
+  for (const p of list) {
+    const parentOk = p.parentPortId && byId.has(p.parentPortId) && !byId.get(p.parentPortId)!.parentPortId;
+    if (isVirtualSignal(p.signalType)) {
+      const host = parentOk ? p.parentPortId! : lastNetwork;
+      if (host) {
+        const arr = children.get(host) ?? [];
+        arr.push(host === p.parentPortId ? p : { ...p, parentPortId: host });
+        children.set(host, arr);
+        continue;
+      }
+    }
+    if (["ethernet", "dante", "ndi"].includes(p.signalType) && !isVirtualSignal(p.signalType)) {
+      lastNetwork = p.id;
+    }
+    parents.push(p.parentPortId ? { ...p, parentPortId: undefined } : p);
+  }
+  return parents.flatMap((p) => [p, ...(children.get(p.id) ?? [])]);
+}
+
+const P = (id: string, signalType: string, parentPortId?: string): Port =>
+  ({ id, label: id, signalType, direction: "bidirectional", parentPortId } as Port);
+
+describe("grouping sub-handles under their host port", () => {
+  it("adopts loose TCP ports onto the ethernet port above them", () => {
+    // What you get from adding TCP ports the ordinary way, before this fix.
+    const out = groupSubHandles([P("lan", "ethernet"), P("t1", "tcp"), P("t2", "tcp")]);
+    expect(out.map((p) => p.id)).toEqual(["lan", "t1", "t2"]);
+    expect(out.slice(1).every((p) => p.parentPortId === "lan")).toBe(true);
+  });
+
+  it("pulls scattered sub-handles back under their parent", () => {
+    const out = groupSubHandles([
+      P("lan", "ethernet"), P("t1", "tcp", "lan"), P("com", "serial"), P("t2", "tcp", "lan"),
+    ]);
+    expect(out.map((p) => p.id)).toEqual(["lan", "t1", "t2", "com"]);
+  });
+
+  it("keeps each ethernet port's streams on their own port", () => {
+    const out = groupSubHandles([
+      P("lan1", "ethernet"), P("a", "tcp", "lan1"), P("lan2", "ethernet"), P("b", "tcp", "lan2"),
+    ]);
+    expect(out.map((p) => p.id)).toEqual(["lan1", "a", "lan2", "b"]);
+    expect(out[1].parentPortId).toBe("lan1");
+    expect(out[3].parentPortId).toBe("lan2");
+  });
+
+  it("never nests a sub-handle under another sub-handle", () => {
+    const out = groupSubHandles([P("lan", "ethernet"), P("t1", "tcp", "lan"), P("t2", "tcp", "t1")]);
+    expect(out.every((p) => !p.parentPortId || p.parentPortId === "lan")).toBe(true);
+  });
+
+  it("re-parents a sub-handle whose parent was deleted", () => {
+    const out = groupSubHandles([P("lan", "ethernet"), P("t1", "tcp", "gone")]);
+    expect(out.find((p) => p.id === "t1")?.parentPortId).toBe("lan");
+  });
+
+  it("leaves a virtual port alone when there is no network port to host it", () => {
+    const out = groupSubHandles([P("hdmi", "hdmi"), P("t1", "tcp")]);
+    expect(out.map((p) => p.id)).toEqual(["hdmi", "t1"]);
+    expect(out[1].parentPortId).toBeUndefined();
+  });
+});

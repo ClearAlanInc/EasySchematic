@@ -40,9 +40,44 @@ import type { FacePlateLayout } from "../types";
 import { AUX_FIELD_GROUPS, normalizeAuxRows, resolveAuxiliaryLine, trimTrailingEmpty } from "../auxiliaryData";
 import { deriveThermalBtuh } from "../thermal";
 
-const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[]).sort(
-  (a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]),
-);
+// TCP/UDP exist only as virtual sub-handles hosted by a network port, so they are
+// not offered here — the "+ TCP / + UDP" control on an ethernet row creates them.
+// Otherwise a stray top-level TCP port could be made that belongs to no jack.
+const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[])
+  .filter((t) => !isVirtualSignal(t))
+  .sort((a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]));
+/** Keep every sub-handle directly beneath its parent, and adopt any orphaned
+ *  virtual port (one whose parent is gone, or that was made before sub-handles
+ *  existed) onto the nearest network port above it. Guarantees the "grouped and
+ *  hosted by their parent" shape whatever order the list arrived in. */
+const groupSubHandles = (list: PortDraft[]): PortDraft[] => {
+  const byId = new Map(list.map((p) => [p.id, p]));
+  const parents: PortDraft[] = [];
+  const children = new Map<string, PortDraft[]>();
+  let lastNetwork: string | undefined;
+
+  for (const p of list) {
+    const parentOk = p.parentPortId && byId.has(p.parentPortId)
+      && !byId.get(p.parentPortId)!.parentPortId;
+    if (isVirtualSignal(p.signalType)) {
+      const host = parentOk ? p.parentPortId! : lastNetwork;
+      if (host) {
+        const arr = children.get(host) ?? [];
+        arr.push(host === p.parentPortId ? p : { ...p, parentPortId: host });
+        children.set(host, arr);
+        continue;
+      }
+      // No network port to host it — leave it in place rather than dropping it.
+    }
+    if (NETWORK_SIGNAL_TYPES.has(p.signalType) && !isVirtualSignal(p.signalType)) {
+      lastNetwork = p.id;
+    }
+    parents.push(p.parentPortId ? { ...p, parentPortId: undefined } : p);
+  }
+
+  return parents.flatMap((p) => [p, ...(children.get(p.id) ?? [])]);
+};
+
 const ALL_CONNECTOR_TYPES = (Object.keys(CONNECTOR_LABELS) as ConnectorType[]).sort(
   (a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]),
 );
@@ -351,7 +386,9 @@ export default function DeviceEditor() {
     const sameNode = syncedPortsNodeRef.current === editingNodeId;
     syncedPortsNodeRef.current = editingNodeId;
     setPorts((prev) =>
-      sameNode ? [...synced, ...prev.filter((p) => p.id.startsWith("draft-"))] : synced,
+      groupSubHandles(
+        sameNode ? [...synced, ...prev.filter((p) => p.id.startsWith("draft-"))] : synced,
+      ),
     );
     setHiddenPorts(node.data.hiddenPorts ?? []);
   }, [editingNodeId, portSignature]);
@@ -417,7 +454,7 @@ export default function DeviceEditor() {
     // Build old→new ID map for draft ports. Unnamed ports are auto-named (not
     // dropped) so a row you added never silently vanishes on Apply.
     const idMap = new Map<string, string>();
-    const finalPorts: Port[] = autoNamePorts(ports)
+    const finalPorts: Port[] = autoNamePorts(groupSubHandles(ports))
       .map((p, i) => {
         const newId = p.id.startsWith("draft-") ? `p${Date.now()}-${i}` : p.id;
         if (newId !== p.id) idMap.set(p.id, newId);
@@ -2655,6 +2692,45 @@ function PortRow({
     dropTarget?.direction === direction && dropTarget.index === index;
   const showIndicatorAfter =
     isLast && dropTarget?.direction === direction && dropTarget.index === index + 1;
+
+  // A virtual sub-handle is hosted by its ethernet port, not a peer of it: render a
+  // compact row nested under the parent, with only the fields a logical stream has.
+  // No connector, gender, direction or IP — those belong to the physical jack above.
+  if (port.parentPortId) {
+    return (
+      <div className="flex items-center gap-1.5 group py-0.5 pl-3">
+        <span
+          className="text-[var(--color-text-muted)] text-[10px] select-none shrink-0"
+          aria-hidden
+        >
+          └
+        </span>
+        <select
+          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500 cursor-pointer shrink-0"
+          value={port.signalType}
+          onChange={(e) => onUpdate({ signalType: e.target.value as SignalType })}
+          title="Transport — TCP mates only with TCP, UDP only with UDP"
+        >
+          <option value="tcp">TCP</option>
+          <option value="udp">UDP</option>
+        </select>
+        <input
+          className="flex-1 min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+          value={port.label}
+          onChange={(e) => onUpdate({ label: e.target.value })}
+          placeholder="Stream name"
+          onKeyDown={(e) => e.stopPropagation()}
+        />
+        <button
+          onClick={onRemove}
+          className="text-[var(--color-text-muted)] hover:text-red-500 cursor-pointer text-xs px-1 shrink-0"
+          title="Remove this stream"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
