@@ -59,7 +59,7 @@ import PatchPanelPage from "./components/PatchPanelPage";
 import PrintSheetPage from "./components/PrintSheetPage";
 import { computeSnap, enforceMinSpacing, detectOverlap, speculativeReparent, type GuideLine } from "./snapUtils";
 import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, SchematicNode, StubLabelData, TextStubData } from "./types";
-import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible } from "./connectorTypes";
+import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible, isVirtualSignal } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic, checkSession } from "./templateApi";
 import { refreshCloudCache } from "./cloudSync";
@@ -569,6 +569,8 @@ function SchematicCanvas() {
   const showMinimap = useSchematicStore((s) => s.showMinimap);
   const setShowMinimap = useSchematicStore((s) => s.setShowMinimap);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
+  const hideVirtualConnections = useSchematicStore((s) => s.hideVirtualConnections);
+  const hidePhysicalConnections = useSchematicStore((s) => s.hidePhysicalConnections);
   const hideAdapters = useSchematicStore((s) => s.hideAdapters);
   const adapterVisibilityDigest = useSchematicStore((s) =>
     s.nodes.filter((n) => n.type === "device" && (n.data as DeviceData).deviceType === "adapter")
@@ -592,12 +594,19 @@ function SchematicCanvas() {
     s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}:${e.data?.stubbed ? "s" : ""}:${e.data?.bundleId ?? ""}`).join("|"),
   );
 
-  // Filter out edges whose signal type is hidden (presentation-only — store edges stay complete)
+  // Filter out edges whose signal type is hidden, plus the virtual/physical layer
+  // toggles (presentation-only — store edges stay complete)
   const visibleEdges = useMemo(() => {
-    if (!hiddenSignalTypesStr) return edges;
-    const hidden = new Set(hiddenSignalTypesStr.split(","));
-    return edges.filter((e) => !hidden.has(e.data?.signalType ?? ""));
-  }, [edges, hiddenSignalTypesStr]);
+    const hidden = hiddenSignalTypesStr ? new Set(hiddenSignalTypesStr.split(",")) : undefined;
+    if (!hidden && !hideVirtualConnections && !hidePhysicalConnections) return edges;
+    return edges.filter((e) => {
+      const st = e.data?.signalType;
+      if (hidden?.has(st ?? "")) return false;
+      const virtual = isVirtualSignal(st);
+      if (virtual ? hideVirtualConnections : hidePhysicalConnections) return false;
+      return true;
+    });
+  }, [edges, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections]);
 
   const autoRoute = useSchematicStore((s) => s.autoRoute);
   const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
@@ -655,7 +664,7 @@ function SchematicCanvas() {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
     }, 50);
     return () => clearTimeout(timer);
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
 
   // Retry routing if initial computation raced ahead of React Flow internals
   const routedEdgeCount = useSchematicStore((s) => Object.keys(s.routedEdges).length);

@@ -1,8 +1,9 @@
 import { useEffect, useCallback, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useSchematicStore, GRID_SIZE } from "../store";
+import { useSchematicStore, GRID_SIZE, getPortFromHandle } from "../store";
 import { resolvePort } from "../packList";
-import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, type DeviceData, type LineStyle } from "../types";
+import { LINE_STYLE_LABELS, LINE_STYLE_DASHARRAY, SIGNAL_LABELS, SIGNAL_COLORS, type DeviceData, type LineStyle, type SignalType } from "../types";
+import { NETWORK_SIGNAL_TYPES, isVirtualSignal } from "../connectorTypes";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
 import MenuSubmenu from "./MenuSubmenu";
 
@@ -491,6 +492,27 @@ export default function EdgeContextMenu() {
     ? (edge.data.signalType as "tcp" | "udp")
     : undefined;
 
+  // Wire type is switchable when both ends sit on network ports: the same ethernet run
+  // can be drawn as the physical cable or as any number of logical streams over it.
+  const srcPortForWire = edge ? getPortFromHandle(store.nodes, edge.source, edge.sourceHandle ?? null) : undefined;
+  const tgtPortForWire = edge ? getPortFromHandle(store.nodes, edge.target, edge.targetHandle ?? null) : undefined;
+  const physicalWireType = srcPortForWire?.signalType;
+  const canSwitchWireType =
+    !!physicalWireType &&
+    NETWORK_SIGNAL_TYPES.has(physicalWireType) &&
+    !!tgtPortForWire && NETWORK_SIGNAL_TYPES.has(tgtPortForWire.signalType);
+  const currentWireType = (edge?.data?.signalType ?? physicalWireType) as SignalType | undefined;
+
+  const setWireType = (st: SignalType) => {
+    if (!menu) return;
+    // Leaving the virtual layer drops the port number — it means nothing on a physical run.
+    useSchematicStore.getState().patchEdgeData(menu.edgeId, {
+      signalType: st,
+      ...(isVirtualSignal(st) ? {} : { networkPort: undefined }),
+    });
+    useSchematicStore.setState({ edgeContextMenu: null });
+  };
+
   const bundleId = edge?.data?.bundleId;
   const inBundle = !!bundleId && (store.bundles[bundleId]?.id != null
     || store.edges.filter((e) => e.data?.bundleId === bundleId).length >= 2);
@@ -704,6 +726,36 @@ export default function EdgeContextMenu() {
               </button>
             )}
           </div>
+        </>
+      )}
+      {canSwitchWireType && currentWireType && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuSubmenu label={`Wire Type: ${SIGNAL_LABELS[currentWireType]}`} minWidth={200}>
+            {([physicalWireType, "tcp", "udp"] as SignalType[]).map((st) => (
+              <button
+                key={st}
+                className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 cursor-pointer ${
+                  currentWireType === st
+                    ? "text-blue-700 bg-blue-50"
+                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                }`}
+                onClick={() => setWireType(st)}
+                title={isVirtualSignal(st)
+                  ? "Virtual — a logical stream over the physical run; no cable of its own"
+                  : "Physical — a real cable in the schedule and pack list"}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0 border"
+                  style={{ background: SIGNAL_COLORS[st], borderColor: "rgba(0,0,0,.15)" }}
+                />
+                <span className="flex-1">{SIGNAL_LABELS[st]}</span>
+                <span className="text-[10px] text-gray-400">
+                  {isVirtualSignal(st) ? "virtual" : "physical"}
+                </span>
+              </button>
+            ))}
+          </MenuSubmenu>
         </>
       )}
       <div className="h-px bg-gray-200 my-1" />

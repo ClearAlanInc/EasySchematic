@@ -876,6 +876,10 @@ export interface SchematicFile {
    *  shape so the migration can honor the user's prior suppression intent. */
   hideDeviceTypes?: boolean;
   hideUnconnectedPorts?: boolean;
+  /** Hide virtual (TCP/UDP) wires on the canvas — physical cabling only. */
+  hideVirtualConnections?: boolean;
+  /** Hide physical cabling on the canvas — virtual/logical layer only. */
+  hidePhysicalConnections?: boolean;
   showPortCounts?: boolean;
   templateHiddenSignals?: Record<string, SignalType[]>;
   templatePresets?: Record<string, TemplatePreset>;

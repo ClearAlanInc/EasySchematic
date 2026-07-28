@@ -19,6 +19,10 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
   const hiddenPinSignalTypesStr = useSchematicStore((s) => s.hiddenPinSignalTypes);
   const hideUnconnectedPorts = useSchematicStore((s) => s.hideUnconnectedPorts);
+  const hideVirtualConnections = useSchematicStore((s) => s.hideVirtualConnections);
+  const hidePhysicalConnections = useSchematicStore((s) => s.hidePhysicalConnections);
+  const setHideVirtualConnections = useSchematicStore((s) => s.setHideVirtualConnections);
+  const setHidePhysicalConnections = useSchematicStore((s) => s.setHidePhysicalConnections);
   const showPortCounts = useSchematicStore((s) => s.showPortCounts);
   const setShowPortCounts = useSchematicStore((s) => s.setShowPortCounts);
   const toggleSignalTypeVisibility = useSchematicStore((s) => s.toggleSignalTypeVisibility);
@@ -217,6 +221,28 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
       {/* Ports + Signal Types */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">
+          Layers
+        </div>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!hidePhysicalConnections}
+            onChange={(e) => setHidePhysicalConnections(!e.target.checked)}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Physical cabling</span>
+        </label>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!hideVirtualConnections}
+            onChange={(e) => setHideVirtualConnections(!e.target.checked)}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Virtual connections (TCP/UDP)</span>
+        </label>
+
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1 pt-2">
           Ports
         </div>
         <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">

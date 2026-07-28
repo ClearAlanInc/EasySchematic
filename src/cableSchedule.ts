@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { SIGNAL_LABELS, CONNECTOR_LABELS } from "./types";
 import { getCableType } from "./cableTypes";
+import { isVirtualSignal } from "./connectorTypes";
 import { resolvePort, resolvePortLabel, getRoomLabel, escapeCsv, csvRow, groupBy } from "./packList";
 import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
@@ -177,7 +178,9 @@ export function computeCableSchedule(
   };
 
   const connections = edges
-    .filter((e) => e.data?.signalType && !e.data?.directAttach)
+    // Virtual wires (TCP/UDP) ride an existing ethernet run and have no cable of their
+    // own — counting them would inflate the schedule and the pack list.
+    .filter((e) => e.data?.signalType && !e.data?.directAttach && !isVirtualSignal(e.data.signalType))
     // For linked pairs, only process the source-side leg (the one whose source is a real device).
     .filter((e) => !e.data?.linkedConnectionId || isSourceLeg(e))
     .map((e) => {

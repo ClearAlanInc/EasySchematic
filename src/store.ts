@@ -575,6 +575,12 @@ interface SchematicState {
 
   // View options
   hiddenSignalTypes: string;
+  /** Hide virtual (TCP/UDP) wires on the canvas — show the physical cabling only. */
+  hideVirtualConnections: boolean;
+  /** Hide physical cabling on the canvas — show the virtual/logical layer only. */
+  hidePhysicalConnections: boolean;
+  setHideVirtualConnections: (hide: boolean) => void;
+  setHidePhysicalConnections: (hide: boolean) => void;
   hiddenPinSignalTypes: string;
   hideUnconnectedPorts: boolean;
   templateHiddenSignals: Record<string, SignalType[]>;
@@ -1290,7 +1296,7 @@ function reanchorConnectedStubLabels(
   });
 }
 
-function getPortFromHandle(
+export function getPortFromHandle(
   nodes: SchematicNode[],
   nodeId: string,
   handleId: string | null,
@@ -1453,6 +1459,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   globalReportHeaderLayout: null,
   globalReportFooterLayout: null,
   hiddenSignalTypes: "",
+  hideVirtualConnections: false,
+  hidePhysicalConnections: false,
   hiddenPinSignalTypes: "",
   hideUnconnectedPorts: false,
   showPortCounts: false,
@@ -1650,8 +1658,21 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Check if either port is direct-attach (adapter plugs directly into device)
     const isDirectAttach = sourcePort?.directAttach || targetPort?.directAttach;
 
+    // A network handle that already carries a wire gets a *virtual* one next: the
+    // physical cable is drawn, everything after it is a logical stream over that cable.
+    // Defaults to TCP; switch to UDP (or back to the physical type) via Wire Type.
+    const handleOccupied =
+      !!sourcePort && NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) &&
+      state.edges.some(
+        (e) =>
+          (e.source === connection.source && e.sourceHandle === connection.sourceHandle) ||
+          (e.target === connection.source && e.targetHandle === connection.sourceHandle) ||
+          (e.target === connection.target && e.targetHandle === connection.targetHandle) ||
+          (e.source === connection.target && e.sourceHandle === connection.targetHandle),
+      );
+
     const newEdgeData: ConnectionData = {
-      signalType: sourcePort?.signalType ?? "custom",
+      signalType: handleOccupied ? "tcp" : (sourcePort?.signalType ?? "custom"),
       ...(connectorMismatch ? { connectorMismatch: true } : {}),
       ...(isDirectAttach ? { directAttach: true } : {}),
     };
@@ -2286,6 +2307,12 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const srcIsMulticable = sourcePort.isMulticable ?? false;
     const tgtIsMulticable = targetPort.isMulticable ?? false;
     if (srcIsMulticable !== tgtIsMulticable) return false;
+
+    // Virtual wires (TCP/UDP) stack on an ethernet port: the port already carries a
+    // physical run, and every logical stream rides that same cable. So once both ends
+    // are network ports, the one-cable-per-handle guards below don't apply — a second
+    // connection here becomes a virtual wire (see onConnect).
+    if (networkBypass) return true;
 
     // Don't allow multiple connections to the same handle, unless the port is multi-connect
     if (!targetPort.multiConnect) {
@@ -4002,6 +4029,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setHideVirtualConnections: (hide) => {
+    set({ hideVirtualConnections: hide });
+    get().saveToLocalStorage();
+  },
+
+  setHidePhysicalConnections: (hide) => {
+    set({ hidePhysicalConnections: hide });
+    get().saveToLocalStorage();
+  },
+
   setShowPortCounts: (show) => {
     set({ showPortCounts: show });
     get().saveToLocalStorage();
@@ -5133,6 +5170,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
       hiddenPinSignalTypes: state.hiddenPinSignalTypes ? state.hiddenPinSignalTypes.split(",") as SignalType[] : undefined,
       hideUnconnectedPorts: state.hideUnconnectedPorts || undefined,
+      hideVirtualConnections: state.hideVirtualConnections || undefined,
+      hidePhysicalConnections: state.hidePhysicalConnections || undefined,
       showPortCounts: state.showPortCounts || undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
@@ -5229,6 +5268,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
             hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
+            hideVirtualConnections: data.hideVirtualConnections ?? false,
+            hidePhysicalConnections: data.hidePhysicalConnections ?? false,
             hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
             hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
             showPortCounts: data.showPortCounts ?? false,
@@ -5314,6 +5355,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
         hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
+        hideVirtualConnections: data.hideVirtualConnections ?? false,
+        hidePhysicalConnections: data.hidePhysicalConnections ?? false,
         hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
         hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
         showPortCounts: data.showPortCounts ?? false,
@@ -5397,6 +5440,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenSignalTypes: state.hiddenSignalTypes ? state.hiddenSignalTypes.split(",") as SignalType[] : undefined,
       hiddenPinSignalTypes: state.hiddenPinSignalTypes ? state.hiddenPinSignalTypes.split(",") as SignalType[] : undefined,
       hideUnconnectedPorts: state.hideUnconnectedPorts || undefined,
+      hideVirtualConnections: state.hideVirtualConnections || undefined,
+      hidePhysicalConnections: state.hidePhysicalConnections || undefined,
       showPortCounts: state.showPortCounts || undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,

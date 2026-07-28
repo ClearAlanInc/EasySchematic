@@ -76,3 +76,84 @@ describe("port number shown in place of the cable ID", () => {
     expect(wireLabel({ signalType: "udp", networkPort: 65535 }, "x")).toBe("UDP 65535");
   });
 });
+
+import { VIRTUAL_SIGNAL_TYPES, isVirtualSignal, NETWORK_SIGNAL_TYPES as NET } from "../connectorTypes";
+import { computeCableSchedule } from "../cableSchedule";
+
+describe("virtual vs physical classification", () => {
+  it("classifies tcp/udp as virtual and everything else as physical", () => {
+    expect(isVirtualSignal("tcp")).toBe(true);
+    expect(isVirtualSignal("udp")).toBe(true);
+    for (const st of ["ethernet", "sdi", "hdmi", "dante", "power"] as const) {
+      expect(isVirtualSignal(st)).toBe(false);
+    }
+    expect(isVirtualSignal(undefined)).toBe(false);
+    expect([...VIRTUAL_SIGNAL_TYPES].sort()).toEqual(["tcp", "udp"]);
+  });
+
+  it("keeps virtual types inside the network family so they stack on ethernet ports", () => {
+    expect(NET.has("tcp") && NET.has("udp")).toBe(true);
+  });
+});
+
+/** Mirrors App.tsx's visibleEdges filter. */
+function visible(
+  edges: { data: { signalType: string } }[],
+  opts: { hideVirtual?: boolean; hidePhysical?: boolean },
+) {
+  return edges.filter((e) => {
+    const v = isVirtualSignal(e.data.signalType as never);
+    return !(v ? opts.hideVirtual : opts.hidePhysical);
+  });
+}
+
+describe("canvas layer visibility", () => {
+  const edges = [
+    { data: { signalType: "ethernet" } },
+    { data: { signalType: "tcp" } },
+    { data: { signalType: "udp" } },
+    { data: { signalType: "sdi" } },
+  ];
+
+  it("shows everything by default", () => {
+    expect(visible(edges, {})).toHaveLength(4);
+  });
+
+  it("hides only the virtual layer", () => {
+    const out = visible(edges, { hideVirtual: true });
+    expect(out.map((e) => e.data.signalType)).toEqual(["ethernet", "sdi"]);
+  });
+
+  it("hides only the physical layer", () => {
+    const out = visible(edges, { hidePhysical: true });
+    expect(out.map((e) => e.data.signalType)).toEqual(["tcp", "udp"]);
+  });
+
+  it("can hide both layers", () => {
+    expect(visible(edges, { hideVirtual: true, hidePhysical: true })).toHaveLength(0);
+  });
+});
+
+describe("virtual wires are excluded from the cable schedule", () => {
+  const port = (id: string) => ({ id, label: id, signalType: "ethernet" as const, direction: "bidirectional" as const });
+  const dev = (id: string) => ({
+    id, type: "device" as const, position: { x: 0, y: 0 },
+    data: { label: id, deviceType: "dsp", ports: [port("p1")] },
+  });
+  const edge = (id: string, signalType: string) => ({
+    id, source: "a", target: "b", sourceHandle: "p1", targetHandle: "p1",
+    data: { signalType },
+  });
+
+  it("counts the physical run but not the logical streams riding it", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = computeCableSchedule([dev("a"), dev("b")] as any, [
+      edge("e1", "ethernet"),
+      edge("e2", "tcp"),
+      edge("e3", "udp"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any, "sequential");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].edgeId).toBe("e1");
+  });
+});

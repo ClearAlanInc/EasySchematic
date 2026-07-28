@@ -521,6 +521,16 @@ export function usbcPowerShortfallW(
 }
 
 /** Signal types that can have network configuration */
+/** Wire types that carry no cable of their own — logical streams riding a physical
+ *  link (an ethernet run). They stack freely on a port, are excluded from cable and
+ *  pack-list totals, and can be shown/hidden independently of physical wiring. */
+export const VIRTUAL_SIGNAL_TYPES: Set<SignalType> = new Set(["tcp", "udp"]);
+
+/** True when a wire is virtual (logical) rather than a physical cable. */
+export function isVirtualSignal(st: SignalType | undefined): boolean {
+  return !!st && VIRTUAL_SIGNAL_TYPES.has(st);
+}
+
 export const NETWORK_SIGNAL_TYPES: Set<SignalType> = new Set([
   "ethernet", "tcp", "udp", "ndi", "dante", "avb", "srt", "hdbaset", "aes67", "st2110",
 ]);
