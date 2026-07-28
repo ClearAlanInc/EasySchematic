@@ -697,9 +697,16 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                   }}
                 />
                 <span
-                  className="text-[10px] leading-4 truncate"
+                  // Sub-handle rows sit in a fixed-width, left-aligned block so every
+                  // "└" lands at the same x. Centring them individually staggered the
+                  // markers whenever the labels differed in length (e.g. 41794 vs 22).
+                  className={`text-[10px] leading-4 truncate ${
+                    port.parentPortId ? "w-24 max-w-full text-left" : ""
+                  }`}
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
-                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — bidirectional${usbcPowerSuffix(port)}`}
+                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — ${
+                    port.parentPortId ? "virtual stream" : "bidirectional"
+                  }${usbcPowerSuffix(port)}`}
                 >
                   {port.parentPortId ? "└ " : "↔ "}{displayLabel(port.label)}
                 </span>
