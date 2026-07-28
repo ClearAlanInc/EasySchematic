@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import type { Port, SchematicNode } from "../types";
 import { isVirtualSignal } from "../connectorTypes";
+import { groupSubHandles } from "../subHandles";
 
 class MemStorage {
   private m = new Map<string, string>();
@@ -108,31 +109,6 @@ describe("virtual sub-handles", () => {
   });
 });
 
-/** Mirrors the editor's groupSubHandles normalization. */
-function groupSubHandles(list: Port[]): Port[] {
-  const byId = new Map(list.map((p) => [p.id, p]));
-  const parents: Port[] = [];
-  const children = new Map<string, Port[]>();
-  let lastNetwork: string | undefined;
-  for (const p of list) {
-    const parentOk = p.parentPortId && byId.has(p.parentPortId) && !byId.get(p.parentPortId)!.parentPortId;
-    if (isVirtualSignal(p.signalType)) {
-      const host = parentOk ? p.parentPortId! : lastNetwork;
-      if (host) {
-        const arr = children.get(host) ?? [];
-        arr.push(host === p.parentPortId ? p : { ...p, parentPortId: host });
-        children.set(host, arr);
-        continue;
-      }
-    }
-    if (["ethernet", "dante", "ndi"].includes(p.signalType) && !isVirtualSignal(p.signalType)) {
-      lastNetwork = p.id;
-    }
-    parents.push(p.parentPortId ? { ...p, parentPortId: undefined } : p);
-  }
-  return parents.flatMap((p) => [p, ...(children.get(p.id) ?? [])]);
-}
-
 const P = (id: string, signalType: string, parentPortId?: string): Port =>
   ({ id, label: id, signalType, direction: "bidirectional", parentPortId } as Port);
 
@@ -174,5 +150,85 @@ describe("grouping sub-handles under their host port", () => {
     const out = groupSubHandles([P("hdmi", "hdmi"), P("t1", "tcp")]);
     expect(out.map((p) => p.id)).toEqual(["hdmi", "t1"]);
     expect(out[1].parentPortId).toBeUndefined();
+  });
+});
+
+describe("v49→v50 migration repairs a whole file on load", () => {
+  const port = (id: string, signalType: string, parentPortId?: string) => ({
+    id, label: id, signalType, direction: "bidirectional",
+    ...(parentPortId ? { parentPortId } : {}),
+  });
+
+  it("collapses a multi-level chain built by the first cut of the feature", async () => {
+    const { migrateSchematic, CURRENT_SCHEMA_VERSION } = await import("../migrations");
+    const out = migrateSchematic({
+      version: 49,
+      nodes: [{
+        id: "d1", type: "device", position: { x: 0, y: 0 },
+        data: {
+          label: "CP4N", deviceType: "control-processor",
+          // LAN → 41794 → 41796 → 443, each parented to the one above.
+          ports: [
+            port("lan", "ethernet"),
+            port("a", "tcp", "lan"),
+            port("b", "tcp", "a"),
+            port("c", "tcp", "b"),
+          ],
+        },
+      }],
+      edges: [],
+    });
+    expect(out.version).toBe(CURRENT_SCHEMA_VERSION);
+    const ports = out.nodes[0].data.ports;
+    expect(ports.map((p: { id: string }) => p.id)).toEqual(["lan", "a", "b", "c"]);
+    expect(ports.slice(1).every((p: { parentPortId: string }) => p.parentPortId === "lan")).toBe(true);
+  });
+
+  it("adopts loose top-level TCP ports onto their ethernet port", async () => {
+    const { migrateSchematic } = await import("../migrations");
+    const out = migrateSchematic({
+      version: 49,
+      nodes: [{
+        id: "d1", type: "device", position: { x: 0, y: 0 },
+        data: { label: "CP4N", deviceType: "dsp", ports: [port("lan", "ethernet"), port("x", "tcp"), port("y", "udp")] },
+      }],
+      edges: [],
+    });
+    const ports = out.nodes[0].data.ports;
+    expect(ports.map((p: { parentPortId?: string }) => p.parentPortId)).toEqual([undefined, "lan", "lan"]);
+  });
+
+  it("repairs custom templates stored in the file too", async () => {
+    const { migrateSchematic } = await import("../migrations");
+    const out = migrateSchematic({
+      version: 49,
+      nodes: [],
+      edges: [],
+      customTemplates: [{ id: "t1", deviceType: "custom", label: "T", ports: [port("lan", "ethernet"), port("s", "tcp", "nope")] }],
+    });
+    expect(out.customTemplates[0].ports[1].parentPortId).toBe("lan");
+  });
+
+  it("leaves a healthy file untouched", async () => {
+    const { migrateSchematic } = await import("../migrations");
+    const before = [port("lan", "ethernet"), port("a", "tcp", "lan")];
+    const out = migrateSchematic({
+      version: 49,
+      nodes: [{ id: "d1", type: "device", position: { x: 0, y: 0 }, data: { label: "D", deviceType: "dsp", ports: before } }],
+      edges: [],
+    });
+    expect(out.nodes[0].data.ports).toEqual(before);
+  });
+
+  it("tolerates devices with no ports and non-device nodes", async () => {
+    const { migrateSchematic } = await import("../migrations");
+    expect(() => migrateSchematic({
+      version: 49,
+      nodes: [
+        { id: "r1", type: "room", position: { x: 0, y: 0 }, data: { label: "Room" } },
+        { id: "d1", type: "device", position: { x: 0, y: 0 }, data: { label: "D", deviceType: "dsp" } },
+      ],
+      edges: [],
+    })).not.toThrow();
   });
 });

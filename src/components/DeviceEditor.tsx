@@ -25,6 +25,7 @@ import {
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
 import { findManagementHost, findManagementPort, describeSshKey, describeManagementGap } from "../managementUrl";
 import { isVirtualSignal } from "../connectorTypes";
+import { groupSubHandles } from "../subHandles";
 import { rackUnitLabel } from "../rackUtils";
 import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
 import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
@@ -46,38 +47,6 @@ import { deriveThermalBtuh } from "../thermal";
 const ALL_SIGNAL_TYPES = (Object.keys(SIGNAL_LABELS) as SignalType[])
   .filter((t) => !isVirtualSignal(t))
   .sort((a, b) => SIGNAL_LABELS[a].localeCompare(SIGNAL_LABELS[b]));
-/** Keep every sub-handle directly beneath its parent, and adopt any orphaned
- *  virtual port (one whose parent is gone, or that was made before sub-handles
- *  existed) onto the nearest network port above it. Guarantees the "grouped and
- *  hosted by their parent" shape whatever order the list arrived in. */
-const groupSubHandles = (list: PortDraft[]): PortDraft[] => {
-  const byId = new Map(list.map((p) => [p.id, p]));
-  const parents: PortDraft[] = [];
-  const children = new Map<string, PortDraft[]>();
-  let lastNetwork: string | undefined;
-
-  for (const p of list) {
-    const parentOk = p.parentPortId && byId.has(p.parentPortId)
-      && !byId.get(p.parentPortId)!.parentPortId;
-    if (isVirtualSignal(p.signalType)) {
-      const host = parentOk ? p.parentPortId! : lastNetwork;
-      if (host) {
-        const arr = children.get(host) ?? [];
-        arr.push(host === p.parentPortId ? p : { ...p, parentPortId: host });
-        children.set(host, arr);
-        continue;
-      }
-      // No network port to host it — leave it in place rather than dropping it.
-    }
-    if (NETWORK_SIGNAL_TYPES.has(p.signalType) && !isVirtualSignal(p.signalType)) {
-      lastNetwork = p.id;
-    }
-    parents.push(p.parentPortId ? { ...p, parentPortId: undefined } : p);
-  }
-
-  return parents.flatMap((p) => [p, ...(children.get(p.id) ?? [])]);
-};
-
 const ALL_CONNECTOR_TYPES = (Object.keys(CONNECTOR_LABELS) as ConnectorType[]).sort(
   (a, b) => CONNECTOR_LABELS[a].localeCompare(CONNECTOR_LABELS[b]),
 );

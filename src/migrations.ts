@@ -12,11 +12,12 @@
 
 import { createDefaultLayout } from "./titleBlockLayout";
 import { DEFAULT_CONNECTOR } from "./connectorTypes";
+import { groupSubHandles } from "./subHandles";
 import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 49;
+export const CURRENT_SCHEMA_VERSION = 50;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -648,6 +649,24 @@ const migrations: Record<number, Migration> = {
     // v48 → v49: adds optional Port.parentPortId, marking a port as a virtual
     // TCP/UDP sub-handle of a network port. Purely additive.
     data.version = 49;
+    return data;
+  },
+  49: (data) => {
+    // v49 → v50: repair sub-handle parenting across the whole file. Devices built
+    // with the first cut of this feature could end up with TCP/UDP ports chained
+    // under each other, or sitting loose as top-level ports belonging to no jack.
+    // groupSubHandles collapses those chains to one level, adopts orphans onto the
+    // nearest network port, and orders children under their parent — so a file
+    // repairs itself on load instead of needing each device opened by hand.
+    for (const node of data.nodes ?? []) {
+      if (node.type === "device" && node.data?.ports) {
+        node.data.ports = groupSubHandles(node.data.ports);
+      }
+    }
+    for (const tmpl of data.customTemplates ?? []) {
+      if (tmpl.ports) tmpl.ports = groupSubHandles(tmpl.ports);
+    }
+    data.version = 50;
     return data;
   },
 };
