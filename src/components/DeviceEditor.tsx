@@ -23,7 +23,7 @@ import {
   type ManagementAuthMode,
 } from "../types";
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
-import { findManagementHost, findManagementPort, describeSshKey } from "../managementUrl";
+import { findManagementHost, findManagementPort, describeSshKey, describeManagementGap } from "../managementUrl";
 import { rackUnitLabel } from "../rackUtils";
 import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
 import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
@@ -391,6 +391,11 @@ export default function DeviceEditor() {
   // which interface is in play while editing.
   const managementHost = useMemo(
     () => findManagementHost({ ports: ports as Port[], hostname: hostname.trim() || undefined }),
+    [ports, hostname],
+  );
+
+  const managementGap = useMemo(
+    () => describeManagementGap({ ports: ports as Port[], hostname: hostname.trim() || undefined }),
     [ports, hostname],
   );
 
@@ -1349,8 +1354,13 @@ export default function DeviceEditor() {
                   <option value="http">http://</option>
                   <option value="https">https://</option>
                 </select>
-                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 truncate max-w-[140px]" title={managementHost ?? "no management address"}>
-                  {managementHost ?? "(set an IP)"}
+                <span
+                  className={`text-[10px] shrink-0 truncate max-w-[140px] ${
+                    managementHost ? "text-[var(--color-text-muted)]" : "text-amber-600"
+                  }`}
+                  title={managementHost ?? managementGap ?? "no management address"}
+                >
+                  {managementHost ?? "⚠ no address"}
                 </span>
                 <input
                   className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"

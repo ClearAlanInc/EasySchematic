@@ -120,6 +120,29 @@ export function buildSshTarget(
 }
 
 /**
+ * Why a designated management interface still has no reachable address, phrased
+ * for the user. Returns undefined when nothing is wrong (or nothing is
+ * designated, in which case there is nothing to explain).
+ *
+ * Without this the actions simply vanish from the menu, leaving "I ticked
+ * Management and SSH and nothing appeared" with no way to discover that an
+ * address is the missing piece.
+ */
+export function describeManagementGap(
+  data: Pick<DeviceData, "ports" | "hostname">,
+): string | undefined {
+  const port = findManagementPort(data);
+  if (!port) return undefined;
+  if (findManagementHost(data)) return undefined;
+
+  const ip = port.networkConfig?.ip?.trim();
+  if (ip) {
+    return `"${ip}" on ${port.label} is not a valid IPv4 address — fix it, or set a device hostname.`;
+  }
+  return `No management address — set an IP on the ${port.label} port, or a device hostname.`;
+}
+
+/**
  * One-line summary of a stored SSH key, so the editor can show what's held
  * without rendering the key material.
  */

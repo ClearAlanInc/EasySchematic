@@ -5,6 +5,7 @@ import {
   buildManagementTarget,
   buildSshTarget,
   describeSshKey,
+  describeManagementGap,
   effectiveAuthMode,
 } from "../managementUrl";
 import type { Port, PortNetworkConfig } from "../types";
@@ -198,5 +199,36 @@ describe("ssh key summary", () => {
     expect(describeSshKey("")).toBe("none stored");
     expect(describeSshKey("   ")).toBe("none stored");
     expect(describeSshKey("blob")).toBe("4 characters");
+  });
+});
+
+describe("diagnosing an unreachable management interface", () => {
+  it("explains a designated port that has no address (the reported bug)", () => {
+    const ports = [netPort("Ethernet 1", { isManagement: true, supportsSsh: true })];
+    const gap = describeManagementGap({ ports });
+    expect(gap).toContain("No management address");
+    expect(gap).toContain("Ethernet 1");
+  });
+
+  it("explains a malformed IP specifically", () => {
+    const ports = [netPort("LAN", { ip: "192.168.1", isManagement: true })];
+    const gap = describeManagementGap({ ports });
+    expect(gap).toContain("192.168.1");
+    expect(gap).toContain("not a valid IPv4");
+  });
+
+  it("reports no gap once an address exists", () => {
+    expect(describeManagementGap({ ports: [netPort("LAN", { ip: "192.168.1.50", isManagement: true })] }))
+      .toBeUndefined();
+  });
+
+  it("reports no gap when a hostname supplies the address", () => {
+    expect(describeManagementGap({ ports: [netPort("LAN", { isManagement: true })], hostname: "core-110f" }))
+      .toBeUndefined();
+  });
+
+  it("stays silent when nothing is designated — nothing to explain", () => {
+    expect(describeManagementGap({ ports: [netPort("LAN", {})] })).toBeUndefined();
+    expect(describeManagementGap({ ports: [] })).toBeUndefined();
   });
 });

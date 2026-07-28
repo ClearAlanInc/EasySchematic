@@ -4,7 +4,7 @@ import { useSchematicStore } from "../store";
 import type { DeviceData, RackElevationPage } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
 import { inferRackHeightU } from "../rackUtils";
-import { buildManagementTarget, buildSshTarget, effectiveAuthMode } from "../managementUrl";
+import { buildManagementTarget, buildSshTarget, describeManagementGap, findManagementPort, effectiveAuthMode } from "../managementUrl";
 
 export default function DeviceContextMenu() {
   const menu = useSchematicStore((s) => s.deviceContextMenu);
@@ -143,6 +143,10 @@ export default function DeviceContextMenu() {
 
   const managementTarget = deviceData ? buildManagementTarget(deviceData) : undefined;
   const sshTarget = deviceData ? buildSshTarget(deviceData) : undefined;
+  // Designated as management but not yet reachable — show the actions greyed out
+  // with the reason rather than hiding them and leaving the user guessing.
+  const managementGap = deviceData ? describeManagementGap(deviceData) : undefined;
+  const sshDesignated = !!(deviceData && findManagementPort(deviceData)?.networkConfig?.supportsSsh);
 
   return (
     <div
@@ -160,7 +164,7 @@ export default function DeviceContextMenu() {
       <MenuItem label="Edit Properties..." onClick={editProperties} />
       <MenuItem label="Swap Device..." onClick={swapDevice} />
 
-      {managementTarget && (
+      {managementTarget ? (
         <MenuItem
           label="Connect / Control..."
           onClick={openManagementUi}
@@ -168,13 +172,20 @@ export default function DeviceContextMenu() {
             managementTarget.viaPortLabel ? ` (via ${managementTarget.viaPortLabel})` : ""
           }`}
         />
-      )}
-      {sshTarget && (
+      ) : managementGap ? (
+        <MenuItem label="Connect / Control..." onClick={editProperties} disabled title={managementGap} />
+      ) : null}
+      {sshTarget ? (
         <MenuItem
           label="Console..."
           onClick={openConsole}
           title={`Open a terminal: ${sshTarget.url}${sshTarget.hasPassword ? " (password copied to clipboard)" : ""}`}
         />
+      ) : sshDesignated && managementGap ? (
+        <MenuItem label="Console..." onClick={editProperties} disabled title={managementGap} />
+      ) : null}
+      {managementGap && (
+        <div className="px-3 py-1 text-[10px] text-amber-600 max-w-[240px] leading-snug">{managementGap}</div>
       )}
 
       {deviceData && (
@@ -247,6 +258,7 @@ function MenuItem({
   indent,
   checked,
   title,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
@@ -254,15 +266,18 @@ function MenuItem({
   indent?: boolean;
   checked?: boolean;
   title?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
-      className={`w-full text-left py-1.5 text-xs cursor-pointer ${indent ? "px-5" : "px-3"} ${
+      className={`w-full text-left py-1.5 text-xs ${indent ? "px-5" : "px-3"} ${
         checked != null ? "flex items-center gap-1.5" : ""
       } ${
-        danger
-          ? "text-red-600 hover:bg-red-50 hover:text-red-700"
-          : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+        disabled
+          ? "text-gray-400 cursor-default"
+          : danger
+            ? "text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+            : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
       }`}
       onClick={onClick}
       title={title}
