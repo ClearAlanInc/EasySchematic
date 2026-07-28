@@ -328,7 +328,7 @@ export default function DevicesAndPortsPage() {
         <li>Revert to the original template defaults or the active preset</li>
         <li>Press <strong>Ctrl+Enter</strong> (or <strong>Cmd+Enter</strong> on Mac) from any field to apply changes and close the editor</li>
         <li>Set a <strong>hostname</strong> for network-addressable devices</li>
-        <li>Toggle the <strong>venue-provided</strong> flag to mark devices supplied by the venue</li>
+        <li>Toggle the <strong>owner-provided</strong> flag to mark devices supplied by the owner</li>
       </ul>
 
       <h2>Swapping devices</h2>

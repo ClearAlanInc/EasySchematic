@@ -498,7 +498,7 @@ export default function DeviceForm({ id, draftId, cloneId, pendingSubmissionId, 
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={isVenueProvided} onChange={(e) => setIsVenueProvided(e.target.checked)} className="cursor-pointer" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Venue provided (exclude from pack list)</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Owner Provided (exclude from pack list)</span>
         </label>
         {(deviceType.includes("power-distribution") || deviceType.includes("company-switch")) && (
           <label>

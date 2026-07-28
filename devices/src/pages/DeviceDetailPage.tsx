@@ -132,7 +132,7 @@ export default function DeviceDetailPage({ id, currentUser }: { id: string; curr
             {template.modelNumber && <span>Model: {template.modelNumber}</span>}
             <span className="capitalize">{template.deviceType.replace(/-/g, " ")}</span>
             {template.hostname && <span>Hostname: {template.hostname}</span>}
-            {template.isVenueProvided && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">Venue Provided</span>}
+            {template.isVenueProvided && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 rounded text-xs font-medium">Owner Provided</span>}
           </div>
           {template.referenceUrl && (
             <a href={template.referenceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-800">

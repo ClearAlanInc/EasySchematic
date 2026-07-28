@@ -37,7 +37,7 @@ Adding a fixture is drop-in — no code:
 
 `fixtures.ts#kitchenSinkFixture` is a synthetic schematic purpose-built to put at least
 one row in every section of every report: grouped devices, serials, cold spares, notes,
-unit costs, adapters, cable accessories, venue-provided exclusion, costed racks, bundles,
+unit costs, adapters, cable accessories, owner-provided exclusion, costed racks, bundles,
 snakes/multicable, gauge/alias/tested/use cable columns, DHCP server + client-behind-a-stub
 (#220), VLANs, PoE budgets, duplicate-IP / ip-in-range / subnet-conflict warnings, distro
 loading through a stubbed power feed (#172), and a patch-panel passthrough port.

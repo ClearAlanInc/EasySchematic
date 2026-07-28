@@ -35,7 +35,7 @@ export default function PackListPage() {
         Devices and cables can have an optional <strong>unit cost</strong> field. Set unit
         cost in the device editor or cable schedule. Costs appear in the pack list and
         can be exported to CSV for budgeting and quoting. Devices flagged
-        as <strong>venue-provided</strong> are distinguished in the pack list so you can
+        as <strong>owner-provided</strong> are distinguished in the pack list so you can
         separate house gear from rental gear.
       </p>
 

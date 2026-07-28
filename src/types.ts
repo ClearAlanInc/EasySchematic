@@ -617,7 +617,7 @@ export interface DeviceTemplate {
   powerCapacityW?: number;       // Total supply capacity in watts (distros only)
   voltage?: string;              // Informational: "100-240V", "208V", "120V"
   thermalBtuh?: number;          // Thermal load in BTU/h for HVAC sizing; auto-derived from powerDrawW × 3.412 if omitted
-  isVenueProvided?: boolean;     // Venue-owned gear — excluded from pack list
+  isVenueProvided?: boolean;     // Owner-provided gear — excluded from pack list
   poeBudgetW?: number;           // PoE budget in watts (switches/PSEs supplying PoE)
   poeDrawW?: number;             // PoE draw in watts (PDs consuming PoE — cameras, APs, etc.)
   unitCost?: number;             // MSRP / default unit cost in dollars

@@ -1945,7 +1945,7 @@ export default function DeviceEditor() {
                   onChange={(e) => setIsVenueProvided(e.target.checked)}
                   className="cursor-pointer"
                 />
-                Venue provided (exclude from pack list)
+                Owner Provided (exclude from pack list)
               </label>
             </div>
           </details>

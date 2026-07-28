@@ -2,7 +2,7 @@ import { port, camLokSet, patchPanelCircuits, wallPlatePorts } from "./_helpers"
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
-  // Company Switches (venue-provided power sources)
+  // Company Switches (owner-provided power sources)
   {
     id: "c0a80101-0300-4000-8000-000000000700",
     deviceType: "company-switch",

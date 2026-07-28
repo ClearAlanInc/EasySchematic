@@ -175,7 +175,7 @@ function stubbed(
  * section of every report:
  *
  * - Pack list: grouped devices (2× camera), serials, spares, notes, unit costs,
- *   expansion-card-free devices, adapters, cable accessories, venue-provided
+ *   expansion-card-free devices, adapters, cable accessories, owner-provided
  *   exclusion, costed racks (grouped 2×), cable summary with routes.
  * - Cable schedule: stored + generated cable IDs, gauge/alias/tested/use columns,
  *   bundles, multicable (snake), stubbed connection collapsed to one row.
@@ -349,7 +349,7 @@ export function kitchenSinkFixture(): ReportFixture {
       { parentId: "room-stage", model: "BigScreen 85", powerDrawW: 120 },
     ),
 
-    // Venue-provided device — must NOT appear in the pack list device section
+    // Owner-provided device — must NOT appear in the pack list device section
     device(
       "house-pa",
       "House PA",

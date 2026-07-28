@@ -181,7 +181,7 @@ export default function OverviewPage() {
           <strong>Auxiliary data</strong> — customizable text lines at the bottom of each device
         </li>
         <li>
-          <strong>Venue-provided gear</strong> — flag devices as venue-provided for pack list distinction
+          <strong>Owner-provided gear</strong> — flag devices as owner-provided for pack list distinction
         </li>
         <li>
           <strong>Nested slots</strong> — expansion cards with sub-slots (e.g., SFP transceivers in network cards)

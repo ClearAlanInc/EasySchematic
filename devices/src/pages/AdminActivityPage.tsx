@@ -416,7 +416,7 @@ function TemplateSummaryCard({ data }: { data: TemplateLike }) {
           </span>
         ))}
         {isVenueProvided && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[11px]">Venue provided</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[11px]">Owner Provided</span>
         )}
         {flaggedForDeletion && (
           <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[11px]">Flagged for deletion</span>
@@ -531,7 +531,7 @@ const FIELD_LABELS: Record<string, string> = {
   weightKg: "Weight (kg)",
   slotFamily: "Slot family",
   hostname: "Hostname",
-  isVenueProvided: "Venue provided",
+  isVenueProvided: "Owner Provided",
   searchTerms: "Search terms",
   ports: "Ports",
   slots: "Slots",

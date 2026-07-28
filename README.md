@@ -41,7 +41,7 @@
 - **Custom label expansion** — embed `{{cableId}}` and other tokens in device labels for inline cable references
 - **IO counts** — optional badges on devices showing connected/total ports per direction (View Options)
 - **Hostname** — per-device hostname field, feeding into the network report
-- **Venue-provided gear flag** — mark devices as provided by venue; distinguished in the pack list
+- **Owner-provided gear flag** — mark devices as provided by the owner; distinguished in the pack list
 - **Owned Gear library** — track an inventory of gear you own; the pack list reports used vs. needed counts so you know what to buy or rent
 - **Nested slots** — expansion cards with their own sub-slots (e.g., SFP/QSFP transceivers in network cards)
 

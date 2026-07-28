@@ -392,7 +392,7 @@ export default function ReviewDetailPage({ id, currentUserId }: { id: string; cu
             </label>
             <label className="sm:col-span-2 flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={editIsVenueProvided} onChange={(e) => setEditIsVenueProvided(e.target.checked)} className="cursor-pointer" />
-              <span className="text-sm font-medium text-slate-700">Venue provided (exclude from pack list)</span>
+              <span className="text-sm font-medium text-slate-700">Owner Provided (exclude from pack list)</span>
             </label>
           </div>
           <PortEditor ports={editPorts} onChange={setEditPorts} deviceType={editDeviceType} />
@@ -648,7 +648,7 @@ function DeviceInfo({ data, compare, side }: DeviceInfoProps) {
       )}
       {extra.isVenueProvided ? (
         <div className={dExtra("isVenueProvided")}>
-          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Venue Provided</span>
+          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Owner Provided</span>
         </div>
       ) : null}
       {Array.isArray(extra.searchTerms) && (extra.searchTerms as unknown[]).length > 0 && (

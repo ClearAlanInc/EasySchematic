@@ -73,7 +73,7 @@ describe("reports harness — kitchen sink exercises every report section", () =
     expect(mainRack?.unitCost).toBe(1200);
   });
 
-  it("counts the cold spare and excludes the venue-provided device", () => {
+  it("counts the cold spare and excludes the owner-provided device", () => {
     const mixers = pack.devices.find((d) => d.model === "MixDesk 24");
     expect(mixers?.count).toBe(2);
     expect(mixers?.spareCount).toBe(1);

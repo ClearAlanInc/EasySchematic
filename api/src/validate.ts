@@ -272,7 +272,7 @@ export function validateTemplate(body: unknown): ValidationResult {
     }
   }
 
-  // Venue-provided flag — optional boolean
+  // Owner-provided flag — optional boolean
   if (obj.isVenueProvided != null && typeof obj.isVenueProvided !== "boolean") {
     return { ok: false, error: "isVenueProvided must be a boolean" };
   }
