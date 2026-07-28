@@ -20,8 +20,10 @@ import {
   type DeviceTemplate,
   type DhcpServerConfig,
   type SlotDefinition,
+  type ManagementAuthMode,
 } from "../types";
 import { CONNECTORS_WITH_GENDER_VARIATION, DEFAULT_CONNECTOR, NETWORK_SIGNAL_TYPES, VIDEO_SIGNAL_TYPES, resolvePortGender, shouldDefaultMultiConnect } from "../connectorTypes";
+import { findManagementHost, findManagementPort, describeSshKey } from "../managementUrl";
 import { rackUnitLabel } from "../rackUtils";
 import { getBundledTemplates, getTemplateById, getCardsByFamily, fetchTemplates, checkSession, createDraft, createHandoff } from "../templateApi";
 import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
@@ -159,6 +161,14 @@ export default function DeviceEditor() {
   const [useShortName, setUseShortName] = useState<boolean | undefined>(undefined);
   const [wrapLabel, setWrapLabelState] = useState<boolean | undefined>(undefined);
   const [hostname, setHostname] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [managementPath, setManagementPath] = useState("");
+  const [managementScheme, setManagementScheme] = useState<"http" | "https" | undefined>(undefined);
+  const [managementAuth, setManagementAuth] = useState<ManagementAuthMode | undefined>(undefined);
+  const [sshKey, setSshKey] = useState("");
+  const [showSshKey, setShowSshKey] = useState(false);
   const [deviceType, setDeviceType] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [modelNumber, setModelNumber] = useState("");
@@ -252,6 +262,14 @@ export default function DeviceEditor() {
     setUseShortName(node.data.useShortName);
     setWrapLabelState(node.data.wrapLabel);
     setHostname(node.data.hostname ?? "");
+    setUsername(node.data.username ?? "");
+    setPassword(node.data.password ?? "");
+    setShowPassword(false);
+    setManagementPath(node.data.managementPath ?? "");
+    setManagementScheme(node.data.managementScheme);
+    setManagementAuth(node.data.managementAuth);
+    setSshKey(node.data.sshKey ?? "");
+    setShowSshKey(false);
     setDeviceType(node.data.deviceType);
     setManufacturer(node.data.manufacturer ?? "");
     setModelNumber(node.data.modelNumber ?? "");
@@ -369,6 +387,19 @@ export default function DeviceEditor() {
     setEditingNodeId(null);
   }, [undo, setCreatingNodeId, setEditingNodeId]);
 
+  // Live preview of the address the management URL will resolve to, so the user can see
+  // which interface is in play while editing.
+  const managementHost = useMemo(
+    () => findManagementHost({ ports: ports as Port[], hostname: hostname.trim() || undefined }),
+    [ports, hostname],
+  );
+
+  // The SSH key only belongs to a device whose management interface speaks SSH.
+  const sshEnabled = useMemo(
+    () => !!findManagementPort({ ports: ports as Port[] })?.networkConfig?.supportsSsh,
+    [ports],
+  );
+
   // Build the DeviceData for the node under edit from the current form state. `overrides`
   // let the template-update flows re-point templateId / bump templateVersion on the edited
   // device without duplicating this whole builder. (#127)
@@ -399,6 +430,12 @@ export default function DeviceEditor() {
       ...(useShortName !== undefined ? { useShortName } : {}),
       ...(wrapLabel !== undefined ? { wrapLabel } : {}),
       ...(hostname.trim() ? { hostname: hostname.trim() } : {}),
+      ...(username.trim() ? { username: username.trim() } : {}),
+      ...(password ? { password } : {}),
+      ...(managementPath.trim() ? { managementPath: managementPath.trim() } : {}),
+      ...(managementScheme ? { managementScheme } : {}),
+      ...(managementAuth ? { managementAuth } : {}),
+      ...(sshKey.trim() ? { sshKey: sshKey.trim() } : {}),
       deviceType: deviceType.trim() || "custom",
       ports: finalPorts,
       ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
@@ -443,7 +480,7 @@ export default function DeviceEditor() {
       ...(() => { const t = searchTermsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20); return t.length > 0 ? { searchTerms: t } : {}; })(),
     };
     return overrides ? { ...data, ...overrides } : data;
-  }, [editingNodeId, ports, label, shortName, useShortName, wrapLabel, hostname, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, serialNumber, note, isSpare, procurementSource, heightMm, widthMm, depthMm, weightKg, rackForm, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
+  }, [editingNodeId, ports, label, shortName, useShortName, wrapLabel, hostname, username, password, managementPath, managementScheme, managementAuth, sshKey, deviceType, manufacturer, modelNumber, referenceUrl, category, color, headerColor, node, showAllPorts, hiddenPorts, dhcpServer, powerDrawW, powerCapacityW, voltage, thermalBtuh, poeBudgetW, poeDrawW, unitCost, serialNumber, note, isSpare, procurementSource, heightMm, widthMm, depthMm, weightKg, rackForm, isCableAccessory, integratedWithCable, isVenueProvided, adapterVisibility, auxiliaryData, searchTermsRaw]);
 
   const handleSave = useCallback(() => {
     if (!editingNodeId) return;
@@ -752,6 +789,10 @@ export default function DeviceEditor() {
       setReferenceUrl(tpl.referenceUrl ?? "");
       setCategory(tpl.category ?? "");
       setHostname(tpl.hostname ?? "");
+      // Credentials are instance-only — a template switch starts them fresh.
+      setUsername("");
+      setPassword("");
+      setSshKey("");
       setPowerDrawW(tpl.powerDrawW);
       setPowerCapacityW(tpl.powerCapacityW);
       setVoltage(tpl.voltage);
@@ -829,7 +870,17 @@ export default function DeviceEditor() {
   };
 
   const updatePort = (id: string, updates: Partial<PortDraft>) => {
-    setPorts(ports.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    // Only one port can be the management interface — promoting one demotes the rest.
+    const claimsManagement = updates.networkConfig?.isManagement === true;
+    setPorts(
+      ports.map((p) => {
+        if (p.id === id) return { ...p, ...updates };
+        if (claimsManagement && p.networkConfig?.isManagement) {
+          return { ...p, networkConfig: { ...p.networkConfig, isManagement: undefined } };
+        }
+        return p;
+      }),
+    );
   };
 
   const bulkAddPorts = (direction: PortDirection, prefix: string, start: number, count: number, signalType: SignalType, section: string) => {
@@ -1246,17 +1297,135 @@ export default function DeviceEditor() {
             />
           )}
 
-          {/* Hostname */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Hostname:</span>
-            <input
-              className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
-              value={hostname}
-              onChange={(e) => setHostname(e.target.value)}
-              placeholder="e.g. nvx-room101"
-              onKeyDown={(e) => e.stopPropagation()}
-            />
-          </div>
+          {/* Network identity — only for devices with a LAN (network-signal) port.
+              Falls open if any field already holds data, so nothing becomes uneditable. */}
+          {(ports.some((p) => NETWORK_SIGNAL_TYPES.has(p.signalType)) || hostname || username || password || sshKey) && (
+            <>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Hostname:</span>
+                <input
+                  className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                  value={hostname}
+                  onChange={(e) => setHostname(e.target.value)}
+                  placeholder="e.g. nvx-room101"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Username:</span>
+                <input
+                  className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. admin"
+                  autoComplete="off"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Password:</span>
+                <input
+                  className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] shrink-0"
+                  onClick={() => setShowPassword((v) => !v)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Management URL:</span>
+                <select
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500 cursor-pointer shrink-0"
+                  value={managementScheme ?? "http"}
+                  onChange={(e) => setManagementScheme(e.target.value as "http" | "https")}
+                >
+                  <option value="http">http://</option>
+                  <option value="https">https://</option>
+                </select>
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 truncate max-w-[140px]" title={managementHost ?? "no management address"}>
+                  {managementHost ?? "(set an IP)"}
+                </span>
+                <input
+                  className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-xs outline-none focus:border-blue-500"
+                  value={managementPath}
+                  onChange={(e) => setManagementPath(e.target.value)}
+                  placeholder="/admin  ·  :8080/#/login"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">On connect:</span>
+                <select
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500 cursor-pointer"
+                  value={managementAuth ?? ""}
+                  onChange={(e) => setManagementAuth((e.target.value || undefined) as ManagementAuthMode | undefined)}
+                  title="What to do with the stored credentials when opening the management UI"
+                >
+                  <option value="">Auto (copy credentials if set)</option>
+                  <option value="none">Don't use credentials</option>
+                  <option value="clipboard">Copy credentials to clipboard</option>
+                  <option value="basic-url">Send in URL — HTTP Basic auth only</option>
+                </select>
+                {managementAuth === "basic-url" && (
+                  <span className="text-[9px] text-amber-600" title="Most browsers ignore or strip credentials embedded in URLs, and the URL is recorded in browser history. Only works on gear using HTTP Basic auth.">
+                    ⚠ often blocked; lands in history
+                  </span>
+                )}
+              </div>
+
+              {(sshEnabled || sshKey) && (
+                <div className="mt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">SSH Key:</span>
+                    <span className="text-[10px] text-[var(--color-text-secondary)] flex-1 truncate">
+                      {sshKey ? describeSshKey(sshKey) : "none stored"}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] shrink-0"
+                      onClick={() => setShowSshKey((v) => !v)}
+                    >
+                      {showSshKey ? "Hide" : sshKey ? "View / Edit" : "Add"}
+                    </button>
+                    {sshKey && (
+                      <button
+                        type="button"
+                        className="text-[10px] text-red-600 hover:text-red-500 shrink-0"
+                        onClick={() => { setSshKey(""); setShowSshKey(false); }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  {showSshKey && (
+                    <>
+                      <textarea
+                        className="w-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1.5 py-1 text-[10px] font-mono outline-none focus:border-blue-500 resize-y"
+                        rows={5}
+                        value={sshKey}
+                        onChange={(e) => setSshKey(e.target.value)}
+                        placeholder={"-----BEGIN OPENSSH PRIVATE KEY-----\n…"}
+                        spellCheck={false}
+                        autoComplete="off"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                      <div className="text-[9px] text-amber-600 mt-0.5">
+                        ⚠ Stored in the schematic file. Obfuscated at rest, but recoverable by
+                        anyone with the file and this app — prefer a key kept in your SSH agent.
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
           {/* Physical Dimensions */}
           <details className="text-xs">
@@ -2956,7 +3125,7 @@ function PortNetworkSection({
       </button>
       {open && (
         <div className="grid grid-cols-2 gap-1 mt-1">
-          <label className="flex items-center gap-1 col-span-2 text-[9px] text-[var(--color-text-muted)]">
+          <label className="flex items-center gap-1 text-[9px] text-[var(--color-text-muted)]">
             <input
               type="checkbox"
               checked={c.dhcp ?? false}
@@ -2965,6 +3134,39 @@ function PortNetworkSection({
             />
             DHCP
           </label>
+          <label
+            className="flex items-center gap-1 text-[9px] text-[var(--color-text-muted)]"
+            title="Use this interface's address when opening the device's management UI. Only one port per device."
+          >
+            <input
+              type="checkbox"
+              checked={c.isManagement ?? false}
+              onChange={(e) =>
+                onChange({
+                  ...c,
+                  isManagement: e.target.checked || undefined,
+                  // SSH is a property of the management interface — drop it when demoted.
+                  supportsSsh: e.target.checked ? c.supportsSsh : undefined,
+                })
+              }
+              className="cursor-pointer"
+            />
+            Management
+          </label>
+          {c.isManagement && (
+            <label
+              className="flex items-center gap-1 col-span-2 text-[9px] text-[var(--color-text-muted)]"
+              title="This device accepts SSH on the management address — adds a Console action to the device's right-click menu."
+            >
+              <input
+                type="checkbox"
+                checked={c.supportsSsh ?? false}
+                onChange={(e) => onChange({ ...c, supportsSsh: e.target.checked || undefined })}
+                className="cursor-pointer"
+              />
+              Supports SSH
+            </label>
+          )}
           <IpInput
             value={c.ip ?? ""}
             onChange={(v) => {

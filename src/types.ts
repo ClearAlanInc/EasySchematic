@@ -26,7 +26,17 @@ export interface PortNetworkConfig {
   gateway?: string;
   vlan?: number;
   dhcp?: boolean;
+  /** Marks this port's address as the device's management interface — the one the
+   *  "Open Management UI" action connects to. At most one port per device carries
+   *  this; setting it on a port clears it on the others. */
+  isManagement?: boolean;
+  /** The device accepts SSH on this management address, enabling the "Console"
+   *  action. Only meaningful on the management interface. */
+  supportsSsh?: boolean;
 }
+
+/** How the "Open Management UI" action should hand over stored credentials. */
+export type ManagementAuthMode = "none" | "clipboard" | "basic-url";
 
 export interface DhcpServerConfig {
   enabled: boolean;
@@ -239,6 +249,27 @@ export interface DeviceData {
    *  undefined = inherit SchematicFile.wrapDeviceLabels. */
   wrapLabel?: boolean;
   hostname?: string;
+  /** Management username for the device (e.g. web UI / API login). Instance-only:
+   *  never copied into templates or community submissions. Editor exposes it only
+   *  when the device has a network-signal port. */
+  username?: string;
+  /** Management password. Stored in the schematic file — treat exported files as
+   *  sensitive when set. Instance-only, same exposure rule as username. */
+  password?: string;
+  /** Path appended to the management address, e.g. "/admin" or ":8080/#/login".
+   *  A leading "/" is added when omitted; may start with ":" to set a port. */
+  managementPath?: string;
+  /** Scheme for the management URL. Defaults to http (most AV gear). */
+  managementScheme?: "http" | "https";
+  /** What to do with the stored credentials when opening the management UI.
+   *  Defaults to "clipboard" when credentials exist, else "none". */
+  managementAuth?: ManagementAuthMode;
+  /** SSH private key for the management interface, kept for documentation and
+   *  hand-off. Enciphered at rest alongside `password` (see credentials.ts) —
+   *  which is obfuscation, not strong protection. Instance-only: never copied
+   *  into templates or community submissions. Shown only when the management
+   *  interface has `supportsSsh`. */
+  sshKey?: string;
   deviceType: string;
   ports: Port[];
   /** Device exists in the project (BOQ, pack list, racks, patch view) but is not rendered

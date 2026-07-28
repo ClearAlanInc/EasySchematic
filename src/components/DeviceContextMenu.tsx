@@ -4,6 +4,7 @@ import { useSchematicStore } from "../store";
 import type { DeviceData, RackElevationPage } from "../types";
 import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
 import { inferRackHeightU } from "../rackUtils";
+import { buildManagementTarget, buildSshTarget, effectiveAuthMode } from "../managementUrl";
 
 export default function DeviceContextMenu() {
   const menu = useSchematicStore((s) => s.deviceContextMenu);
@@ -50,6 +51,68 @@ export default function DeviceContextMenu() {
     });
   }, [menu]);
 
+  const openManagementUi = useCallback(() => {
+    if (!menu) return;
+    const { nodes: ns, addToast } = useSchematicStore.getState();
+    const node = ns.find((n) => n.id === menu.nodeId);
+    useSchematicStore.setState({ deviceContextMenu: null });
+    if (node?.type !== "device") return;
+    const data = node.data as DeviceData;
+    const target = buildManagementTarget(data);
+    if (!target) return;
+
+    const mode = effectiveAuthMode(data);
+    // Hand the credentials over before navigating, so they're ready to paste.
+    if (mode === "clipboard" && (data.username || data.password) && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(data.password ?? data.username ?? "")
+        .then(() =>
+          addToast(
+            data.password
+              ? `Password copied — user "${data.username ?? ""}" · ${target.host}`
+              : `Username copied · ${target.host}`,
+            "info",
+          ),
+        )
+        .catch(() => { /* clipboard blocked — the tab still opens */ });
+    }
+
+    // noopener/noreferrer: the opened device page must not get a handle on this window.
+    window.open(target.urlWithCredentials ?? target.url, "_blank", "noopener,noreferrer");
+  }, [menu]);
+
+  const openConsole = useCallback(() => {
+    if (!menu) return;
+    const { nodes: ns, addToast } = useSchematicStore.getState();
+    const node = ns.find((n) => n.id === menu.nodeId);
+    useSchematicStore.setState({ deviceContextMenu: null });
+    if (node?.type !== "device") return;
+    const data = node.data as DeviceData;
+    const ssh = buildSshTarget(data);
+    if (!ssh) return;
+
+    const announce = (extra: string) =>
+      addToast(
+        `Opening SSH to ${ssh.username ? ssh.username + "@" : ""}${ssh.host}${extra}` +
+          " — needs an ssh:// handler (Terminal on macOS)",
+        "info",
+        6000,
+      );
+
+    // SSH takes no password from the URL, so hand it over via the clipboard.
+    if (ssh.hasPassword && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(data.password ?? "")
+        .then(() => announce(" · password copied"))
+        .catch(() => announce(""));
+    } else {
+      announce("");
+    }
+
+    // Custom scheme: assigning location lets the OS claim it without leaving a blank tab.
+    window.location.href = ssh.url;
+  }, [menu]);
+
   const deleteDevice = useCallback(() => {
     if (!menu) return;
     useSchematicStore.setState({ deviceContextMenu: null });
@@ -78,6 +141,9 @@ export default function DeviceContextMenu() {
     .flatMap((p) => p.placements.map((pl) => ({ page: p, placement: pl })))
     .find((x) => x.placement.deviceNodeId === nodeId);
 
+  const managementTarget = deviceData ? buildManagementTarget(deviceData) : undefined;
+  const sshTarget = deviceData ? buildSshTarget(deviceData) : undefined;
+
   return (
     <div
       ref={menuRef}
@@ -93,6 +159,23 @@ export default function DeviceContextMenu() {
     >
       <MenuItem label="Edit Properties..." onClick={editProperties} />
       <MenuItem label="Swap Device..." onClick={swapDevice} />
+
+      {managementTarget && (
+        <MenuItem
+          label="Connect / Control..."
+          onClick={openManagementUi}
+          title={`Open ${managementTarget.url} in a new tab${
+            managementTarget.viaPortLabel ? ` (via ${managementTarget.viaPortLabel})` : ""
+          }`}
+        />
+      )}
+      {sshTarget && (
+        <MenuItem
+          label="Console..."
+          onClick={openConsole}
+          title={`Open a terminal: ${sshTarget.url}${sshTarget.hasPassword ? " (password copied to clipboard)" : ""}`}
+        />
+      )}
 
       {deviceData && (
         <>
@@ -163,12 +246,14 @@ function MenuItem({
   danger,
   indent,
   checked,
+  title,
 }: {
   label: string;
   onClick: () => void;
   danger?: boolean;
   indent?: boolean;
   checked?: boolean;
+  title?: string;
 }) {
   return (
     <button
@@ -180,6 +265,7 @@ function MenuItem({
           : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
       }`}
       onClick={onClick}
+      title={title}
     >
       {checked != null && (
         <span className="w-3 text-center shrink-0 text-[10px]">{checked ? "✓" : ""}</span>

@@ -46,6 +46,7 @@ import { pairKey } from "./roomDistance";
 import type { Orientation } from "./printConfig";
 import { computeAlignment, resolveAlignmentOverlaps, type AlignOperation } from "./alignUtils";
 import { CURRENT_SCHEMA_VERSION, STUB_LABEL_Z_INDEX, migrateSchematic } from "./migrations";
+import { withEncryptedSecrets, decryptNodeSecrets } from "./credentials";
 import { healStaleWaypoints } from "./waypointHealing";
 import { newBundleId, gcBundles, reconcileBundleJunctions, bundleJunctionsFor, splitMemberWaypoints } from "./bundles";
 import { computeBundleTrunk, type BundleEndpoint } from "./routing/bundleRoute";
@@ -2778,6 +2779,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         : { auxiliaryData: [{ text: "{{deviceType}}", position: "header" as const }] }),
       // Preserved instance fields:
       ...(oldData.hostname ? { hostname: oldData.hostname } : (newTemplate.hostname ? { hostname: newTemplate.hostname } : {})),
+      ...(oldData.username ? { username: oldData.username } : {}),
+      ...(oldData.password ? { password: oldData.password } : {}),
+      ...(oldData.sshKey ? { sshKey: oldData.sshKey } : {}),
       ...(oldData.useShortName !== undefined ? { useShortName: oldData.useShortName } : {}),
       ...(oldData.wrapLabel !== undefined ? { wrapLabel: oldData.wrapLabel } : {}),
     };
@@ -5112,7 +5116,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const data: SchematicFile = {
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
-      nodes: state.nodes,
+      nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       ownedGear: state.ownedGear.length > 0 ? state.ownedGear : undefined,
       signalColors: state.signalColors,
@@ -5198,6 +5202,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           const data = migrateSchematic(mod.default) as SchematicFile;
           snapNodesToGrid(data.nodes);
           applyRoomLockState(data.nodes);
+          decryptNodeSecrets(data.nodes);
           syncCounters(data.nodes, data.edges);
           data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
           data.edges = applyWaypointHeal(data.nodes, data.edges);
@@ -5282,6 +5287,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       const data = migrateSchematic(parsed) as SchematicFile;
       snapNodesToGrid(data.nodes);
       applyRoomLockState(data.nodes);
+      decryptNodeSecrets(data.nodes);
       syncCounters(data.nodes, data.edges);
       data.edges = ensureUniqueEdgeIds(removeOrphanedEdges(data.nodes, data.edges));
       data.edges = applyWaypointHeal(data.nodes, data.edges);
@@ -5373,7 +5379,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     return {
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
-      nodes: state.nodes,
+      nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       customTemplates: state.customTemplates.length > 0 ? state.customTemplates : undefined,
       ownedGear: state.ownedGear.length > 0 ? state.ownedGear : undefined,
@@ -5450,6 +5456,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
     snapNodesToGrid(nodes);
     applyRoomLockState(nodes);
+    decryptNodeSecrets(nodes);
     syncCounters(nodes, edges);
     edges = ensureUniqueEdgeIds(removeOrphanedEdges(nodes, edges));
     edges = applyWaypointHeal(nodes, edges);

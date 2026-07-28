@@ -16,7 +16,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 43;
+export const CURRENT_SCHEMA_VERSION = 47;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -611,6 +611,31 @@ const migrations: Record<number, Migration> = {
     // v42 → v43: patch panel view — adds optional edge.data.patchHops/patchSegments,
     // DeviceData.offCanvas, and the "patch-panel" page variant. Purely additive.
     data.version = 43;
+    return data;
+  },
+  43: (data) => {
+    // v43 → v44: adds optional DeviceData.username/password (device management
+    // credentials, shown for devices with a network port). Purely additive.
+    data.version = 44;
+    return data;
+  },
+  44: (data) => {
+    // v44 → v45: adds optional PortNetworkConfig.isManagement and
+    // DeviceData.managementPath/managementScheme/managementAuth, driving the
+    // "Connect / Control" action. Purely additive.
+    data.version = 45;
+    return data;
+  },
+  45: (data) => {
+    // v45 → v46: adds optional PortNetworkConfig.supportsSsh, driving the
+    // "Console" action on the management interface. Purely additive.
+    data.version = 46;
+    return data;
+  },
+  46: (data) => {
+    // v46 → v47: adds optional DeviceData.sshKey, enciphered at rest alongside
+    // password. Purely additive.
+    data.version = 47;
     return data;
   },
 };
