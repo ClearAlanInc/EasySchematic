@@ -15,6 +15,7 @@ import type { AuxRow } from "../types";
 import { useDisplayLabel } from "../labelCaseUtils";
 import { resolveDeviceLabel } from "../displayName";
 import { isPortConnected } from "../portVisibility";
+import { isVirtualSignal } from "../connectorTypes";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -90,6 +91,23 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   const connectedHandles = useMemo(
     () => new Set(connectedHandleStr ? connectedHandleStr.split(",") : []),
     [connectedHandleStr],
+  );
+
+  // Handles carrying a *physical* cable. Virtual wires (TCP/UDP) ride the physical run
+  // and stack without limit, so they must not make a port look occupied — only the one
+  // real cable does.
+  const physicalHandleStr = useSchematicStore((s) => {
+    const ids: string[] = [];
+    for (const e of s.edges) {
+      if (isVirtualSignal(e.data?.signalType)) continue;
+      if (e.source === id && e.sourceHandle) ids.push(e.sourceHandle);
+      if (e.target === id && e.targetHandle) ids.push(e.targetHandle);
+    }
+    return ids.sort().join(",");
+  });
+  const physicalHandles = useMemo(
+    () => new Set(physicalHandleStr ? physicalHandleStr.split(",") : []),
+    [physicalHandleStr],
   );
 
   // Reactive signal-type map for edges connected to this node — drives passthrough port
@@ -651,10 +669,10 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
             const port = item.port;
             const inId = `${port.id}-in`;
             const outId = `${port.id}-out`;
-            const inConnected = connectedHandles.has(inId);
-            const outConnected = connectedHandles.has(outId);
-            const inDisabled = outConnected;
-            const outDisabled = inConnected;
+            // Only the single physical cable closes off the opposite side; a port with
+            // just virtual wires stays open, and network ports always accept more.
+            const inDisabled = physicalHandles.has(outId);
+            const outDisabled = physicalHandles.has(inId);
 
             return (
               <div key={port.id} className="flex justify-center items-center relative h-4">

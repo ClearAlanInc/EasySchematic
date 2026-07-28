@@ -55,7 +55,7 @@ import { requestRoutes, setRoutingResultHandler, cancelRouting as cancelRoutingC
 import { reconcileWaypointNodes, syncEdgesFromWaypointNodes, spliceWaypointsForRemovedNodes } from "./waypointSync";
 import { orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type CrossingPoint } from "./edgeRouter";
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
-import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, areSignalPairsCompatible, effectiveSignalType } from "./connectorTypes";
+import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, areSignalPairsCompatible, effectiveSignalType, isVirtualSignal } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
@@ -318,6 +318,10 @@ interface SchematicState {
   pasteClipboard: () => void;
   alignSelectedNodes: (op: AlignOperation) => void;
   isValidConnection: (connection: Connection) => boolean;
+  /** Stack another virtual wire on the same two ports as an existing connection.
+   *  React Flow refuses to draw a second edge between one handle pair, so adding a
+   *  parallel TCP/UDP stream has to come from here rather than the canvas. */
+  addVirtualWire: (edgeId: string, kind: "tcp" | "udp") => void;
   updateDeviceLabel: (nodeId: string, label: string) => void;
   batchUpdateDeviceLabels: (changes: { nodeId: string; label: string }[]) => void;
   updateDeviceShortName: (nodeId: string, shortName: string) => void;
@@ -1658,21 +1662,24 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // Check if either port is direct-attach (adapter plugs directly into device)
     const isDirectAttach = sourcePort?.directAttach || targetPort?.directAttach;
 
-    // A network handle that already carries a wire gets a *virtual* one next: the
-    // physical cable is drawn, everything after it is a logical stream over that cable.
-    // Defaults to TCP; switch to UDP (or back to the physical type) via Wire Type.
-    const handleOccupied =
-      !!sourcePort && NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) &&
+    // One physical cable per port, unlimited virtual wires. If either end already
+    // carries a physical cable, this wire is a logical stream over it (TCP by default —
+    // switch to UDP, or back to physical, via Wire Type). Virtual wires already on the
+    // port don't count, so the real cable can still be drawn afterwards.
+    const carriesPhysical = (nodeId: string, handle: string | null | undefined) =>
       state.edges.some(
         (e) =>
-          (e.source === connection.source && e.sourceHandle === connection.sourceHandle) ||
-          (e.target === connection.source && e.targetHandle === connection.sourceHandle) ||
-          (e.target === connection.target && e.targetHandle === connection.targetHandle) ||
-          (e.source === connection.target && e.sourceHandle === connection.targetHandle),
+          !isVirtualSignal(e.data?.signalType) &&
+          ((e.source === nodeId && e.sourceHandle === handle) ||
+            (e.target === nodeId && e.targetHandle === handle)),
       );
+    const stacksOnPhysical =
+      !!sourcePort && NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) &&
+      (carriesPhysical(connection.source, connection.sourceHandle) ||
+        carriesPhysical(connection.target, connection.targetHandle));
 
     const newEdgeData: ConnectionData = {
-      signalType: handleOccupied ? "tcp" : (sourcePort?.signalType ?? "custom"),
+      signalType: stacksOnPhysical ? "tcp" : (sourcePort?.signalType ?? "custom"),
       ...(connectorMismatch ? { connectorMismatch: true } : {}),
       ...(isDirectAttach ? { directAttach: true } : {}),
     };
@@ -2308,10 +2315,10 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const tgtIsMulticable = targetPort.isMulticable ?? false;
     if (srcIsMulticable !== tgtIsMulticable) return false;
 
-    // Virtual wires (TCP/UDP) stack on an ethernet port: the port already carries a
-    // physical run, and every logical stream rides that same cable. So once both ends
-    // are network ports, the one-cable-per-handle guards below don't apply — a second
-    // connection here becomes a virtual wire (see onConnect).
+    // Virtual wires (TCP/UDP) stack on an ethernet port: the port carries one physical
+    // run and every logical stream rides that same cable. Once both ends are network
+    // ports the one-cable-per-handle guards below don't apply — onConnect makes the
+    // extra wire virtual, so the single-physical-cable rule still holds.
     if (networkBypass) return true;
 
     // Don't allow multiple connections to the same handle, unless the port is multi-connect
@@ -2362,6 +2369,26 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
 
     return true;
+  },
+
+  addVirtualWire: (edgeId, kind) => {
+    const state = get();
+    const src = state.edges.find((e) => e.id === edgeId);
+    if (!src) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    const existing = ensureUniqueEdgeIds(state.edges);
+    const newEdge: ConnectionEdge = {
+      id: nextEdgeId(existing),
+      source: src.source,
+      target: src.target,
+      sourceHandle: src.sourceHandle,
+      targetHandle: src.targetHandle,
+      type: src.type,
+      data: { signalType: kind },
+    };
+    set({ edges: [...existing, newEdge] });
+    get().recomputeCableIds();
+    get().saveToLocalStorage();
   },
 
   updateDeviceLabel: (nodeId, label) => {

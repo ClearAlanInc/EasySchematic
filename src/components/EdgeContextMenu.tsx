@@ -503,6 +503,12 @@ export default function EdgeContextMenu() {
     !!tgtPortForWire && NETWORK_SIGNAL_TYPES.has(tgtPortForWire.signalType);
   const currentWireType = (edge?.data?.signalType ?? physicalWireType) as SignalType | undefined;
 
+  const addVirtualWire = (kind: "tcp" | "udp") => {
+    if (!menu) return;
+    useSchematicStore.getState().addVirtualWire(menu.edgeId, kind);
+    useSchematicStore.setState({ edgeContextMenu: null });
+  };
+
   const setWireType = (st: SignalType) => {
     if (!menu) return;
     // Leaving the virtual layer drops the port number — it means nothing on a physical run.
@@ -726,6 +732,21 @@ export default function EdgeContextMenu() {
               </button>
             )}
           </div>
+        </>
+      )}
+      {canSwitchWireType && (
+        <>
+          <div className="h-px bg-gray-200 my-1" />
+          <MenuItem
+            label="Add TCP Wire on These Ports"
+            onClick={() => addVirtualWire("tcp")}
+            title="Stack another logical stream on the same two ports"
+          />
+          <MenuItem
+            label="Add UDP Wire on These Ports"
+            onClick={() => addVirtualWire("udp")}
+            title="Stack another logical stream on the same two ports"
+          />
         </>
       )}
       {canSwitchWireType && currentWireType && (

@@ -83,6 +83,51 @@ describe("stacking virtual wires on an ethernet port", () => {
     expect(port?.signalType).toBe("ethernet");
   });
 
+  it("keeps exactly one physical cable no matter how many wires are added", () => {
+    const s = useSchematicStore.getState();
+    for (let i = 0; i < 5; i++) useSchematicStore.getState().onConnect(ethConn);
+    void s;
+    const edges = useSchematicStore.getState().edges;
+    const physical = edges.filter((e) => !["tcp", "udp"].includes(e.data?.signalType ?? ""));
+    const virtual = edges.filter((e) => ["tcp", "udp"].includes(e.data?.signalType ?? ""));
+    expect(edges).toHaveLength(5);
+    expect(physical).toHaveLength(1);
+    expect(virtual).toHaveLength(4);
+  });
+
+  it("still lets the physical cable be drawn after virtual wires exist", () => {
+    // Seed a virtual-only port, as if the logical layer was documented first.
+    useSchematicStore.setState({
+      edges: [{
+        id: "v1", source: "a", target: "b",
+        sourceHandle: "eth-out", targetHandle: "eth-in",
+        data: { signalType: "udp", networkPort: 5353 },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any],
+    });
+    useSchematicStore.getState().onConnect(ethConn);
+    const edges = useSchematicStore.getState().edges;
+    expect(edges).toHaveLength(2);
+    // No physical cable was present, so this one is the real run.
+    expect(edges[1].data?.signalType).toBe("ethernet");
+  });
+
+  it("stacks extra wires on the same port pair via addVirtualWire", () => {
+    // React Flow refuses a duplicate edge between one handle pair, so the canvas
+    // cannot draw this — the explicit action is the supported route.
+    useSchematicStore.getState().onConnect(ethConn);
+    const physicalId = useSchematicStore.getState().edges[0].id;
+    useSchematicStore.getState().addVirtualWire(physicalId, "tcp");
+    useSchematicStore.getState().addVirtualWire(physicalId, "udp");
+
+    const edges = useSchematicStore.getState().edges;
+    expect(edges.map((e) => e.data?.signalType)).toEqual(["ethernet", "tcp", "udp"]);
+    // All three share the same two ports.
+    expect(new Set(edges.map((e) => `${e.sourceHandle}->${e.targetHandle}`)).size).toBe(1);
+    // Ids stay unique so routing and the schedule can tell them apart.
+    expect(new Set(edges.map((e) => e.id)).size).toBe(3);
+  });
+
   it("still refuses a second cable on a non-network port", () => {
     const sdiConn = { source: "a", sourceHandle: "sdi-out", target: "b", targetHandle: "sdiIn-in" };
     const s = useSchematicStore.getState();
