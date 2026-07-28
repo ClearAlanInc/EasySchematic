@@ -318,10 +318,6 @@ interface SchematicState {
   pasteClipboard: () => void;
   alignSelectedNodes: (op: AlignOperation) => void;
   isValidConnection: (connection: Connection) => boolean;
-  /** Stack another virtual wire on the same two ports as an existing connection.
-   *  React Flow refuses to draw a second edge between one handle pair, so adding a
-   *  parallel TCP/UDP stream has to come from here rather than the canvas. */
-  addVirtualWire: (edgeId: string, kind: "tcp" | "udp") => void;
   updateDeviceLabel: (nodeId: string, label: string) => void;
   batchUpdateDeviceLabels: (changes: { nodeId: string; label: string }[]) => void;
   updateDeviceShortName: (nodeId: string, shortName: string) => void;
@@ -1666,13 +1662,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     // carries a physical cable, this wire is a logical stream over it (TCP by default —
     // switch to UDP, or back to physical, via Wire Type). Virtual wires already on the
     // port don't count, so the real cable can still be drawn afterwards.
-    const carriesPhysical = (nodeId: string, handle: string | null | undefined) =>
-      state.edges.some(
+    // -in/-out are two handles on ONE physical jack, so the cable check is per port,
+    // not per handle — otherwise a port fed on -in would still accept a second cable
+    // out of -out.
+    const basePort = (h: string | null | undefined) => (h ?? "").replace(/-(in|out|rear|front)$/, "");
+    const carriesPhysical = (nodeId: string, handle: string | null | undefined) => {
+      const base = basePort(handle);
+      return state.edges.some(
         (e) =>
           !isVirtualSignal(e.data?.signalType) &&
-          ((e.source === nodeId && e.sourceHandle === handle) ||
-            (e.target === nodeId && e.targetHandle === handle)),
+          ((e.source === nodeId && basePort(e.sourceHandle) === base) ||
+            (e.target === nodeId && basePort(e.targetHandle) === base)),
       );
+    };
     const stacksOnPhysical =
       !!sourcePort && NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) &&
       (carriesPhysical(connection.source, connection.sourceHandle) ||
@@ -2369,26 +2371,6 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
 
     return true;
-  },
-
-  addVirtualWire: (edgeId, kind) => {
-    const state = get();
-    const src = state.edges.find((e) => e.id === edgeId);
-    if (!src) return;
-    pushUndo({ nodes: state.nodes, edges: state.edges });
-    const existing = ensureUniqueEdgeIds(state.edges);
-    const newEdge: ConnectionEdge = {
-      id: nextEdgeId(existing),
-      source: src.source,
-      target: src.target,
-      sourceHandle: src.sourceHandle,
-      targetHandle: src.targetHandle,
-      type: src.type,
-      data: { signalType: kind },
-    };
-    set({ edges: [...existing, newEdge] });
-    get().recomputeCableIds();
-    get().saveToLocalStorage();
   },
 
   updateDeviceLabel: (nodeId, label) => {

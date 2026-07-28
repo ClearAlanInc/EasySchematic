@@ -47,7 +47,10 @@ const ethConn = {
 };
 
 beforeEach(() => {
-  useSchematicStore.setState({ nodes: [device("a", 0), device("b", 600)], edges: [] });
+  useSchematicStore.setState({
+    nodes: [device("a", 0), device("b", 600), device("c", 1200)],
+    edges: [],
+  });
 });
 
 describe("stacking virtual wires on an ethernet port", () => {
@@ -112,20 +115,16 @@ describe("stacking virtual wires on an ethernet port", () => {
     expect(edges[1].data?.signalType).toBe("ethernet");
   });
 
-  it("stacks extra wires on the same port pair via addVirtualWire", () => {
-    // React Flow refuses a duplicate edge between one handle pair, so the canvas
-    // cannot draw this — the explicit action is the supported route.
-    useSchematicStore.getState().onConnect(ethConn);
-    const physicalId = useSchematicStore.getState().edges[0].id;
-    useSchematicStore.getState().addVirtualWire(physicalId, "tcp");
-    useSchematicStore.getState().addVirtualWire(physicalId, "udp");
-
+  it("treats -in and -out as one jack — a fed port takes no second cable", () => {
+    // A bidirectional port is a single physical socket; feeding it on -in must not
+    // leave -out free for another cable. The onward wire is a logical stream instead.
+    const s = useSchematicStore.getState();
+    s.onConnect({ source: "a", sourceHandle: "eth-out", target: "b", targetHandle: "eth-in" });
+    useSchematicStore.getState().onConnect({
+      source: "b", sourceHandle: "eth-out", target: "c", targetHandle: "eth-in",
+    });
     const edges = useSchematicStore.getState().edges;
-    expect(edges.map((e) => e.data?.signalType)).toEqual(["ethernet", "tcp", "udp"]);
-    // All three share the same two ports.
-    expect(new Set(edges.map((e) => `${e.sourceHandle}->${e.targetHandle}`)).size).toBe(1);
-    // Ids stay unique so routing and the schedule can tell them apart.
-    expect(new Set(edges.map((e) => e.id)).size).toBe(3);
+    expect(edges.map((e) => e.data?.signalType)).toEqual(["ethernet", "tcp"]);
   });
 
   it("still refuses a second cable on a non-network port", () => {

@@ -15,7 +15,7 @@ import type { AuxRow } from "../types";
 import { useDisplayLabel } from "../labelCaseUtils";
 import { resolveDeviceLabel } from "../displayName";
 import { isPortConnected } from "../portVisibility";
-import { isVirtualSignal } from "../connectorTypes";
+import { isVirtualSignal, NETWORK_SIGNAL_TYPES } from "../connectorTypes";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -669,10 +669,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
             const port = item.port;
             const inId = `${port.id}-in`;
             const outId = `${port.id}-out`;
-            // Only the single physical cable closes off the opposite side; a port with
-            // just virtual wires stays open, and network ports always accept more.
-            const inDisabled = physicalHandles.has(outId);
-            const outDisabled = physicalHandles.has(inId);
+            // A network port never closes: it takes one physical cable and any number of
+            // virtual wires on top, so both handles stay live (onConnect makes the extra
+            // wires virtual). Other bidirectional ports still take a single cable, and the
+            // opposite side greys out once that cable is in.
+            const netPort = NETWORK_SIGNAL_TYPES.has(port.signalType);
+            const inDisabled = !netPort && physicalHandles.has(outId);
+            const outDisabled = !netPort && physicalHandles.has(inId);
 
             return (
               <div key={port.id} className="flex justify-center items-center relative h-4">
