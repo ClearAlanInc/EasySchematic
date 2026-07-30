@@ -156,6 +156,19 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   }, [data.ports, data.showAllPorts, data.hiddenPorts, hideVirtual,
       hiddenPinSignalTypes, templateHiddenStr, hideUnconnectedPorts, connectedHandles]);
 
+  // Widest label among each network port's sub-handles. Giving every sibling that
+  // same width keeps their "└" markers in one column while the block as a whole stays
+  // centred under the parent port, instead of hanging off to one side.
+  const subHandleWidthCh = useMemo(() => {
+    const widest = new Map<string, number>();
+    for (const p of data.ports) {
+      if (!p.parentPortId) continue;
+      const len = displayLabel(p.label).length;
+      widest.set(p.parentPortId, Math.max(widest.get(p.parentPortId) ?? 0, len));
+    }
+    return widest;
+  }, [data.ports, displayLabel]);
+
   const headerAuxRows = useMemo(
     () => rowsInSlot(data.auxiliaryData, "header"),
     [data.auxiliaryData],
@@ -697,18 +710,25 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                   }}
                 />
                 <span
-                  // Sub-handle rows sit in a fixed-width, left-aligned block so every
-                  // "└" lands at the same x. Centring them individually staggered the
-                  // markers whenever the labels differed in length (e.g. 41794 vs 22).
-                  className={`text-[10px] leading-4 truncate ${
-                    port.parentPortId ? "w-24 max-w-full text-left" : ""
-                  }`}
+                  className="text-[10px] leading-4 truncate inline-flex items-center gap-0.5 max-w-full"
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
                   title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — ${
                     port.parentPortId ? "virtual stream" : "bidirectional"
                   }${usbcPowerSuffix(port)}`}
                 >
-                  {port.parentPortId ? "└ " : "↔ "}{displayLabel(port.label)}
+                  <span className="shrink-0 opacity-70">{port.parentPortId ? "└" : "↔"}</span>
+                  {port.parentPortId ? (
+                    // Every sibling gets the widest label's width, so the markers line up
+                    // and the group still sits centred beneath the parent.
+                    <span
+                      className="text-left truncate"
+                      style={{ width: `${subHandleWidthCh.get(port.parentPortId) ?? 0}ch` }}
+                    >
+                      {displayLabel(port.label)}
+                    </span>
+                  ) : (
+                    <span className="truncate">{displayLabel(port.label)}</span>
+                  )}
                 </span>
                 <Handle
                   type="source"
