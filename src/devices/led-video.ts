@@ -134,7 +134,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-010d-4000-8000-000000000345",
+    id: "c0a80101-0335-4000-8000-000000000775",
     deviceType: "led-processor",
     category: "led-processing",
     label: "Novastar NovaPro UHD Jr",
@@ -201,7 +201,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-010e-4000-8000-000000000346",
+    id: "c0a80101-0336-4000-8000-000000000776",
     deviceType: "led-processor",
     category: "led-processing",
     label: "Brompton Tessera S8",
@@ -232,7 +232,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-010f-4000-8000-000000000347",
+    id: "c0a80101-0337-4000-8000-000000000777",
     deviceType: "led-processor",
     category: "led-processing",
     label: "Brompton Tessera R2+",

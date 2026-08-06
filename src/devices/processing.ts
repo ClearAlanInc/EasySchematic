@@ -822,7 +822,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-00f8-4000-8000-000000000324",
+    id: "c0a80101-0333-4000-8000-000000000773",
     deviceType: "adapter",
     label: "TB (M) → RJ45 (F) Adapter",
     searchTerms: ["thunderbolt", "usb-c", "ethernet", "dongle", "network", "male", "female"],
@@ -834,7 +834,7 @@ export const templates: DeviceTemplate[] = [
   },
   // ── Connector-Mismatch Adapters (passive cable adapters) ────────────
   {
-    id: "c0a80101-00ce-4000-8000-000000000206",
+    id: "c0a80101-032e-4000-8000-000000000768",
     deviceType: "adapter",
     label: "USB-C (M) → USB-A (F) Adapter",
     searchTerms: ["usb-c", "usb-a", "adapter", "dongle", "male", "female"],
@@ -845,7 +845,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-00cf-4000-8000-000000000207",
+    id: "c0a80101-032f-4000-8000-000000000769",
     deviceType: "adapter",
     label: "USB-C (M) → USB-B (F) Adapter",
     searchTerms: ["usb-c", "usb-b", "adapter", "dongle", "male", "female"],
@@ -856,7 +856,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-00d0-4000-8000-000000000208",
+    id: "c0a80101-0330-4000-8000-000000000770",
     deviceType: "adapter",
     label: "mini-XLR (M) → XLR-3 (F) Adapter",
     searchTerms: ["mini-xlr", "xlr", "adapter", "audio", "male", "female"],
@@ -867,7 +867,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-00d1-4000-8000-000000000209",
+    id: "c0a80101-0331-4000-8000-000000000771",
     deviceType: "adapter",
     label: "IEC (M) → Edison (F) Adapter",
     searchTerms: ["iec", "edison", "power", "adapter", "cable", "male", "female"],
@@ -878,7 +878,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-00d2-4000-8000-000000000210",
+    id: "c0a80101-0332-4000-8000-000000000772",
     deviceType: "adapter",
     label: "IEC (M) → powerCON (F) Adapter",
     searchTerms: ["iec", "powercon", "power", "adapter", "cable", "male", "female"],

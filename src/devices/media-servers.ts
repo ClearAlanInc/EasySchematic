@@ -134,7 +134,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-010c-4000-8000-000000000344",
+    id: "c0a80101-0334-4000-8000-000000000774",
     deviceType: "media-server",
     category: "media-servers",
     label: "Disguise VX 1",
@@ -245,7 +245,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-0110-4000-8000-000000000348",
+    id: "c0a80101-0338-4000-8000-000000000778",
     deviceType: "media-server",
     category: "media-servers",
     label: "Disguise GX 2",
@@ -274,7 +274,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-0111-4000-8000-000000000349",
+    id: "c0a80101-0339-4000-8000-000000000779",
     deviceType: "media-server",
     category: "media-servers",
     label: "Disguise GX 2C",
@@ -303,7 +303,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-0112-4000-8000-000000000350",
+    id: "c0a80101-033a-4000-8000-000000000780",
     deviceType: "media-server",
     category: "media-servers",
     label: "Disguise GX 3",

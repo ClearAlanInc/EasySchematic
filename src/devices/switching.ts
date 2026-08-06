@@ -186,7 +186,7 @@ export const templates: DeviceTemplate[] = [
   },
   // ── Video Switchers ──────────────────────────────────────────────
   {
-    id: "c0a80101-003d-4000-8000-000000000061",
+    id: "c0a80101-032c-4000-8000-000000000766",
     deviceType: "switcher",
     label: "ATEM Mini",
     manufacturer: "Blackmagic Design",
@@ -207,7 +207,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-003e-4000-8000-000000000062",
+    id: "c0a80101-032d-4000-8000-000000000767",
     deviceType: "switcher",
     label: "ATEM Mini Pro",
     manufacturer: "Blackmagic Design",
@@ -760,7 +760,7 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
-    id: "c0a80101-0240-4000-8000-000000000721",
+    id: "c0a80101-033b-4000-8000-000000000781",
     deviceType: "router",
     label: "BMD Videohub 80x80 12G",
     manufacturer: "Blackmagic Design",
