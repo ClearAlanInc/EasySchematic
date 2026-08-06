@@ -115,6 +115,8 @@ export const DEVICE_TYPE_TO_CATEGORY: Record<string, string> = {
   "mtr-pc": "Codecs",
   "touch-controller": "Control",
   "occupancy-sensor": "Control",
+  "light-sensor": "Control",
+  "dimmer": "Lighting",
 };
 
 /** Human-readable labels for device types (kebab-case → Title Case with known acronyms) */

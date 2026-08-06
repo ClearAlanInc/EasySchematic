@@ -91,6 +91,7 @@ export const templates: DeviceTemplate[] = [
       port("Relay 1", "contact-closure", "output"),
       port("Relay 2", "contact-closure", "output"),
       port("USB (Host)", "usb", "bidirectional", "usb-a"),
+      port("infiNET EX (Gateway)", "rf", "bidirectional", "wireless"),
     ],
   },
   // Crestron DIN-AP4 — 4-Series DIN Rail Control System
@@ -411,6 +412,116 @@ export const templates: DeviceTemplate[] = [
     ports: [
       port("Wi-Fi", "ethernet", "bidirectional", "wireless"),
       port("USB-C (Charging)", "power", "input", "usb-c"),
+    ],
+  },
+  // Crestron MC4-R — 4-Series Control System for Crestron Home OS (PoE powered)
+  {
+    id: "c0a80101-031a-4000-8000-000000000748",
+    deviceType: "control-processor",
+    label: "Crestron MC4-R",
+    manufacturer: "Crestron",
+    modelNumber: "MC4-R",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Control-and-Management/Control-System/Residential/MC4-R",
+    searchTerms: ["crestron", "control", "processor", "mc4-r", "4-series", "crestron home", "residential", "infinet", "poe"],
+    powerDrawW: 7,
+    poeDrawW: 12.95, // 802.3at Type 1 Class 0 PD allocation; actual consumption 7 W typical
+    thermalBtuh: 24,
+    heightMm: 27,
+    widthMm: 258,
+    depthMm: 130,
+    weightKg: 0.45,
+    rackForm: "full", // 1RU rack ears included
+    ports: [
+      port("LAN (PoE, GbE)", "ethernet", "bidirectional"),
+      port("CRESNET", "cresnet", "bidirectional"),
+      port("COM (RS-232)", "serial", "bidirectional", "phoenix"),
+      { ...port("IR/Serial 1", "custom", "output", "terminal-block"), inheritsSignal: true },
+      { ...port("IR/Serial 2", "custom", "output", "terminal-block"), inheritsSignal: true },
+      { ...port("IR/Serial 3", "custom", "output", "terminal-block"), inheritsSignal: true },
+      { ...port("IR/Serial 4", "custom", "output", "terminal-block"), inheritsSignal: true },
+      port("IR In", "ir", "input", "trs-eighth"),
+      port("Versiport 1", "gpio", "bidirectional"),
+      port("Versiport 2", "gpio", "bidirectional"),
+      port("Relay 1", "contact-closure", "output"),
+      port("Relay 2", "contact-closure", "output"),
+      port("USB (Host)", "usb", "bidirectional", "usb-a"),
+      port("infiNET EX (Gateway)", "rf", "bidirectional", "wireless"),
+    ],
+  },
+  // Crestron TSW-1060 — 10.1 in. wall mount touch screen (discontinued; PoE+ powered)
+  {
+    id: "c0a80101-031b-4000-8000-000000000749",
+    deviceType: "touch-screen",
+    label: "Crestron TSW-1060",
+    manufacturer: "Crestron",
+    modelNumber: "TSW-1060",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Inactive/Discontinued/T/TSW-1060-B-S",
+    searchTerms: ["crestron", "touch", "screen", "wall", "tsw-1060", "10 inch", "poe", "scheduling"],
+    powerDrawW: 12.9, // derived from 44 BTU/hr heat dissipation
+    poeDrawW: 30, // requests 30 W (PoE+ Class 4) without LLDP; 15.4 W from 802.3af (USB port disabled)
+    thermalBtuh: 44,
+    heightMm: 168,
+    widthMm: 260,
+    depthMm: 39,
+    weightKg: 0.68,
+    rackForm: "shelf-only",
+    ports: [
+      port("LAN (PoE+)", "ethernet", "bidirectional"),
+      port("USB (Light Bar)", "usb", "bidirectional", "usb-a"),
+    ],
+  },
+  // Crestron GLS sensors
+  {
+    id: "c0a80101-031c-4000-8000-000000000750",
+    deviceType: "occupancy-sensor",
+    label: "Crestron GLS-OIR-CSM-EX-BATT",
+    manufacturer: "Crestron",
+    modelNumber: "GLS-OIR-CSM-EX-BATT",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Lighting-and-Environmental/Sensors/Occupancy-Sensors/GLS-OIR-CSM-EX-BATT",
+    searchTerms: ["crestron", "occupancy", "sensor", "pir", "infinet", "wireless", "battery", "ceiling"],
+    heightMm: 31,
+    widthMm: 112,
+    depthMm: 112,
+    weightKg: 0.14, // with included 9V lithium battery; 10-year battery life
+    rackForm: "shelf-only",
+    ports: [
+      port("infiNET EX", "rf", "bidirectional", "wireless"),
+    ],
+  },
+  {
+    id: "c0a80101-031d-4000-8000-000000000751",
+    deviceType: "light-sensor",
+    label: "Crestron GLS-LDL-EX-BATT",
+    manufacturer: "Crestron",
+    modelNumber: "GLS-LDL-EX-BATT",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Lighting-and-Environmental/Sensors/Photosensors/GLS-LDL-EX-BATT",
+    searchTerms: ["crestron", "photosensor", "daylight", "light", "sensor", "infinet", "wireless", "battery"],
+    heightMm: 25,
+    widthMm: 71,
+    depthMm: 71,
+    weightKg: 0.03, // 2x AAA lithium batteries; 10-year battery life
+    rackForm: "shelf-only",
+    ports: [
+      port("infiNET EX", "rf", "bidirectional", "wireless"),
+    ],
+  },
+  {
+    id: "c0a80101-031e-4000-8000-000000000752",
+    deviceType: "light-sensor",
+    label: "Crestron GLS-LCCT",
+    manufacturer: "Crestron",
+    modelNumber: "GLS-LCCT",
+    referenceUrl: "https://www.crestron.com/Products/Catalog/Lighting-and-Environmental/Sensors/Photosensors/GLS-LCCT",
+    searchTerms: ["crestron", "solarsync", "daylight", "color", "temperature", "sensor", "cresnet", "outdoor", "ip67"],
+    powerDrawW: 5, // Cresnet power usage maximum while self-heating; 70 mW typical
+    thermalBtuh: 17,
+    heightMm: 71,
+    widthMm: 69,
+    depthMm: 69,
+    weightKg: 0.14,
+    rackForm: "shelf-only",
+    ports: [
+      port("NET (Cresnet)", "cresnet", "bidirectional"),
     ],
   },
   // Tally Systems
