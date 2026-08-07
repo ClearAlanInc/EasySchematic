@@ -816,4 +816,65 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // ── Generic amplifiers and loudspeakers ─────────────────────────
+  {
+    id: "c0a80101-0357-4000-8000-000000000809",
+    deviceType: "amplifier",
+    label: "Generic Stereo Audio Amplifier",
+    searchTerms: ["generic", "amplifier", "amp", "stereo", "2 channel"],
+    powerDrawW: 250, // nominal placeholder — adjust per design
+    ports: [
+      port("Audio In L", "analog-audio", "input", "xlr-3"),
+      port("Audio In R", "analog-audio", "input", "xlr-3"),
+      port("Speaker Out L", "speaker-level", "output"),
+      port("Speaker Out R", "speaker-level", "output"),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-0358-4000-8000-000000000810",
+    deviceType: "amplifier",
+    label: "Generic 4-Channel Audio Amplifier",
+    searchTerms: ["generic", "amplifier", "amp", "4 channel", "multichannel"],
+    powerDrawW: 500, // nominal placeholder — adjust per design
+    ports: [
+      ...ports("Audio In", "analog-audio", "input", 4, "xlr-3"),
+      ...ports("Speaker Out", "speaker-level", "output", 4),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-0359-4000-8000-000000000811",
+    deviceType: "amplifier",
+    label: "Generic 8-Channel Audio Amplifier",
+    searchTerms: ["generic", "amplifier", "amp", "8 channel", "multichannel"],
+    powerDrawW: 900, // nominal placeholder — adjust per design
+    ports: [
+      ...ports("Audio In", "analog-audio", "input", 8, "xlr-3"),
+      ...ports("Speaker Out", "speaker-level", "output", 8),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-035a-4000-8000-000000000812",
+    deviceType: "speaker",
+    label: "Generic Passive Loudspeaker",
+    searchTerms: ["generic", "speaker", "loudspeaker", "passive"],
+    ports: [
+      port("Speaker In", "speaker-level", "input"),
+      port("Link", "speaker-level", "output"),
+    ],
+  },
+  {
+    id: "c0a80101-035b-4000-8000-000000000813",
+    deviceType: "speaker",
+    label: "Generic Active (Powered) Loudspeaker",
+    searchTerms: ["generic", "speaker", "loudspeaker", "active", "powered", "self-powered"],
+    powerDrawW: 150, // nominal placeholder — adjust per design
+    ports: [
+      port("Audio In", "analog-audio", "input", "xlr-3"),
+      port("Audio Link", "analog-audio", "output", "xlr-3"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];

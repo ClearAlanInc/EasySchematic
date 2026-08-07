@@ -639,4 +639,24 @@ export const templates: DeviceTemplate[] = [
       port("DC Power", "power", "input", "barrel"),
     ],
   },
+  // ── Generic audio endpoints ─────────────────────────────────────
+  {
+    id: "c0a80101-0355-4000-8000-000000000807",
+    deviceType: "media-player",
+    label: "Generic Mono Audio Source",
+    searchTerms: ["generic", "audio", "source", "mono", "playback"],
+    ports: [
+      port("Audio Out", "analog-audio", "output", "xlr-3"),
+    ],
+  },
+  {
+    id: "c0a80101-0356-4000-8000-000000000808",
+    deviceType: "media-player",
+    label: "Generic Stereo Audio Source",
+    searchTerms: ["generic", "audio", "source", "stereo", "playback"],
+    ports: [
+      port("Audio Out L", "analog-audio", "output", "xlr-3"),
+      port("Audio Out R", "analog-audio", "output", "xlr-3"),
+    ],
+  },
 ];
