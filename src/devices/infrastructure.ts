@@ -1,4 +1,4 @@
-import { port, camLokSet, patchPanelCircuits, wallPlatePorts } from "./_helpers";
+import { port, ports, camLokSet, patchPanelCircuits, wallPlatePorts } from "./_helpers";
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
@@ -509,6 +509,22 @@ export const templates: DeviceTemplate[] = [
       port("Serial", "serial", "bidirectional"),
       port("AC Power 1", "power", "input"),
       port("AC Power 2", "power", "input"),
+    ],
+  },
+  // Televic D-Gate 48V power supply (drawing-derived ports; datasheet partner-gated)
+  {
+    id: "c0a80101-0368-4000-8000-000000000826",
+    deviceType: "power-distribution",
+    label: "Televic D-Gate PWR",
+    manufacturer: "Televic",
+    modelNumber: "71.98.2930",
+    referenceUrl: "https://televic.com/en/conference/products/central-equipment",
+    searchTerms: ["televic", "plixus", "d-gate", "dgate", "power", "48v", "71.98.2930"],
+    rackForm: "full",
+    ports: [
+      ...ports("48V Out", "power", "output", 6, "phoenix"),
+      port("TTL Out", "gpio", "output"),
+      port("AC Power", "power", "input"),
     ],
   },
 ];
