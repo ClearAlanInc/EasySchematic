@@ -35,6 +35,7 @@ import LoginDialog from "./LoginDialog";
 import CardCreatorDialog from "./CardCreatorDialog";
 import TemplateSyncDialog from "./TemplateSyncDialog";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps } from "../networkValidation";
+import { parseVlanList, formatVlanList } from "../vlanPropagation";
 import IpInput from "./IpInput";
 import FacePlateEditor from "./FacePlateEditor";
 import type { FacePlateLayout } from "../types";
@@ -2561,6 +2562,7 @@ function PortSection({
                   onDuplicate={() => onDuplicate(port.id)}
                   onUpdate={(u) => onUpdate(port.id, u)}
                   onAddSubHandle={onAddSubHandle}
+                  parentVlan={port.parentPortId ? ports.find((p) => p.id === port.parentPortId)?.networkConfig?.vlan : undefined}
                   isDragging={draggedPortId === port.id}
                   setDraggedPortId={setDraggedPortId}
                   dropTarget={dropTarget}
@@ -2611,6 +2613,7 @@ function PortRow({
   isLast,
   isHidden,
   onToggleVisibility,
+  parentVlan,
 }: {
   port: PortDraft;
   index: number;
@@ -2620,6 +2623,8 @@ function PortRow({
   onDuplicate: () => void;
   onUpdate: (updates: Partial<PortDraft>) => void;
   onAddSubHandle: (parentId: string, kind: "tcp" | "udp") => void;
+  /** Parent physical port's VLAN when this row is a sub-handle — shown as the inherited default. */
+  parentVlan?: number;
   isDragging: boolean;
   setDraggedPortId: (id: string | null) => void;
   dropTarget: { direction: PortDirection; index: number } | null;
@@ -3152,6 +3157,34 @@ function PortRow({
         </>
       )}
 
+      {/* Sub-handle VLAN tag override — streams inherit the parent physical port's
+          VLAN unless the device tags this stream onto a different one. */}
+      {NETWORK_SIGNAL_TYPES.has(port.signalType) && port.parentPortId && (
+        <div className="pl-6 mb-0.5 flex items-center gap-1.5">
+          <span className="text-[9px] text-[var(--color-text-muted)] shrink-0" title="VLAN this stream is tagged onto. Empty inherits the parent port's VLAN.">
+            VLAN tag:
+          </span>
+          <input
+            className="w-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+            type="number"
+            value={port.networkConfig?.vlan ?? ""}
+            onChange={(e) =>
+              onUpdate({
+                networkConfig: e.target.value
+                  ? { ...port.networkConfig, vlan: Number(e.target.value) }
+                  : port.networkConfig
+                    ? { ...port.networkConfig, vlan: undefined }
+                    : undefined,
+              })
+            }
+            placeholder={parentVlan != null ? `Inherit (${parentVlan})` : "Inherit"}
+            min={1}
+            max={4094}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* USB-C Power Delivery (per-port — USB-C doesn't pool a shared budget like PoE) */}
       {port.connectorType === "usb-c" && (
         <div className="pl-6 mb-0.5 flex items-center gap-1.5">
@@ -3215,7 +3248,11 @@ function PortNetworkSection({
 }) {
   const [open, setOpen] = useState(false);
   const c = config ?? {};
-  const hasData = c.ip || c.subnetMask || c.gateway || c.vlan || c.dhcp;
+  const hasData = c.ip || c.subnetMask || c.gateway || c.vlan || c.dhcp ||
+    c.vlanMode === "trunk" || c.trunkVlans?.length || c.trunkAllVlans || c.nativeVlan;
+  const isTrunkMode = c.vlanMode === "trunk";
+  const [trunkText, setTrunkText] = useState(() => formatVlanList(c.trunkVlans ?? []));
+  const trunkTextInvalid = isTrunkMode && !c.trunkAllVlans && parseVlanList(trunkText) === null;
 
   // Duplicate IP detection
   const nodes = useSchematicStore((s) => s.nodes);
@@ -3311,17 +3348,76 @@ function PortNetworkSection({
             placeholder="Gateway"
             disabled={c.dhcp}
           />
-          <input
-            className={`bg-[var(--color-surface)] border rounded px-1 py-0.5 text-[10px] outline-none ${
-              vlanInvalid ? "border-red-400" : "border-[var(--color-border)] focus:border-blue-500"
-            }`}
-            type="number"
-            value={c.vlan ?? ""}
-            onChange={(e) => onChange({ ...c, vlan: e.target.value ? Number(e.target.value) : undefined })}
-            placeholder="VLAN"
-            title={vlanInvalid ? "VLAN must be 1-4094" : undefined}
-            onKeyDown={(e) => e.stopPropagation()}
-          />
+          <div className="flex gap-1 col-span-2 items-center">
+            <select
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500 cursor-pointer"
+              value={isTrunkMode ? "trunk" : "access"}
+              onChange={(e) => {
+                if (e.target.value === "trunk") {
+                  // Access VLAN carries over as the trunk's native (untagged) VLAN.
+                  onChange({ ...c, vlanMode: "trunk", nativeVlan: c.nativeVlan ?? c.vlan, vlan: undefined });
+                } else {
+                  onChange({ ...c, vlanMode: undefined, vlan: c.vlan ?? c.nativeVlan, trunkVlans: undefined, trunkAllVlans: undefined, nativeVlan: undefined });
+                }
+              }}
+              title="Access carries one untagged VLAN. Trunk carries multiple tagged VLANs (802.1Q)."
+            >
+              <option value="access">Access</option>
+              <option value="trunk">Trunk</option>
+            </select>
+            {!isTrunkMode ? (
+              <input
+                className={`flex-1 min-w-0 bg-[var(--color-surface)] border rounded px-1 py-0.5 text-[10px] outline-none ${
+                  vlanInvalid ? "border-red-400" : "border-[var(--color-border)] focus:border-blue-500"
+                }`}
+                type="number"
+                value={c.vlan ?? ""}
+                onChange={(e) => onChange({ ...c, vlan: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="VLAN"
+                title={vlanInvalid ? "VLAN must be 1-4094" : "Access VLAN — propagates to connected ports"}
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <>
+                <label className="flex items-center gap-1 text-[9px] text-[var(--color-text-muted)] shrink-0" title="Permit every VLAN (1-4094) on this trunk">
+                  <input
+                    type="checkbox"
+                    checked={c.trunkAllVlans ?? false}
+                    onChange={(e) => onChange({ ...c, trunkAllVlans: e.target.checked || undefined })}
+                    className="cursor-pointer"
+                  />
+                  All
+                </label>
+                <input
+                  className={`flex-1 min-w-0 bg-[var(--color-surface)] border rounded px-1 py-0.5 text-[10px] outline-none ${
+                    trunkTextInvalid ? "border-red-400" : "border-[var(--color-border)] focus:border-blue-500"
+                  }`}
+                  type="text"
+                  value={trunkText}
+                  disabled={c.trunkAllVlans}
+                  onChange={(e) => {
+                    setTrunkText(e.target.value);
+                    const parsed = parseVlanList(e.target.value);
+                    if (parsed !== null) onChange({ ...c, trunkVlans: parsed.length > 0 ? parsed : undefined });
+                  }}
+                  placeholder="Allowed: 1,10,20-30"
+                  title={trunkTextInvalid ? "Use comma-separated VLANs or ranges, 1-4094" : "Allowed tagged VLANs (comma/range syntax)"}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                <input
+                  className="w-16 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500"
+                  type="number"
+                  value={c.nativeVlan ?? ""}
+                  onChange={(e) => onChange({ ...c, nativeVlan: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="Native"
+                  title="Native (untagged) VLAN on this trunk"
+                  min={1}
+                  max={4094}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </>
+            )}
+          </div>
           <select
             className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-1 py-0.5 text-[10px] outline-none focus:border-blue-500 cursor-pointer"
             value={linkSpeed ?? ""}

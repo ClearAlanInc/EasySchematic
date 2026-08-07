@@ -24,7 +24,18 @@ export interface PortNetworkConfig {
   ip?: string;
   subnetMask?: string;
   gateway?: string;
+  /** Access VLAN (vlanMode "access" or unset). Propagates one wire hop to connected
+   *  access ports — see vlanPropagation.ts. On a sub-handle this overrides the parent
+   *  physical port's VLAN for devices that tag per-stream. */
   vlan?: number;
+  /** Absent means "access" — pre-trunking files carry only `vlan`. */
+  vlanMode?: "access" | "trunk";
+  /** Allowed tagged VLANs when vlanMode is "trunk". Ignored when trunkAllVlans is set. */
+  trunkVlans?: number[];
+  /** Trunk permits all VLANs (1-4094) — the common switch default. */
+  trunkAllVlans?: boolean;
+  /** Untagged/native VLAN on a trunk port. */
+  nativeVlan?: number;
   dhcp?: boolean;
   /** Marks this port's address as the device's management interface — the one the
    *  "Open Management UI" action connects to. At most one port per device carries

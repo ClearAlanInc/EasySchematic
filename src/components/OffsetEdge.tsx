@@ -6,7 +6,8 @@ import {
 } from "@xyflow/react";
 import { useSchematicStore } from "../store";
 import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle, type DeviceData } from "../types";
-import { usbcPowerShortfallW } from "../connectorTypes";
+import { usbcPowerShortfallW, isVirtualSignal, NETWORK_SIGNAL_TYPES } from "../connectorTypes";
+import { vlanLinkInfo } from "../vlanPropagation";
 import { midCustomLabelPlacement } from "../stubPlacement";
 import { computeEdgeLengthEstimate, resolveCableLengthLabel } from "../cableLengthLabel";
 
@@ -89,6 +90,27 @@ function OffsetEdgeComponent({
       resolvePort(edge.target, edge.targetHandle),
     );
   });
+
+  // VLAN annotation for physical network links — derived live from the endpoint
+  // ports (like usbcShortfall) so edits and propagation show immediately.
+  // Serialized "label\0issue" to keep the selector primitive.
+  const vlanInfoStr = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    if (!edge?.data || isVirtualSignal(edge.data.signalType) || !NETWORK_SIGNAL_TYPES.has(edge.data.signalType)) return "";
+    const resolvePort = (nodeId: string, handle: string | null | undefined) => {
+      const node = s.nodes.find((n) => n.id === nodeId);
+      if (!node || node.type !== "device") return undefined;
+      const portId = (handle ?? "").replace(/-(in|out|rear|front)$/, "");
+      return (node.data as DeviceData).ports?.find((p) => p.id === portId);
+    };
+    const info = vlanLinkInfo(
+      resolvePort(edge.source, edge.sourceHandle),
+      resolvePort(edge.target, edge.targetHandle),
+    );
+    if (!info.label && !info.issue) return "";
+    return `${info.label ?? ""}\0${info.issue ?? ""}`;
+  });
+  const [vlanLabel, vlanIssue] = vlanInfoStr ? vlanInfoStr.split("\0") : ["", ""];
 
   // Check if this edge is hidden (part of a virtual pair, the secondary half)
   const isHiddenVirtualEdge = useSchematicStore((s) => s.hiddenVirtualEdgeIds.has(id));
@@ -616,6 +638,30 @@ function OffsetEdgeComponent({
     </div>
   ) : null;
 
+  // VLAN badge — a misconfigured link warns persistently in red; a healthy VLAN
+  // annotation appears only on hover/selection to keep dense networks readable.
+  const vlanBadge = (vlanIssue || (vlanLabel && (selected || isHovered))) ? (
+    <div
+      key="vlan"
+      title={vlanIssue || `This link carries ${vlanLabel}`}
+      style={{
+        position: "absolute",
+        transform: `translate(-50%, -50%) translate(${customMidPt.x}px, ${customMidPt.y - 14}px)`,
+        fontSize: 9,
+        fontWeight: 700,
+        lineHeight: 1.4,
+        color: "#fff",
+        background: vlanIssue ? "#dc2626" : "#2563eb",
+        padding: "0 4px",
+        borderRadius: 4,
+        whiteSpace: "nowrap",
+        pointerEvents: "auto",
+      }}
+    >
+      {vlanIssue ? `⚠ ${vlanLabel || "VLAN"}` : vlanLabel}
+    </div>
+  ) : null;
+
   // Cable-length badge (#100) — one per cable at the midpoint, nudged below the
   // centre so it clears a midpoint cable ID / custom label. Styled like the cable-ID
   // badge for a consistent set. Double-click opens the length editor (writes the same
@@ -687,6 +733,7 @@ function OffsetEdgeComponent({
       {customLabels}
       {cableLengthBadge}
       {usbcWarningBadge}
+      {vlanBadge}
       {reconnectVisuals}
     </EdgeLabelRenderer>
   ) : null;

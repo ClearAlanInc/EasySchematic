@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState, useCallback, useEffect } from "react";
 import { useSchematicStore } from "../store";
 import { computeNetworkReport, computeDhcpServerSummary, computePoeBudget, buildNetworkReportCsv, type NetworkReportRow } from "../networkReport";
-import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps, computeDhcpWarnings, computeSubnetConflicts, type DhcpWarning } from "../networkValidation";
+import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps, computeDhcpWarnings, computeSubnetConflicts, computeVlanConflicts, type DhcpWarning } from "../networkValidation";
 import {
   computePackList,
   computeDocumentSummary,
@@ -381,6 +381,12 @@ function NetworkReportTab() {
         nodeId: c.nodeId,
         portId: c.portId,
         type: "subnet-conflict" as const,
+        message: c.message,
+      })),
+      ...computeVlanConflicts(nodes, edges).map((c) => ({
+        nodeId: c.nodeId,
+        portId: c.portId,
+        type: "vlan-conflict" as const,
         message: c.message,
       })),
     ];

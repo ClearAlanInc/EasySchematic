@@ -57,6 +57,7 @@ import { orthogonalize, extractSegments, segmentsCross, type RoutedEdge, type Cr
 import { simplifyWaypoints, waypointsToSvgPath, waypointsToSvgPathWithHops } from "./pathfinding";
 import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, findAdaptersForSignalBridge, NETWORK_SIGNAL_TYPES, BARE_WIRE_CONNECTORS, areSignalsCompatibleViaConnector, areSignalPairsCompatible, effectiveSignalType, isVirtualSignal } from "./connectorTypes";
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
+import { findPropagationTargets, isTrunk, type PortRef } from "./vlanPropagation";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
@@ -1314,6 +1315,47 @@ export function getPortFromHandle(
   return ports.find((p) => p.id === baseId);
 }
 
+/** Write a VLAN into a set of ports (immutably). Used by VLAN propagation — see vlanPropagation.ts. */
+function applyVlanToNodes(nodes: SchematicNode[], targets: PortRef[], vlan: number): SchematicNode[] {
+  if (targets.length === 0) return nodes;
+  const byNode = new Map<string, Set<string>>();
+  for (const t of targets) {
+    if (!byNode.has(t.nodeId)) byNode.set(t.nodeId, new Set());
+    byNode.get(t.nodeId)!.add(t.portId);
+  }
+  return nodes.map((n) => {
+    const portIds = byNode.get(n.id);
+    if (!portIds || n.type !== "device") return n;
+    const data = n.data as DeviceData;
+    return {
+      ...n,
+      data: {
+        ...data,
+        ports: data.ports.map((p) =>
+          portIds.has(p.id) && p.networkConfig?.vlan !== vlan
+            ? { ...p, networkConfig: { ...p.networkConfig, vlan } }
+            : p,
+        ),
+      },
+    } as DeviceNode;
+  });
+}
+
+/** Propagate a VLAN one wire hop out from `origin` into connected access ports.
+ *  Mutates the store via `set`; callers are responsible for undo bookkeeping. */
+function propagateVlanFrom(
+  origin: PortRef,
+  vlan: number,
+  get: () => { nodes: SchematicNode[]; edges: ConnectionEdge[] },
+  set: (partial: { nodes: SchematicNode[] }) => void,
+): void {
+  const { nodes, edges } = get();
+  const targets = findPropagationTargets(origin, nodes, edges);
+  if (targets.length > 0) {
+    set({ nodes: applyVlanToNodes(nodes, targets, vlan) });
+  }
+}
+
 function removeOrphanedEdges(nodes: SchematicNode[], edges: ConnectionEdge[]): ConnectionEdge[] {
   return edges.filter((e) => {
     const srcNode = nodes.find((n) => n.id === e.source);
@@ -1703,6 +1745,41 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes: existingEdges === state.edges ? state.nodes : reconcileWaypointNodes(state.nodes, existingEdges),
       edges: [...existingEdges, newEdge],
     });
+
+    // ── Connect-time VLAN propagation ────────────────────────────────────
+    // A new physical network link pulls unconfigured access ports into the
+    // configured end's VLAN. VLAN 1 counts as default: a non-default end wins
+    // over it silently. When both ends carry different non-default VLANs,
+    // prompt before overwriting; declining keeps both (the wire shows a
+    // mismatch warning until one end is edited, which then wins everywhere).
+    if (
+      !stacksOnPhysical && sourcePort && targetPort &&
+      NETWORK_SIGNAL_TYPES.has(sourcePort.signalType) && NETWORK_SIGNAL_TYPES.has(targetPort.signalType) &&
+      !isTrunk(sourcePort.networkConfig) && !isTrunk(targetPort.networkConfig) &&
+      !sourcePort.parentPortId && !targetPort.parentPortId
+    ) {
+      const srcVlan = sourcePort.networkConfig?.vlan;
+      const tgtVlan = targetPort.networkConfig?.vlan;
+      const srcRef: PortRef = { nodeId: connection.source, portId: sourcePort.id };
+      const tgtRef: PortRef = { nodeId: connection.target, portId: targetPort.id };
+      let winner: { ref: PortRef; vlan: number } | undefined;
+      if (srcVlan != null && tgtVlan != null && srcVlan !== tgtVlan) {
+        if (tgtVlan === 1) winner = { ref: srcRef, vlan: srcVlan };
+        else if (srcVlan === 1) winner = { ref: tgtRef, vlan: tgtVlan };
+        else if (confirm(
+          `Connected ports have different VLANs (${srcVlan} on "${sourcePort.label}", ${tgtVlan} on "${targetPort.label}").\n\n` +
+          `OK applies VLAN ${srcVlan} to the connected port. Cancel keeps both and flags the mismatch.`,
+        )) {
+          winner = { ref: srcRef, vlan: srcVlan };
+        }
+      } else if (srcVlan != null && tgtVlan == null) {
+        winner = { ref: srcRef, vlan: srcVlan };
+      } else if (tgtVlan != null && srcVlan == null) {
+        winner = { ref: tgtRef, vlan: tgtVlan };
+      }
+      if (winner) propagateVlanFrom(winner.ref, winner.vlan, get, set);
+    }
+
     get().saveToLocalStorage();
   },
 
@@ -2517,6 +2594,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     });
     if (edgesChanged) {
       set({ edges: syncedEdges });
+    }
+
+    // Propagate edited access VLANs one wire hop to connected ports (last change wins).
+    // Sub-handles (parentPortId) carry per-stream tag overrides and don't propagate;
+    // trunk config and cleared VLANs don't propagate either.
+    if (oldNode) {
+      const oldPorts = new Map((oldNode.data as DeviceData).ports.map((p) => [p.id, p]));
+      for (const p of data.ports) {
+        const newVlan = p.networkConfig?.vlan;
+        if (newVlan == null || p.parentPortId || isTrunk(p.networkConfig)) continue;
+        if (oldPorts.get(p.id)?.networkConfig?.vlan === newVlan) continue;
+        propagateVlanFrom({ nodeId, portId: p.id }, newVlan, get, set);
+      }
     }
 
     get().saveToLocalStorage();

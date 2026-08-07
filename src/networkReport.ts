@@ -2,6 +2,7 @@ import type { SchematicNode, DeviceData, ConnectionEdge } from "./types";
 import { SIGNAL_LABELS } from "./types";
 import { NETWORK_SIGNAL_TYPES } from "./connectorTypes";
 import { findReachableDhcpServers } from "./networkValidation";
+import { formatVlanList, isTrunk } from "./vlanPropagation";
 import { getRoomLabel, escapeCsv } from "./packList";
 import { transformLabelNow } from "./labelCaseUtils";
 import type { ReportLayout } from "./reportLayout";
@@ -44,10 +45,22 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
 
     for (const port of data.ports) {
       const nc = port.networkConfig;
-      const hasConfig = nc && (nc.ip || nc.subnetMask || nc.gateway || nc.vlan || nc.dhcp);
+      const hasConfig = nc && (nc.ip || nc.subnetMask || nc.gateway || nc.vlan || nc.dhcp ||
+        isTrunk(nc) || nc.trunkVlans?.length || nc.nativeVlan);
       // addressable defaults to undefined (= yes) for network signal types, false = explicitly unchecked
       const isAddressable = NETWORK_SIGNAL_TYPES.has(port.signalType) && port.addressable !== false;
       if (!isAddressable && !hasConfig) continue;
+
+      // Trunk ports render their allowed list; sub-handle streams show the parent
+      // port's VLAN as inherited when they carry no override of their own.
+      let vlanCell = nc?.vlan != null ? String(nc.vlan) : "";
+      if (isTrunk(nc)) {
+        const allowed = nc!.trunkAllVlans ? "all" : formatVlanList(nc!.trunkVlans ?? []);
+        vlanCell = `Trunk ${allowed}${nc!.nativeVlan != null ? ` (native ${nc!.nativeVlan})` : ""}`;
+      } else if (!vlanCell && port.parentPortId) {
+        const parentVlan = data.ports.find((p) => p.id === port.parentPortId)?.networkConfig?.vlan;
+        if (parentVlan != null) vlanCell = `${parentVlan} (inherited)`;
+      }
 
       rows.push({
         nodeId: node.id,
@@ -60,7 +73,7 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
         ip: nc?.ip ?? "",
         subnetMask: nc?.subnetMask ?? "",
         gateway: nc?.gateway ?? "",
-        vlan: nc?.vlan != null ? String(nc.vlan) : "",
+        vlan: vlanCell,
         dhcp: nc?.dhcp ?? false,
         dhcpServerLabel: "",
         dhcpCovered: false,

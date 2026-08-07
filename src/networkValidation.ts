@@ -1,6 +1,7 @@
 import type { SchematicNode, DeviceData, DhcpServerConfig, SignalType } from "./types";
 import type { ConnectionEdge } from "./types";
 import { NETWORK_SIGNAL_TYPES } from "./connectorTypes";
+import { vlanLinkInfo } from "./vlanPropagation";
 
 /** Returns true if `ip` is a valid IPv4 address (4 octets, each 0-255). */
 export function isValidIpv4(ip: string): boolean {
@@ -243,12 +244,12 @@ export function findReachableDhcpServers(
     const s = edge.source;
     const t = edge.target;
 
-    // Check VLAN compatibility: if both ports have VLANs and they differ, skip
+    // Check VLAN compatibility (trunk-aware): a link with a VLAN issue —
+    // access mismatch, VLAN not allowed on a trunk, disjoint trunk lists —
+    // doesn't pass traffic between broadcast domains, so don't traverse it.
     const srcPort = resolvePort(nodeMap.get(s), edge.sourceHandle);
     const tgtPort = resolvePort(nodeMap.get(t), edge.targetHandle);
-    const srcVlan = srcPort?.networkConfig?.vlan;
-    const tgtVlan = tgtPort?.networkConfig?.vlan;
-    if (srcVlan != null && tgtVlan != null && srcVlan !== tgtVlan) continue;
+    if (vlanLinkInfo(srcPort, tgtPort).issue) continue;
 
     if (!adj.has(s)) adj.set(s, new Set());
     if (!adj.has(t)) adj.set(t, new Set());
@@ -284,7 +285,7 @@ export function findReachableDhcpServers(
 export interface DhcpWarning {
   nodeId: string;
   portId: string;
-  type: "no-server" | "ip-in-range" | "subnet-conflict";
+  type: "no-server" | "ip-in-range" | "subnet-conflict" | "vlan-conflict";
   message: string;
 }
 
@@ -408,6 +409,53 @@ export function computeSubnetConflicts(
         portId: tgtPort.id,
         message: `Subnet mismatch with ${srcLabel} (${srcPort.label}) — ${tgtIp}/${tgtMask} vs ${srcIp}/${srcMask}`,
       });
+    }
+  }
+
+  return conflicts;
+}
+
+export interface VlanConflict {
+  nodeId: string;
+  portId: string;
+  message: string;
+}
+
+/**
+ * Detect VLAN misconfiguration on directly connected network ports (trunk-aware):
+ * access/access VLAN mismatches, access VLANs not permitted by the far trunk,
+ * and trunk/trunk links whose allowed lists don't overlap.
+ */
+export function computeVlanConflicts(
+  nodes: SchematicNode[],
+  edges: ConnectionEdge[],
+): VlanConflict[] {
+  const nodeMap = new Map<string, SchematicNode>(nodes.map((n) => [n.id, n]));
+  const conflicts: VlanConflict[] = [];
+  const seen = new Set<string>();
+
+  for (const edge of collapseStubEdges(nodes, edges)) {
+    if (!NETWORK_SIGNAL_TYPES.has(edge.signalType)) continue;
+
+    const srcPort = resolvePort(nodeMap.get(edge.source), edge.sourceHandle);
+    const tgtPort = resolvePort(nodeMap.get(edge.target), edge.targetHandle);
+    const { issue } = vlanLinkInfo(srcPort, tgtPort);
+    if (!issue || !srcPort || !tgtPort) continue;
+
+    const srcNode = nodeMap.get(edge.source);
+    const tgtNode = nodeMap.get(edge.target);
+    const srcLabel = srcNode?.type === "device" ? (srcNode.data as DeviceData).label : "?";
+    const tgtLabel = tgtNode?.type === "device" ? (tgtNode.data as DeviceData).label : "?";
+
+    const srcKey = `${edge.source}:${srcPort.id}`;
+    if (!seen.has(srcKey)) {
+      seen.add(srcKey);
+      conflicts.push({ nodeId: edge.source, portId: srcPort.id, message: `${issue} — link to ${tgtLabel} (${tgtPort.label})` });
+    }
+    const tgtKey = `${edge.target}:${tgtPort.id}`;
+    if (!seen.has(tgtKey)) {
+      seen.add(tgtKey);
+      conflicts.push({ nodeId: edge.target, portId: tgtPort.id, message: `${issue} — link to ${srcLabel} (${srcPort.label})` });
     }
   }
 
