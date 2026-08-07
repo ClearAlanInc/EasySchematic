@@ -832,6 +832,18 @@ export const templates: DeviceTemplate[] = [
     ],
   },
   {
+    id: "c0a80101-035e-4000-8000-000000000816",
+    deviceType: "amplifier",
+    label: "Generic 2-Channel Audio Amplifier",
+    searchTerms: ["generic", "amplifier", "amp", "2 channel", "multichannel"],
+    powerDrawW: 250, // nominal placeholder — adjust per design
+    ports: [
+      ...ports("Audio In", "analog-audio", "input", 2, "xlr-3"),
+      ...ports("Speaker Out", "speaker-level", "output", 2),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
     id: "c0a80101-0358-4000-8000-000000000810",
     deviceType: "amplifier",
     label: "Generic 4-Channel Audio Amplifier",
