@@ -1716,4 +1716,38 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // Televic Plixus MME + Dante ("D-Gate MME" in HoC drawings) — conference engine
+  {
+    id: "c0a80101-0365-4000-8000-000000000823",
+    deviceType: "conference-system",
+    label: "Televic Plixus MME Dante",
+    manufacturer: "Televic",
+    modelNumber: "71.98.2905",
+    referenceUrl: "https://televic.com/en/conference/products/central-equipment-for-conference-systems/plixus-multimedia-engine",
+    searchTerms: ["televic", "plixus", "mme", "dante", "conference", "d-gate", "dgate", "multimedia engine", "71.98.2905"],
+    powerDrawW: 400, // integrated 400 W supply (also powers downstream conference units)
+    weightKg: 8.2,
+    rackForm: "full",
+    ports: [
+      // Plixus conference network rides Cat5e — protocol noted in the label
+      port("CN Port A (Plixus)", "ethernet", "bidirectional"),
+      port("CN Port B (Plixus)", "ethernet", "bidirectional"),
+      port("CN Port C (Plixus)", "ethernet", "bidirectional"),
+      port("CN Port D (Plixus)", "ethernet", "bidirectional"),
+      port("Dante 1", "dante", "bidirectional"),
+      port("Dante 2", "dante", "bidirectional"),
+      port("LAN", "ethernet", "bidirectional"),
+      port("SDI In", "sdi", "input"),
+      port("Aux In 1", "analog-audio", "input", "xlr-3"),
+      port("Aux In 2", "analog-audio", "input", "xlr-3"),
+      port("Aux Out 1 (Bal)", "analog-audio", "output", "xlr-3"),
+      port("Aux Out 2", "analog-audio", "output", "rca"),
+      port("Aux Out 3", "analog-audio", "output", "rca"),
+      port("Headphones", "analog-audio", "output", "trs-quarter"),
+      port("USB 1", "usb", "bidirectional", "usb-a"),
+      port("USB 2", "usb", "bidirectional", "usb-a"),
+      port("48V Out", "power", "output", "phoenix"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];
