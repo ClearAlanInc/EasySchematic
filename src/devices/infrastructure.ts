@@ -486,4 +486,29 @@ export const templates: DeviceTemplate[] = [
     powerDrawW: 0,
     ports: wallPlatePorts("Port ", 2, { signalType: "analog-audio", frontConnectorType: "xlr-3" }),
   },
+  // Evertz 7800FR-QT — 3RU multiframe, redundant PSU (+78PQT) (client package)
+  {
+    id: "c0a80101-0364-4000-8000-000000000822",
+    deviceType: "frame",
+    label: "Evertz 7800FR-QT",
+    manufacturer: "Evertz",
+    modelNumber: "7800FR-QT",
+    referenceUrl: "https://evertz.com/products/catalogue/7800FR.pdf",
+    searchTerms: ["evertz", "7800", "multiframe", "frame", "7700", "modular", "3ru"],
+    powerDrawW: 450, // frame maximum; 360 W module load
+    heightMm: 133,
+    widthMm: 483,
+    depthMm: 368,
+    weightKg: 7.9, // empty
+    rackForm: "full",
+    ports: [
+      port("Ref In 1", "genlock", "input"),
+      port("Ref In 2", "genlock", "input"),
+      port("Frame Status (Tally)", "contact-closure", "output"),
+      port("LAN (Frame Ctrl)", "ethernet", "bidirectional"),
+      port("Serial", "serial", "bidirectional"),
+      port("AC Power 1", "power", "input"),
+      port("AC Power 2", "power", "input"),
+    ],
+  },
 ];

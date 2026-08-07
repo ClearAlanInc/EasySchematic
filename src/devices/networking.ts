@@ -1140,4 +1140,25 @@ export const templates: DeviceTemplate[] = [
       port("DC Power (12V)", "power", "input", "barrel"),
     ],
   },
+  // Evertz NUC-AV-100 — NUCLEUS Session Manager appliance (client package)
+  {
+    id: "c0a80101-0363-4000-8000-000000000821",
+    deviceType: "computer",
+    label: "Evertz NUC-AV-100",
+    manufacturer: "Evertz",
+    modelNumber: "NUC-AV-100",
+    referenceUrl: "https://av.evertz.com/av-solutions/by-product/nucleus-platform/session-manager/",
+    searchTerms: ["evertz", "nucleus", "session manager", "nuc", "av-100", "management", "controller"],
+    rackForm: "shelf-only",
+    ports: [
+      port("HDMI Out", "hdmi", "output"),
+      port("DP Out", "displayport", "output"),
+      port("VGA Out", "vga", "output"),
+      port("USB 1", "usb", "bidirectional", "usb-a"),
+      port("USB 2", "usb", "bidirectional", "usb-a"),
+      port("LAN 1", "ethernet", "bidirectional"),
+      port("LAN 2", "ethernet", "bidirectional"),
+      port("DC Power", "power", "input", "barrel"),
+    ],
+  },
 ];
