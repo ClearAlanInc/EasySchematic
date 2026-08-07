@@ -334,12 +334,20 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     );
   };
 
-  /** Render a passthrough port as a full-width row with rear (left) and front (right) handles. */
+  /** Render a passthrough port as a full-width row with a handle on each edge.
+   *  Patch panels read rack-style: rear (field termination) left, front (patch) right.
+   *  Wall plates read signal-flow style: the front jack is where the local device
+   *  plugs in, so front goes LEFT (input side) and rear RIGHT (feeding onward). */
   const renderPassthroughPort = (port: Port) => {
     const rearId = `${port.id}-rear`;
     const frontId = `${port.id}-front`;
+    const frontOnLeft = data.deviceType === "wall-plate";
+    const leftId = frontOnLeft ? frontId : rearId;
+    const rightId = frontOnLeft ? rearId : frontId;
     const rearConnected = connectedHandles.has(rearId);
     const frontConnected = connectedHandles.has(frontId);
+    const leftConnected = frontOnLeft ? frontConnected : rearConnected;
+    const rightConnected = frontOnLeft ? rearConnected : frontConnected;
     // For inheriting ports, pick up the connected edge's signal type reactively from
     // signalByHandle (derived from connectedEdgeSignalsStr selector). Prefer rear side;
     // fall back to front, then to the port's stored placeholder.
@@ -354,12 +362,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         className="flex justify-between items-center relative h-4"
         onContextMenu={(e) => openPortMenu(e, port)}
       >
-        {/* Rear handle — left edge, source (ConnectionMode.Loose; isValidConnection enforces direction) */}
+        {/* Left handle — source (ConnectionMode.Loose; isValidConnection enforces direction) */}
         <Handle
           type="source"
           position={Position.Left}
-          id={rearId}
-          data-connected={rearConnected || undefined}
+          id={leftId}
+          data-connected={leftConnected || undefined}
           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-left-[5px]"
           style={{ background: signalColor, top: "50%" }}
         />
@@ -370,12 +378,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         >
           ⇔ {displayLabel(port.label)}
         </span>
-        {/* Front handle — right edge, source (same reasoning as rear) */}
+        {/* Right handle — source (same reasoning as left) */}
         <Handle
           type="source"
           position={Position.Right}
-          id={frontId}
-          data-connected={frontConnected || undefined}
+          id={rightId}
+          data-connected={rightConnected || undefined}
           className="!w-2.5 !h-2.5 !border-2 !border-[var(--color-border)] !-right-[5px]"
           style={{ background: signalColor, top: "50%" }}
         />
