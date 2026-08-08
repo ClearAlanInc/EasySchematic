@@ -1795,4 +1795,29 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // QSC Q-SYS Server Core X10 — Dell-based 1RU AV&C processor (client package)
+  {
+    id: "c0a80101-0369-4000-8000-000000000827",
+    deviceType: "audio-dsp",
+    label: "QSC Q-SYS Server Core X10",
+    manufacturer: "QSC",
+    modelNumber: "Server Core X10",
+    referenceUrl: "https://www.qsys.com/resource-files/productresources/dn/dsp_cores/server_core_x10/q_dn_server_core_x10_specsheet.pdf",
+    searchTerms: ["qsc", "q-sys", "core", "x10", "server", "dsp", "audio processor", "aes67", "dante"],
+    powerDrawW: 240, // 2.0 A current draw @ 120 VAC; 136 BTU/hr typical dissipation
+    thermalBtuh: 136,
+    voltage: "100-240V",
+    heightMm: 44,
+    widthMm: 438,
+    depthMm: 460,
+    rackForm: "full",
+    ports: [
+      port("LAN A (Q-LAN, 2.5G)", "ethernet", "bidirectional"),
+      port("LAN B (Q-LAN, 2.5G)", "ethernet", "bidirectional"),
+      port("AUX A (2.5G)", "ethernet", "bidirectional"),
+      port("AUX B (2.5G)", "ethernet", "bidirectional"),
+      port("RS-232", "serial", "bidirectional", "db9"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];

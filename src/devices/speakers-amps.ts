@@ -1,4 +1,4 @@
-import { port, ports } from "./_helpers";
+import { port, ports, trunkPort } from "./_helpers";
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
@@ -886,6 +886,28 @@ export const templates: DeviceTemplate[] = [
     ports: [
       port("Audio In", "analog-audio", "input", "xlr-3"),
       port("Audio Link", "analog-audio", "output", "xlr-3"),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  // QSC MPA-Q 8x250 — 8x250W Q-SYS network amplifier (client package)
+  {
+    id: "c0a80101-036a-4000-8000-000000000828",
+    deviceType: "amplifier",
+    label: "QSC MPA-Q 8x250",
+    manufacturer: "QSC",
+    modelNumber: "MPA-Q 8x250",
+    referenceUrl: "https://www.qsys.com/resource-files/productresources/amp/mpa-q/q_amp_mpa-q_series_spec_sheet.pdf",
+    searchTerms: ["qsc", "mpa-q", "amplifier", "q-sys", "network", "8 channel", "70v", "100v"],
+    voltage: "100-240V",
+    rackForm: "full", // 2RU
+    ports: [
+      ...ports("Input", "analog-audio", "input", 8, "phoenix"),
+      ...ports("Speaker Out", "speaker-level", "output", 8, "phoenix"),
+      trunkPort("GPI In", "gpio", "input", 4, "phoenix"),
+      port("Relay 1", "contact-closure", "output"),
+      port("Relay 2", "contact-closure", "output"),
+      port("LAN A (Q-LAN, PoE)", "ethernet", "bidirectional"),
+      port("LAN B (Q-LAN)", "ethernet", "bidirectional"),
       port("AC Power", "power", "input"),
     ],
   },
