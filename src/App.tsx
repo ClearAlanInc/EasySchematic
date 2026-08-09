@@ -1618,7 +1618,7 @@ function SchematicCanvas() {
       elevateEdgesOnSelect={false}
       deleteKeyCode={null}
       selectionKeyCode={null}
-      multiSelectionKeyCode={null}
+      multiSelectionKeyCode={["Shift", "Meta", "Control"]}
       proOptions={{ hideAttribution: true }}
       panOnScroll={false}
       zoomOnScroll={false}
