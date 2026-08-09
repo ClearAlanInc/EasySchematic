@@ -1,4 +1,4 @@
-import { port } from "./_helpers";
+import { port, ports } from "./_helpers";
 import type { DeviceTemplate } from "../types";
 
 export const templates: DeviceTemplate[] = [
@@ -71,6 +71,94 @@ export const templates: DeviceTemplate[] = [
       port("HDMI Out", "hdmi", "output"),
       port("RS-232", "serial", "bidirectional"),
       port("AC Power", "power", "input"),
+    ],
+  },
+  // ── Raritan Dominion KVM suite (client package; drawing-derived) ──
+  {
+    id: "c0a80101-0377-4000-8000-000000000841",
+    deviceType: "kvm-extender",
+    label: "Raritan DKX3-216",
+    manufacturer: "Raritan",
+    modelNumber: "DKX3-216",
+    referenceUrl: "https://www.raritan.com/products/kvm-serial/kvm-over-ip-switches/dominion-kx-iii",
+    searchTerms: ["raritan", "dominion", "dkx3", "kvm", "over ip", "switch", "16 port"],
+    rackForm: "full",
+    ports: [
+      // CPU ports carry Raritan KVM-over-CatX to CIM dongles
+      ...ports("CPU (CIM)", "ethernet", "bidirectional", 16),
+      port("LAN 1", "ethernet", "bidirectional"),
+      port("LAN 2", "ethernet", "bidirectional"),
+      port("Local DVI-D Out", "dvi", "output"),
+      port("Local USB", "usb", "bidirectional", "usb-a"),
+      port("Modem", "serial", "bidirectional", "db9"),
+      port("AC Power 1", "power", "input"),
+      port("AC Power 2", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-0378-4000-8000-000000000842",
+    deviceType: "kvm-extender",
+    label: "Raritan DKX3-UST",
+    manufacturer: "Raritan",
+    modelNumber: "DKX3-UST",
+    referenceUrl: "https://www.raritan.com/products/kvm-serial/kvm-over-ip-switches/user-station",
+    searchTerms: ["raritan", "dominion", "dkx3-ust", "user station", "kvm"],
+    rackForm: "shelf-only",
+    ports: [
+      port("HDMI Out", "hdmi", "output"),
+      port("DP Out", "displayport", "output"),
+      port("Audio Out", "analog-audio", "output", "trs-eighth"),
+      port("Mic In", "analog-audio", "input", "trs-eighth"),
+      ...ports("USB", "usb", "bidirectional", 4, "usb-a"),
+      port("COM 1", "serial", "bidirectional", "db9"),
+      port("COM 2", "serial", "bidirectional", "db9"),
+      port("LAN 1", "ethernet", "bidirectional"),
+      port("LAN 2", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-0379-4000-8000-000000000843",
+    deviceType: "monitor",
+    label: "Raritan T1700-LED",
+    manufacturer: "Raritan",
+    modelNumber: "T1700-LED",
+    referenceUrl: "https://www.raritan.com/products/kvm-serial/rack-lcd-consoles",
+    searchTerms: ["raritan", "t1700", "rack", "console", "drawer", "lcd", "kvm monitor"],
+    rackForm: "full",
+    ports: [
+      port("DVI In", "dvi", "input"),
+      port("VGA In", "vga", "input"),
+      port("USB", "usb", "bidirectional", "usb-b"),
+      port("AC Power", "power", "input"),
+    ],
+  },
+  {
+    id: "c0a80101-037a-4000-8000-000000000844",
+    deviceType: "adapter",
+    label: "Raritan D2CIM-DVUSB-DP",
+    manufacturer: "Raritan",
+    modelNumber: "D2CIM-DVUSB-DP",
+    referenceUrl: "https://www.raritan.com/products/kvm-serial/kvm-over-ip-switches/cims",
+    searchTerms: ["raritan", "cim", "d2cim", "dvusb", "displayport", "dongle", "kvm"],
+    ports: [
+      port("DP (to PC)", "displayport", "input"),
+      port("USB (to PC)", "usb", "bidirectional", "usb-b"),
+      port("CatX (to KVM)", "ethernet", "bidirectional"),
+    ],
+  },
+  {
+    id: "c0a80101-037b-4000-8000-000000000845",
+    deviceType: "adapter",
+    label: "Raritan D3CIM-DVUSB-DP",
+    manufacturer: "Raritan",
+    modelNumber: "D3CIM-DVUSB-DP",
+    referenceUrl: "https://www.raritan.com/products/kvm-serial/kvm-over-ip-switches/cims",
+    searchTerms: ["raritan", "cim", "d3cim", "dvusb", "displayport", "dongle", "kvm"],
+    ports: [
+      port("DP (to PC)", "displayport", "input"),
+      port("USB (to PC)", "usb", "bidirectional", "usb-b"),
+      port("CatX (to KVM)", "ethernet", "bidirectional"),
     ],
   },
 ];

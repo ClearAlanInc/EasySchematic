@@ -1161,4 +1161,45 @@ export const templates: DeviceTemplate[] = [
       port("DC Power", "power", "input", "barrel"),
     ],
   },
+  // Cisco Catalyst C9300-48UXM-A — 48-port mGig UPOE (client package; drawing-derived)
+  {
+    id: "c0a80101-0375-4000-8000-000000000839",
+    deviceType: "network-switch",
+    label: "Cisco C9300-48UXM-A",
+    manufacturer: "Cisco",
+    modelNumber: "C9300-48UXM-A",
+    referenceUrl: "https://www.cisco.com/site/us/en/products/networking/switches/catalyst-9300-series-switches/index.html",
+    searchTerms: ["cisco", "catalyst", "c9300", "48uxm", "switch", "upoe", "mgig", "managed"],
+    poeBudgetW: 822, // UPOE budget with 1100 W PSU
+    voltage: "100-240V",
+    rackForm: "full",
+    ports: [
+      ...ports("PoE Port", "ethernet", "bidirectional", 48),
+      port("10GE Port 49", "ethernet", "bidirectional"),
+      port("10GE Port 50", "ethernet", "bidirectional"),
+      port("SFP Port 51", "ethernet", "bidirectional", "sfp"),
+      port("SFP Port 52", "ethernet", "bidirectional", "sfp"),
+      port("Mgmt", "ethernet", "bidirectional"),
+      port("Console (RJ45)", "serial", "bidirectional", "rj45"),
+      port("AC Power 1", "power", "input"),
+      port("AC Power 2", "power", "input"),
+    ],
+  },
+  // Cisco SG350-10 — 10-port GbE managed (client package; drawing-derived)
+  {
+    id: "c0a80101-0376-4000-8000-000000000840",
+    deviceType: "network-switch",
+    label: "Cisco SG350-10",
+    manufacturer: "Cisco",
+    modelNumber: "SG350-10",
+    referenceUrl: "https://www.cisco.com/c/en/us/support/switches/sg350-10-10-port-gigabit-managed-switch/model.html",
+    searchTerms: ["cisco", "sg350", "switch", "10 port", "gigabit", "managed"],
+    rackForm: "shelf-only",
+    ports: [
+      ...ports("Port", "ethernet", "bidirectional", 8),
+      port("Port 9 (Combo)", "ethernet", "bidirectional"),
+      port("Port 10 (Combo)", "ethernet", "bidirectional"),
+      port("DC Power", "power", "input", "barrel"),
+    ],
+  },
 ];
