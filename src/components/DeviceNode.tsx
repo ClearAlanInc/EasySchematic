@@ -165,6 +165,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   // Port hover details card (#hover-features). Tracks the hovered port and the
   // cursor position; the card itself renders into document.body via HoverCard.
   const [hoverPort, setHoverPort] = useState<{ port: Port; x: number; y: number } | null>(null);
+  const [hoverDevice, setHoverDevice] = useState<{ x: number; y: number } | null>(null);
+  const deviceHoverProps = {
+    onMouseEnter: (e: React.MouseEvent) => setHoverDevice({ x: e.clientX, y: e.clientY }),
+    onMouseMove: (e: React.MouseEvent) => setHoverDevice({ x: e.clientX, y: e.clientY }),
+    onMouseLeave: () => setHoverDevice(null),
+  };
   const portHoverProps = (port: Port) => ({
     onMouseEnter: (e: React.MouseEvent) => setHoverPort({ port, x: e.clientX, y: e.clientY }),
     onMouseMove: (e: React.MouseEvent) => setHoverPort({ port, x: e.clientX, y: e.clientY }),
@@ -202,6 +208,29 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         {vlanText && <HoverRow label="VLAN" value={vlanText} />}
         {port.multiConnect && <HoverRow label="Connections" value="multiple allowed" />}
         {port.notes && <div className="mt-1 text-[var(--color-text-muted)] whitespace-pre-wrap">{port.notes}</div>}
+      </HoverCard>
+    );
+  };
+
+  const renderDeviceHoverCard = () => {
+    if (!hoverDevice || hoverPort) return null;
+    const dims = [data.heightMm, data.widthMm, data.depthMm];
+    const dimText = dims.every((d) => d != null) ? `${data.heightMm} × ${data.widthMm} × ${data.depthMm} mm` : null;
+    const connected = data.ports.filter((p) => isPortConnected(p, connectedHandles)).length;
+    return (
+      <HoverCard x={hoverDevice.x} y={hoverDevice.y}>
+        <HoverTitle text={displayLabel(data.label)} />
+        {(data.manufacturer || data.modelNumber) && (
+          <HoverRow label="Model" value={[data.manufacturer, data.modelNumber].filter(Boolean).join(" ")} />
+        )}
+        <HoverRow label="Type" value={data.deviceType} />
+        {data.hostname && data.hostname !== data.label && <HoverRow label="Hostname" value={data.hostname} />}
+        <HoverRow label="Ports" value={`${connected} of ${data.ports.length} connected`} />
+        {data.powerDrawW != null && <HoverRow label="Power" value={`${data.powerDrawW} W`} />}
+        {data.poeBudgetW != null && <HoverRow label="PoE budget" value={`${data.poeBudgetW} W`} />}
+        {data.poeDrawW != null && <HoverRow label="PoE draw" value={`${data.poeDrawW} W`} />}
+        {dimText && <HoverRow label="Size" value={dimText} />}
+        {data.weightKg != null && <HoverRow label="Weight" value={`${data.weightKg} kg`} />}
       </HoverCard>
     );
   };
@@ -530,6 +559,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           paddingTop: pt,
           paddingBottom: pb,
         }}
+        {...deviceHoverProps}
       >
         <div
           className="flex items-center justify-center"
@@ -542,7 +572,6 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                 : "text-xs font-semibold text-[var(--color-text-heading)] truncate leading-tight"
             }
             style={labelStyle}
-            title={displayLabel(resolvedLabel.text)}
           >
             {displayLabel(resolvedLabel.text)}
           </span>
@@ -798,6 +827,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       {renderFooterAuxBlock(footerAuxRows)}
       </div>
       {renderPortHoverCard()}
+      {renderDeviceHoverCard()}
     </div>
   );
 }
