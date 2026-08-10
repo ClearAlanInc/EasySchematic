@@ -6,7 +6,15 @@ import type { ReactNode } from "react";
  * can never be clipped by node bounds or the canvas transform. Used by the
  * port and wire hover details (#hover-features).
  */
-export function HoverCard({ x, y, children }: { x: number; y: number; children: ReactNode }) {
+export function HoverCard({ x, y, children, interactive, onMouseEnter, onMouseLeave }: {
+  x: number;
+  y: number;
+  children: ReactNode;
+  /** Accept pointer events (for cards with clickable content, e.g. password reveal). */
+  interactive?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
   // Offset from the cursor, clamped so the card stays on screen.
   const pad = 14;
   const maxW = 300;
@@ -21,8 +29,10 @@ export function HoverCard({ x, y, children }: { x: number; y: number; children: 
         bottom: flipUp ? window.innerHeight - y + pad : undefined,
         maxWidth: maxW,
         zIndex: 10000,
-        pointerEvents: "none",
+        pointerEvents: interactive ? "auto" : "none",
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg px-2.5 py-2 text-[11px] leading-snug text-[var(--color-text)]"
     >
       {children}

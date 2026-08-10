@@ -1,4 +1,4 @@
-import { memo, useMemo, useCallback, useState } from "react";
+import { memo, useMemo, useCallback, useState, useRef } from "react";
 import { HoverCard, HoverRow, HoverTitle } from "./HoverCard";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
@@ -167,10 +167,32 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
   // cursor position; the card itself renders into document.body via HoverCard.
   const [hoverPort, setHoverPort] = useState<{ port: Port; x: number; y: number } | null>(null);
   const [hoverDevice, setHoverDevice] = useState<{ x: number; y: number } | null>(null);
+  // Password stays masked until clicked; reset whenever the card closes.
+  const [showPassword, setShowPassword] = useState(false);
+  // The device card accepts clicks (password reveal), so hide on a short delay
+  // to let the cursor travel from the header into the card without it vanishing.
+  const deviceHideTimer = useRef<number | null>(null);
+  const cancelDeviceHide = () => {
+    if (deviceHideTimer.current != null) {
+      window.clearTimeout(deviceHideTimer.current);
+      deviceHideTimer.current = null;
+    }
+  };
+  const hideDeviceCard = () => {
+    cancelDeviceHide();
+    setHoverDevice(null);
+    setShowPassword(false);
+  };
   const deviceHoverProps = {
-    onMouseEnter: (e: React.MouseEvent) => setHoverDevice({ x: e.clientX, y: e.clientY }),
+    onMouseEnter: (e: React.MouseEvent) => {
+      cancelDeviceHide();
+      setHoverDevice({ x: e.clientX, y: e.clientY });
+    },
     onMouseMove: (e: React.MouseEvent) => setHoverDevice({ x: e.clientX, y: e.clientY }),
-    onMouseLeave: () => setHoverDevice(null),
+    onMouseLeave: () => {
+      cancelDeviceHide();
+      deviceHideTimer.current = window.setTimeout(hideDeviceCard, 150);
+    },
   };
   const portHoverProps = (port: Port) => ({
     onMouseEnter: (e: React.MouseEvent) => setHoverPort({ port, x: e.clientX, y: e.clientY }),
@@ -226,7 +248,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       ? (isEncrypted(data.password) ? decryptSecret(data.password) : data.password)
       : null;
     return (
-      <HoverCard x={hoverDevice.x} y={hoverDevice.y}>
+      <HoverCard
+        x={hoverDevice.x}
+        y={hoverDevice.y}
+        interactive={!!mgmtPassword}
+        onMouseEnter={cancelDeviceHide}
+        onMouseLeave={hideDeviceCard}
+      >
         <HoverTitle text={displayLabel(data.label)} />
         {(data.manufacturer || data.modelNumber) && (
           <HoverRow label="Model" value={[data.manufacturer, data.modelNumber].filter(Boolean).join(" ")} />
@@ -243,7 +271,21 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
           <div className="mt-1 pt-1 border-t border-[var(--color-border)]/60">
             {mgmtIp && <HoverRow label="Mgmt IP" value={mgmtIp} />}
             {data.username && <HoverRow label="Username" value={data.username} />}
-            {mgmtPassword && <HoverRow label="Password" value={mgmtPassword} />}
+            {mgmtPassword && (
+              <HoverRow
+                label="Password"
+                value={
+                  <button
+                    type="button"
+                    className="cursor-pointer hover:text-[var(--color-text)] underline decoration-dotted underline-offset-2"
+                    title={showPassword ? "Click to hide" : "Click to reveal"}
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? mgmtPassword : "••••••••"}
+                  </button>
+                }
+              />
+            )}
           </div>
         )}
       </HoverCard>
