@@ -17,6 +17,7 @@ import { useDisplayLabel } from "../labelCaseUtils";
 import { resolveDeviceLabel } from "../displayName";
 import { isPortConnected } from "../portVisibility";
 import { isVirtualSignal, NETWORK_SIGNAL_TYPES } from "../connectorTypes";
+import { decryptSecret, isEncrypted } from "../credentials";
 
 type ColumnItem =
   | { type: "port"; port: Port }
@@ -217,6 +218,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     const dims = [data.heightMm, data.widthMm, data.depthMm];
     const dimText = dims.every((d) => d != null) ? `${data.heightMm} × ${data.widthMm} × ${data.depthMm} mm` : null;
     const connected = data.ports.filter((p) => isPortConnected(p, connectedHandles)).length;
+    // Management block: shown only when a port is flagged as the management
+    // interface. Password deciphers the at-rest obfuscation (see credentials.ts).
+    const mgmtPort = data.ports.find((p) => p.networkConfig?.isManagement);
+    const mgmtIp = mgmtPort ? (mgmtPort.networkConfig?.ip || (mgmtPort.networkConfig?.dhcp ? "DHCP" : null)) : null;
+    const mgmtPassword = data.password
+      ? (isEncrypted(data.password) ? decryptSecret(data.password) : data.password)
+      : null;
     return (
       <HoverCard x={hoverDevice.x} y={hoverDevice.y}>
         <HoverTitle text={displayLabel(data.label)} />
@@ -231,6 +239,13 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         {data.poeDrawW != null && <HoverRow label="PoE draw" value={`${data.poeDrawW} W`} />}
         {dimText && <HoverRow label="Size" value={dimText} />}
         {data.weightKg != null && <HoverRow label="Weight" value={`${data.weightKg} kg`} />}
+        {mgmtPort && (
+          <div className="mt-1 pt-1 border-t border-[var(--color-border)]/60">
+            {mgmtIp && <HoverRow label="Mgmt IP" value={mgmtIp} />}
+            {data.username && <HoverRow label="Username" value={data.username} />}
+            {mgmtPassword && <HoverRow label="Password" value={mgmtPassword} />}
+          </div>
+        )}
       </HoverCard>
     );
   };
