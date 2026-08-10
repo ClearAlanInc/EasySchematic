@@ -911,4 +911,44 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // client package speaker complement (70V distributed)
+  {
+    id: "c0a80101-0380-4000-8000-000000000850",
+    deviceType: "speaker",
+    label: "Tannoy CMS 601DC BM",
+    manufacturer: "Tannoy",
+    modelNumber: "CMS 601DC BM",
+    referenceUrl: "https://www.tannoy.com/product.html?modelCode=P0CQProduct",
+    searchTerms: ["tannoy", "cms", "601", "ceiling", "speaker", "70v", "dual concentric"],
+    ports: [
+      port("Speaker In (70V)", "speaker-level", "input", "phoenix"),
+      port("Link (70V)", "speaker-level", "output", "phoenix"),
+    ],
+  },
+  {
+    id: "c0a80101-0381-4000-8000-000000000851",
+    deviceType: "speaker",
+    label: "Tannoy CMS 801 Sub BM",
+    manufacturer: "Tannoy",
+    modelNumber: "CMS 801 Sub BM",
+    referenceUrl: "https://www.tannoy.com",
+    searchTerms: ["tannoy", "cms", "801", "sub", "subwoofer", "ceiling", "70v"],
+    ports: [
+      port("Speaker In (70V)", "speaker-level", "input", "phoenix"),
+      port("Link (70V)", "speaker-level", "output", "phoenix"),
+    ],
+  },
+  {
+    id: "c0a80101-0382-4000-8000-000000000852",
+    deviceType: "speaker",
+    label: "Innovox SLA-6.1-70V",
+    manufacturer: "Innovox",
+    modelNumber: "SLA-6.1-70V",
+    referenceUrl: "https://www.innovoxaudio.com/products/sla-micro-6-1",
+    searchTerms: ["innovox", "sla", "line array", "slim", "70v", "program", "speaker"],
+    ports: [
+      port("Speaker In (70V)", "speaker-level", "input", "phoenix"),
+      port("Link (70V)", "speaker-level", "output", "phoenix"),
+    ],
+  },
 ];

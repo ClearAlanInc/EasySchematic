@@ -2029,4 +2029,19 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // Bosch LBB 4511/00 Integrus IR radiator (client package; drawing-derived)
+  {
+    id: "c0a80101-037f-4000-8000-000000000849",
+    deviceType: "assistive-listening",
+    label: "Bosch LBB 4511/00",
+    manufacturer: "Bosch",
+    modelNumber: "LBB 4511/00",
+    referenceUrl: "https://www.boschsecurity.com/us/en/solutions/conference-solutions/integrus/",
+    searchTerms: ["bosch", "integrus", "ir", "radiator", "infrared", "interpretation", "lbb4511"],
+    ports: [
+      port("HF In", "rf", "input"),
+      port("HF Out (Loop)", "rf", "output"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];

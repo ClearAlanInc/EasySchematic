@@ -356,4 +356,27 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // Panasonic PT-REZ15 laser projector (client package; drawing-derived)
+  {
+    id: "c0a80101-037d-4000-8000-000000000847",
+    deviceType: "projector",
+    label: "Panasonic PT-REZ15",
+    manufacturer: "Panasonic",
+    modelNumber: "PT-REZ15LBU7",
+    referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/projectors/large-venue/pt-rez15-series",
+    searchTerms: ["panasonic", "pt-rez15", "projector", "laser", "1-chip", "dlp", "large venue"],
+    ports: [
+      port("HDMI In 1", "hdmi", "input"),
+      port("HDMI In 2", "hdmi", "input"),
+      port("DP In", "displayport", "input"),
+      port("Serial In", "serial", "input", "db9"),
+      port("Serial Out", "serial", "output", "db9"),
+      port("Remote In", "control-voltage", "input", "trs-eighth"),
+      port("Remote In 2", "control-voltage", "input", "trs-eighth"),
+      port("Remote Out", "control-voltage", "output", "trs-eighth"),
+      port("USB", "usb", "bidirectional", "usb-a"),
+      port("LAN", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];

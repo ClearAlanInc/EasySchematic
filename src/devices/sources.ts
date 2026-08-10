@@ -659,4 +659,28 @@ export const templates: DeviceTemplate[] = [
       port("Audio Out R", "analog-audio", "output", "xlr-3"),
     ],
   },
+  // Contemporary Research 232-ATSC+ HDTV tuner (client package; drawing-derived)
+  {
+    id: "c0a80101-037c-4000-8000-000000000846",
+    deviceType: "media-player",
+    label: "Contemporary Research 232-ATSC+",
+    manufacturer: "Contemporary Research",
+    modelNumber: "232-ATSC+",
+    referenceUrl: "https://crwww.com/products/232-atsc-plus",
+    searchTerms: ["contemporary research", "atsc", "tuner", "catv", "hdtv", "232"],
+    rackForm: "half",
+    ports: [
+      port("RF In (Air/Cable)", "rf", "input"),
+      port("HDMI Out", "hdmi", "output"),
+      port("Video Out", "composite", "output"),
+      port("RGBHV Out", "vga", "output"),
+      port("Audio Out L", "analog-audio", "output", "phoenix"),
+      port("Audio Out R", "analog-audio", "output", "phoenix"),
+      port("S/PDIF Out", "spdif", "output"),
+      port("IR In", "ir", "input"),
+      port("RS-232", "serial", "bidirectional", "db9"),
+      port("LAN", "ethernet", "bidirectional"),
+      port("AC Power", "power", "input"),
+    ],
+  },
 ];

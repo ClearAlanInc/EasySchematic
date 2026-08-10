@@ -669,4 +669,23 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
+  // Panasonic AW-RP60 camera controller (client package; drawing-derived)
+  {
+    id: "c0a80101-037e-4000-8000-000000000848",
+    deviceType: "ptz-controller",
+    label: "Panasonic AW-RP60",
+    manufacturer: "Panasonic",
+    modelNumber: "AW-RP60GJ",
+    referenceUrl: "https://na.panasonic.com/us/audio-video-solutions/broadcast-cinema-pro-video/professional-ptz-cameras-controllers/aw-rp60-compact-remote-ptz-camera-controller",
+    searchTerms: ["panasonic", "aw-rp60", "ptz", "camera", "controller", "remote"],
+    rackForm: "shelf-only",
+    ports: [
+      ...ports("Serial Control", "rs422", "bidirectional", 5, "rj45"),
+      port("RS-232C In", "serial", "input", "trs-eighth"),
+      port("RS-232C Out", "serial", "output", "trs-eighth"),
+      port("Tally/GPIO", "gpio", "bidirectional", "db15"),
+      port("LAN (PoE)", "ethernet", "bidirectional"),
+      port("DC Power", "power", "input", "barrel"),
+    ],
+  },
 ];
