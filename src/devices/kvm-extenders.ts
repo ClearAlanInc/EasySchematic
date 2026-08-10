@@ -73,7 +73,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // ── Raritan Dominion KVM suite (client package; drawing-derived) ──
+  // ── Raritan Dominion KVM suite (client package import; drawing-derived) ──
   {
     id: "c0a80101-0377-4000-8000-000000000841",
     deviceType: "kvm-extender",

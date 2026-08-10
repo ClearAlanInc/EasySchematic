@@ -659,7 +659,7 @@ export const templates: DeviceTemplate[] = [
       port("Audio Out R", "analog-audio", "output", "xlr-3"),
     ],
   },
-  // Contemporary Research 232-ATSC+ HDTV tuner (client package; drawing-derived)
+  // Contemporary Research 232-ATSC+ HDTV tuner (client package import; drawing-derived)
   {
     id: "c0a80101-037c-4000-8000-000000000846",
     deviceType: "media-player",

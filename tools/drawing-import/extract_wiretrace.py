@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Extract a wire trace from a vector PDF drawing package.
 
-Method (proven on a 5-sheet HoC-style functional package): consultant drawings
+Method (proven on a multi-sheet functional package): consultant drawings
 label every wire with a cable number at BOTH endpoints. Instead of visually
 tracing lines, extract positioned text with PyMuPDF, find cable-number tokens,
 associate each token with its adjacent port label and owning device block, and

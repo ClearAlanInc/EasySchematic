@@ -631,7 +631,7 @@ export const templates: DeviceTemplate[] = [
       port("DC Power (12V)", "power", "input", "barrel"),
     ],
   },
-  // Crestron PRO4 — flagship 2U 4-Series processor (discontinued; client package)
+  // Crestron PRO4 — flagship 2U 4-Series processor (discontinued; client package import)
   {
     id: "c0a80101-0374-4000-8000-000000000838",
     deviceType: "control-processor",
@@ -669,7 +669,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // Panasonic AW-RP60 camera controller (client package; drawing-derived)
+  // Panasonic AW-RP60 camera controller (client package import; drawing-derived)
   {
     id: "c0a80101-037e-4000-8000-000000000848",
     deviceType: "ptz-controller",

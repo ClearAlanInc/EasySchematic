@@ -1058,7 +1058,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power 2 (modular)", "power", "input"),
     ],
   },
-  // ── Evertz NUCLEUS UXP AV-over-IP gateways (client package) ──
+  // ── Evertz NUCLEUS UXP AV-over-IP gateways (client package import) ──
   {
     id: "c0a80101-035f-4000-8000-000000000817",
     deviceType: "av-over-ip",
@@ -1140,7 +1140,7 @@ export const templates: DeviceTemplate[] = [
       port("DC Power (12V)", "power", "input", "barrel"),
     ],
   },
-  // Evertz NUC-AV-100 — NUCLEUS Session Manager appliance (client package)
+  // Evertz NUC-AV-100 — NUCLEUS Session Manager appliance (client package import)
   {
     id: "c0a80101-0363-4000-8000-000000000821",
     deviceType: "computer",
@@ -1161,7 +1161,7 @@ export const templates: DeviceTemplate[] = [
       port("DC Power", "power", "input", "barrel"),
     ],
   },
-  // Cisco Catalyst C9300-48UXM-A — 48-port mGig UPOE (client package; drawing-derived)
+  // Cisco Catalyst C9300-48UXM-A — 48-port mGig UPOE (client package import; drawing-derived)
   {
     id: "c0a80101-0375-4000-8000-000000000839",
     deviceType: "network-switch",
@@ -1185,7 +1185,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power 2", "power", "input"),
     ],
   },
-  // Cisco SG350-10 — 10-port GbE managed (client package; drawing-derived)
+  // Cisco SG350-10 — 10-port GbE managed (client package import; drawing-derived)
   {
     id: "c0a80101-0376-4000-8000-000000000840",
     deviceType: "network-switch",

@@ -356,7 +356,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // Panasonic PT-REZ15 laser projector (client package; drawing-derived)
+  // Panasonic PT-REZ15 laser projector (client package import; drawing-derived)
   {
     id: "c0a80101-037d-4000-8000-000000000847",
     deviceType: "projector",

@@ -1689,7 +1689,7 @@ export const templates: DeviceTemplate[] = [
       port("Audio In R", "analog-audio", "input", "xlr-3"),
     ],
   },
-  // Evertz UXP-HUBA-32x32 — NUCLEUS analog/Dante audio hub (client package)
+  // Evertz UXP-HUBA-32x32 — NUCLEUS analog/Dante audio hub (client package import)
   {
     id: "c0a80101-0362-4000-8000-000000000820",
     deviceType: "audio-interface",
@@ -1716,7 +1716,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // Televic Plixus MME + Dante ("D-Gate MME" in HoC drawings) — conference engine
+  // Televic Plixus MME + Dante — conference multimedia engine
   {
     id: "c0a80101-0365-4000-8000-000000000823",
     deviceType: "conference-system",
@@ -1724,7 +1724,7 @@ export const templates: DeviceTemplate[] = [
     manufacturer: "Televic",
     modelNumber: "71.98.2905",
     referenceUrl: "https://televic.com/en/conference/products/central-equipment-for-conference-systems/plixus-multimedia-engine",
-    searchTerms: ["televic", "plixus", "mme", "dante", "conference", "d-gate", "dgate", "multimedia engine", "71.98.2905"],
+    searchTerms: ["televic", "plixus", "mme", "dante", "conference", "multimedia engine", "71.98.2905"],
     powerDrawW: 400, // integrated 400 W supply (also powers downstream conference units)
     weightKg: 8.2,
     rackForm: "full",
@@ -1770,7 +1770,7 @@ export const templates: DeviceTemplate[] = [
       port("Power In (48V)", "power", "input", "phoenix"),
     ],
   },
-  // Televic Lingua IR moderator ("IR MOD" in HoC drawings; drawing-derived ports)
+  // Televic Lingua IR moderator (drawing-derived ports)
   {
     id: "c0a80101-0367-4000-8000-000000000825",
     deviceType: "conference-system",
@@ -1795,7 +1795,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // QSC Q-SYS Server Core X10 — Dell-based 1RU AV&C processor (client package)
+  // QSC Q-SYS Server Core X10 — Dell-based 1RU AV&C processor (client package import)
   {
     id: "c0a80101-0369-4000-8000-000000000827",
     deviceType: "audio-dsp",
@@ -1820,7 +1820,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // Shure Axient Digital wireless chain (client package)
+  // Shure Axient Digital wireless chain (client package import)
   {
     id: "c0a80101-036b-4000-8000-000000000829",
     deviceType: "wireless-mic-receiver",
@@ -1890,7 +1890,7 @@ export const templates: DeviceTemplate[] = [
       port("RF Out", "rf", "output"),
     ],
   },
-  // client package small audio units (drawing-derived port complements, flagged)
+  // Client package small audio units (drawing-derived port complements, flagged)
   {
     id: "c0a80101-036e-4000-8000-000000000832",
     deviceType: "phone-hybrid",
@@ -1997,7 +1997,7 @@ export const templates: DeviceTemplate[] = [
       port("DC Power", "power", "input", "barrel"),
     ],
   },
-  // Ashly MX-508 8-channel rack mixer (client package; drawing-derived)
+  // Ashly MX-508 8-channel rack mixer (client package import; drawing-derived)
   {
     id: "c0a80101-0373-4000-8000-000000000837",
     deviceType: "audio-mixer",
@@ -2029,7 +2029,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // Bosch LBB 4511/00 Integrus IR radiator (client package; drawing-derived)
+  // Bosch LBB 4511/00 Integrus IR radiator (client package import; drawing-derived)
   {
     id: "c0a80101-037f-4000-8000-000000000849",
     deviceType: "assistive-listening",

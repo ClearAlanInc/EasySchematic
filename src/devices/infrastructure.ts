@@ -486,7 +486,7 @@ export const templates: DeviceTemplate[] = [
     powerDrawW: 0,
     ports: wallPlatePorts("Port ", 2, { signalType: "analog-audio", frontConnectorType: "xlr-3" }),
   },
-  // Evertz 7800FR-QT — 3RU multiframe, redundant PSU (+78PQT) (client package)
+  // Evertz 7800FR-QT — 3RU multiframe, redundant PSU (+78PQT) (client package import)
   {
     id: "c0a80101-0364-4000-8000-000000000822",
     deviceType: "frame",
@@ -511,15 +511,15 @@ export const templates: DeviceTemplate[] = [
       port("AC Power 2", "power", "input"),
     ],
   },
-  // Televic D-Gate 48V power supply (drawing-derived ports; datasheet partner-gated)
+  // Televic Plixus 48V power supply (drawing-derived ports; datasheet partner-gated)
   {
     id: "c0a80101-0368-4000-8000-000000000826",
     deviceType: "power-distribution",
-    label: "Televic D-Gate PWR",
+    label: "Televic Plixus PWR",
     manufacturer: "Televic",
     modelNumber: "71.98.2930",
     referenceUrl: "https://televic.com/en/conference/products/central-equipment",
-    searchTerms: ["televic", "plixus", "d-gate", "dgate", "power", "48v", "71.98.2930"],
+    searchTerms: ["televic", "plixus", "power", "supply", "48v", "71.98.2930"],
     rackForm: "full",
     ports: [
       ...ports("48V Out", "power", "output", 6, "phoenix"),

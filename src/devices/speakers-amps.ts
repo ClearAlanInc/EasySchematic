@@ -889,7 +889,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // QSC MPA-Q 8x250 — 8x250W Q-SYS network amplifier (client package)
+  // QSC MPA-Q 8x250 — 8x250W Q-SYS network amplifier (client package import)
   {
     id: "c0a80101-036a-4000-8000-000000000828",
     deviceType: "amplifier",
@@ -911,7 +911,7 @@ export const templates: DeviceTemplate[] = [
       port("AC Power", "power", "input"),
     ],
   },
-  // client package speaker complement (70V distributed)
+  // Client package speaker complement (70V distributed)
   {
     id: "c0a80101-0380-4000-8000-000000000850",
     deviceType: "speaker",
