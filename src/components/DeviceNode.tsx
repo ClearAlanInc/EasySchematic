@@ -1,7 +1,8 @@
-import { memo, useMemo, useCallback } from "react";
+import { memo, useMemo, useCallback, useState } from "react";
+import { HoverCard, HoverRow, HoverTitle } from "./HoverCard";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { DeviceNode as DeviceNodeType, Port } from "../types";
-import { SIGNAL_COLORS, SIGNAL_LABELS, portSide } from "../types";
+import { SIGNAL_COLORS, SIGNAL_LABELS, CONNECTOR_LABELS, portSide } from "../types";
 import { useSchematicStore } from "../store";
 import {
   resolveAuxiliaryLine,
@@ -21,14 +22,6 @@ type ColumnItem =
   | { type: "port"; port: Port }
   | { type: "section"; name: string }
   | { type: "divider" };
-
-/** Hover-tooltip suffix surfacing a USB-C port's Power Delivery rating, if set. */
-function usbcPowerSuffix(port: Port): string {
-  const parts: string[] = [];
-  if (port.usbcPowerSourceW != null) parts.push(`delivers ${port.usbcPowerSourceW}W`);
-  if (port.usbcPowerDrawW != null) parts.push(`draws ${port.usbcPowerDrawW}W`);
-  return parts.length ? ` — USB-C PD: ${parts.join(", ")}` : "";
-}
 
 /** Build a list of ports interleaved with section headers where section changes. */
 function buildColumnItems(ports: Port[]): ColumnItem[] {
@@ -169,6 +162,50 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
     return widest;
   }, [data.ports, displayLabel]);
 
+  // Port hover details card (#hover-features). Tracks the hovered port and the
+  // cursor position; the card itself renders into document.body via HoverCard.
+  const [hoverPort, setHoverPort] = useState<{ port: Port; x: number; y: number } | null>(null);
+  const portHoverProps = (port: Port) => ({
+    onMouseEnter: (e: React.MouseEvent) => setHoverPort({ port, x: e.clientX, y: e.clientY }),
+    onMouseMove: (e: React.MouseEvent) => setHoverPort({ port, x: e.clientX, y: e.clientY }),
+    onMouseLeave: () => setHoverPort(null),
+  });
+  const DIRECTION_LABELS: Record<string, string> = {
+    input: "Input", output: "Output", bidirectional: "Bidirectional", passthrough: "Passthrough",
+  };
+  const renderPortHoverCard = () => {
+    if (!hoverPort) return null;
+    const port = hoverPort.port;
+    const color = SIGNAL_COLORS[port.signalType] ?? SIGNAL_COLORS.custom;
+    const nc = port.networkConfig;
+    const vlanText = nc?.vlanMode === "trunk"
+      ? `Trunk ${nc.trunkAllVlans ? "(all)" : (nc.trunkVlans ?? []).join(",")}${nc.nativeVlan != null ? ` · native ${nc.nativeVlan}` : ""}`
+      : nc?.vlan != null ? String(nc.vlan) : null;
+    return (
+      <HoverCard x={hoverPort.x} y={hoverPort.y}>
+        <HoverTitle text={displayLabel(port.label)} dotColor={color} />
+        <HoverRow label="Signal" value={SIGNAL_LABELS[port.signalType] ?? port.signalType} color={color} />
+        <HoverRow label="Direction" value={DIRECTION_LABELS[port.direction] ?? port.direction} />
+        {port.direction === "passthrough" ? (
+          <>
+            {port.rearConnectorType && <HoverRow label="Rear" value={CONNECTOR_LABELS[port.rearConnectorType] ?? port.rearConnectorType} />}
+            {port.frontConnectorType && <HoverRow label="Front" value={CONNECTOR_LABELS[port.frontConnectorType] ?? port.frontConnectorType} />}
+          </>
+        ) : (
+          port.connectorType && <HoverRow label="Connector" value={CONNECTOR_LABELS[port.connectorType] ?? port.connectorType} />
+        )}
+        {port.linkSpeed && <HoverRow label="Speed" value={port.linkSpeed} />}
+        {port.poeDrawW != null && <HoverRow label="PoE draw" value={`${port.poeDrawW} W`} />}
+        {port.usbcPowerSourceW != null && <HoverRow label="USB-C PD" value={`supplies ${port.usbcPowerSourceW} W`} />}
+        {port.usbcPowerDrawW != null && <HoverRow label="USB-C PD" value={`draws ${port.usbcPowerDrawW} W`} />}
+        {nc?.ip && <HoverRow label="IP" value={nc.ip} />}
+        {vlanText && <HoverRow label="VLAN" value={vlanText} />}
+        {port.multiConnect && <HoverRow label="Connections" value="multiple allowed" />}
+        {port.notes && <div className="mt-1 text-[var(--color-text-muted)] whitespace-pre-wrap">{port.notes}</div>}
+      </HoverCard>
+    );
+  };
+
   const headerAuxRows = useMemo(
     () => rowsInSlot(data.auxiliaryData, "header"),
     [data.auxiliaryData],
@@ -300,6 +337,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         key={port.id}
         className={`flex items-center gap-1 ${isLeft ? "pl-3" : "pr-3 justify-end"} h-4 relative`}
         onContextMenu={(e) => openPortMenu(e, port)}
+        {...portHoverProps(port)}
       >
         {isLeft && (
           <Handle
@@ -315,7 +353,6 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         <span
           className="text-[10px] leading-4 truncate"
           style={{ color: SIGNAL_COLORS[port.signalType] }}
-          title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]})${usbcPowerSuffix(port)}`}
         >
           {displayLabel(port.label)}
         </span>
@@ -355,12 +392,12 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       ? (signalByHandle.get(rearId) ?? signalByHandle.get(frontId) ?? port.signalType)
       : port.signalType;
     const signalColor = SIGNAL_COLORS[resolvedSignal as keyof typeof SIGNAL_COLORS] ?? SIGNAL_COLORS.custom;
-    const signalLabel = SIGNAL_LABELS[resolvedSignal as keyof typeof SIGNAL_LABELS] ?? resolvedSignal;
     return (
       <div
         key={port.id}
         className="flex justify-between items-center relative h-4"
         onContextMenu={(e) => openPortMenu(e, port)}
+        {...portHoverProps(port)}
       >
         {/* Left handle — source (ConnectionMode.Loose; isValidConnection enforces direction) */}
         <Handle
@@ -374,7 +411,6 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
         <span
           className="text-[10px] leading-4 truncate px-3 flex-1 text-center"
           style={{ color: signalColor }}
-          title={`${displayLabel(port.label)} (${signalLabel}) — passthrough`}
         >
           ⇔ {displayLabel(port.label)}
         </span>
@@ -580,7 +616,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
               const rh = right ? handleProps(right, "right") : null;
               return (
                 <div key={i} className="flex justify-between items-center relative h-4">
-                  <div className="flex items-center gap-1 pl-3 min-w-0 flex-1" onContextMenu={left ? (e) => openPortMenu(e, left) : undefined}>
+                  <div className="flex items-center gap-1 pl-3 min-w-0 flex-1" onContextMenu={left ? (e) => openPortMenu(e, left) : undefined} {...(left ? portHoverProps(left) : {})}>
                     {left && lh && (
                       <>
                         <Handle
@@ -595,20 +631,18 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                         <span
                           className="text-[10px] leading-4 truncate"
                           style={{ color: SIGNAL_COLORS[left.signalType] }}
-                          title={`${displayLabel(left.label)} (${SIGNAL_LABELS[left.signalType]})${usbcPowerSuffix(left)}`}
                         >
                           {displayLabel(left.label)}
                         </span>
                       </>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end" onContextMenu={right ? (e) => openPortMenu(e, right) : undefined}>
+                  <div className="flex items-center gap-1 pr-3 min-w-0 flex-1 justify-end" onContextMenu={right ? (e) => openPortMenu(e, right) : undefined} {...(right ? portHoverProps(right) : {})}>
                     {right && rh && (
                       <>
                         <span
                           className="text-[10px] leading-4 truncate"
                           style={{ color: SIGNAL_COLORS[right.signalType] }}
-                          title={`${displayLabel(right.label)} (${SIGNAL_LABELS[right.signalType]})${usbcPowerSuffix(right)}`}
                         >
                           {displayLabel(right.label)}
                         </span>
@@ -720,9 +754,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
                 <span
                   className="text-[10px] leading-4 truncate inline-flex items-center gap-0.5 max-w-full"
                   style={{ color: SIGNAL_COLORS[port.signalType] }}
-                  title={`${displayLabel(port.label)} (${SIGNAL_LABELS[port.signalType]}) — ${
-                    port.parentPortId ? "virtual stream" : "bidirectional"
-                  }${usbcPowerSuffix(port)}`}
+                  {...portHoverProps(port)}
                 >
                   <span className="shrink-0 opacity-70">{port.parentPortId ? "└" : "↔"}</span>
                   {port.parentPortId ? (
@@ -765,6 +797,7 @@ function DeviceNodeComponent({ id, data, selected }: NodeProps<DeviceNodeType>) 
       )}
       {renderFooterAuxBlock(footerAuxRows)}
       </div>
+      {renderPortHoverCard()}
     </div>
   );
 }

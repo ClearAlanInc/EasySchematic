@@ -5,7 +5,8 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 import { useSchematicStore } from "../store";
-import { LINE_STYLE_DASHARRAY, type ConnectionEdge, type LineStyle, type DeviceData } from "../types";
+import { LINE_STYLE_DASHARRAY, SIGNAL_LABELS, SIGNAL_COLORS, type ConnectionEdge, type LineStyle, type DeviceData } from "../types";
+import { HoverCard, HoverRow, HoverTitle } from "./HoverCard";
 import { usbcPowerShortfallW, isVirtualSignal, NETWORK_SIGNAL_TYPES } from "../connectorTypes";
 import { vlanLinkInfo } from "../vlanPropagation";
 import { midCustomLabelPlacement } from "../stubPlacement";
@@ -29,14 +30,21 @@ function OffsetEdgeComponent({
   const [isHovered, setIsHovered] = useState(false);
   // Tooltip state — tracks which updater circle the mouse is over
   const [tooltipType, setTooltipType] = useState<"source" | "target" | null>(null);
+  // Cursor position (viewport coords) while hovering — anchors the wire hover card.
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const el = document.querySelector(`.react-flow__edge[data-id="${id}"]`);
     if (!el) return;
     const onEnter = () => setIsHovered(true);
-    const onLeave = () => { setIsHovered(false); setTooltipType(null); };
+    const onLeave = () => { setIsHovered(false); setTooltipType(null); setHoverPos(null); };
+    const onMove = (e: Event) => {
+      const me = e as MouseEvent;
+      setHoverPos({ x: me.clientX, y: me.clientY });
+    };
     el.addEventListener("mouseenter", onEnter);
     el.addEventListener("mouseleave", onLeave);
+    el.addEventListener("mousemove", onMove);
 
     // Track hover on individual updater circles for tooltip
     const srcUpdater = el.querySelector('.react-flow__edgeupdater-source');
@@ -52,6 +60,7 @@ function OffsetEdgeComponent({
     return () => {
       el.removeEventListener("mouseenter", onEnter);
       el.removeEventListener("mouseleave", onLeave);
+      el.removeEventListener("mousemove", onMove);
       srcUpdater?.removeEventListener('mouseenter', onEnterSrc);
       tgtUpdater?.removeEventListener('mouseenter', onEnterTgt);
       srcUpdater?.removeEventListener('mouseleave', onLeaveUpdater);
@@ -111,6 +120,24 @@ function OffsetEdgeComponent({
     return `${info.label ?? ""}\0${info.issue ?? ""}`;
   });
   const [vlanLabel, vlanIssue] = vlanInfoStr ? vlanInfoStr.split("\0") : ["", ""];
+
+  // Wire hover card data: signal type, endpoint device + port labels (#hover-features).
+  const hoverInfoStr = useSchematicStore((s) => {
+    const edge = s.edges.find((e) => e.id === id);
+    if (!edge?.data) return "";
+    const resolveEnd = (nodeId: string, handle: string | null | undefined) => {
+      const node = s.nodes.find((n) => n.id === nodeId);
+      if (!node || node.type !== "device") return ["?", "?"];
+      const portId = (handle ?? "").replace(/-(in|out|rear|front)$/, "");
+      const port = (node.data as DeviceData).ports?.find((p) => p.id === portId);
+      return [(node.data as DeviceData).label, port?.label ?? "?"];
+    };
+    const [sd, sp] = resolveEnd(edge.source, edge.sourceHandle);
+    const [td, tp] = resolveEnd(edge.target, edge.targetHandle);
+    return [edge.data.signalType, sd, sp, td, tp].join("\u0000");
+  });
+  const [hoverSignal, hoverSrcDev, hoverSrcPort, hoverTgtDev, hoverTgtPort] =
+    hoverInfoStr ? hoverInfoStr.split("\u0000") : ["", "", "", "", ""];
 
   // Check if this edge is hidden (part of a virtual pair, the secondary half)
   const isHiddenVirtualEdge = useSchematicStore((s) => s.hiddenVirtualEdgeIds.has(id));
@@ -725,6 +752,20 @@ function OffsetEdgeComponent({
     </>
   ) : null;
 
+  // Wire hover card — type, wire number, and both endpoints (#hover-features)
+  const wireHoverCard = (isHovered && hoverPos && !tooltipType && hoverInfoStr) ? (
+    <HoverCard x={hoverPos.x} y={hoverPos.y}>
+      <HoverTitle
+        text={SIGNAL_LABELS[hoverSignal as keyof typeof SIGNAL_LABELS] ?? hoverSignal}
+        dotColor={SIGNAL_COLORS[hoverSignal as keyof typeof SIGNAL_COLORS]}
+      />
+      {cableId && <HoverRow label="Wire" value={cableId} />}
+      <HoverRow label="From" value={`${hoverSrcDev} — ${hoverSrcPort}`} />
+      <HoverRow label="To" value={`${hoverTgtDev} — ${hoverTgtPort}`} />
+      {vlanLabel && <HoverRow label="VLAN" value={vlanIssue ? `${vlanLabel} ⚠` : vlanLabel} />}
+    </HoverCard>
+  ) : null;
+
   // All labels + reconnect visuals rendered via EdgeLabelRenderer (HTML layer above all SVG edges)
   const hasPortalContent = customLabels || cableIdLabels || reconnectVisuals || usbcWarningBadge || cableLengthBadge;
   const edgeLabelsPortal = hasPortalContent ? (
@@ -765,6 +806,7 @@ function OffsetEdgeComponent({
         interactionWidth={interactionWidth}
       />
       {edgeLabelsPortal}
+      {wireHoverCard}
       {debugLabel}
     </>
   );
