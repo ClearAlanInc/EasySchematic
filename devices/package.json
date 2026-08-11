@@ -5,7 +5,9 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "vite",
+    "dev:selfhosted": "vite --mode selfhosted",
     "build": "vite build",
+    "build:selfhosted": "vite build --mode selfhosted",
     "preview": "vite preview"
   },
   "dependencies": {
