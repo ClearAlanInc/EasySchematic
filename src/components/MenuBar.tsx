@@ -19,7 +19,7 @@ import SchematicBrowser from "./SchematicBrowser";
 import LoginDialog from "./LoginDialog";
 import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
 import { queueCloudSave } from "../cloudSync";
-import { CLOUD_ENABLED, DEVICES_URL } from "../selfHosted";
+import { CLOUD_ENABLED, DEVICES_URL, DOCS_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
 import CsvImportWizard from "./CsvImportWizard";
@@ -711,11 +711,11 @@ export default function MenuBar() {
       { type: "item", label: "Room Distances...", onClick: () => setShowRoomDistances(true) },
     ],
     Help: [
-      {
+      ...(DOCS_URL ? [{
         type: "item",
         label: "Documentation \u2197",
-        onClick: () => window.open("https://docs.easyschematic.live", "_blank", "noopener,noreferrer"),
-      },
+        onClick: () => window.open(DOCS_URL, "_blank", "noopener,noreferrer"),
+      } satisfies MenuEntry] : []),
       ...(DEVICES_URL ? [{
         type: "item",
         label: "Device Database \u2197",

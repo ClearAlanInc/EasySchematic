@@ -32,6 +32,7 @@ describe("selfHosted flag semantics", () => {
     expect(m.SUBMIT_ENABLED).toBe(true);
     expect(m.API_URL).toBe("https://api.easyschematic.live");
     expect(m.DEVICES_URL).toBe("https://devices.easyschematic.live");
+    expect(m.DOCS_URL).toBe("https://docs.easyschematic.live");
   });
 
   it("custom API URL without the flag: unchanged cloud behavior", async () => {
@@ -56,6 +57,7 @@ describe("selfHosted flag semantics", () => {
     expect(m.SUBMIT_ENABLED).toBe(false);
     expect(m.API_URL).toBe("");
     expect(m.DEVICES_URL).toBe("");
+    expect(m.DOCS_URL).toBe("");
   });
 
   it('accepts "1" as well as "true"', async () => {
@@ -92,6 +94,15 @@ describe("selfHosted flag semantics", () => {
     expect(m.CLOUD_ENABLED).toBe(true);
     expect(m.API_URL).toBe("https://api.myshop.lan");
     expect(m.SUBMIT_ENABLED).toBe(false); // no devices site to hand off to
+  });
+
+  it("VITE_DOCS_URL points every docs link at a custom site", async () => {
+    const m = await importSelfHosted({
+      VITE_SELF_HOSTED: "true",
+      VITE_TEMPLATE_API_URL: "https://api.myshop.lan",
+      VITE_DOCS_URL: "https://docs.myshop.lan",
+    });
+    expect(m.DOCS_URL).toBe("https://docs.myshop.lan");
   });
 });
 

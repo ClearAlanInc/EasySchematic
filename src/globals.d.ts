@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_TEMPLATE_API_URL?: string;
   /** Override for the community device-database site URL (links only, never fetched) */
   readonly VITE_DEVICES_URL?: string;
+  /** Override for the documentation site URL (links only, never fetched) */
+  readonly VITE_DOCS_URL?: string;
 }
 
 declare const __APP_VERSION__: string;

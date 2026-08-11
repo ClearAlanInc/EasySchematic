@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DEVICE_TEMPLATES } from "../deviceLibrary";
 import { forceFullReset } from "../sw-register";
+import { DOCS_URL, DEVICES_URL } from "../selfHosted";
 
 declare const __APP_VERSION__: string;
 declare const __BUILD_HASH__: string;
@@ -105,9 +106,9 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
           <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
             {[
               { label: "Website", href: "https://easyschematic.live" },
-              { label: "Docs", href: "https://docs.easyschematic.live" },
+              ...(DOCS_URL ? [{ label: "Docs", href: DOCS_URL }] : []),
               { label: "GitHub", href: "https://github.com/duremovich/EasySchematic" },
-              { label: "Device Database", href: "https://devices.easyschematic.live" },
+              ...(DEVICES_URL ? [{ label: "Device Database", href: DEVICES_URL }] : []),
               { label: "Support", href: "mailto:support@easyschematic.live" },
               { label: "Report a Bug", href: "https://github.com/duremovich/EasySchematic/issues" },
               { label: "Discord", href: "https://discord.gg/dxXn3Jk2a6" },

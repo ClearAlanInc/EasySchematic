@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { sponsors } from "../sponsors";
-import { IS_SELF_HOSTED } from "../selfHosted";
+import { IS_SELF_HOSTED, DOCS_URL, DEVICES_URL } from "../selfHosted";
 
 const features = [
   {
@@ -271,12 +271,16 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 text-sm">
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-wrap gap-x-8 gap-y-2 justify-center">
-          <a href="https://docs.easyschematic.live" className="hover:text-white transition-colors">
-            Documentation
-          </a>
-          <a href="https://devices.easyschematic.live" className="hover:text-white transition-colors">
-            Device Database
-          </a>
+          {DOCS_URL && (
+            <a href={DOCS_URL} className="hover:text-white transition-colors">
+              Documentation
+            </a>
+          )}
+          {DEVICES_URL && (
+            <a href={DEVICES_URL} className="hover:text-white transition-colors">
+              Device Database
+            </a>
+          )}
           <a href="https://github.com/duremovich/caDesign" className="hover:text-white transition-colors">
             GitHub
           </a>

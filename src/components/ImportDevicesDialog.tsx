@@ -5,7 +5,7 @@ import { parseJsonImport } from "../import/parseJson";
 import { parseCsvImport } from "../import/parseCsv";
 import type { ParsedTemplate } from "../import/types";
 import { createSubmission } from "../templateApi";
-import { SUBMIT_ENABLED } from "../selfHosted";
+import { SUBMIT_ENABLED, DOCS_URL } from "../selfHosted";
 
 type Tab = "json" | "csv";
 
@@ -158,15 +158,20 @@ export default function ImportDevicesDialog({ open, onClose }: Props) {
             <button onClick={close} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer">✕</button>
           </div>
           <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
-            Bulk-add device templates to your library. See the{" "}
-            <a href="https://docs.easyschematic.live/import-devices" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-              import guide
-            </a>{" "}
-            for sample files and walkthroughs, or the{" "}
-            <a href="https://docs.easyschematic.live/device-template-schema" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-              schema reference
-            </a>{" "}
-            for the full field list.
+            Bulk-add device templates to your library.
+            {DOCS_URL && (
+              <>
+                {" "}See the{" "}
+                <a href={`${DOCS_URL}/import-devices`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                  import guide
+                </a>{" "}
+                for sample files and walkthroughs, or the{" "}
+                <a href={`${DOCS_URL}/device-template-schema`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                  schema reference
+                </a>{" "}
+                for the full field list.
+              </>
+            )}
           </p>
         </div>
 

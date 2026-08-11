@@ -26,6 +26,7 @@ export const IS_SELF_HOSTED = rawFlag === "true" || rawFlag === "1";
 // SET-BUT-EMPTY env vars, and an empty string must mean "unset" here.
 const envApiUrl = import.meta.env?.VITE_TEMPLATE_API_URL || undefined;
 const envDevicesUrl = import.meta.env?.VITE_DEVICES_URL || undefined;
+const envDocsUrl = import.meta.env?.VITE_DOCS_URL || undefined;
 
 /**
  * Base URL of the schematic/auth/template API. Empty string in a fully-offline
@@ -41,6 +42,14 @@ export const API_URL: string =
  */
 export const DEVICES_URL: string =
   envDevicesUrl ?? (IS_SELF_HOSTED ? "" : "https://devices.easyschematic.live");
+
+/**
+ * Base URL of the documentation site (links only — never fetched). Empty
+ * string hides every docs link, keeping fully-offline builds free of
+ * external references.
+ */
+export const DOCS_URL: string =
+  envDocsUrl ?? (IS_SELF_HOSTED ? "" : "https://docs.easyschematic.live");
 
 /**
  * Master gate for everything that talks to the API: auth, cloud schematics,
