@@ -31,29 +31,23 @@ function entry(id: string, base: string | null, name = "Studio A"): OutboxEntry 
   return { id, data: { name, version: 50, nodes: [], edges: [] }, queuedAt: "2026-08-11T01:00:00.000Z", baseUpdatedAt: base };
 }
 
-function makeDeps(entries: OutboxEntry[], remote: { id: string; name: string; updated_at: string }[]): ReplayDeps & {
-  removed: string[];
-  notices: string[];
-  update: ReturnType<typeof vi.fn>;
-  saveNew: ReturnType<typeof vi.fn>;
-  confirmOverwrite: ReturnType<typeof vi.fn>;
-  recordSaved: ReturnType<typeof vi.fn>;
-} {
+function makeDeps(entries: OutboxEntry[], remote: { id: string; name: string; updated_at: string }[]) {
   const removed: string[] = [];
   const notices: string[] = [];
-  return {
+  const deps = {
     removed,
     notices,
     getEntries: async () => entries,
     removeEntry: async (id: string) => { removed.push(id); },
     listRemote: async () => remote,
-    update: vi.fn().mockResolvedValue({ updated_at: "2026-08-11T02:00:00.000Z" }),
-    saveNew: vi.fn().mockResolvedValue({ id: "new-id", updated_at: "2026-08-11T02:00:00.000Z" }),
+    update: vi.fn<ReplayDeps["update"]>(async () => ({ updated_at: "2026-08-11T02:00:00.000Z" })),
+    saveNew: vi.fn<ReplayDeps["saveNew"]>(async () => ({ id: "new-id", updated_at: "2026-08-11T02:00:00.000Z" })),
     cacheContent: async () => {},
-    confirmOverwrite: vi.fn().mockReturnValue(true),
+    confirmOverwrite: vi.fn<ReplayDeps["confirmOverwrite"]>(() => true),
     notify: (m: string) => { notices.push(m); },
-    recordSaved: vi.fn(),
+    recordSaved: vi.fn<ReplayDeps["recordSaved"]>(),
   };
+  return deps satisfies ReplayDeps & Record<string, unknown>;
 }
 
 beforeEach(() => {

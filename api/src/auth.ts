@@ -18,6 +18,8 @@ export type Env = {
     SUPPORT_FORWARD_EMAIL: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
+    /** Extra CORS/redirect origins for self-hosted deployments (comma-separated). */
+    ALLOWED_ORIGINS?: string;
   };
   Variables: {
     user?: SessionUser;

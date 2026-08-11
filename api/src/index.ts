@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { cors } from "hono/cors";
 import { rowToTemplate, rowToSummary, templateToRow } from "./db";
 import { authMiddleware, sessionMiddleware, requireSession, requireModerator, requireModeratorOrToken, requireAdmin, requireAdminOrToken } from "./auth";
@@ -103,16 +104,27 @@ const STATIC_ALLOWED_ORIGINS = [
 // it back (even with credentials, for login/cloud) is safe.
 const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 
-/** CORS origin resolver: echoes an origin back iff it's an official host or loopback. */
-function corsOrigin(origin: string): string | null {
+/** Extra allowed origins for self-hosted deployments, from the ALLOWED_ORIGINS
+ *  env var (comma-separated full origins, e.g. "https://cadesign.clearalan.ca").
+ *  Lets a company host the app at its own domain without editing code. */
+function envAllowedOrigins(c?: Context<Env>): string[] {
+  const raw = c?.env?.ALLOWED_ORIGINS;
+  if (!raw) return [];
+  return raw.split(",").map((s) => s.trim().replace(/\/$/, "")).filter(Boolean);
+}
+
+/** CORS origin resolver: echoes an origin back iff it's an official host,
+ *  a deployment-configured extra origin, or loopback. */
+function corsOrigin(origin: string, c?: Context<Env>): string | null {
   if (!origin) return null;
   if (STATIC_ALLOWED_ORIGINS.includes(origin)) return origin;
+  if (envAllowedOrigins(c).includes(origin)) return origin;
   if (LOOPBACK_ORIGIN.test(origin)) return origin;
   return null;
 }
 
-function isAllowedOrigin(url: string): boolean {
-  try { return corsOrigin(new URL(url).origin) !== null; }
+function isAllowedOrigin(url: string, c?: Context<Env>): boolean {
+  try { return corsOrigin(new URL(url).origin, c) !== null; }
   catch { return false; }
 }
 
@@ -140,7 +152,7 @@ function cookieRedirect(c: { header: (k: string, v: string, options?: { append?:
 app.post("/auth/login", async (c) => {
   const body = await c.req.json<{ email?: string; returnTo?: string }>();
   const email = body.email?.trim().toLowerCase();
-  const returnTo = body.returnTo && isAllowedOrigin(body.returnTo) ? body.returnTo : undefined;
+  const returnTo = body.returnTo && isAllowedOrigin(body.returnTo, c) ? body.returnTo : undefined;
 
   if (!email || !email.includes("@")) {
     return c.json({ error: "Valid email is required" }, 400);
@@ -247,7 +259,7 @@ ${body}
 app.get("/auth/verify", async (c) => {
   const token = c.req.query("token");
   const returnTo = c.req.query("returnTo");
-  const validReturnTo = returnTo && isAllowedOrigin(returnTo) ? returnTo : undefined;
+  const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
 
   if (!token) {
     return c.html(authPage("Invalid Link", `<h1>Invalid Link</h1><p>This login link is missing a token.</p>
@@ -303,7 +315,7 @@ app.post("/auth/verify", async (c) => {
   }
 
   const returnTo = c.req.query("returnTo");
-  const validReturnTo = returnTo && isAllowedOrigin(returnTo) ? returnTo : undefined;
+  const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
 
   if (!token) {
     return c.html(authPage("Invalid Request", `<h1>Invalid Request</h1><p>No token provided.</p>
@@ -390,7 +402,7 @@ app.post("/auth/logout", async (c) => {
 
 app.get("/auth/google/start", async (c) => {
   const returnTo = c.req.query("returnTo");
-  const validReturnTo = returnTo && isAllowedOrigin(returnTo) ? returnTo : undefined;
+  const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
 
   const db = c.env.easyschematic_db;
 

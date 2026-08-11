@@ -2,6 +2,12 @@ name = "easyschematic-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
+[vars]
+# Origins (comma-separated, no trailing slash) allowed to make credentialed
+# requests and be used as login redirect targets, in addition to the official
+# hosts and loopback. Set to wherever the app itself is served from.
+ALLOWED_ORIGINS = "https://cadesign.clearalan.ca,https://www.cadesign.clearalan.ca"
+
 [dev]
 port = 8787
 persist_to = ".wrangler/state"
