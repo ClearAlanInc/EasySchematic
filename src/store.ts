@@ -59,6 +59,7 @@ import { areConnectorsCompatible, needsAdapter, findAdaptersForConnectorBridge, 
 import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } from "./rackUtils";
 import { findPropagationTargets, isTrunk, type PortRef } from "./vlanPropagation";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
+import { markOrgTemplateDirty } from "./orgSyncOutbox";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getTemplateById } from "./templateApi";
@@ -412,6 +413,9 @@ interface SchematicState {
   updateCustomTemplate: (id: string, template: DeviceTemplate) => void;
   removeCustomTemplate: (deviceType: string) => void;
   clearAllCustomTemplates: () => void;
+  /** Fold server-side company library changes in WITHOUT marking anything dirty
+   *  (that would echo the change straight back). Sync engine only. */
+  applyRemoteOrgTemplates: (upserts: DeviceTemplate[], deletedIds: string[]) => void;
   addOwnedGear: (template: DeviceTemplate, quantity?: number) => void;
   setOwnedGear: (items: OwnedGearItem[]) => void;
   updateOwnedGearQuantity: (templateKey: string, quantity: number) => void;
@@ -3655,12 +3659,14 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({ customTemplates: updated, customTemplateOrder: order });
     saveCustomTemplates(updated);
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
+    markOrgTemplateDirty(templateKey(template), "upsert");
   },
 
   updateCustomTemplate: (id, template) => {
     const updated = get().customTemplates.map((t) => (t.id === id ? template : t));
     set({ customTemplates: updated });
     saveCustomTemplates(updated);
+    markOrgTemplateDirty(templateKey(template), "upsert");
   },
 
   addOwnedGear: (template, quantity = 1) => {
@@ -3726,9 +3732,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({ customTemplates: updated, customTemplateOrder: order, customTemplateGroupAssignments: groupAssignments });
     saveCustomTemplates(updated);
     saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments });
+    markOrgTemplateDirty(key, "delete");
   },
 
   clearAllCustomTemplates: () => {
+    const removed = get().customTemplates.map((t) => templateKey(t));
     set({
       customTemplates: [],
       customTemplateOrder: [],
@@ -3737,6 +3745,36 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     });
     saveCustomTemplates([]);
     saveCustomTemplateMeta({ groups: [], order: [], groupAssignments: {} });
+    for (const key of removed) markOrgTemplateDirty(key, "delete");
+  },
+
+  applyRemoteOrgTemplates: (upserts, deletedIds) => {
+    const deleted = new Set(deletedIds);
+    const byKey = new Map(get().customTemplates.map((t) => [templateKey(t), t]));
+    for (const t of upserts) byKey.set(templateKey(t), t);
+    for (const id of deleted) byKey.delete(id);
+    const updated = [...byKey.values()];
+
+    // Rebuild order dropping deletions AND any duplicate keys (a pre-sync
+    // library could hold dupes; the Map merge above collapses them, so the
+    // order list must too or counts drift).
+    const order: string[] = [];
+    const known = new Set<string>();
+    for (const k of get().customTemplateOrder) {
+      if (deleted.has(k) || known.has(k)) continue;
+      order.push(k);
+      known.add(k);
+    }
+    for (const t of updated) {
+      const k = templateKey(t);
+      if (!known.has(k)) { order.push(k); known.add(k); }
+    }
+    const groupAssignments = { ...get().customTemplateGroupAssignments };
+    for (const id of deleted) delete groupAssignments[id];
+
+    set({ customTemplates: updated, customTemplateOrder: order, customTemplateGroupAssignments: groupAssignments });
+    saveCustomTemplates(updated);
+    saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments });
   },
 
   // Custom template organization (#62)
@@ -4552,6 +4590,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       set({ customTemplates: merged, customTemplateOrder: order });
       saveCustomTemplates(merged);
       saveCustomTemplateMeta({ groups: get().customTemplateGroups, order, groupAssignments: get().customTemplateGroupAssignments });
+      for (const t of newTemplates) markOrgTemplateDirty(templateKey(t), "upsert");
     }
   },
 
@@ -5628,6 +5667,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         const merged = [...existing, ...newTemplates];
         set({ customTemplates: merged });
         saveCustomTemplates(merged);
+        // Customs carried in by the file join the company library like any
+        // other local addition.
+        for (const t of newTemplates) markOrgTemplateDirty(templateKey(t), "upsert");
       }
     }
     // Always apply colors — if file has none, reset to defaults

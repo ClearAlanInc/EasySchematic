@@ -384,3 +384,31 @@ export function validateTemplate(body: unknown): ValidationResult {
 }
 
 export type { TemplateInput };
+
+/**
+ * Light validation for organization (company library) custom templates.
+ * These are synced verbatim as JSON blobs, so unlike community submissions
+ * they don't need the full columnar contract — just enough structure that a
+ * pulled template can't crash the client: a label, a deviceType, and a
+ * bounded ports array.
+ */
+export function validateOrgTemplate(body: unknown): { ok: true } | { ok: false; error: string } {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { ok: false, error: "Template must be a JSON object" };
+  }
+  const obj = body as Record<string, unknown>;
+  const labelErr = checkString(obj.label, "label");
+  if (labelErr) return { ok: false, error: labelErr };
+  const typeErr = checkString(obj.deviceType, "deviceType", 200);
+  if (typeErr) return { ok: false, error: typeErr };
+  if (!Array.isArray(obj.ports)) return { ok: false, error: "ports must be an array" };
+  if (obj.ports.length > MAX_PORTS) return { ok: false, error: `ports must have ${MAX_PORTS} or fewer entries` };
+  for (const p of obj.ports) {
+    if (!p || typeof p !== "object") return { ok: false, error: "each port must be an object" };
+    const port = p as Record<string, unknown>;
+    if (typeof port.id !== "string" || typeof port.label !== "string") {
+      return { ok: false, error: "each port must have string id and label" };
+    }
+  }
+  return { ok: true };
+}

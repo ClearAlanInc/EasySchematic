@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { rowToTemplate, rowToSummary, templateToRow } from "./db";
 import { authMiddleware, sessionMiddleware, requireSession, requireModerator, requireModeratorOrToken, requireAdmin, requireAdminOrToken } from "./auth";
 import type { Env } from "./auth";
-import { validateTemplate } from "./validate";
+import { validateTemplate, validateOrgTemplate } from "./validate";
 import { checkRateLimit, cleanupExpiredRateLimits } from "./rateLimiter";
 
 const app = new Hono<Env>();
@@ -2631,6 +2631,151 @@ app.put("/schematics/:id/set-template", async (c) => {
   ]);
 
   return c.json({ ok: true });
+});
+
+// ==================== ORGANIZATION DEVICE LIBRARY ====================
+// Company-wide custom template sync (self-hosted deployments): every
+// authenticated user shares one library. The server is authoritative; clients
+// push local edits stamped with when the edit happened (editedAt) and pull
+// changes since their last sync. Conflicts resolve last-write-wins by edit
+// time — a stale push gets a 409 carrying the newer server row so the client
+// can adopt it instead.
+
+const MAX_ORG_TEMPLATE_SIZE = 256 * 1024; // 256 KB per template
+
+interface OrgTemplateRow {
+  id: string;
+  data: string;
+  deleted: number;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+function orgRowToJson(row: OrgTemplateRow) {
+  return {
+    id: row.id,
+    data: row.deleted ? null : JSON.parse(row.data),
+    deleted: !!row.deleted,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
+  };
+}
+
+app.get("/org-templates", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+
+  const since = c.req.query("since");
+  // serverTime lets the client record an exact high-water mark for its next
+  // `since` — using the client's clock would drop rows written during the sync.
+  const serverTime = new Date().toISOString();
+
+  const stmt = since
+    ? c.env.easyschematic_db
+        .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates WHERE updated_at > ? ORDER BY updated_at")
+        .bind(since)
+    : c.env.easyschematic_db
+        .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates ORDER BY updated_at");
+
+  const { results } = await stmt.all<OrgTemplateRow>();
+  return c.json({ serverTime, templates: (results ?? []).map(orgRowToJson) });
+});
+
+app.put("/org-templates/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  if (user.banned) return c.json({ error: "Account suspended" }, 403);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const limit = await checkRateLimit(db, `org-tpl:user:${user.id}`, 120);
+  if (!limit.allowed) return c.json({ error: "Too many library writes. Try again later." }, 429);
+
+  const raw = await c.req.text();
+  if (new TextEncoder().encode(raw).length > MAX_ORG_TEMPLATE_SIZE) {
+    return c.json({ error: "Template too large (max 256 KB)" }, 400);
+  }
+
+  let body: { data?: unknown; editedAt?: unknown };
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+
+  const editedAt = typeof body.editedAt === "string" && !Number.isNaN(Date.parse(body.editedAt))
+    ? body.editedAt
+    : new Date().toISOString();
+
+  const check = validateOrgTemplate(body.data);
+  if (!check.ok) return c.json({ error: check.error }, 400);
+
+  const existing = await db
+    .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates WHERE id = ?")
+    .bind(id)
+    .first<OrgTemplateRow>();
+
+  if (existing && existing.updated_at > editedAt) {
+    // Someone else wrote a newer version while this client was offline.
+    return c.json({ error: "Conflict: server has a newer version", current: orgRowToJson(existing) }, 409);
+  }
+
+  const updatedAt = new Date().toISOString();
+  await db
+    .prepare(
+      `INSERT INTO org_templates (id, data, deleted, updated_at, updated_by) VALUES (?, ?, 0, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET data = excluded.data, deleted = 0, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+    )
+    .bind(id, JSON.stringify(body.data), updatedAt, user.id)
+    .run();
+
+  return c.json({ id, updatedAt });
+});
+
+app.delete("/org-templates/:id", async (c) => {
+  const user = requireSession(c);
+  if (!user) return c.json({ error: "Not authenticated" }, 401);
+  if (user.banned) return c.json({ error: "Account suspended" }, 403);
+
+  const db = c.env.easyschematic_db;
+  const id = c.req.param("id");
+
+  const limit = await checkRateLimit(db, `org-tpl:user:${user.id}`, 120);
+  if (!limit.allowed) return c.json({ error: "Too many library writes. Try again later." }, 429);
+
+  let editedAt = new Date().toISOString();
+  try {
+    const body = await c.req.json<{ editedAt?: string }>();
+    if (typeof body.editedAt === "string" && !Number.isNaN(Date.parse(body.editedAt))) {
+      editedAt = body.editedAt;
+    }
+  } catch {
+    // No body — delete stamped with server time.
+  }
+
+  const existing = await db
+    .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates WHERE id = ?")
+    .bind(id)
+    .first<OrgTemplateRow>();
+
+  if (existing && existing.updated_at > editedAt) {
+    return c.json({ error: "Conflict: server has a newer version", current: orgRowToJson(existing) }, 409);
+  }
+
+  const updatedAt = new Date().toISOString();
+  // Tombstone (never hard-delete) so offline clients learn of the removal on
+  // their next pull. Deleting an id the server never saw still writes the
+  // tombstone — the client is telling us the device existed locally.
+  await db
+    .prepare(
+      `INSERT INTO org_templates (id, data, deleted, updated_at, updated_by) VALUES (?, '{}', 1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET deleted = 1, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+    )
+    .bind(id, updatedAt, user.id)
+    .run();
+
+  return c.json({ id, updatedAt, deleted: true });
 });
 
 app.get("/health", async (c) => {

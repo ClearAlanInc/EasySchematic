@@ -63,6 +63,7 @@ import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnect
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic, checkSession } from "./templateApi";
 import { refreshCloudCache } from "./cloudSync";
+import { syncOrgTemplates, initOrgTemplateSync } from "./orgTemplateSync";
 import { CLOUD_ENABLED } from "./selfHosted";
 import { useTheme } from "./hooks/useTheme";
 
@@ -525,9 +526,12 @@ function SchematicCanvas() {
     // its only consumers are cloud UI, which is hidden in this mode.)
     if (!CLOUD_ENABLED) return;
     const store = useSchematicStore.getState();
+    // Push-after-edit trigger for the company device library (debounced).
+    const stopOrgSync = initOrgTemplateSync();
     const goOnline = () => {
       store.setIsOnline(true);
       refreshCloudCache();
+      void syncOrgTemplates();
     };
     const goOffline = () => store.setIsOnline(false);
     window.addEventListener("online", goOnline);
@@ -536,7 +540,7 @@ function SchematicCanvas() {
     // Refresh cache on tab focus (if online and logged in)
     const onFocus = () => {
       if (document.visibilityState === "visible" && navigator.onLine) {
-        checkSession().then((u) => { if (u) refreshCloudCache(); });
+        checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); } });
       }
     };
     document.addEventListener("visibilitychange", onFocus);
@@ -547,14 +551,15 @@ function SchematicCanvas() {
       const current = navigator.onLine;
       if (current !== useSchematicStore.getState().isOnline) {
         useSchematicStore.getState().setIsOnline(current);
-        if (current) refreshCloudCache();
+        if (current) { refreshCloudCache(); void syncOrgTemplates(); }
       }
     }, 3000);
 
     // Populate cache on mount if logged in
-    checkSession().then((u) => { if (u) refreshCloudCache(); });
+    checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); } });
 
     return () => {
+      stopOrgSync();
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
       document.removeEventListener("visibilitychange", onFocus);

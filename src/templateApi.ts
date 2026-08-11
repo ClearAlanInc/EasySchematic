@@ -264,6 +264,73 @@ export async function loadSchematicTemplate(): Promise<unknown | null> {
   return res.json();
 }
 
+// ==================== ORGANIZATION DEVICE LIBRARY ====================
+// Company-wide custom template sync (see orgTemplateSync.ts for the engine).
+
+export interface OrgTemplateEntry {
+  id: string;
+  data: DeviceTemplate | null; // null on tombstones
+  deleted: boolean;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** Thrown on a 409 — carries the newer server row so the caller can adopt it. */
+export class OrgConflictError extends Error {
+  current: OrgTemplateEntry;
+  constructor(current: OrgTemplateEntry) {
+    super("Org template conflict: server has a newer version");
+    this.name = "OrgConflictError";
+    this.current = current;
+  }
+}
+
+/** Thrown on a 401 — the user isn't signed in; sync just waits. */
+export class NotAuthenticatedError extends Error {
+  constructor() {
+    super("Not authenticated");
+    this.name = "NotAuthenticatedError";
+  }
+}
+
+export async function listOrgTemplates(since?: string): Promise<{ serverTime: string; templates: OrgTemplateEntry[] }> {
+  assertCloudEnabled();
+  const url = new URL(`${API_URL}/org-templates`);
+  if (since) url.searchParams.set("since", since);
+  const res = await fetch(url, { credentials: "include" });
+  if (res.status === 401) throw new NotAuthenticatedError();
+  if (!res.ok) throw new Error(`Failed to list org templates (${res.status})`);
+  return res.json();
+}
+
+export async function putOrgTemplate(id: string, template: DeviceTemplate, editedAt: string): Promise<{ updatedAt: string }> {
+  assertCloudEnabled();
+  const res = await fetch(`${API_URL}/org-templates/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: template, editedAt }),
+  });
+  if (res.status === 401) throw new NotAuthenticatedError();
+  if (res.status === 409) throw new OrgConflictError((await res.json()).current);
+  if (!res.ok) throw new Error(`Failed to push org template (${res.status})`);
+  return res.json();
+}
+
+export async function deleteOrgTemplate(id: string, editedAt: string): Promise<{ updatedAt: string }> {
+  assertCloudEnabled();
+  const res = await fetch(`${API_URL}/org-templates/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ editedAt }),
+  });
+  if (res.status === 401) throw new NotAuthenticatedError();
+  if (res.status === 409) throw new OrgConflictError((await res.json()).current);
+  if (!res.ok) throw new Error(`Failed to delete org template (${res.status})`);
+  return res.json();
+}
+
 // ==================== TEMPLATES ====================
 
 /** Submit a single device template to the community review queue. */
