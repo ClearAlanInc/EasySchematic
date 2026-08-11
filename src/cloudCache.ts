@@ -1,14 +1,28 @@
 /**
- * IndexedDB read cache for cloud schematics.
- * Stores schematic metadata + full content locally so they're accessible offline.
- * This is a READ CACHE only — cloud saves always require an internet connection.
+ * IndexedDB cache for cloud schematics: a read cache of metadata + full
+ * content for offline access, plus a write outbox — cloud saves made while
+ * offline queue here and replay on reconnect (see cloudSync.ts).
  */
 
 import type { CloudSchematic } from "./templateApi";
 
 const DB_NAME = "easyschematic-cloud-cache";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const SCHEMATICS_STORE = "schematics";
+const OUTBOX_STORE = "outbox";
+
+/** A cloud save captured while offline, awaiting replay. One per schematic —
+ *  a newer queued save simply replaces the older one. */
+export interface OutboxEntry {
+  /** Cloud schematic id the save targets. */
+  id: string;
+  /** Full SchematicFile export at the moment of the save. */
+  data: unknown;
+  queuedAt: string;
+  /** The cloud updated_at we last synced from — replay compares the server's
+   *  current stamp against this to detect a colleague's intervening save. */
+  baseUpdatedAt: string | null;
+}
 
 export interface CachedSchematic extends CloudSchematic {
   data: unknown | null; // full SchematicFile content, null if not yet fetched
@@ -26,6 +40,9 @@ function openCache(): Promise<IDBDatabase> {
       const db = req.result;
       if (!db.objectStoreNames.contains(SCHEMATICS_STORE)) {
         db.createObjectStore(SCHEMATICS_STORE, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(OUTBOX_STORE)) {
+        db.createObjectStore(OUTBOX_STORE, { keyPath: "id" });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -118,12 +135,47 @@ export async function removeCachedSchematic(id: string): Promise<void> {
   });
 }
 
-/** Wipe all cached data (for logout). */
+/** Wipe all cached data (for logout). Also drops any queued offline saves —
+ *  they belonged to the account that just signed out. */
 export async function clearCache(): Promise<void> {
   const db = await openCache();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(SCHEMATICS_STORE, "readwrite");
+    const tx = db.transaction([SCHEMATICS_STORE, OUTBOX_STORE], "readwrite");
     tx.objectStore(SCHEMATICS_STORE).clear();
+    tx.objectStore(OUTBOX_STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ─── Write Outbox ────────────────────────────────────────
+
+/** Queue (or replace) the pending offline save for a schematic. */
+export async function putOutboxEntry(entry: OutboxEntry): Promise<void> {
+  const db = await openCache();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, "readwrite");
+    tx.objectStore(OUTBOX_STORE).put(entry);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getOutboxEntries(): Promise<OutboxEntry[]> {
+  const db = await openCache();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, "readonly");
+    const req = tx.objectStore(OUTBOX_STORE).getAll();
+    req.onsuccess = () => resolve(req.result as OutboxEntry[]);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function removeOutboxEntry(id: string): Promise<void> {
+  const db = await openCache();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, "readwrite");
+    tx.objectStore(OUTBOX_STORE).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

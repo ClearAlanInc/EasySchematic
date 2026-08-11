@@ -62,7 +62,7 @@ import type { ConnectionEdge, DeviceData, DeviceTemplate, SchematicFile, Schemat
 import { findAdaptersForSignalBridge, findAdaptersForConnectorBridge, areConnectorsCompatible, isVirtualSignal } from "./connectorTypes";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { loadSharedSchematic, checkSession } from "./templateApi";
-import { refreshCloudCache } from "./cloudSync";
+import { refreshCloudCache, replayCloudOutbox } from "./cloudSync";
 import { syncOrgTemplates, initOrgTemplateSync } from "./orgTemplateSync";
 import { CLOUD_ENABLED } from "./selfHosted";
 import { useTheme } from "./hooks/useTheme";
@@ -532,6 +532,7 @@ function SchematicCanvas() {
       store.setIsOnline(true);
       refreshCloudCache();
       void syncOrgTemplates();
+      void replayCloudOutbox();
     };
     const goOffline = () => store.setIsOnline(false);
     window.addEventListener("online", goOnline);
@@ -540,7 +541,7 @@ function SchematicCanvas() {
     // Refresh cache on tab focus (if online and logged in)
     const onFocus = () => {
       if (document.visibilityState === "visible" && navigator.onLine) {
-        checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); } });
+        checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); void replayCloudOutbox(); } });
       }
     };
     document.addEventListener("visibilitychange", onFocus);
@@ -551,12 +552,12 @@ function SchematicCanvas() {
       const current = navigator.onLine;
       if (current !== useSchematicStore.getState().isOnline) {
         useSchematicStore.getState().setIsOnline(current);
-        if (current) { refreshCloudCache(); void syncOrgTemplates(); }
+        if (current) { refreshCloudCache(); void syncOrgTemplates(); void replayCloudOutbox(); }
       }
     }, 3000);
 
     // Populate cache on mount if logged in
-    checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); } });
+    checkSession().then((u) => { if (u) { refreshCloudCache(); void syncOrgTemplates(); void replayCloudOutbox(); } });
 
     return () => {
       stopOrgSync();

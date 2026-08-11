@@ -18,6 +18,7 @@ import UserMenuButton from "./UserMenuButton";
 import SchematicBrowser from "./SchematicBrowser";
 import LoginDialog from "./LoginDialog";
 import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
+import { queueCloudSave } from "../cloudSync";
 import { CLOUD_ENABLED, DEVICES_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
@@ -262,16 +263,32 @@ export default function MenuBar() {
     // Cloud-backed schematic: update cloud (local file handle still used if present).
     // In a self-hosted build a stale cloudSchematicId (from a previous hosted session's
     // autosave) is ignored so Ctrl+S falls through to a real local save.
-    if (CLOUD_ENABLED && store.cloudSchematicId && store.isOnline) {
-      checkSession().then((session) => {
-        if (!session) return;
-        const data = store.exportToJSON();
-        updateSchematicInCloud(store.cloudSchematicId!, data)
-          .then((result) => store.setCloudSavedAt(result.updated_at))
-          .catch((e: unknown) => {
-            store.addToast(e instanceof Error ? e.message : "Cloud save failed", "error");
-          });
-      });
+    if (CLOUD_ENABLED && store.cloudSchematicId) {
+      const cloudId = store.cloudSchematicId;
+      const data = store.exportToJSON();
+      if (store.isOnline) {
+        checkSession().then((session) => {
+          if (!session) return;
+          updateSchematicInCloud(cloudId, data)
+            .then((result) => store.setCloudSavedAt(result.updated_at))
+            .catch((e: unknown) => {
+              // A network drop mid-save (fetch rejects with TypeError) queues
+              // for replay like an offline save; real API errors surface.
+              if (!navigator.onLine || e instanceof TypeError) {
+                queueCloudSave(cloudId, data, store.cloudSavedAt)
+                  .then(() => store.addToast("Connection lost — cloud save queued for when you're back online", "info"))
+                  .catch(() => store.addToast("Cloud save failed", "error"));
+              } else {
+                store.addToast(e instanceof Error ? e.message : "Cloud save failed", "error");
+              }
+            });
+        });
+      } else {
+        // Offline: queue the save for replay on reconnect.
+        queueCloudSave(cloudId, data, store.cloudSavedAt)
+          .then(() => store.addToast("Offline — cloud save queued for when you're back online", "info"))
+          .catch(() => store.addToast("Couldn't queue offline cloud save", "error"));
+      }
     }
 
     // Has a local file handle: silently overwrite
@@ -444,7 +461,19 @@ export default function MenuBar() {
     const store = useSchematicStore.getState();
 
     if (!navigator.onLine) {
-      store.addToast("You're offline. Use File → Save to save a copy to your computer.", "info");
+      if (store.cloudSchematicId) {
+        // Already cloud-backed: queue the save and replay it on reconnect.
+        try {
+          await queueCloudSave(store.cloudSchematicId, exportToJSON(), store.cloudSavedAt);
+          store.addToast("Offline — cloud save queued for when you're back online", "info");
+        } catch {
+          store.addToast("Couldn't queue offline cloud save", "error");
+        }
+      } else {
+        // A first-time cloud save needs a login round-trip; offline we can
+        // only point at the local fallback.
+        store.addToast("You're offline. Use File → Save to save a copy to your computer.", "info");
+      }
       return;
     }
 
