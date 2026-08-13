@@ -314,8 +314,9 @@ export default function MenuBar() {
         await writeToFileHandle(store.fileHandle);
         store.addToast("Saved", "success", 1500);
         return;
-      } catch {
+      } catch (e: unknown) {
         // Handle went stale (file moved/deleted) — fall through to picker
+        console.warn("Existing file handle failed, re-prompting for location:", e);
         store.setFileHandle(null);
       }
     }
@@ -338,7 +339,8 @@ export default function MenuBar() {
         // leaving a misleading 0-byte artifact on disk. (#0-byte-save)
         await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
         store.setFileHandle(null);
-        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 6000);
+        console.error("Save to file failed:", e);
+        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 30000);
       }
     } else {
       downloadFile();
@@ -363,7 +365,8 @@ export default function MenuBar() {
         // Remove the picker's empty file instead of leaving a 0-byte artifact.
         await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
         store.setFileHandle(null);
-        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 6000);
+        console.error("Save As failed:", e);
+        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 30000);
       }
     } else {
       downloadFile();
