@@ -51,6 +51,7 @@ function sheetScoped<N extends { id: string }>(
 }
 import SnapGuides from "./components/SnapGuides";
 import PageBoundaryOverlay from "./components/PageBoundaryOverlay";
+import PageGuides from "./components/PageGuides";
 import PrintViewBar from "./components/PrintViewBar";
 import DeviceLibrary from "./components/DeviceLibrary";
 import DeviceEditor from "./components/DeviceEditor";
@@ -597,6 +598,7 @@ function SchematicCanvas() {
   const isDragging = useSchematicStore((s) => s.isDragging);
   const debugEdges = useSchematicStore((s) => s.debugEdges);
   const printView = useSchematicStore((s) => s.printView);
+  const showPageGuides = useSchematicStore((s) => s.showPageGuides);
   const showMinimap = useSchematicStore((s) => s.showMinimap);
   const setShowMinimap = useSchematicStore((s) => s.setShowMinimap);
   const hiddenSignalTypesStr = useSchematicStore((s) => s.hiddenSignalTypes);
@@ -1754,6 +1756,7 @@ function SchematicCanvas() {
     >
       <ResizeSnapGuides dragGuides={snapGuides} />
       {printView && <PageBoundaryOverlay />}
+      {!printView && showPageGuides && <PageGuides />}
       {connectPreview && (() => {
         const { fromX, fromY, toX, toY, fromSource, snapped, valid, adaptable } = connectPreview;
         const dx = Math.abs(toX - fromX);

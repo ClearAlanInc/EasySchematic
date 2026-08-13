@@ -928,6 +928,8 @@ export interface SchematicFile {
   /** Hide physical cabling on the canvas — virtual/logical layer only. */
   hidePhysicalConnections?: boolean;
   showPortCounts?: boolean;
+  /** Faint page-grid outlines on the normal canvas. Default true. */
+  showPageGuides?: boolean;
   templateHiddenSignals?: Record<string, SignalType[]>;
   templatePresets?: Record<string, TemplatePreset>;
   favoriteTemplates?: string[];

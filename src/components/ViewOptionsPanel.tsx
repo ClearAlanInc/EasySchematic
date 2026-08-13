@@ -24,6 +24,8 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
   const setHideVirtualConnections = useSchematicStore((s) => s.setHideVirtualConnections);
   const setHidePhysicalConnections = useSchematicStore((s) => s.setHidePhysicalConnections);
   const showPortCounts = useSchematicStore((s) => s.showPortCounts);
+  const showPageGuides = useSchematicStore((s) => s.showPageGuides);
+  const setShowPageGuides = useSchematicStore((s) => s.setShowPageGuides);
   const setShowPortCounts = useSchematicStore((s) => s.setShowPortCounts);
   const toggleSignalTypeVisibility = useSchematicStore((s) => s.toggleSignalTypeVisibility);
   const togglePinSignalTypeVisibility = useSchematicStore((s) => s.togglePinSignalTypeVisibility);
@@ -262,6 +264,15 @@ export default function ViewOptionsPanel({ mobile, onClose }: { mobile?: boolean
             className="w-3 h-3 accent-blue-500 cursor-pointer"
           />
           <span className="text-xs text-[var(--color-text)]">Show IO counts</span>
+        </label>
+        <label className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-[var(--color-surface-hover)] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showPageGuides}
+            onChange={(e) => setShowPageGuides(e.target.checked)}
+            className="w-3 h-3 accent-blue-500 cursor-pointer"
+          />
+          <span className="text-xs text-[var(--color-text)]">Show page guides</span>
         </label>
 
         {/* Divider */}

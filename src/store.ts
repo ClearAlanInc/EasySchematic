@@ -602,6 +602,9 @@ interface SchematicState {
   setHideUnconnectedPorts: (hide: boolean) => void;
   showPortCounts: boolean;
   setShowPortCounts: (show: boolean) => void;
+  /** Faint page-grid outlines on the normal canvas (#page-guides). Default on. */
+  showPageGuides: boolean;
+  setShowPageGuides: (show: boolean) => void;
   setTemplateHiddenSignals: (templateId: string, hidden: SignalType[]) => void;
   showAllSignalTypes: () => void;
 
@@ -1589,6 +1592,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   hiddenPinSignalTypes: "",
   hideUnconnectedPorts: false,
   showPortCounts: false,
+  showPageGuides: true,
   templateHiddenSignals: {},
   templatePresets: {},
   favoriteTemplates: [],
@@ -4296,6 +4300,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setShowPageGuides: (show) => {
+    set({ showPageGuides: show });
+    get().saveToLocalStorage();
+  },
+
   setTemplateHiddenSignals: (templateId, hidden) => {
     const current = get().templateHiddenSignals;
     if (hidden.length === 0) {
@@ -5534,6 +5543,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hideVirtualConnections: state.hideVirtualConnections || undefined,
       hidePhysicalConnections: state.hidePhysicalConnections || undefined,
       showPortCounts: state.showPortCounts || undefined,
+      showPageGuides: state.showPageGuides === false ? false : undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
@@ -5638,6 +5648,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
             hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
             showPortCounts: data.showPortCounts ?? false,
+            showPageGuides: data.showPageGuides ?? true,
             templateHiddenSignals: data.templateHiddenSignals ?? {},
             templatePresets: data.templatePresets ?? {},
             favoriteTemplates: data.favoriteTemplates ?? [],
@@ -5729,6 +5740,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
         hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
         showPortCounts: data.showPortCounts ?? false,
+            showPageGuides: data.showPageGuides ?? true,
         templateHiddenSignals: data.templateHiddenSignals ?? {},
         templatePresets: data.templatePresets ?? {},
         favoriteTemplates: data.favoriteTemplates ?? [],
@@ -5816,6 +5828,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hideVirtualConnections: state.hideVirtualConnections || undefined,
       hidePhysicalConnections: state.hidePhysicalConnections || undefined,
       showPortCounts: state.showPortCounts || undefined,
+      showPageGuides: state.showPageGuides === false ? false : undefined,
       templateHiddenSignals: Object.keys(state.templateHiddenSignals).length > 0 ? state.templateHiddenSignals : undefined,
       templatePresets: Object.keys(state.templatePresets).length > 0 ? state.templatePresets : undefined,
       favoriteTemplates: state.favoriteTemplates.length > 0 ? state.favoriteTemplates : undefined,
@@ -5923,6 +5936,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       hiddenPinSignalTypes: data.hiddenPinSignalTypes?.length ? [...data.hiddenPinSignalTypes].sort().join(",") : "",
       hideUnconnectedPorts: data.hideUnconnectedPorts ?? false,
       showPortCounts: data.showPortCounts ?? false,
+            showPageGuides: data.showPageGuides ?? true,
       templateHiddenSignals: data.templateHiddenSignals ?? {},
       templatePresets: data.templatePresets ?? {},
       favoriteTemplates: data.favoriteTemplates ?? [],
