@@ -1280,11 +1280,11 @@ export default function DeviceLibrary() {
       </div>
 
       {/* Degraded-library notice: the API fetch failed and we're on cache/bundled,
-          so community devices may be missing. Replaces the old silent fallback. (#181) */}
+          so server-side devices may be missing. Replaces the old silent fallback. (#181) */}
       {libraryDegraded && (
         <div className="px-3 py-2 border-b border-amber-300 bg-amber-50 text-[11px] text-amber-800">
           <div className="leading-snug">
-            Couldn't load the full device library — some community devices may be missing.
+            Couldn't reach the ClearAlan device library — some devices may be missing.
           </div>
           <button
             onClick={loadLibrary}
