@@ -11,6 +11,7 @@ import type { SchematicFile, SchematicNode, AnnotationData } from "../types";
 import ReportsDialog, { type ReportsTab } from "./ReportsDialog";
 import TitleBlockDialog from "./TitleBlockDialog";
 import AboutDialog from "./AboutDialog";
+import RevisionHistoryDialog from "./RevisionHistoryDialog";
 import PreferencesDialog from "./PreferencesDialog";
 import RoomDistancesDialog from "./RoomDistancesDialog";
 import AlignmentMenu from "./AlignmentMenu";
@@ -150,6 +151,7 @@ export default function MenuBar() {
   const [reportsTab, setReportsTab] = useState<ReportsTab | null>(null);
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [showRevisionHistory, setShowRevisionHistory] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [showRoomDistances, setShowRoomDistances] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
@@ -231,6 +233,7 @@ export default function MenuBar() {
 
   // Legacy download fallback (always triggers browser download)
   const downloadFile = useCallback(() => {
+    useSchematicStore.getState().bumpMinorRevision();
     const data = exportToJSON();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json; charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -259,6 +262,13 @@ export default function MenuBar() {
   // Save: reuse existing handle/cloud, or prompt for first save
   const handleSave = useCallback(async () => {
     const store = useSchematicStore.getState();
+
+    // One explicit save = one minor revision bump, shared by whichever targets
+    // (cloud and/or local file) this action writes to. The no-target first-save
+    // path bumps later, once a destination is actually chosen.
+    if ((CLOUD_ENABLED && store.cloudSchematicId) || store.fileHandle) {
+      store.bumpMinorRevision();
+    }
 
     // Cloud-backed schematic: update cloud (local file handle still used if present).
     // In a self-hosted build a stale cloudSchematicId (from a previous hosted session's
@@ -312,6 +322,7 @@ export default function MenuBar() {
       if (!handle) return;
       // Switch the session to the chosen file (handle + name + tab title). (#174)
       store.adoptLocalFile(handle);
+      store.bumpMinorRevision();
       try {
         await writeToFileHandle(handle);
         store.addToast("Saved", "success", 1500);
@@ -333,6 +344,7 @@ export default function MenuBar() {
       // match it, and detach from cloud (user chose a local destination). This
       // makes subsequent Ctrl+S saves and the window title follow the new file. (#174)
       store.adoptLocalFile(handle);
+      store.bumpMinorRevision();
       try {
         await writeToFileHandle(handle);
         store.addToast("Saved", "success", 1500);
@@ -464,6 +476,7 @@ export default function MenuBar() {
       if (store.cloudSchematicId) {
         // Already cloud-backed: queue the save and replay it on reconnect.
         try {
+          store.bumpMinorRevision();
           await queueCloudSave(store.cloudSchematicId, exportToJSON(), store.cloudSavedAt);
           store.addToast("Offline — cloud save queued for when you're back online", "info");
         } catch {
@@ -484,6 +497,7 @@ export default function MenuBar() {
     }
     setCloudSaving(true);
     try {
+      store.bumpMinorRevision(session.email);
       const data = exportToJSON();
       if (store.cloudSchematicId) {
         const result = await updateSchematicInCloud(store.cloudSchematicId, data);
@@ -608,6 +622,7 @@ export default function MenuBar() {
       { type: "item", label: "Save", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Save As...", shortcut: "Ctrl+Shift+S", onClick: handleSaveAs },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
+      { type: "item", label: "Revision History...", onClick: () => setShowRevisionHistory(true) },
       { type: "separator" },
       // Cloud items are hidden entirely (not just disabled) in a self-hosted build
       ...(CLOUD_ENABLED ? [
@@ -1076,6 +1091,9 @@ export default function MenuBar() {
       )}
       {showTitleBlockDialog && (
         <TitleBlockDialog onClose={() => setShowTitleBlockDialog(false)} />
+      )}
+      {showRevisionHistory && (
+        <RevisionHistoryDialog onClose={() => setShowRevisionHistory(false)} />
       )}
       {showAboutDialog && (
         <AboutDialog onClose={() => setShowAboutDialog(false)} />

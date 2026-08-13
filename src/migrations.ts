@@ -17,7 +17,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 50;
+export const CURRENT_SCHEMA_VERSION = 51;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -667,6 +667,14 @@ const migrations: Record<number, Migration> = {
       if (tmpl.ports) tmpl.ports = groupSubHandles(tmpl.ports);
     }
     data.version = 50;
+    return data;
+  },
+  50: (data) => {
+    // v50 -> v51: document revision numbering (major.minor) + metadata-only
+    // revision history. Existing files start at 1.0 with an empty log.
+    data.revision ??= { major: 1, minor: 0 };
+    data.revisionHistory ??= [];
+    data.version = 51;
     return data;
   },
 };

@@ -869,9 +869,31 @@ export interface BundleMeta {
   collapsed?: boolean;
 }
 
+/** User-facing document revision, independent of the file-format `version`. */
+export interface RevisionInfo {
+  major: number;
+  minor: number;
+}
+
+/** One line of the revision log. Metadata only — no content snapshot. */
+export interface RevisionEntry {
+  major: number;
+  minor: number;
+  kind: "minor" | "major";
+  /** ISO timestamp of the save that produced this revision. */
+  savedAt: string;
+  /** Cloud account email when the save happened signed-in. */
+  savedBy?: string;
+  /** Optional note, prompted for on major bumps. */
+  note?: string;
+}
+
 export interface SchematicFile {
   version: number;
   name: string;
+  /** Document revision — minor auto-bumps on each explicit save. */
+  revision?: RevisionInfo;
+  revisionHistory?: RevisionEntry[];
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
   customTemplates?: DeviceTemplate[];

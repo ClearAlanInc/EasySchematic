@@ -37,7 +37,7 @@ import type {
   PatchPanelViewPage,
 } from "./types";
 import type { ReactFlowInstance } from "@xyflow/react";
-import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode, ProjectStatus } from "./types";
+import type { SignalType, ScrollConfig, LineStyle, LabelCaseMode, DistanceSettings, PanMode, StubLabelPageMode, ProjectStatus, RevisionInfo, RevisionEntry } from "./types";
 import { defaultStubPlacement, healStubPortAlignment, STUB_W_EST } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import { textStubSideForPort, textStubBoxPosition } from "./textStub";
@@ -555,6 +555,13 @@ interface SchematicState {
   setPrintCustomWidthIn: (w: number) => void;
   setPrintCustomHeightIn: (h: number) => void;
   setPrintOriginOffset: (x: number, y: number) => void;
+
+  // Document revision (#revision-history). Minor bumps on every explicit save
+  // (file or cloud, never autosave); major bumps only via bumpMajorRevision.
+  revision: RevisionInfo;
+  revisionHistory: RevisionEntry[];
+  bumpMinorRevision: (savedBy?: string) => void;
+  bumpMajorRevision: (note?: string, savedBy?: string) => void;
 
   // Title block
   titleBlock: TitleBlock;
@@ -1435,6 +1442,39 @@ function saveCategoryOrder(order: string[] | null) {
 const _initCustomTemplates = loadCustomTemplates();
 const _initCustomMeta = loadCustomTemplateMeta(_initCustomTemplates);
 
+// Metadata-only entries are tiny; the cap is just a runaway guard for a file
+// saved thousands of times. Oldest entries fall off first.
+const REVISION_HISTORY_CAP = 500;
+
+function applyRevisionBump(
+  set: (partial: Partial<SchematicState>) => void,
+  get: () => SchematicState,
+  next: RevisionInfo,
+  kind: "minor" | "major",
+  savedBy?: string,
+  note?: string,
+): void {
+  const state = get();
+  const entry: RevisionEntry = {
+    major: next.major,
+    minor: next.minor,
+    kind,
+    savedAt: new Date().toISOString(),
+    ...(savedBy ? { savedBy } : {}),
+    ...(note ? { note } : {}),
+  };
+  const revisionHistory = [...state.revisionHistory, entry].slice(-REVISION_HISTORY_CAP);
+  // Keep the title block's rev display in step, but only while it still holds
+  // an auto-format value (or nothing) — a hand-typed scheme like "Rev C" wins.
+  const tbRev = state.titleBlock.revision.trim();
+  const isAutoFormat = !tbRev || /^v?\d+\.\d+$/i.test(tbRev);
+  const titleBlock = isAutoFormat
+    ? { ...state.titleBlock, revision: `v${next.major}.${next.minor}` }
+    : state.titleBlock;
+  set({ revision: next, revisionHistory, titleBlock });
+  get().saveToLocalStorage();
+}
+
 export const useSchematicStore = create<SchematicState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -1496,6 +1536,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   bundles: {},
   roomDistances: undefined,
   distanceSettings: undefined,
+  revision: { major: 1, minor: 0 },
+  revisionHistory: [],
   titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
   titleBlockLayout: createDefaultLayout(),
   signalColors: undefined,
@@ -4133,6 +4175,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({ distanceSettings: merged });
     get().saveToLocalStorage();
   },
+  bumpMinorRevision: (savedBy) => {
+    const { revision } = get();
+    applyRevisionBump(set, get, { major: revision.major, minor: revision.minor + 1 }, "minor", savedBy);
+  },
+
+  bumpMajorRevision: (note, savedBy) => {
+    const { revision } = get();
+    applyRevisionBump(set, get, { major: revision.major + 1, minor: 0 }, "major", savedBy, note);
+  },
+
   setTitleBlock: (tb) => { set({ titleBlock: tb }); get().saveToLocalStorage(); },
   setTitleBlockLayout: (layout) => { set({ titleBlockLayout: layout }); get().saveToLocalStorage(); },
 
@@ -5304,6 +5356,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const data: SchematicFile = {
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
+      revision: state.revision,
+      revisionHistory: state.revisionHistory.length > 0 ? state.revisionHistory : undefined,
       nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       ownedGear: state.ownedGear.length > 0 ? state.ownedGear : undefined,
@@ -5416,6 +5470,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             printCustomHeightIn: data.printCustomHeightIn ?? 36,
             printOriginOffsetX: data.printOriginOffsetX ?? 0,
             printOriginOffsetY: data.printOriginOffsetY ?? 0,
+            revision: data.revision ?? { major: 1, minor: 0 },
+            revisionHistory: data.revisionHistory ?? [],
             titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
             hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5503,6 +5559,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         printCustomHeightIn: data.printCustomHeightIn ?? 36,
         printOriginOffsetX: data.printOriginOffsetX ?? 0,
         printOriginOffsetY: data.printOriginOffsetY ?? 0,
+        revision: data.revision ?? { major: 1, minor: 0 },
+        revisionHistory: data.revisionHistory ?? [],
         titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
         hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5573,6 +5631,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     return {
       version: CURRENT_SCHEMA_VERSION,
       name: state.schematicName,
+      revision: state.revision,
+      revisionHistory: state.revisionHistory.length > 0 ? state.revisionHistory : undefined,
       nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       customTemplates: state.customTemplates.length > 0 ? state.customTemplates : undefined,
@@ -5691,6 +5751,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printCustomHeightIn: data.printCustomHeightIn ?? 36,
       printOriginOffsetX: data.printOriginOffsetX ?? 0,
       printOriginOffsetY: data.printOriginOffsetY ?? 0,
+      revision: data.revision ?? { major: 1, minor: 0 },
+      revisionHistory: data.revisionHistory ?? [],
       titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
       hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5801,6 +5863,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         cloudSchematicId: null,
         cloudSavedAt: null,
         fileHandle: null,
+        revision: { major: 1, minor: 0 },
+        revisionHistory: [],
         titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: createDefaultLayout(),
         hiddenSignalTypes: "",
