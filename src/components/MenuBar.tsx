@@ -224,8 +224,15 @@ export default function MenuBar() {
 
   // Write schematic JSON to a FileSystemFileHandle (silent, no dialog)
   const writeToFileHandle = useCallback(async (handle: FileSystemFileHandle) => {
+    // Serialize and VALIDATE before touching the file — createWritable's swap
+    // file only replaces the original at close(), so a failure here leaves an
+    // existing file untouched. The guard keeps a malformed export from ever
+    // committing an empty/garbage payload over good data. (#0-byte-save)
     const data = exportToJSON();
     const json = JSON.stringify(data, null, 2);
+    if (!json || json.length < 20 || !Array.isArray(data.nodes)) {
+      throw new Error("Export produced no data — file not written");
+    }
     const writable = await handle.createWritable();
     await writable.write(json);
     await writable.close();
@@ -327,7 +334,11 @@ export default function MenuBar() {
         await writeToFileHandle(handle);
         store.addToast("Saved", "success", 1500);
       } catch (e: unknown) {
-        store.addToast(e instanceof Error ? e.message : "Save failed", "error");
+        // The picker already created an empty file; remove it rather than
+        // leaving a misleading 0-byte artifact on disk. (#0-byte-save)
+        await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
+        store.setFileHandle(null);
+        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 6000);
       }
     } else {
       downloadFile();
@@ -349,7 +360,10 @@ export default function MenuBar() {
         await writeToFileHandle(handle);
         store.addToast("Saved", "success", 1500);
       } catch (e: unknown) {
-        store.addToast(e instanceof Error ? e.message : "Save failed", "error");
+        // Remove the picker's empty file instead of leaving a 0-byte artifact.
+        await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
+        store.setFileHandle(null);
+        store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 6000);
       }
     } else {
       downloadFile();
