@@ -62,6 +62,28 @@ export async function checkSession(): Promise<{ id: string; email: string; name:
   }
 }
 
+export interface AuthProviders {
+  google: boolean;
+  microsoft: boolean;
+  magicLink: boolean;
+}
+
+/** Which sign-in methods this deployment's API has configured. Falls back to
+ *  the historical default (Google + magic link) when the endpoint is missing
+ *  or unreachable, so older servers keep their current dialog. */
+export async function fetchAuthProviders(): Promise<AuthProviders> {
+  const fallback: AuthProviders = { google: true, microsoft: false, magicLink: true };
+  if (!CLOUD_ENABLED) return { google: false, microsoft: false, magicLink: false };
+  try {
+    const res = await fetch(`${API_URL}/auth/providers`);
+    if (!res.ok) return fallback;
+    const data = (await res.json()) as Partial<AuthProviders>;
+    return { google: !!data.google, microsoft: !!data.microsoft, magicLink: !!data.magicLink };
+  } catch {
+    return fallback;
+  }
+}
+
 export async function requestLogin(email: string, returnTo?: string): Promise<void> {
   assertCloudEnabled();
   const res = await fetch(`${API_URL}/auth/login`, {

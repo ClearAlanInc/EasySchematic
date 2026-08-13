@@ -559,6 +559,176 @@ app.get("/auth/google/callback", async (c) => {
   return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
 });
 
+// ==================== MICROSOFT (ENTRA ID) OAUTH ENDPOINTS ====================
+// Mirrors the Google flow. Enabled by setting MS_CLIENT_ID / MS_CLIENT_SECRET
+// (and optionally MS_TENANT to pin sign-in to one organization's accounts —
+// self-hosted deployments should set their tenant ID so only company accounts
+// can authenticate).
+
+function msTenant(c: Context<Env>): string {
+  return c.env.MS_TENANT?.trim() || "common";
+}
+
+/** Redirect URI derived from the request origin so the same code works on any
+ *  self-hosted API host — register this exact value on the app registration. */
+function msRedirectUri(c: Context<Env>): string {
+  return `${new URL(c.req.url).origin}/auth/microsoft/callback`;
+}
+
+/** Which login providers this deployment has configured — drives the client's
+ *  login dialog so buttons only appear for providers that will actually work. */
+app.get("/auth/providers", (c) => {
+  return c.json({
+    google: !!c.env.GOOGLE_CLIENT_ID,
+    microsoft: !!c.env.MS_CLIENT_ID,
+    magicLink: !!c.env.RESEND_API_KEY,
+  });
+});
+
+app.get("/auth/microsoft/start", async (c) => {
+  if (!c.env.MS_CLIENT_ID) return c.json({ error: "Microsoft sign-in is not configured" }, 404);
+
+  const returnTo = c.req.query("returnTo");
+  const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
+
+  const db = c.env.easyschematic_db;
+
+  const ip = getClientIP(c);
+  const ipLimit = await checkRateLimit(db, `login:ip:${ip}`, 10);
+  if (!ipLimit.allowed) {
+    return c.json({ error: "Too many login attempts. Try again later." }, 429);
+  }
+
+  const state = crypto.randomUUID();
+  const expiresAt = sqliteDatetime(10 * 60 * 1000);
+  await db
+    .prepare("INSERT INTO oauth_states (id, return_to, expires_at) VALUES (?, ?, ?)")
+    .bind(state, validReturnTo ?? null, expiresAt)
+    .run();
+
+  const params = new URLSearchParams({
+    client_id: c.env.MS_CLIENT_ID,
+    redirect_uri: msRedirectUri(c),
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+    prompt: "select_account",
+  });
+
+  return c.redirect(`https://login.microsoftonline.com/${msTenant(c)}/oauth2/v2.0/authorize?${params}`);
+});
+
+app.get("/auth/microsoft/callback", async (c) => {
+  const db = c.env.easyschematic_db;
+  const code = c.req.query("code");
+  const state = c.req.query("state");
+  const error = c.req.query("error");
+
+  const stateRow = state
+    ? await db
+        .prepare("SELECT return_to, expires_at FROM oauth_states WHERE id = ?")
+        .bind(state)
+        .first<{ return_to: string | null; expires_at: string }>()
+    : null;
+
+  if (state) {
+    await db.prepare("DELETE FROM oauth_states WHERE id = ?").bind(state).run();
+  }
+
+  const returnOrigin = stateRow?.return_to
+    ? new URL(stateRow.return_to).origin
+    : null;
+
+  const redirectWithError = (err: string) => {
+    if (returnOrigin) {
+      return c.redirect(`${returnOrigin}/?error=${err}`);
+    }
+    return c.redirect(`https://devices.easyschematic.live/#/login?error=${err}`);
+  };
+
+  if (error) return redirectWithError("oauth_denied");
+  if (!stateRow) return redirectWithError("expired");
+  const now = sqliteDatetime(0);
+  if (stateRow.expires_at <= now) return redirectWithError("expired");
+  if (!code) return redirectWithError("expired");
+  if (!c.env.MS_CLIENT_ID || !c.env.MS_CLIENT_SECRET) return redirectWithError("oauth_failed");
+
+  const tokenRes = await fetch(`https://login.microsoftonline.com/${msTenant(c)}/oauth2/v2.0/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: c.env.MS_CLIENT_ID,
+      client_secret: c.env.MS_CLIENT_SECRET,
+      redirect_uri: msRedirectUri(c),
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!tokenRes.ok) {
+    console.error("Microsoft token exchange failed:", await tokenRes.text());
+    return redirectWithError("oauth_failed");
+  }
+
+  const tokenData = await tokenRes.json<{ id_token?: string }>();
+  if (!tokenData.id_token) return redirectWithError("oauth_failed");
+
+  // Decode id_token payload (trusted — direct from Microsoft over HTTPS).
+  // Work/school accounts carry the org-verified address in `email` or as the
+  // UPN in `preferred_username`; there is no email_verified claim.
+  const payload = JSON.parse(atob(tokenData.id_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  const { sub, email, preferred_username, name } = payload as {
+    sub: string; email?: string; preferred_username?: string; name?: string;
+  };
+
+  const rawEmail = email || (preferred_username?.includes("@") ? preferred_username : undefined);
+  if (!rawEmail) return redirectWithError("email_not_verified");
+  const normalizedEmail = rawEmail.toLowerCase();
+
+  // Account resolution: microsoft_id first, then email
+  let user = await db
+    .prepare("SELECT id FROM users WHERE microsoft_id = ?")
+    .bind(sub)
+    .first<{ id: string }>();
+
+  if (!user) {
+    const existing = await db
+      .prepare("SELECT id, microsoft_id FROM users WHERE email = ?")
+      .bind(normalizedEmail)
+      .first<{ id: string; microsoft_id: string | null }>();
+
+    if (existing) {
+      if (existing.microsoft_id && existing.microsoft_id !== sub) {
+        return redirectWithError("account_conflict");
+      }
+      // Link Microsoft identity to the existing (magic-link or Google) user
+      if (!existing.microsoft_id) {
+        await db.prepare("UPDATE users SET microsoft_id = ? WHERE id = ?").bind(sub, existing.id).run();
+      }
+      user = { id: existing.id };
+    } else {
+      const userId = crypto.randomUUID();
+      await db
+        .prepare("INSERT INTO users (id, email, name, microsoft_id, last_login_at) VALUES (?, ?, ?, ?, datetime('now'))")
+        .bind(userId, normalizedEmail, name ?? null, sub)
+        .run();
+      user = { id: userId };
+    }
+  }
+
+  await db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").bind(user.id).run();
+
+  const sessionId = crypto.randomUUID();
+  const sessionExpires = sqliteDatetime(30 * 24 * 60 * 60 * 1000);
+  await db
+    .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(sessionId, user.id, sessionExpires)
+    .run();
+
+  const dest = stateRow.return_to || "https://devices.easyschematic.live/#/";
+  return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
+});
+
 app.get("/auth/me", async (c) => {
   const user = requireSession(c);
   const hasCookie = !!c.req.header("Cookie")?.includes("session=");

@@ -18,6 +18,12 @@ export type Env = {
     SUPPORT_FORWARD_EMAIL: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
+    /** Microsoft Entra ID app registration (self-hosted deployments). Unset = provider hidden. */
+    MS_CLIENT_ID?: string;
+    MS_CLIENT_SECRET?: string;
+    /** Entra tenant restriction: a tenant ID (only that org's accounts can sign
+     *  in) or "common" for any Microsoft account. Defaults to "common". */
+    MS_TENANT?: string;
     /** Extra CORS/redirect origins for self-hosted deployments (comma-separated). */
     ALLOWED_ORIGINS?: string;
   };
