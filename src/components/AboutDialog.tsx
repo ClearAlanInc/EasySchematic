@@ -91,13 +91,14 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
           </div>
 
           <p className="text-xs text-[var(--color-text)] leading-relaxed max-w-[320px]">
-            AV signal flow diagram tool for broadcast, live production, and AV
-            integration
+            AV Signal flow and information management tool. Built for real-world
+            Audio-Visual installations, their design, deployment, delivery and
+            continued management.
           </p>
 
           <div className="flex flex-col gap-1 text-xs text-[var(--color-text)]">
             <span>{Math.floor(DEVICE_TEMPLATES.length / 10) * 10}+ bundled device templates</span>
-            <span>2,000+ in the community library</span>
+            <span>Synced with the ClearAlan device library</span>
             <span>68 signal types</span>
           </div>
 
@@ -105,13 +106,11 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
 
           <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
             {[
-              { label: "Website", href: "https://easyschematic.live" },
+              { label: "Website", href: "https://cadesign.clearalan.ca" },
               ...(DOCS_URL ? [{ label: "Docs", href: DOCS_URL }] : []),
-              { label: "GitHub", href: "https://github.com/duremovich/EasySchematic" },
+              { label: "GitHub", href: "https://github.com/ClearAlanInc/EasySchematic" },
               ...(DEVICES_URL ? [{ label: "Device Database", href: DEVICES_URL }] : []),
-              { label: "Support", href: "mailto:support@easyschematic.live" },
-              { label: "Report a Bug", href: "https://github.com/duremovich/EasySchematic/issues" },
-              { label: "Discord", href: "https://discord.gg/dxXn3Jk2a6" },
+              { label: "Report a Bug", href: "https://github.com/ClearAlanInc/EasySchematic/issues" },
             ].map((link) => (
               <a
                 key={link.label}
