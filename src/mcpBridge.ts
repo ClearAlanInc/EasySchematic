@@ -48,6 +48,8 @@ import {
   type InstallCardBatchParams,
   type PlaceDeviceInRackBatchParams,
   type PortFace,
+  type SaveToGitParams,
+  type SaveToGitResult,
 } from "./mcp/protocol";
 import {
   classifyDeviceProperties,
@@ -911,6 +913,9 @@ class BridgeController {
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `tab-${Date.now()}`;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private backoffMs = 1000;
+  /** App-initiated requests awaiting a request_result (e.g. Save to Git). */
+  private pendingRequests = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }>();
+  private requestSeq = 0;
   /** Set when pairing was refused (bad token / superseded) so we stop retrying. */
   private halted = false;
 
@@ -930,6 +935,7 @@ class BridgeController {
 
   stop() {
     this.enabled = false;
+    this.rejectPendingRequests(new Error("Bridge disconnected."));
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -950,6 +956,31 @@ class BridgeController {
     if (!this.enabled || this.halted) return;
     this.reconnectTimer = setTimeout(() => this.connect(), this.backoffMs);
     this.backoffMs = Math.min(this.backoffMs * 2, 15000);
+  }
+
+  private rejectPendingRequests(err: Error) {
+    for (const p of this.pendingRequests.values()) {
+      clearTimeout(p.timer);
+      p.reject(err);
+    }
+    this.pendingRequests.clear();
+  }
+
+  /** Send an app-initiated request to the MCP server and await its result. */
+  request(command: "saveToGit", params: SaveToGitParams): Promise<SaveToGitResult> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || st().mcpBridgeStatus !== "connected") {
+      return Promise.reject(new Error("The MCP bridge isn't connected — check Preferences → AI Assistant."));
+    }
+    const requestId = `app-req-${++this.requestSeq}`;
+    const ws = this.ws;
+    return new Promise<SaveToGitResult>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        reject(new Error("The MCP server didn't answer — it may predate this feature; update and restart it."));
+      }, 15000);
+      this.pendingRequests.set(requestId, { resolve: resolve as (v: unknown) => void, reject, timer });
+      ws.send(JSON.stringify({ type: "request", requestId, command, params }));
+    });
   }
 
   private connect() {
@@ -1012,6 +1043,16 @@ class BridgeController {
     if (msg.type === "superseded") {
       this.halted = true;
       setStatus("error", msg.reason ?? "Another tab took the AI connection.");
+      return;
+    }
+    if (msg.type === "request_result") {
+      const p = this.pendingRequests.get(msg.requestId);
+      if (p) {
+        this.pendingRequests.delete(msg.requestId);
+        clearTimeout(p.timer);
+        if (msg.ok) p.resolve(msg.result);
+        else p.reject(new Error(msg.error || "Request failed."));
+      }
       return;
     }
     if (msg.type === "command") {

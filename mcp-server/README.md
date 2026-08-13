@@ -38,6 +38,23 @@ npm run build        # also regenerates the shared protocol file from ../src/mcp
 node mcp-server/dist/index.js
 ```
 
+## Save to Git (optional)
+
+Start the server with a repository path to enable **File → Save to Git** in the
+editor — the app hands its export to the server, which writes
+`<Schematic Name>.json` into the repo and commits it as
+`"<name> v<major>.<minor>"`:
+
+```bash
+EASYSCHEMATIC_GIT_REPO=~/repos/av-designs node mcp-server/dist/index.js
+```
+
+Set `EASYSCHEMATIC_GIT_SUBDIR=projects` to keep the files in a subdirectory.
+The directory must already be a git working tree; the app can only supply a
+bare file name (sanitized server-side), never a path. This gives Safari and
+other browsers without direct file-write support a first-class save-plus-
+version-control flow.
+
 On startup it prints (to stderr) a **pairing token** and the port it is listening
 on. Configure with environment variables if needed:
 

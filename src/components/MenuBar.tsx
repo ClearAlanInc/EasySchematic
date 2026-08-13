@@ -20,6 +20,7 @@ import SchematicBrowser from "./SchematicBrowser";
 import LoginDialog from "./LoginDialog";
 import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
 import { queueCloudSave } from "../cloudSync";
+import { mcpBridge } from "../mcpBridge";
 import { CLOUD_ENABLED, DEVICES_URL, DOCS_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
@@ -187,6 +188,7 @@ export default function MenuBar() {
   const cloudSavedAt = useSchematicStore((s) => s.cloudSavedAt);
   const fileHandle = useSchematicStore((s) => s.fileHandle);
   const isOnline = useSchematicStore((s) => s.isOnline);
+  const mcpBridgeStatus = useSchematicStore((s) => s.mcpBridgeStatus);
 
   // Keep nameValue in sync when schematicName changes externally
   useEffect(() => {
@@ -372,6 +374,34 @@ export default function MenuBar() {
       downloadFile();
     }
   }, [writeToFileHandle, downloadFile, downloadFileRaw, pickFileHandle]);
+
+  // Save to Git (#git-save): hand the export to the local MCP bridge, which
+  // writes it into the configured repository and commits. Works from any
+  // browser — no File System Access API needed.
+  const handleSaveToGit = useCallback(async () => {
+    const store = useSchematicStore.getState();
+    store.bumpMinorRevision();
+    const s2 = useSchematicStore.getState();
+    const data = s2.exportToJSON();
+    const fileName = `${s2.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic"}.json`;
+    const message = `${s2.schematicName} v${s2.revision.major}.${s2.revision.minor}`;
+    try {
+      const result = await mcpBridge.request("saveToGit", {
+        fileName,
+        json: JSON.stringify(data, null, 2),
+        message,
+      });
+      store.addToast(
+        result.commit
+          ? `Committed ${result.commit} — ${message}`
+          : "Saved to repo — no changes since the last commit",
+        "success",
+        4000,
+      );
+    } catch (e: unknown) {
+      store.addToast(`Save to Git failed: ${e instanceof Error ? e.message : String(e)}`, "error", 30000);
+    }
+  }, []);
 
   // Save As: always show picker, optionally switch from cloud to local
   const handleSaveAs = useCallback(async () => {
@@ -669,6 +699,15 @@ export default function MenuBar() {
       { type: "separator" },
       { type: "item", label: "Save", shortcut: "Ctrl+S", onClick: handleSave },
       { type: "item", label: "Save As...", shortcut: "Ctrl+Shift+S", onClick: handleSaveAs },
+      {
+        type: "item",
+        label: "Save to Git",
+        disabled: mcpBridgeStatus !== "connected",
+        title: mcpBridgeStatus === "connected"
+          ? "Write the file into the bridge's git repository and commit"
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with EASYSCHEMATIC_GIT_REPO",
+        onClick: handleSaveToGit,
+      },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
       { type: "item", label: "Revision History...", onClick: () => setShowRevisionHistory(true) },
       { type: "separator" },

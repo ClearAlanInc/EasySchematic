@@ -9,6 +9,9 @@ export interface BridgeOptions {
   allowedOrigins: string[];
   requestTimeoutMs?: number;
   log: (msg: string) => void;
+  /** Handler for app-initiated requests (e.g. "saveToGit"). Absent = every
+   *  request is answered with a not-supported error. */
+  onClientRequest?: (command: string, params: Record<string, unknown>) => Promise<unknown>;
 }
 
 interface Pending {
@@ -85,6 +88,27 @@ export class AppBridge {
         this.active = ws;
         ws.send(JSON.stringify({ type: "hello_ack", ok: true }));
         this.opts.log(`EasySchematic connected (schematic: ${String(msg.schematicName ?? "untitled")}).`);
+        return;
+      }
+
+      if (msg.type === "request" && typeof msg.requestId === "string") {
+        // App-initiated request (reverse direction from call()).
+        const requestId = msg.requestId;
+        const reply = (ok: boolean, payload: { result?: unknown; error?: string }) => {
+          try {
+            ws.send(JSON.stringify({ type: "request_result", requestId, ok, ...payload }));
+          } catch {
+            /* socket gone — nothing to do */
+          }
+        };
+        if (!this.opts.onClientRequest) {
+          reply(false, { error: "This MCP server does not support app requests." });
+          return;
+        }
+        this.opts
+          .onClientRequest(String(msg.command ?? ""), (msg.params ?? {}) as Record<string, unknown>)
+          .then((result) => reply(true, { result }))
+          .catch((err: unknown) => reply(false, { error: err instanceof Error ? err.message : String(err) }));
         return;
       }
 

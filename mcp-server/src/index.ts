@@ -19,6 +19,7 @@ import {
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { AppBridge } from "./bridge.js";
+import { saveToGit } from "./git.js";
 import { TOOLS } from "./tools.js";
 import { PROMPTS, getPrompt, SERVER_INSTRUCTIONS } from "./prompts.js";
 import { DEFAULT_BRIDGE_PORT } from "./protocol.generated.js";
@@ -32,12 +33,33 @@ const allowedOrigins = (process.env.EASYSCHEMATIC_MCP_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const bridge = new AppBridge({ port, token, allowedOrigins, log });
+// "Save to Git": set EASYSCHEMATIC_GIT_REPO to a working tree to let the app's
+// File > Save to Git write + commit there (EASYSCHEMATIC_GIT_SUBDIR optional).
+const gitRepo = process.env.EASYSCHEMATIC_GIT_REPO?.trim();
+const gitSubdir = process.env.EASYSCHEMATIC_GIT_SUBDIR?.trim() || undefined;
+
+const bridge = new AppBridge({
+  port,
+  token,
+  allowedOrigins,
+  log,
+  onClientRequest: async (command, params) => {
+    if (command !== "saveToGit") throw new Error(`Unknown request "${command}".`);
+    if (!gitRepo) {
+      throw new Error("Save to Git is not configured — start the MCP server with EASYSCHEMATIC_GIT_REPO=/path/to/repo.");
+    }
+    return saveToGit(
+      { repoDir: gitRepo, subdir: gitSubdir },
+      params as { fileName: string; json: string; message: string },
+    );
+  },
+});
 bridge.start();
 
 log("");
 log(`WebSocket bridge listening on ws://127.0.0.1:${port}`);
 log(`Pairing token: ${token}`);
+if (gitRepo) log(`Save to Git enabled: ${gitRepo}${gitSubdir ? "/" + gitSubdir : ""}`);
 log("Paste this token into EasySchematic → Preferences → AI (Beta), then turn the toggle on.");
 log("");
 

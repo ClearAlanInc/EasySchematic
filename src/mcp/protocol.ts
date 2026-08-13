@@ -116,10 +116,47 @@ export interface SupersededMessage {
   reason: string;
 }
 
+/** App -> server: an app-INITIATED request (the reverse of CommandMessage) —
+ *  e.g. "Save to Git", where the app asks the local server to write the export
+ *  into a repository and commit it. Servers predating this message silently
+ *  ignore it; the app times out with an "update the MCP server" hint. */
+export interface ClientRequestMessage {
+  type: "request";
+  requestId: string;
+  command: "saveToGit";
+  params: SaveToGitParams;
+}
+
+/** Server -> app: the correlated result of a ClientRequestMessage. */
+export interface RequestResultMessage {
+  type: "request_result";
+  requestId: string;
+  ok: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+export interface SaveToGitParams {
+  /** Bare file name (no directories) — the server sanitizes and pins it inside
+   *  the configured repository; ".json" is appended when missing. */
+  fileName: string;
+  /** Full pretty-printed SchematicFile JSON. */
+  json: string;
+  /** Commit message, e.g. "Toronto International Centre v1.7". */
+  message: string;
+}
+
+export interface SaveToGitResult {
+  /** Absolute path the file was written to. */
+  path: string;
+  /** Short commit hash, or null when the file was identical (nothing to commit). */
+  commit: string | null;
+}
+
 /** Messages the app may send to the server. */
-export type BridgeClientMessage = HelloMessage | ResponseMessage;
+export type BridgeClientMessage = HelloMessage | ResponseMessage | ClientRequestMessage;
 /** Messages the server may send to the app. */
-export type BridgeServerMessage = HelloAck | CommandMessage | SupersededMessage;
+export type BridgeServerMessage = HelloAck | CommandMessage | SupersededMessage | RequestResultMessage;
 
 // ---------------------------------------------------------------------------
 // Tool parameter shapes (documented contract; validated on both ends).
