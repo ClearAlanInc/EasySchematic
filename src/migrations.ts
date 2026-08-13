@@ -17,7 +17,7 @@ import { defaultStubPlacement } from "./stubPlacement";
 import { getPortAbsolutePositions } from "./snapUtils";
 import type { SchematicNode } from "./types";
 
-export const CURRENT_SCHEMA_VERSION = 51;
+export const CURRENT_SCHEMA_VERSION = 52;
 
 /** Stub-label nodes paint at this z-index so connection lines render UNDER their
  *  white box (matches waypoint/junction z — above edge z, below the 10000 edge labels). */
@@ -675,6 +675,14 @@ const migrations: Record<number, Migration> = {
     data.revision ??= { major: 1, minor: 0 };
     data.revisionHistory ??= [];
     data.version = 51;
+    return data;
+  },
+  51: (data) => {
+    // v51 -> v52: multiple schematic pages ("sheets"). Existing content has no
+    // per-node sheetId, which resolves to the first sheet — so a single default
+    // sheet definition is the whole migration.
+    data.schematicSheets ??= [{ id: "sheet-1", label: "Page 1" }];
+    data.version = 52;
     return data;
   },
 };

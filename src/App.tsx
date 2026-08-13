@@ -24,6 +24,31 @@ import { normalizeShortcutKey } from "./keyUtils";
 import { warmupRoutingWorker } from "./routing/routingClient";
 import { useMcpBridge } from "./mcpBridge";
 import { nodeTypes, edgeTypes } from "./nodeTypes";
+import { nodesOnSheet } from "./sheets";
+
+/** Scope a node list to the active sheet for drag-time geometry (snap, overlap,
+ *  spacing, room reparenting). Sheets share one coordinate plane, so nodes on
+ *  other pages must never act as snap targets or obstacles. */
+function sheetScoped<N extends { id: string }>(
+  nodesArr: N[],
+  state: {
+    schematicSheets: { id: string }[];
+    activeSheetId: string;
+    edges: import("./types").ConnectionEdge[];
+  },
+): N[] {
+  if (state.schematicSheets.length <= 1) return nodesArr;
+  const first = state.schematicSheets[0].id;
+  const visible = new Set(
+    nodesOnSheet(
+      nodesArr as unknown as import("./types").SchematicNode[],
+      state.edges,
+      state.activeSheetId,
+      first,
+    ).map((n) => n.id),
+  );
+  return nodesArr.filter((n) => visible.has(n.id));
+}
 import SnapGuides from "./components/SnapGuides";
 import PageBoundaryOverlay from "./components/PageBoundaryOverlay";
 import PrintViewBar from "./components/PrintViewBar";
@@ -600,19 +625,31 @@ function SchematicCanvas() {
     s.edges.map((e) => `${e.id}:${e.source}:${e.sourceHandle}:${e.target}:${e.targetHandle}:${e.data?.manualWaypoints?.length ?? 0}:${e.data?.stubbed ? "s" : ""}:${e.data?.bundleId ?? ""}`).join("|"),
   );
 
+  // Multi-page (#multi-page): the canvas shows one schematic sheet at a time.
+  const schematicSheets = useSchematicStore((s) => s.schematicSheets);
+  const activeSheetId = useSchematicStore((s) => s.activeSheetId);
+  const firstSheetId = schematicSheets[0]?.id ?? "sheet-1";
+  const sheetNodes = useMemo(() => {
+    if (schematicSheets.length <= 1) return nodes;
+    return nodesOnSheet(nodes, edges, activeSheetId, firstSheetId);
+  }, [nodes, edges, schematicSheets.length, activeSheetId, firstSheetId]);
+  const sheetNodeIds = useMemo(() => new Set(sheetNodes.map((n) => n.id)), [sheetNodes]);
+
   // Filter out edges whose signal type is hidden, plus the virtual/physical layer
   // toggles (presentation-only — store edges stay complete)
   const visibleEdges = useMemo(() => {
     const hidden = hiddenSignalTypesStr ? new Set(hiddenSignalTypesStr.split(",")) : undefined;
-    if (!hidden && !hideVirtualConnections && !hidePhysicalConnections) return edges;
+    const multiSheet = schematicSheets.length > 1;
+    if (!hidden && !hideVirtualConnections && !hidePhysicalConnections && !multiSheet) return edges;
     return edges.filter((e) => {
+      if (multiSheet && (!sheetNodeIds.has(e.source) || !sheetNodeIds.has(e.target))) return false;
       const st = e.data?.signalType;
       if (hidden?.has(st ?? "")) return false;
       const virtual = isVirtualSignal(st);
       if (virtual ? hideVirtualConnections : hidePhysicalConnections) return false;
       return true;
     });
-  }, [edges, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections]);
+  }, [edges, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, schematicSheets.length, sheetNodeIds]);
 
   const autoRoute = useSchematicStore((s) => s.autoRoute);
   const edgeHitboxSize = useSchematicStore((s) => s.edgeHitboxSize);
@@ -670,7 +707,18 @@ function SchematicCanvas() {
       useSchematicStore.getState().recomputeRoutes(rfInstance);
     }, 50);
     return () => clearTimeout(timer);
-  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion]);
+  }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion, activeSheetId]);
+
+  // Fit the view to the newly-active sheet's content on page switch.
+  const prevSheetRef = useRef(activeSheetId);
+  useEffect(() => {
+    if (prevSheetRef.current === activeSheetId) return;
+    prevSheetRef.current = activeSheetId;
+    const t = setTimeout(() => {
+      rfInstance?.fitView({ padding: 0.15, duration: 250 });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [activeSheetId, rfInstance]);
 
   // Retry routing if initial computation raced ahead of React Flow internals
   const routedEdgeCount = useSchematicStore((s) => Object.keys(s.routedEdges).length);
@@ -907,7 +955,7 @@ function SchematicCanvas() {
           if (device) {
             const spacing = enforceMinSpacing(
               device as SchematicNode,
-              updated.nodes,
+              sheetScoped(updated.nodes, updated),
               updated.hiddenAdapterNodeIds,
             );
             if (spacing) {
@@ -1217,7 +1265,7 @@ function SchematicCanvas() {
         return;
       }
 
-      const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+      const snap = computeSnap(draggedNode as SchematicNode, sheetScoped(state.nodes, state), {
         useShortNames: state.useShortNames,
         wrapDeviceLabels: state.wrapDeviceLabels,
       });
@@ -1253,15 +1301,17 @@ function SchematicCanvas() {
         );
         // Show red overlap indicator when device conflicts with a neighbor
         // Speculatively reparent so overlap works when dragging into a room
-        const checkNode = speculativeReparent(snappedNode, updated as SchematicNode[]);
-        const overlap = detectOverlap(checkNode, updated as SchematicNode[], state.hiddenAdapterNodeIds);
+        const scopedUpdated = sheetScoped(updated as SchematicNode[], state);
+        const checkNode = speculativeReparent(snappedNode, scopedUpdated);
+        const overlap = detectOverlap(checkNode, scopedUpdated, state.hiddenAdapterNodeIds);
         useSchematicStore.setState({
           nodes: updated as SchematicNode[],
           overlapNodeId: overlap ? draggedNode.id : null,
         });
       } else {
-        const checkNode = speculativeReparent(draggedNode as SchematicNode, state.nodes);
-        const overlap = detectOverlap(checkNode, state.nodes, state.hiddenAdapterNodeIds);
+        const scopedNodes = sheetScoped(state.nodes, state);
+        const checkNode = speculativeReparent(draggedNode as SchematicNode, scopedNodes);
+        const overlap = detectOverlap(checkNode, scopedNodes, state.hiddenAdapterNodeIds);
         useSchematicStore.setState({ overlapNodeId: overlap ? draggedNode.id : null });
       }
     },
@@ -1303,7 +1353,7 @@ function SchematicCanvas() {
       // correction that would re-introduce the cascade we're avoiding here.
       const isGroupDrag = draggedNodes && draggedNodes.length > 1;
       if (isGroupDrag) {
-        const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+        const snap = computeSnap(draggedNode as SchematicNode, sheetScoped(state.nodes, state), {
           useShortNames: state.useShortNames,
           wrapDeviceLabels: state.wrapDeviceLabels,
         });
@@ -1351,7 +1401,7 @@ function SchematicCanvas() {
 
       // Apply final snap so the node lands on the aligned position. For stubs,
       // computeSnap already handles port-priority + center-grid fallback.
-      const snap = computeSnap(draggedNode as SchematicNode, state.nodes, {
+      const snap = computeSnap(draggedNode as SchematicNode, sheetScoped(state.nodes, state), {
         useShortNames: state.useShortNames,
         wrapDeviceLabels: state.wrapDeviceLabels,
       });
@@ -1362,7 +1412,7 @@ function SchematicCanvas() {
       // Speculatively reparent so enforcement works when dragging into a room
       const snappedNode = { ...draggedNode, position: { x: finalX, y: finalY } } as SchematicNode;
       const checkNode = speculativeReparent(snappedNode, state.nodes);
-      const spacing = enforceMinSpacing(checkNode, state.nodes, state.hiddenAdapterNodeIds, snap);
+      const spacing = enforceMinSpacing(checkNode, sheetScoped(state.nodes, state), state.hiddenAdapterNodeIds, snap);
       if (spacing) {
         // Convert back to absolute coords if speculatively reparented
         if (checkNode.parentId && !draggedNode.parentId) {
@@ -1509,7 +1559,7 @@ function SchematicCanvas() {
         selectionDirection ? `selection-${selectionDirection}` : "",
         panMode === "pan-first" && !shiftHeld && !isMobile ? "pan-mode" : "",
       ].filter(Boolean).join(" ") || undefined}
-      nodes={nodes}
+      nodes={sheetNodes}
       edges={visibleEdges}
       onNodesChange={onNodesChange}
       onNodeDragStart={onNodeDragStart}

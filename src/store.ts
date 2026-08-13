@@ -60,6 +60,7 @@ import { inferRackHeightU, inferRackForm, shelfFootprintMm, shelfInnerWidthMm } 
 import { findPropagationTargets, isTrunk, type PortRef } from "./vlanPropagation";
 import { DEVICE_TEMPLATES } from "./deviceLibrary";
 import { markOrgTemplateDirty } from "./orgSyncOutbox";
+import { DEFAULT_SHEET, newSheetId, resolveNodeSheet, nodesOnSheet, sheetIsEmpty, type SheetDef } from "./sheets";
 import { createDefaultLayout } from "./titleBlockLayout";
 import { sanitizeNoteHtml } from "./sanitizeHtml";
 import { getTemplateById } from "./templateApi";
@@ -754,6 +755,19 @@ interface SchematicState {
   /** "schematic" for the main signal flow, or a page ID for rack elevation pages */
   activePage: string;
   setActivePage: (pageId: string) => void;
+
+  // Schematic sheets — multiple schematic pages in one file (#multi-page).
+  // Nodes carry data.sheetId (absent = first sheet); edges never cross sheets.
+  schematicSheets: SheetDef[];
+  activeSheetId: string;
+  addSchematicSheet: (label?: string) => string;
+  renameSchematicSheet: (id: string, label: string) => void;
+  removeSchematicSheet: (id: string) => void;
+  setActiveSheet: (id: string) => void;
+  /** Move nodes (expanded to their root containers) to another sheet. Wires
+   *  that would cross sheets are split into stub pairs to keep every edge
+   *  intra-sheet. */
+  moveNodesToSheet: (nodeIds: string[], sheetId: string) => void;
   addRackPage: (label: string) => string;
   removeRackPage: (pageId: string) => void;
   renameRackPage: (pageId: string, label: string) => void;
@@ -1444,6 +1458,15 @@ const _initCustomMeta = loadCustomTemplateMeta(_initCustomTemplates);
 
 // Metadata-only entries are tiny; the cap is just a runaway guard for a file
 // saved thousands of times. Oldest entries fall off first.
+/** Sheet stamp for newly-created top-level nodes: tag with the active sheet,
+ *  omitted entirely on the first sheet so single-page files stay clean. */
+function activeSheetStamp(state: { schematicSheets: SheetDef[]; activeSheetId: string }): { sheetId?: string } {
+  const first = state.schematicSheets[0]?.id;
+  return state.activeSheetId && state.activeSheetId !== first
+    ? { sheetId: state.activeSheetId }
+    : {};
+}
+
 const REVISION_HISTORY_CAP = 500;
 
 function applyRevisionBump(
@@ -1594,6 +1617,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   patchTracedEdgeId: null,
   pages: [],
   activePage: "schematic",
+  schematicSheets: [DEFAULT_SHEET],
+  activeSheetId: DEFAULT_SHEET.id,
 
   setHideAdapters: (hide) => {
     const state = get();
@@ -1871,6 +1896,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       type: "device",
       position,
       data: {
+        ...activeSheetStamp(get()),
         label: template.label,
         deviceType: template.deviceType,
         ports,
@@ -2246,6 +2272,15 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         targetHandle: e.targetHandle ? (portIdMap.get(e.targetHandle) ?? e.targetHandle) : e.targetHandle,
         data,
       });
+    }
+
+    // Pasted content always lands on the ACTIVE sheet, wherever it was copied.
+    const pasteStamp = activeSheetStamp(state);
+    for (let i = 0; i < newNodes.length; i++) {
+      const n = newNodes[i];
+      if (n.parentId) continue; // children follow their container
+      const { sheetId: _oldSheet, ...rest } = n.data as Record<string, unknown>;
+      newNodes[i] = { ...n, data: { ...rest, ...pasteStamp } } as SchematicNode;
     }
 
     // Deselect existing nodes/edges, add pasted ones as selected
@@ -3314,7 +3349,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       id: nextRoomId(),
       type: "room",
       position,
-      data: { label },
+      data: { label, ...activeSheetStamp(get()) },
       style: { width: size?.width ?? 400, height: size?.height ?? 300 },
       selected: true,
       zIndex: -1,
@@ -3446,7 +3481,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       id: nextNoteId(),
       type: "note",
       position,
-      data: { html: "" },
+      data: { html: "", ...activeSheetStamp(get()) },
       style: { width: 200, height: 100 },
     };
     set({ nodes: [...state.nodes, newNote] });
@@ -4021,6 +4056,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position: { x: idealX, y: idealY },
       ...(adapterParentId ? { parentId: adapterParentId } : {}),
       data: {
+        ...activeSheetStamp(get()),
         label: template.label,
         deviceType: template.deviceType,
         ports: adapterPorts,
@@ -4681,6 +4717,110 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   },
 
   // ── Rack builder actions ──────────────────────────────────────────
+
+
+  addSchematicSheet: (label) => {
+    const state = get();
+    const id = newSheetId();
+    const sheet: SheetDef = { id, label: label?.trim() || `Page ${state.schematicSheets.length + 1}` };
+    set({ schematicSheets: [...state.schematicSheets, sheet], activeSheetId: id, activePage: "schematic" });
+    get().saveToLocalStorage();
+    return id;
+  },
+
+  renameSchematicSheet: (id, label) => {
+    if (!label.trim()) return;
+    set({ schematicSheets: get().schematicSheets.map((sh) => (sh.id === id ? { ...sh, label: label.trim() } : sh)) });
+    get().saveToLocalStorage();
+  },
+
+  removeSchematicSheet: (id) => {
+    const state = get();
+    if (state.schematicSheets.length <= 1) return;
+    const first = state.schematicSheets[0].id;
+    if (id === first) {
+      get().addToast("The first page can't be deleted", "info");
+      return;
+    }
+    if (!sheetIsEmpty(state.nodes, state.edges, id, first)) {
+      get().addToast("Move or delete this page's contents first", "info");
+      return;
+    }
+    set({
+      schematicSheets: state.schematicSheets.filter((sh) => sh.id !== id),
+      activeSheetId: state.activeSheetId === id ? first : state.activeSheetId,
+    });
+    get().saveToLocalStorage();
+  },
+
+  setActiveSheet: (id) => {
+    const state = get();
+    if (!state.schematicSheets.some((sh) => sh.id === id)) return;
+    if (state.activeSheetId === id && state.activePage === "schematic") return;
+    // Selection must never span sheets — clear it on switch.
+    const nodes = state.nodes.some((n) => n.selected)
+      ? state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n))
+      : state.nodes;
+    const edges = state.edges.some((e) => e.selected)
+      ? state.edges.map((e) => (e.selected ? { ...e, selected: false } : e))
+      : state.edges;
+    set({ activeSheetId: id, activePage: "schematic", nodes, edges });
+    get().saveToLocalStorage();
+  },
+
+  moveNodesToSheet: (nodeIds, sheetId) => {
+    const state = get();
+    if (!state.schematicSheets.some((sh) => sh.id === sheetId)) return;
+    const first = state.schematicSheets[0].id;
+    const nodeMap = new Map(state.nodes.map((n) => [n.id, n] as const));
+    // Children can't leave their container — expand to root ancestors, so
+    // moving anything inside a room moves the whole room.
+    const rootIds = new Set<string>();
+    for (const id of nodeIds) {
+      let n = nodeMap.get(id);
+      let guard = 0;
+      while (n?.parentId && guard++ < 8) n = nodeMap.get(n.parentId);
+      if (n) rootIds.add(n.id);
+    }
+    if (rootIds.size === 0) return;
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) =>
+        rootIds.has(n.id) ? ({ ...n, selected: false, data: { ...n.data, sheetId } } as SchematicNode) : n,
+      ),
+    });
+
+    // Restore the intra-sheet invariant: wires now spanning two sheets become
+    // stub pairs (wire tags), each leg staying with its own device.
+    const after = get();
+    const afterMap = new Map(after.nodes.map((n) => [n.id, n] as const));
+    const crossing = after.edges.filter((e) => {
+      if (e.data?.linkedConnectionId) return false; // already stubbed
+      const src = afterMap.get(e.source);
+      const tgt = afterMap.get(e.target);
+      if (!src || !tgt) return false;
+      return (
+        resolveNodeSheet(src, afterMap, after.edges, first) !==
+        resolveNodeSheet(tgt, afterMap, after.edges, first)
+      );
+    });
+    for (const e of crossing) {
+      get().convertEdgeToStubs(e.id);
+      const s2 = get();
+      const m2 = new Map(s2.nodes.map((n) => [n.id, n] as const));
+      set({
+        nodes: s2.nodes.map((n) => {
+          if (n.id !== `stub-${e.id}-src` && n.id !== `stub-${e.id}-tgt`) return n;
+          if (n.parentId) return n; // parented stubs follow their room's sheet
+          const dev = m2.get(n.id.endsWith("-src") ? e.source : e.target);
+          if (!dev) return n;
+          const sh = resolveNodeSheet(dev, m2, s2.edges, first);
+          return { ...n, data: { ...n.data, sheetId: sh } } as SchematicNode;
+        }),
+      });
+    }
+    get().saveToLocalStorage();
+  },
 
   setActivePage: (pageId) => {
     const state = get();
@@ -5358,6 +5498,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       name: state.schematicName,
       revision: state.revision,
       revisionHistory: state.revisionHistory.length > 0 ? state.revisionHistory : undefined,
+      schematicSheets: state.schematicSheets.length > 1 ? state.schematicSheets : undefined,
+      activeSheetId: state.schematicSheets.length > 1 ? state.activeSheetId : undefined,
       nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       ownedGear: state.ownedGear.length > 0 ? state.ownedGear : undefined,
@@ -5472,6 +5614,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
             printOriginOffsetY: data.printOriginOffsetY ?? 0,
             revision: data.revision ?? { major: 1, minor: 0 },
             revisionHistory: data.revisionHistory ?? [],
+            schematicSheets: data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET],
+            activeSheetId: (data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET]).some((sh) => sh.id === data.activeSheetId) ? data.activeSheetId! : (data.schematicSheets?.[0]?.id ?? DEFAULT_SHEET.id),
             titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
             titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
             hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5561,6 +5705,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         printOriginOffsetY: data.printOriginOffsetY ?? 0,
         revision: data.revision ?? { major: 1, minor: 0 },
         revisionHistory: data.revisionHistory ?? [],
+        schematicSheets: data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET],
+        activeSheetId: (data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET]).some((sh) => sh.id === data.activeSheetId) ? data.activeSheetId! : (data.schematicSheets?.[0]?.id ?? DEFAULT_SHEET.id),
         titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
         hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5633,6 +5779,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       name: state.schematicName,
       revision: state.revision,
       revisionHistory: state.revisionHistory.length > 0 ? state.revisionHistory : undefined,
+      schematicSheets: state.schematicSheets.length > 1 ? state.schematicSheets : undefined,
+      activeSheetId: state.schematicSheets.length > 1 ? state.activeSheetId : undefined,
       nodes: withEncryptedSecrets(state.nodes),
       edges: state.edges.map(({ zIndex: _, selected: _s, ...rest }) => rest) as ConnectionEdge[],
       customTemplates: state.customTemplates.length > 0 ? state.customTemplates : undefined,
@@ -5753,6 +5901,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       printOriginOffsetY: data.printOriginOffsetY ?? 0,
       revision: data.revision ?? { major: 1, minor: 0 },
       revisionHistory: data.revisionHistory ?? [],
+      schematicSheets: data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET],
+      activeSheetId: (data.schematicSheets?.length ? data.schematicSheets : [DEFAULT_SHEET]).some((sh) => sh.id === data.activeSheetId) ? data.activeSheetId! : (data.schematicSheets?.[0]?.id ?? DEFAULT_SHEET.id),
       titleBlock: data.titleBlock ?? { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
       titleBlockLayout: data.titleBlockLayout ?? createDefaultLayout(),
       hiddenSignalTypes: data.hiddenSignalTypes?.length ? [...data.hiddenSignalTypes].sort().join(",") : "",
@@ -5824,7 +5974,11 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
 
-    const mergedNodes = [...state.nodes, ...newNodes];
+    const csvStamp = activeSheetStamp(state);
+    const stampedNew = newNodes.map((n) =>
+      n.parentId ? n : ({ ...n, data: { ...n.data, ...csvStamp } } as SchematicNode),
+    );
+    const mergedNodes = [...state.nodes, ...stampedNew];
     const mergedEdges = ensureUniqueEdgeIds([...state.edges, ...newEdges]);
 
     syncCounters(mergedNodes, mergedEdges);
@@ -5865,6 +6019,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         fileHandle: null,
         revision: { major: 1, minor: 0 },
         revisionHistory: [],
+        schematicSheets: [DEFAULT_SHEET],
+        activeSheetId: DEFAULT_SHEET.id,
         titleBlock: { showName: "", venue: "", designer: "", engineer: "", date: "", drawingTitle: "", company: "", revision: "", logo: "", customFields: [] },
         titleBlockLayout: createDefaultLayout(),
         hiddenSignalTypes: "",
@@ -6008,6 +6164,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       zIndex: STUB_LABEL_Z_INDEX,
       selected: false,
       data: {
+        ...activeSheetStamp(get()),
         text: "",
         signalType: port.signalType,
         anchorNodeId: nodeId,
@@ -6137,7 +6294,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position: { x: srcStubAbs.x - srcParentAbs.x, y: srcStubAbs.y - srcParentAbs.y },
       ...(srcParentId ? { parentId: srcParentId } : {}),
       zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
-      data: { signalType: sigType, linkedConnectionId, side: "source" },
+      data: { signalType: sigType, linkedConnectionId, side: "source", ...activeSheetStamp(get()) },
     } as SchematicNode;
     const tgtStubNode: SchematicNode = {
       id: stubNodeIdTgt,
@@ -6145,7 +6302,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position: { x: tgtStubAbs.x - tgtParentAbs.x, y: tgtStubAbs.y - tgtParentAbs.y },
       ...(tgtParentId ? { parentId: tgtParentId } : {}),
       zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
-      data: { signalType: sigType, linkedConnectionId, side: "target" },
+      data: { signalType: sigType, linkedConnectionId, side: "target", ...activeSheetStamp(get()) },
     } as SchematicNode;
 
     const baseData = { ...edge.data! };
@@ -6619,10 +6776,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
 
   recomputeRoutes: (rfInstance) => {
     const state = get();
+    // Only the active sheet routes: its nodes are the obstacle set (sheets
+    // share one coordinate plane, so other sheets' devices must not deflect
+    // wires) and only its edges recompute. Off-sheet edges keep their last
+    // committed routes — their nodes can't move while hidden.
+    const firstSheetId = state.schematicSheets[0]?.id ?? "sheet-1";
+    const sheetNodeIds = new Set(
+      nodesOnSheet(state.nodes, state.edges, state.activeSheetId, firstSheetId).map((n) => n.id),
+    );
     const hiddenSet = state.hiddenSignalTypes ? new Set(state.hiddenSignalTypes.split(",")) : null;
-    let visibleEdges = hiddenSet
-      ? state.edges.filter((e) => !hiddenSet.has(e.data?.signalType ?? ""))
-      : state.edges;
+    let visibleEdges = state.edges.filter((e) => {
+      if (!sheetNodeIds.has(e.source) || !sheetNodeIds.has(e.target)) return false;
+      return !hiddenSet?.has(e.data?.signalType ?? "");
+    });
 
     // --- Adapter visibility: compute hidden adapters and virtual edges ---
     const hiddenAdapterNodeIds = new Set<string>();
@@ -6704,9 +6870,9 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         .filter((n) => n.type === "device" && (n.data as DeviceData).offCanvas)
         .map((n) => n.id),
     );
-    const routingNodes = (hiddenAdapterNodeIds.size > 0 || offCanvasIds.size > 0)
-      ? state.nodes.filter((n) => !hiddenAdapterNodeIds.has(n.id) && !offCanvasIds.has(n.id))
-      : state.nodes;
+    const routingNodes = state.nodes.filter(
+      (n) => sheetNodeIds.has(n.id) && !hiddenAdapterNodeIds.has(n.id) && !offCanvasIds.has(n.id),
+    );
 
     // Hand the heavy A* off to the routing worker. Build the DOM-derived handle snapshot here
     // (needs rfInstance), tag the request with a monotonic seq, stash the main-thread-only context

@@ -8,6 +8,10 @@ import { buildManagementTarget, buildSshTarget, describeManagementGap, findManag
 
 export default function DeviceContextMenu() {
   const menu = useSchematicStore((s) => s.deviceContextMenu);
+  const schematicSheets = useSchematicStore((s) => s.schematicSheets);
+  const activeSheetId = useSchematicStore((s) => s.activeSheetId);
+  const moveNodesToSheet = useSchematicStore((s) => s.moveNodesToSheet);
+  const addSchematicSheet = useSchematicStore((s) => s.addSchematicSheet);
   const allPages = useSchematicStore((s) => s.pages);
   const pages = useMemo(() => allPages.filter((p): p is RackElevationPage => p.type === "rack-elevation"), [allPages]);
   const setActivePage = useSchematicStore((s) => s.setActivePage);
@@ -244,6 +248,40 @@ export default function DeviceContextMenu() {
           ) : null}
         </>
       )}
+
+      {/* Always shown — "New Page…" is how the second page gets created. */}
+      <div className="border-t border-gray-200 my-1" />
+      <div className="px-3 py-1 text-neutral-400 text-[10px] uppercase tracking-wider">
+        Move to Page
+      </div>
+      {schematicSheets.filter((sh) => sh.id !== activeSheetId).map((sh) => (
+        <MenuItem
+          key={sh.id}
+          label={sh.label}
+          indent
+          onClick={() => {
+            const state = useSchematicStore.getState();
+            // Move the whole selection when the clicked node is part of it.
+            const selected = state.nodes.filter((n) => n.selected).map((n) => n.id);
+            const ids = selected.includes(nodeId) ? selected : [nodeId];
+            moveNodesToSheet(ids, sh.id);
+            state.addToast(`Moved to ${sh.label} — crossing wires became tags`, "success");
+            useSchematicStore.setState({ deviceContextMenu: null });
+          }}
+        />
+      ))}
+      <MenuItem
+        label="New Page…"
+        indent
+        onClick={() => {
+          const state = useSchematicStore.getState();
+          const selected = state.nodes.filter((n) => n.selected).map((n) => n.id);
+          const ids = selected.includes(nodeId) ? selected : [nodeId];
+          const newId = addSchematicSheet();
+          moveNodesToSheet(ids, newId);
+          useSchematicStore.setState({ deviceContextMenu: null });
+        }}
+      />
 
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Delete Device" onClick={deleteDevice} danger />

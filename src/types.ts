@@ -894,6 +894,10 @@ export interface SchematicFile {
   /** Document revision — minor auto-bumps on each explicit save. */
   revision?: RevisionInfo;
   revisionHistory?: RevisionEntry[];
+  /** Schematic pages ("sheets"). Nodes carry `data.sheetId`; absent = first
+   *  sheet. See src/sheets.ts for the model. */
+  schematicSheets?: import("./sheets").SheetDef[];
+  activeSheetId?: string;
   nodes: SchematicNode[];
   edges: ConnectionEdge[];
   customTemplates?: DeviceTemplate[];

@@ -22,6 +22,12 @@ export default function PageTabs() {
   const addPatchPanelPage = useSchematicStore((s) => s.addPatchPanelPage);
   const removePatchPanelPage = useSchematicStore((s) => s.removePatchPanelPage);
   const renamePatchPanelPage = useSchematicStore((s) => s.renamePatchPanelPage);
+  const schematicSheets = useSchematicStore((s) => s.schematicSheets);
+  const activeSheetId = useSchematicStore((s) => s.activeSheetId);
+  const setActiveSheet = useSchematicStore((s) => s.setActiveSheet);
+  const addSchematicSheet = useSchematicStore((s) => s.addSchematicSheet);
+  const renameSchematicSheet = useSchematicStore((s) => s.renameSchematicSheet);
+  const removeSchematicSheet = useSchematicStore((s) => s.removeSchematicSheet);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -54,13 +60,18 @@ export default function PageTabs() {
 
   const commitRename = useCallback(() => {
     if (!editingId || !editValue.trim()) { setEditingId(null); return; }
+    if (schematicSheets.some((sh) => sh.id === editingId)) {
+      renameSchematicSheet(editingId, editValue.trim());
+      setEditingId(null);
+      return;
+    }
     const page = pages.find((p) => p.id === editingId);
     if (!page) { setEditingId(null); return; }
     if (page.type === "print-sheet") renamePrintSheetPage(editingId, editValue.trim());
     else if (page.type === "patch-panel") renamePatchPanelPage(editingId, editValue.trim());
     else renameRackPage(editingId, editValue.trim());
     setEditingId(null);
-  }, [editingId, editValue, pages, renameRackPage, renamePrintSheetPage, renamePatchPanelPage]);
+  }, [editingId, editValue, pages, schematicSheets, renameSchematicSheet, renameRackPage, renamePrintSheetPage, renamePatchPanelPage]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, pageId: string) => {
     e.preventDefault();
@@ -68,13 +79,23 @@ export default function PageTabs() {
     setContextMenu({ pageId, x: e.clientX, y: e.clientY });
   }, []);
 
-  const menuPage = contextMenu ? pages.find((p) => p.id === contextMenu.pageId) : null;
+  const menuSheet = contextMenu ? schematicSheets.find((sh) => sh.id === contextMenu.pageId) : null;
+  const menuPage = contextMenu && !menuSheet ? pages.find((p) => p.id === contextMenu.pageId) : null;
   const isPrintSheet = menuPage?.type === "print-sheet";
   const isPatchBay = menuPage?.type === "patch-panel";
 
   const handleRename = () => {
+    if (menuSheet) { startRename(menuSheet.id, menuSheet.label); return; }
     if (!menuPage) return;
     startRename(menuPage.id, menuPage.label);
+  };
+
+  const handleDeleteSheet = () => {
+    if (!menuSheet) return;
+    setContextMenu(null);
+    if (confirm(`Delete schematic page "${menuSheet.label}"? Only empty pages can be deleted.`)) {
+      removeSchematicSheet(menuSheet.id);
+    }
   };
 
   const handleDuplicate = () => {
@@ -123,9 +144,43 @@ export default function PageTabs() {
         className="flex items-center gap-0.5 bg-neutral-100 border-b border-neutral-300 px-2 py-0 text-xs select-none overflow-x-auto"
         style={{ minHeight: 28 }}
       >
-        {/* Schematic tab */}
-        <button className={tabClass(activePage === "schematic")} onClick={() => setActivePage("schematic")}>
-          Schematic
+        {/* Schematic sheet tabs (#multi-page) */}
+        {schematicSheets.map((sheet) => (
+          <button
+            key={sheet.id}
+            className={tabClass(activePage === "schematic" && activeSheetId === sheet.id)}
+            onClick={() => setActiveSheet(sheet.id)}
+            onDoubleClick={() => startRename(sheet.id, sheet.label)}
+            onContextMenu={(e) => handleContextMenu(e, sheet.id)}
+            title="Double-click to rename, right-click for options"
+          >
+            {editingId === sheet.id ? (
+              <input
+                ref={inputRef}
+                className="bg-white border border-blue-400 rounded px-1 py-0 text-xs w-24 outline-none"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter") commitRename();
+                  if (e.key === "Escape") setEditingId(null);
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              sheet.label
+            )}
+          </button>
+        ))}
+
+        {/* Add schematic page */}
+        <button
+          className="px-2 py-1 text-blue-400 hover:text-blue-700 hover:bg-blue-100 rounded"
+          onClick={() => addSchematicSheet()}
+          title="Add schematic page"
+        >
+          ▦+
         </button>
 
         {/* Page tabs */}
@@ -192,6 +247,36 @@ export default function PageTabs() {
           </button>
         )}
       </div>
+
+      {/* Sheet context menu */}
+      {contextMenu && menuSheet && (
+        <div
+          className="fixed z-50 bg-white border border-gray-300 rounded shadow-lg py-1 min-w-[140px] text-xs"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-neutral-400 border-b border-neutral-100 mb-1 truncate">
+            {menuSheet.label}
+          </div>
+          <button
+            className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+            onClick={handleRename}
+          >
+            Rename
+          </button>
+          {schematicSheets.length > 1 && menuSheet.id !== schematicSheets[0].id && (
+            <>
+              <div className="border-t border-gray-100 my-1" />
+              <button
+                className="w-full text-left px-3 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+                onClick={handleDeleteSheet}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Context menu */}
       {contextMenu && menuPage && (
