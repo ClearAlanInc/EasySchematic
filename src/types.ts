@@ -439,6 +439,10 @@ export interface StubLabelData {
   signalType: SignalType;
   /** Shared with the partner stub node + both stub-leg edges. Identifies one logical cable. */
   linkedConnectionId: string;
+  /** Wire-tag code (e.g. "T4") shown on BOTH ends of the pair so the two
+   *  fly-offs can be matched by eye across pages. Auto-assigned on split;
+   *  renameable; both partners always carry the same value. */
+  tag?: string;
   /** Which end of the logical connection this stub represents */
   side: "source" | "target";
   /** When true, append [PortName] to the label text (per-stub override; falls back to global setting) */

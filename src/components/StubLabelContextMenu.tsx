@@ -62,6 +62,35 @@ export default function StubLabelContextMenu() {
     useSchematicStore.setState({ stubLabelContextMenu: null });
   }, [menu]);
 
+  const renameTag = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const node = store.nodes.find((n) => n.id === menu.nodeId);
+    const d = node?.data as StubLabelData | undefined;
+    if (!d?.linkedConnectionId) return;
+    const next = prompt("Wire tag (shown on both ends; empty to remove):", d.tag ?? "");
+    if (next !== null) store.renameWireTag(d.linkedConnectionId, next);
+    useSchematicStore.setState({ stubLabelContextMenu: null });
+  }, [menu]);
+
+  const goToOtherEnd = useCallback(() => {
+    if (!menu) return;
+    const store = useSchematicStore.getState();
+    const node = store.nodes.find((n) => n.id === menu.nodeId);
+    const d = node?.data as StubLabelData | undefined;
+    if (!d?.linkedConnectionId) return;
+    const partner = store.nodes.find(
+      (n) =>
+        n.type === "stub-label" &&
+        n.id !== menu.nodeId &&
+        (n.data as StubLabelData).linkedConnectionId === d.linkedConnectionId,
+    );
+    useSchematicStore.setState({ stubLabelContextMenu: null });
+    if (!partner) return;
+    // App owns the viewport + sheet switching — hand off via event.
+    window.dispatchEvent(new CustomEvent("easyschematic:focus-node", { detail: { nodeId: partner.id } }));
+  }, [menu]);
+
   const collapseStubs = useCallback(() => {
     if (!menu) return;
     const store = useSchematicStore.getState();
@@ -99,6 +128,9 @@ export default function StubLabelContextMenu() {
       }}
       onClick={(e) => e.stopPropagation()}
     >
+      <MenuItem label={data?.tag ? `Rename Tag… (${data.tag})` : "Set Tag…"} onClick={renameTag} />
+      <MenuItem label="Go to Other End" onClick={goToOtherEnd} />
+      <div className="border-t border-gray-200 my-1" />
       <MenuItem label={showPortLabel} onClick={() => cycleBool("showPort")} />
       <MenuItem label={showRoomLabel} onClick={() => cycleBool("showRoom")} />
       <MenuItem label={pageModeLabel} onClick={cyclePageMode} />

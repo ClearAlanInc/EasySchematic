@@ -732,6 +732,8 @@ interface SchematicState {
   wrapDeviceLabels: boolean;
   setWrapDeviceLabels: (wrap: boolean) => void;
   patchStubLabelData: (nodeId: string, patch: Partial<import("./types").StubLabelData>) => void;
+  /** Set (or clear, with "") the wire-tag code on BOTH ends of a stub pair. */
+  renameWireTag: (linkedConnectionId: string, tag: string) => void;
   /** Attach a free-text stub to a single device port (#196). No edge/connection is
    *  created; the new node starts in edit mode. */
   addTextStub: (nodeId: string, portId: string) => void;
@@ -1465,6 +1467,18 @@ function activeSheetStamp(state: { schematicSheets: SheetDef[]; activeSheetId: s
   return state.activeSheetId && state.activeSheetId !== first
     ? { sheetId: state.activeSheetId }
     : {};
+}
+
+/** Next free wire-tag code: T1, T2, ... scanning every stub's current tag so
+ *  renames and deletions never cause a collision. */
+function nextWireTag(nodes: SchematicNode[]): string {
+  let max = 0;
+  for (const n of nodes) {
+    if (n.type !== "stub-label") continue;
+    const m = /^T(\d+)$/i.exec(((n.data as { tag?: string }).tag ?? "").trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `T${max + 1}`;
 }
 
 const REVISION_HISTORY_CAP = 500;
@@ -6096,6 +6110,21 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  renameWireTag: (linkedConnectionId, tag) => {
+    const trimmed = tag.trim();
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.type !== "stub-label") return n;
+        if ((n.data as { linkedConnectionId?: string }).linkedConnectionId !== linkedConnectionId) return n;
+        const { tag: _old, ...rest } = n.data as Record<string, unknown>;
+        return { ...n, data: trimmed ? { ...rest, tag: trimmed } : rest } as SchematicNode;
+      }),
+    });
+    get().saveToLocalStorage();
+  },
+
   patchStubLabelData: (nodeId, patch) => {
     const state = get();
     pushUndo({ nodes: state.nodes, edges: state.edges });
@@ -6281,6 +6310,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const stubNodeIdSrc = `stub-${edge.id}-src`;
     const stubNodeIdTgt = `stub-${edge.id}-tgt`;
     const sigType = edge.data!.signalType;
+    const wireTag = nextWireTag(state.nodes);
 
     // Don't stamp data.placed yet — the X above assumes STUB_W_EST (80px), but
     // a wide cable label can produce a 200+ px box. tryPlace's overlap-correction
@@ -6294,7 +6324,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position: { x: srcStubAbs.x - srcParentAbs.x, y: srcStubAbs.y - srcParentAbs.y },
       ...(srcParentId ? { parentId: srcParentId } : {}),
       zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
-      data: { signalType: sigType, linkedConnectionId, side: "source", ...activeSheetStamp(get()) },
+      data: { signalType: sigType, linkedConnectionId, side: "source", tag: wireTag, ...activeSheetStamp(get()) },
     } as SchematicNode;
     const tgtStubNode: SchematicNode = {
       id: stubNodeIdTgt,
@@ -6302,7 +6332,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       position: { x: tgtStubAbs.x - tgtParentAbs.x, y: tgtStubAbs.y - tgtParentAbs.y },
       ...(tgtParentId ? { parentId: tgtParentId } : {}),
       zIndex: STUB_LABEL_Z_INDEX, // paint above connection lines (#178)
-      data: { signalType: sigType, linkedConnectionId, side: "target", ...activeSheetStamp(get()) },
+      data: { signalType: sigType, linkedConnectionId, side: "target", tag: wireTag, ...activeSheetStamp(get()) },
     } as SchematicNode;
 
     const baseData = { ...edge.data! };

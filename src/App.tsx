@@ -709,6 +709,54 @@ function SchematicCanvas() {
     return () => clearTimeout(timer);
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion, activeSheetId]);
 
+  // Cross-page navigation (#wire-tags): "Go to Other End" and friends dispatch
+  // easyschematic:focus-node; we switch sheets when needed, then select and
+  // center the target once it has rendered.
+  useEffect(() => {
+    const onFocusNode = (e: Event) => {
+      const nodeId = (e as CustomEvent).detail?.nodeId as string | undefined;
+      if (!nodeId) return;
+      const state = useSchematicStore.getState();
+      const target = state.nodes.find((n) => n.id === nodeId);
+      if (!target) return;
+      const first = state.schematicSheets[0]?.id ?? "sheet-1";
+      const map = new Map(state.nodes.map((n) => [n.id, n] as const));
+      const targetSheet = nodesOnSheet([target], state.edges, state.activeSheetId, first).length > 0
+        ? state.activeSheetId
+        : state.schematicSheets.find((sh) =>
+            nodesOnSheet(state.nodes, state.edges, sh.id, first).some((n) => n.id === nodeId),
+          )?.id;
+      if (targetSheet && targetSheet !== state.activeSheetId) {
+        state.setActiveSheet(targetSheet);
+      }
+      // Wait for the sheet's nodes to mount before selecting/centering.
+      setTimeout(() => {
+        const st = useSchematicStore.getState();
+        useSchematicStore.setState({
+          nodes: st.nodes.map((n) => ({ ...n, selected: n.id === nodeId })),
+        });
+        const node = st.nodes.find((n) => n.id === nodeId);
+        if (node && rfInstance) {
+          let x = node.position.x;
+          let y = node.position.y;
+          let pid = node.parentId;
+          while (pid) {
+            const par = map.get(pid);
+            if (!par) break;
+            x += par.position.x;
+            y += par.position.y;
+            pid = par.parentId;
+          }
+          const w = (node.measured?.width as number | undefined) ?? 120;
+          const h = (node.measured?.height as number | undefined) ?? 20;
+          rfInstance.setCenter(x + w / 2, y + h / 2, { zoom: Math.max(rfInstance.getZoom(), 0.8), duration: 300 });
+        }
+      }, 120);
+    };
+    window.addEventListener("easyschematic:focus-node", onFocusNode);
+    return () => window.removeEventListener("easyschematic:focus-node", onFocusNode);
+  }, [rfInstance]);
+
   // Fit the view to the newly-active sheet's content on page switch.
   const prevSheetRef = useRef(activeSheetId);
   useEffect(() => {

@@ -665,7 +665,7 @@ export default function EdgeContextMenu() {
         onClick={toggleEdgeCableIdMode}
       />
       <MenuItem
-        label={isStubbed ? "Show Full Connection" : "Stub Connection"}
+        label={isStubbed ? "Show Full Connection" : "Split into Wire Tags"}
         onClick={toggleStubbed}
       />
       {!isDirectAttach && (

@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StubLabelNode as StubLabelNodeType, StubLabelData, ConnectionEdge, SchematicNode } from "../types";
 import { SIGNAL_COLORS } from "../types";
 import { useSchematicStore, GRID_SIZE } from "../store";
+import { resolveNodeSheet } from "../sheets";
 import { resolvePortLabel } from "../packList";
 import { computePageGrid } from "../printPageGrid";
 import { getPaperSize } from "../printConfig";
@@ -98,6 +99,22 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
         const fp = findPage(farAbs.x, farAbs.y);
         if (mp > 0) myPage = String(mp);
         if (fp > 0) farPage = String(fp);
+      }
+    }
+
+    // Multi-page (#multi-page): when the pair spans schematic sheets, the page
+    // tag names the sheet ("Pg Audio") — that beats print-grid numbers, which
+    // only describe positions on THIS sheet's plane.
+    if (s.schematicSheets.length > 1 && partnerStub) {
+      const first = s.schematicSheets[0].id;
+      const me = s.nodes.find((n) => n.id === id);
+      if (me) {
+        const mySheet = resolveNodeSheet(me, nodeMap, s.edges, first);
+        const farSheet = resolveNodeSheet(partnerStub, nodeMap, s.edges, first);
+        if (mySheet !== farSheet) {
+          myPage = s.schematicSheets.find((sh) => sh.id === mySheet)?.label ?? "";
+          farPage = s.schematicSheets.find((sh) => sh.id === farSheet)?.label ?? "";
+        }
       }
     }
     return `${arrow}\0${farLabel}\0${farPort}\0${farRoomLabel}\0${myPage}\0${farPage}`;
@@ -263,6 +280,19 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
           color: "#374151",
         }}
       >
+        {data.tag && (
+          <span
+            style={{
+              fontWeight: 700,
+              marginRight: 4,
+              paddingRight: 4,
+              borderRight: `1px solid ${selected ? "#1a73e8" : color}`,
+              color: selected ? "#1a73e8" : color,
+            }}
+          >
+            {data.tag}
+          </span>
+        )}
         {text}
       </div>
     </>
