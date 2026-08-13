@@ -1,12 +1,11 @@
 import { useEffect } from "react";
-import { sponsors } from "../sponsors";
-import { IS_SELF_HOSTED, DOCS_URL, DEVICES_URL } from "../selfHosted";
+import { DOCS_URL, DEVICES_URL } from "../selfHosted";
 
 const features = [
   {
     title: "Drag-and-Drop Device Library",
     description:
-      "2,000+ professional AV device templates — cameras, switchers, routers, audio consoles, media servers, displays, and more. Drag devices onto the canvas and connect them in seconds.",
+      "Professional AV device templates — cameras, switchers, routers, audio consoles, media servers, displays, and more. Drag devices onto the canvas and connect them in seconds.",
   },
   {
     title: "Color-Coded Signal Types",
@@ -95,12 +94,12 @@ export default function LandingPage() {
             AV Signal Flow Diagram Tool
           </h1>
           <p className="text-base md:text-lg text-slate-400 max-w-2xl mb-3">
-            Design AV system diagrams, block diagrams, and signal flow schematics for
-            broadcast, live production, and AV integration. Free and browser-based.
+            AV Signal flow and information management tool. Built for real-world
+            Audio-Visual installations, their design, deployment, delivery and
+            continued management.
           </p>
           <p className="text-slate-500 mb-8">
-            2,000+ device templates &middot; 68 signal types &middot;
-            Smart edge routing &middot; DXF/PDF/PNG export
+            68 signal types &middot; Smart edge routing &middot; DXF/PDF/PNG export
           </p>
           <button
             onClick={openEditor}
@@ -123,50 +122,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Supported by */}
-      <section className="border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">
-            Supported by
-          </p>
-          <div className="flex justify-center gap-8 mb-6">
-            {sponsors.filter((s) => s.kind === "organization").map((s) => (
-              <a
-                key={s.name}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={s.name}
-              >
-                {/* Self-hosted builds render text-only — the logo is an external asset
-                    and would be this page's only automatic external request. */}
-                {s.logo && !IS_SELF_HOSTED ? (
-                  <img
-                    src={s.logo}
-                    alt={s.name}
-                    className="h-16 rounded-lg"
-                  />
-                ) : (
-                  <span className="text-sm font-semibold text-slate-600">{s.name}</span>
-                )}
-              </a>
-            ))}
-          </div>
-          {sponsors.some((s) => s.kind === "individual") && (
-            <div>
-              <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
-                Individual supporters
-              </p>
-              <p className="text-sm text-slate-500">
-                {sponsors
-                  .filter((s) => s.kind === "individual")
-                  .map((s) => s.name)
-                  .join(" · ")}
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Signal type badges */}
       <section className="border-b border-slate-200">
