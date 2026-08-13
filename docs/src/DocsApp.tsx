@@ -7,6 +7,7 @@ import DevicesAndPortsPage from "./pages/DevicesAndPorts";
 import ConnectionsPage from "./pages/Connections";
 import EdgeRoutingPage from "./pages/EdgeRouting";
 import RoomsAndGroupingPage from "./pages/RoomsAndGrouping";
+import SchematicPagesPage from "./pages/SchematicPages";
 import DeviceLibraryPage from "./pages/DeviceLibrary";
 import ImportExportPage from "./pages/ImportExport";
 import DeviceTemplateSchemaPage from "./pages/DeviceTemplateSchema";
@@ -29,6 +30,7 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   connections: { title: "Connections", component: ConnectionsPage },
   "connection-routing": { title: "Connection Routing", component: EdgeRoutingPage },
   "rooms-and-grouping": { title: "Rooms & Grouping", component: RoomsAndGroupingPage },
+  "schematic-pages": { title: "Schematic Pages", component: SchematicPagesPage },
   racks: { title: "Rack Builder", component: RacksPage },
   "patch-panels": { title: "Patch Panels & Patch Bay", component: PatchPanelsPage },
   "print-sheets": { title: "Print Sheets", component: PrintSheetsPage },
@@ -65,7 +67,7 @@ export default function DocsApp() {
   const Page = route.component;
 
   useEffect(() => {
-    document.title = `${route.title} — EasySchematic Docs`;
+    document.title = `${route.title} — caDesign Docs`;
     document.querySelector("main")?.scrollTo(0, 0);
 
     // Update JSON-LD structured data per page
@@ -73,9 +75,9 @@ export default function DocsApp() {
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "TechArticle",
-      "headline": `${route.title} — EasySchematic Docs`,
-      "url": `https://docs.easyschematic.live/${slug}`,
-      "isPartOf": { "@type": "WebSite", "name": "EasySchematic Docs", "url": "https://docs.easyschematic.live" },
+      "headline": `${route.title} — caDesign Docs`,
+      "url": `https://docs.cadesign.clearalan.ca/${slug}`,
+      "isPartOf": { "@type": "WebSite", "name": "caDesign Docs", "url": "https://docs.cadesign.clearalan.ca" },
     };
     let script = document.querySelector<HTMLScriptElement>('script[data-jsonld]');
     if (!script) {

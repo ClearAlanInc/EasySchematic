@@ -4,7 +4,7 @@ export default function ApiPage() {
       <h1>Public API</h1>
 
       <p>
-        The device database at <code>api.easyschematic.live</code> exposes public read-only endpoints.
+        The device database at <code>api.cadesign.clearalan.ca</code> exposes public read-only endpoints.
         No authentication required. Responses are JSON, cached for 5 minutes.
       </p>
       <p>
@@ -16,7 +16,7 @@ export default function ApiPage() {
 
       <h3>GET /templates</h3>
       <p>Returns all device templates.</p>
-      <pre><code>GET https://api.easyschematic.live/templates</code></pre>
+      <pre><code>GET https://api.cadesign.clearalan.ca/templates</code></pre>
       <p>Each template includes:</p>
       <ul>
         <li><code>id</code> — unique template ID</li>
@@ -51,7 +51,7 @@ export default function ApiPage() {
 
       <h3>GET /templates/:id</h3>
       <p>Returns a single template by ID, including contributor attribution.</p>
-      <pre><code>GET https://api.easyschematic.live/templates/c0a80101-0006-4000-8000-000000000006</code></pre>
+      <pre><code>GET https://api.cadesign.clearalan.ca/templates/c0a80101-0006-4000-8000-000000000006</code></pre>
       <p>
         In addition to the standard template fields, this endpoint includes <code>submittedBy</code> and{" "}
         <code>lastEditedBy</code> objects (each with a <code>name</code> field) when the template was contributed
@@ -60,24 +60,24 @@ export default function ApiPage() {
 
       <h3>GET /templates/device-types</h3>
       <p>Returns a sorted array of all distinct <code>deviceType</code> values currently in the database.</p>
-      <pre><code>GET https://api.easyschematic.live/templates/device-types</code></pre>
+      <pre><code>GET https://api.cadesign.clearalan.ca/templates/device-types</code></pre>
       <pre><code>["adapter", "audio-embedder", "audio-interface", "av-over-ip", "camera", ...]</code></pre>
 
       <h3>GET /templates/search-terms</h3>
       <p>Returns a sorted array of all search terms across all templates (lowercase, deduplicated).</p>
-      <pre><code>GET https://api.easyschematic.live/templates/search-terms</code></pre>
+      <pre><code>GET https://api.cadesign.clearalan.ca/templates/search-terms</code></pre>
       <pre><code>["3g", "8x8", "aja", "blackmagic", "bolt", "capture", ...]</code></pre>
 
       <h3>GET /contributors</h3>
       <p>Returns the top 50 community contributors ranked by approved submission count.</p>
-      <pre><code>GET https://api.easyschematic.live/contributors</code></pre>
+      <pre><code>GET https://api.cadesign.clearalan.ca/contributors</code></pre>
       <p>Each entry includes <code>id</code>, <code>name</code> (display name or anonymized email), <code>approvedCount</code>, <code>createdCount</code> (new templates submitted), and <code>editedCount</code> (edits to existing templates).</p>
 
       <h2>Authentication</h2>
       <p>
         Write operations (submitting devices, moderation, admin) require session-based authentication via magic link
         email. These endpoints are not documented here as they are intended for use through the{" "}
-        <a href="https://devices.easyschematic.live" target="_blank" rel="noopener noreferrer">devices site</a> UI.
+        <a href="https://devices.cadesign.clearalan.ca" target="_blank" rel="noopener noreferrer">devices site</a> UI.
       </p>
 
       <h2>Rate limits</h2>

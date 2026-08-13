@@ -4,7 +4,7 @@ export default function PrintingPage() {
       <h1>Printing &amp; Title Block</h1>
 
       <p>
-        EasySchematic has a full print workflow: page setup, a configurable title block, and multi-page PDF export.
+        caDesign has a full print workflow: page setup, a configurable title block, and multi-page PDF export.
         This page covers printing the <strong>signal flow schematic</strong>. For paper-based rack
         elevation drawings — multiple rack viewports composed onto a sheet, vector PDF export — see{" "}
         <a href="/print-sheets">Print Sheets</a>.
@@ -29,6 +29,14 @@ export default function PrintingPage() {
         <li><strong>Orientation</strong> — Landscape or Portrait</li>
         <li><strong>Scale</strong> — 0.25x to 2.0x, controlling how much of the canvas fits on each page</li>
       </ul>
+
+      <h2>Page guides on the canvas</h2>
+      <p>
+        Faint dashed outlines of the print page grid are shown on the normal canvas (toggle under
+        <strong> View options → Show page guides</strong>), with a small "Page N" label in each page's corner and
+        the paper size on page 1. Use them to lay out rooms and note blocks so nothing straddles a page break —
+        without entering Print View. They're non-interactive and follow the active schematic page.
+      </p>
 
       <h2>Show Info panel</h2>
       <p>

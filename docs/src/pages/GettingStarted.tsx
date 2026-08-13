@@ -7,7 +7,7 @@ export default function GettingStartedPage() {
       <ol>
         <li>
           <strong>Open</strong>{" "}
-          <a href="https://easyschematic.live/">EasySchematic</a> in your browser
+          <a href="https://cadesign.clearalan.ca/">caDesign</a> in your browser
         </li>
         <li>
           <strong>Drag a device</strong> from the library sidebar on the left onto the canvas
@@ -84,10 +84,10 @@ export default function GettingStartedPage() {
       <p>
         Click the <strong>sun/moon icon</strong> in the right side of the menu bar to toggle between light and dark
         themes. The preference is saved to your browser and automatically applied on future visits. On first visit,
-        EasySchematic follows your OS dark mode setting.
+        caDesign follows your OS dark mode setting.
       </p>
       <p>
-        The dark mode toggle is also available in the <strong>devices database</strong> (devices.easyschematic.live)
+        The dark mode toggle is also available in the <strong>devices database</strong> (devices.cadesign.clearalan.ca)
         via the same icon in the top navigation bar.
       </p>
 

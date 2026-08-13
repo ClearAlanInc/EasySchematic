@@ -11,6 +11,7 @@ const navItems = [
     { hash: "connections", label: "Connections" },
     { hash: "connection-routing", label: "Connection Routing" },
     { hash: "rooms-and-grouping", label: "Rooms & Grouping" },
+    { hash: "schematic-pages", label: "Schematic Pages" },
     { hash: "racks", label: "Rack Builder" },
     { hash: "patch-panels", label: "Patch Panels & Patch Bay" },
     { hash: "print-sheets", label: "Print Sheets" },
@@ -70,7 +71,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <div className="mt-8 px-3 flex flex-col gap-2">
         <a
-          href="https://easyschematic.live/"
+          href="https://cadesign.clearalan.ca/"
           target="_blank"
           rel="noopener noreferrer"
           className="block text-sm text-blue-600 hover:text-blue-800"
@@ -78,7 +79,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           Open App &rarr;
         </a>
         <a
-          href="https://devices.easyschematic.live/"
+          href="https://devices.cadesign.clearalan.ca/"
           target="_blank"
           rel="noopener noreferrer"
           className="block text-sm text-blue-600 hover:text-blue-800"
@@ -90,20 +91,6 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           className="block text-sm text-blue-600 hover:text-blue-800"
         >
           Developer Reference &rarr;
-        </a>
-        <a
-          href="mailto:support@easyschematic.live"
-          className="block text-sm text-blue-600 hover:text-blue-800"
-        >
-          Support &rarr;
-        </a>
-        <a
-          href="https://discord.gg/dxXn3Jk2a6"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-sm text-blue-600 hover:text-blue-800"
-        >
-          Discord &rarr;
         </a>
       </div>
     </>
@@ -138,7 +125,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4 px-3"
         >
           <img src="/favicon.svg" alt="" className="w-6 h-6" />
-          EasySchematic
+          caDesign
         </a>
         <SearchBar />
         <NavContent />
@@ -167,7 +154,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           className="flex items-center gap-2 text-base font-bold text-gray-900 ml-2"
         >
           <img src="/favicon.svg" alt="" className="w-5 h-5" />
-          EasySchematic
+          caDesign
         </a>
       </div>
 

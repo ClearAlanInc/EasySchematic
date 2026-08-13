@@ -5,7 +5,7 @@ export default function ImportExportPage() {
 
       <h2>Cloud storage</h2>
       <p>
-        Cloud storage is separate from file export — it saves the full schematic to EasySchematic's servers so you
+        Cloud storage is separate from file export — it saves the full schematic to caDesign's servers so you
         can access it from any browser.
       </p>
       <ul>
@@ -30,9 +30,15 @@ export default function ImportExportPage() {
         <li>If no template is set, <strong>File → New</strong> creates a blank schematic as usual</li>
       </ul>
 
-      <h2>JSON (native format)</h2>
+            <p>
+        <strong>Offline saves queue automatically.</strong> If you save while offline (or the connection drops
+        mid-save), the cloud save is stored locally and replayed when you're back online. If a teammate saved the
+        same schematic in the meantime, you're asked whether to overwrite or keep both versions.
+      </p>
+
+<h2>JSON (native format)</h2>
       <p>
-        The JSON format is EasySchematic's native file format. It contains the complete schematic — all devices,
+        The JSON format is caDesign's native file format. It contains the complete schematic — all devices,
         connections, rooms, and configuration.
       </p>
 
@@ -58,6 +64,28 @@ export default function ImportExportPage() {
       <p>
         Click <strong>Open...</strong> in the menu bar to import a previously exported file. Schema migrations run automatically if
         the file was saved with an older version.
+      </p>
+
+      <h2>Revisions &amp; history</h2>
+      <p>
+        Every schematic carries a <strong>major.minor revision number</strong> alongside its content. Each
+        explicit save — <strong>Ctrl+S</strong>, Save As, a cloud save, or Save to Git — bumps the minor number
+        once (autosave never bumps) and appends an entry to the revision log: number, timestamp, and the signed-in
+        account when applicable.
+      </p>
+      <ul>
+        <li><strong>File → Revision History…</strong> shows the log, newest first.</li>
+        <li><strong>New Major Revision…</strong> (in the same dialog) bumps the major number, resets minor, and records an optional note — use it for issued/as-built milestones.</li>
+        <li>The title block's revision field auto-fills "v2.4"-style text until you hand-type a custom scheme, which then always wins.</li>
+      </ul>
+
+      <h2>Saving to Git</h2>
+      <p>
+        With the local MCP bridge running (see <a href="/ai-assistant">AI Assistant (MCP) → Git integration</a>),
+        <strong>File → Open from Git</strong> lists schematics in your project repositories and
+        <strong> File → Save to Git</strong> writes the file back and commits it — one commit per save, tagged with
+        the revision number. This works from any browser, including Safari and other browsers without direct
+        file-write support.
       </p>
 
       <h2>Device templates</h2>
@@ -141,10 +169,10 @@ export default function ImportExportPage() {
           </tr>
         </thead>
         <tbody>
-          <tr><td><code>EasySchematic-Devices</code></td><td>Device rectangles and labels</td></tr>
-          <tr><td><code>EasySchematic-Rooms</code></td><td>Room container outlines and labels</td></tr>
-          <tr><td><code>EasySchematic-Connections-SDI</code></td><td>SDI connections (one layer per signal type)</td></tr>
-          <tr><td><code>EasySchematic-Connections-HDMI</code></td><td>HDMI connections</td></tr>
+          <tr><td><code>caDesign-Devices</code></td><td>Device rectangles and labels</td></tr>
+          <tr><td><code>caDesign-Rooms</code></td><td>Room container outlines and labels</td></tr>
+          <tr><td><code>caDesign-Connections-SDI</code></td><td>SDI connections (one layer per signal type)</td></tr>
+          <tr><td><code>caDesign-Connections-HDMI</code></td><td>HDMI connections</td></tr>
           <tr><td>...</td><td>One layer per signal type in use</td></tr>
         </tbody>
       </table>

@@ -4,12 +4,12 @@ export default function SelfHostingPage() {
       <h1>Self-Hosting</h1>
 
       <p>
-        EasySchematic can be self-hosted using Docker. Two compose profiles are
+        caDesign can be self-hosted using Docker. Two compose profiles are
         available: a <strong>production</strong> image that builds the frontend
         and serves it with nginx, and a <strong>development</strong> image that
         clones the repo at container start and runs the Vite dev server with hot
         reload. All offline canvas features work the same as the hosted version
-        at <a href="https://easyschematic.live">easyschematic.live</a>.
+        at <a href="https://cadesign.clearalan.ca">cadesign.clearalan.ca</a>.
       </p>
 
       <div
@@ -18,7 +18,7 @@ export default function SelfHostingPage() {
       >
         <strong>Note:</strong> Cloud features — save to cloud, device
         submissions, shared links — communicate with the hosted API at{" "}
-        <code>api.easyschematic.live</code>. The API runs on Cloudflare Workers
+        <code>api.cadesign.clearalan.ca</code>. The API runs on Cloudflare Workers
         and is not included in the Docker image. No account or API key is
         required for read-only access (browsing the device library, loading
         shared schematics).
@@ -33,7 +33,7 @@ export default function SelfHostingPage() {
 
       <pre>
         <code>{`git clone https://github.com/duremovich/EasySchematic.git
-cd EasySchematic
+cd caDesign
 docker compose up -d`}</code>
       </pre>
 
@@ -110,7 +110,7 @@ docker compose up -d`}</code>
 
       <pre>
         <code>{`git clone https://github.com/duremovich/EasySchematic.git
-cd EasySchematic
+cd caDesign
 make dev`}</code>
       </pre>
 
@@ -193,7 +193,7 @@ make dev`}</code>
 
       <p>
         By default the app talks to the hosted API at{" "}
-        <code>https://api.easyschematic.live</code>. For the dev container you
+        <code>https://api.cadesign.clearalan.ca</code>. For the dev container you
         can override this with a <code>.env</code> file in the repository root
         (the same directory as <code>compose.yml</code>). The file is listed in{" "}
         <code>.gitignore</code> and is never committed.
@@ -201,7 +201,7 @@ make dev`}</code>
 
       <ol>
         <li>
-          In the cloned EasySchematic directory, create a file named{" "}
+          In the cloned caDesign directory, create a file named{" "}
           <code>.env</code>.
         </li>
         <li>
@@ -217,7 +217,7 @@ make dev`}</code>
       <p>Example — use the hosted API (explicit default):</p>
 
       <pre>
-        <code>VITE_TEMPLATE_API_URL=https://api.easyschematic.live</code>
+        <code>VITE_TEMPLATE_API_URL=https://api.cadesign.clearalan.ca</code>
       </pre>
 
       <p>Example — point at a local API (e.g. Wrangler on port 8787):</p>
@@ -250,6 +250,33 @@ make dev`}</code>
         With <code>docker compose</code>, set the variable in your environment
         or a <code>.env</code> file next to <code>compose.yml</code> — it is
         forwarded to the build automatically.
+      </p>
+
+      <h2>Microsoft (Entra ID) sign-in</h2>
+      <p>
+        Self-hosted deployments can authenticate users against a Microsoft Entra ID tenant instead of (or in
+        addition to) Google and email magic links. On the API worker:
+      </p>
+      <ol>
+        <li>Create an <strong>app registration</strong> in the Entra admin center with a Web redirect URI of{" "}
+          <code>https://api.cadesign.clearalan.ca/auth/microsoft/callback</code>.</li>
+        <li>Set <code>MS_CLIENT_ID</code> (Application ID) and <code>MS_TENANT</code> (Directory ID) in{" "}
+          <code>api/wrangler.toml</code>. Setting the tenant ID means <strong>only that organization's accounts
+          can sign in</strong>; <code>"common"</code> would allow any Microsoft account.</li>
+        <li>Store the secret with <code>npx wrangler secret put MS_CLIENT_SECRET</code> and deploy.</li>
+      </ol>
+      <p>
+        The login dialog asks the API which providers are configured (<code>GET /auth/providers</code>) and shows
+        only those buttons — a Microsoft-only deployment shows exactly one sign-in option.
+      </p>
+
+      <h2>Company device library sync</h2>
+      <p>
+        With a self-hosted API, custom device templates sync <strong>company-wide</strong>: a device anyone creates
+        or edits is pushed to the server and appears in every signed-in employee's library. Sync runs on app start,
+        on reconnect, on tab focus, and shortly after each library edit; edits made offline queue locally and push
+        when a connection returns. Conflicts resolve last-write-wins by edit time, deletions propagate, and a
+        machine's pre-existing custom devices seed the company library on its first sync.
       </p>
 
       <h2>Fully-offline mode (no cloud, no external services)</h2>
@@ -309,7 +336,7 @@ make dev`}</code>
       <h2>Reverse proxy</h2>
 
       <p>
-        To serve EasySchematic behind a reverse proxy (nginx, Caddy, Traefik),
+        To serve caDesign behind a reverse proxy (nginx, Caddy, Traefik),
         point the proxy at the container port. For the production container, a
         simple HTTP proxy is sufficient since it serves static files only. For
         the dev server, the proxy must support WebSocket upgrades if you use
@@ -325,6 +352,12 @@ make dev`}</code>
       </pre>
 
       <h2>What works offline</h2>
+      <p>
+        The app is also a <strong>PWA</strong>: after one online visit, the service worker caches the entire app,
+        so it loads and runs with no connection at all — install it to the dock/taskbar from the browser. Cloud
+        saves made while offline <strong>queue and replay automatically</strong> on reconnect (with a prompt if a
+        teammate saved the same schematic in the meantime).
+      </p>
 
       <table>
         <thead>

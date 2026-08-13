@@ -4,7 +4,7 @@ export default function AiAssistantPage() {
       <h1>AI Assistant (MCP)</h1>
 
       <p>
-        EasySchematic can connect to an AI assistant (such as Claude) so it can{" "}
+        caDesign can connect to an AI assistant (such as Claude) so it can{" "}
         <strong>read and edit your schematic live</strong> — searching the device
         library, adding devices, setting device properties, and making
         connections, with the results appearing on your canvas as it works. This
@@ -17,7 +17,7 @@ export default function AiAssistantPage() {
       >
         <strong>How it works:</strong> a small program called the{" "}
         <em>MCP server</em> runs on your own computer. The assistant talks to that
-        server, and the server talks to your open EasySchematic tab over a
+        server, and the server talks to your open caDesign tab over a
         connection that stays on your machine (<code>127.0.0.1</code> only). Your
         drawing is reachable only while you turn the setting on, and only after a
         one-time <strong>pairing token</strong> is matched.
@@ -43,7 +43,7 @@ node dist/index.js`}</code>
         listening on (default <code>8765</code>).
       </p>
 
-      <h2>2. Turn it on in EasySchematic</h2>
+      <h2>2. Turn it on in caDesign</h2>
 
       <ol>
         <li>
@@ -78,6 +78,24 @@ node dist/index.js`}</code>
       <p>
         Then you can ask things like <em>“search for a 4K display, add it, and
         connect the laptop's HDMI output to it.”</em>
+      </p>
+
+      <h2>Git integration (Open from Git / Save to Git)</h2>
+      <p>
+        The same bridge powers version control. Start the server with the directory that holds your project
+        repositories — <strong>each project keeps its own repo</strong>:
+      </p>
+      <pre><code>{`EASYSCHEMATIC_GIT_ROOT=~/repos node mcp-server/dist/index.js`}</code></pre>
+      <ul>
+        <li><strong>File → Open from Git…</strong> lists schematic files found inside git repositories under the root, grouped by repo. Opening one binds the document to that file.</li>
+        <li><strong>File → Save to Git</strong> writes the export back to the bound file and commits it in <strong>that file's repository</strong> as <code>{`"<name> v<major>.<minor>"`}</code> — one commit per save, matched to the document's revision number.</li>
+        <li>A document that wasn't opened from git saves into the root on first use and binds from then on.</li>
+      </ul>
+      <p>
+        Teammates clone repos wherever they like — each runs the bridge with their own root, and file references
+        stay root-relative. The app never sees or supplies an absolute path, and only files inside git working
+        trees are listed. This is the recommended save flow for Safari and other browsers without direct
+        file-write support.
       </p>
 
       <h2>What it can do in Beta</h2>
@@ -178,7 +196,7 @@ node dist/index.js`}</code>
       >
         <strong>Security:</strong> the connection never leaves your computer, is
         off until you enable it, and requires the pairing token. If you self-host
-        EasySchematic on a non-localhost address, set{" "}
+        caDesign on a non-localhost address, set{" "}
         <code>EASYSCHEMATIC_MCP_ORIGINS</code> on the server to allow that origin.
       </div>
     </>
