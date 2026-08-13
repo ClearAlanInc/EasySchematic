@@ -50,6 +50,10 @@ import {
   type PortFace,
   type SaveToGitParams,
   type SaveToGitResult,
+  type ClientRequestCommand,
+  type ListGitFilesResult,
+  type OpenGitFileParams,
+  type OpenGitFileResult,
 } from "./mcp/protocol";
 import {
   classifyDeviceProperties,
@@ -966,14 +970,15 @@ class BridgeController {
     this.pendingRequests.clear();
   }
 
-  /** Send an app-initiated request to the MCP server and await its result. */
-  request(command: "saveToGit", params: SaveToGitParams): Promise<SaveToGitResult> {
+  /** Send an app-initiated request to the MCP server and await its result.
+   *  Use the typed wrappers below rather than calling this directly. */
+  request<TResult>(command: ClientRequestCommand, params: Record<string, unknown>): Promise<TResult> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || st().mcpBridgeStatus !== "connected") {
       return Promise.reject(new Error("The MCP bridge isn't connected — check Preferences → AI Assistant."));
     }
     const requestId = `app-req-${++this.requestSeq}`;
     const ws = this.ws;
-    return new Promise<SaveToGitResult>((resolve, reject) => {
+    return new Promise<TResult>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         reject(new Error("The MCP server didn't answer — it may predate this feature; update and restart it."));
@@ -1076,6 +1081,17 @@ class BridgeController {
 }
 
 export const mcpBridge = new BridgeController();
+
+// Typed request wrappers (#git-save)
+export function bridgeSaveToGit(params: SaveToGitParams): Promise<SaveToGitResult> {
+  return mcpBridge.request<SaveToGitResult>("saveToGit", params as unknown as Record<string, unknown>);
+}
+export function bridgeListGitFiles(): Promise<ListGitFilesResult> {
+  return mcpBridge.request<ListGitFilesResult>("listGitFiles", {});
+}
+export function bridgeOpenGitFile(params: OpenGitFileParams): Promise<OpenGitFileResult> {
+  return mcpBridge.request<OpenGitFileResult>("openGitFile", params as unknown as Record<string, unknown>);
+}
 
 /** Mount once (in App). Starts/stops the bridge as the Beta setting changes. */
 export function useMcpBridge() {

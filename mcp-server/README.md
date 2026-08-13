@@ -38,22 +38,30 @@ npm run build        # also regenerates the shared protocol file from ../src/mcp
 node mcp-server/dist/index.js
 ```
 
-## Save to Git (optional)
+## Git integration (optional)
 
-Start the server with a repository path to enable **File → Save to Git** in the
-editor — the app hands its export to the server, which writes
-`<Schematic Name>.json` into the repo and commits it as
-`"<name> v<major>.<minor>"`:
+Start the server with the directory that holds your project repositories —
+**each project keeps its own repo** — to enable **File → Open from Git** and
+**File → Save to Git** in the editor:
 
 ```bash
-EASYSCHEMATIC_GIT_REPO=~/repos/av-designs node mcp-server/dist/index.js
+EASYSCHEMATIC_GIT_ROOT=~/repos node mcp-server/dist/index.js
 ```
 
-Set `EASYSCHEMATIC_GIT_SUBDIR=projects` to keep the files in a subdirectory.
-The directory must already be a git working tree; the app can only supply a
-bare file name (sanitized server-side), never a path. This gives Safari and
-other browsers without direct file-write support a first-class save-plus-
-version-control flow.
+- *Open from Git* lists schematic `.json` files found inside git repositories
+  under the root, grouped by repo. Opening one binds the document to that file.
+- *Save to Git* writes the export back to the bound file and commits it in
+  **that file's repository** as `"<name> v<major>.<minor>"`. A document that
+  wasn't opened from git saves into the root on first use and binds from then
+  on (`EASYSCHEMATIC_GIT_SUBDIR` picks a subdirectory for those).
+
+Different users clone repos wherever they like — each runs the server with
+their own root, and file references stay root-relative. The app never sees or
+supplies an absolute path; every reference is sanitized and pinned inside the
+root, and only files inside git working trees are listed. This gives Safari
+and other browsers without direct file-write support a first-class
+save-plus-version-control flow. (`EASYSCHEMATIC_GIT_REPO` still works as an
+alias for the root.)
 
 On startup it prints (to stderr) a **pairing token** and the port it is listening
 on. Configure with environment variables if needed:

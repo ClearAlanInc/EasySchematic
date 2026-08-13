@@ -19,7 +19,7 @@ import {
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { AppBridge } from "./bridge.js";
-import { saveToGit } from "./git.js";
+import { saveToGit, listGitSchematics, openGitFile } from "./git.js";
 import { TOOLS } from "./tools.js";
 import { PROMPTS, getPrompt, SERVER_INSTRUCTIONS } from "./prompts.js";
 import { DEFAULT_BRIDGE_PORT } from "./protocol.generated.js";
@@ -33,10 +33,21 @@ const allowedOrigins = (process.env.EASYSCHEMATIC_MCP_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-// "Save to Git": set EASYSCHEMATIC_GIT_REPO to a working tree to let the app's
-// File > Save to Git write + commit there (EASYSCHEMATIC_GIT_SUBDIR optional).
-const gitRepo = process.env.EASYSCHEMATIC_GIT_REPO?.trim();
+// Git integration: set EASYSCHEMATIC_GIT_ROOT to the directory holding your
+// project repositories (each project = its own repo). Enables the app's
+// File > Open from Git and File > Save to Git. EASYSCHEMATIC_GIT_REPO is
+// accepted as a legacy alias; EASYSCHEMATIC_GIT_SUBDIR applies to ref-less
+// first-time saves only.
+const gitRoot = (process.env.EASYSCHEMATIC_GIT_ROOT || process.env.EASYSCHEMATIC_GIT_REPO)?.trim();
 const gitSubdir = process.env.EASYSCHEMATIC_GIT_SUBDIR?.trim() || undefined;
+const gitConfig = gitRoot ? { root: gitRoot, subdir: gitSubdir } : null;
+
+const requireGit = () => {
+  if (!gitConfig) {
+    throw new Error("Git features are not configured — start the MCP server with EASYSCHEMATIC_GIT_ROOT=/path/to/repos.");
+  }
+  return gitConfig;
+};
 
 const bridge = new AppBridge({
   port,
@@ -44,14 +55,16 @@ const bridge = new AppBridge({
   allowedOrigins,
   log,
   onClientRequest: async (command, params) => {
-    if (command !== "saveToGit") throw new Error(`Unknown request "${command}".`);
-    if (!gitRepo) {
-      throw new Error("Save to Git is not configured — start the MCP server with EASYSCHEMATIC_GIT_REPO=/path/to/repo.");
+    switch (command) {
+      case "listGitFiles":
+        return listGitSchematics(requireGit());
+      case "openGitFile":
+        return openGitFile(requireGit(), String((params as { ref?: unknown }).ref ?? ""));
+      case "saveToGit":
+        return saveToGit(requireGit(), params as { ref?: string; fileName: string; json: string; message: string });
+      default:
+        throw new Error(`Unknown request "${command}".`);
     }
-    return saveToGit(
-      { repoDir: gitRepo, subdir: gitSubdir },
-      params as { fileName: string; json: string; message: string },
-    );
   },
 });
 bridge.start();
@@ -59,7 +72,7 @@ bridge.start();
 log("");
 log(`WebSocket bridge listening on ws://127.0.0.1:${port}`);
 log(`Pairing token: ${token}`);
-if (gitRepo) log(`Save to Git enabled: ${gitRepo}${gitSubdir ? "/" + gitSubdir : ""}`);
+if (gitRoot) log(`Git root: ${gitRoot} (Open from Git / Save to Git enabled)`);
 log("Paste this token into EasySchematic → Preferences → AI (Beta), then turn the toggle on.");
 log("");
 

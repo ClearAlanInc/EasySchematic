@@ -751,6 +751,10 @@ interface SchematicState {
 
   // Cloud storage
   cloudSchematicId: string | null;
+  /** Root-relative ref of the git file this document was opened from via the
+   *  MCP bridge (per-user local context, autosave-only — never in the file). */
+  gitRef: string | null;
+  setGitRef: (ref: string | null) => void;
   cloudSavedAt: string | null;
   setCloudSchematicId: (id: string | null) => void;
   setCloudSavedAt: (ts: string | null) => void;
@@ -1624,6 +1628,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cableIdMap: {},
   cloudSchematicId: null,
   cloudSavedAt: null,
+  gitRef: null,
   fileHandle: null,
   isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   pendingIncompatibleConnection: null,
@@ -4706,6 +4711,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   },
 
   setCloudSchematicId: (id) => { set({ cloudSchematicId: id }); get().saveToLocalStorage(); },
+  setGitRef: (ref) => { set({ gitRef: ref }); get().saveToLocalStorage(); },
   setCloudSavedAt: (ts) => { set({ cloudSavedAt: ts }); get().saveToLocalStorage(); },
   setFileHandle: (handle) => set({ fileHandle: handle }),
 
@@ -4719,6 +4725,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       // Ctrl+S writes to the file rather than the previously-linked cloud copy.
       cloudSchematicId: null,
       cloudSavedAt: null,
+      gitRef: null,
     });
     get().saveToLocalStorage();
   },
@@ -5593,6 +5600,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       blob.cloudSchematicId = state.cloudSchematicId;
       blob.cloudSavedAt = state.cloudSavedAt ?? undefined;
     }
+    if (state.gitRef) blob.gitRef = state.gitRef;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
     } catch {
@@ -5787,6 +5795,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         // Restore cloud identity from autosave (not part of SchematicFile)
         cloudSchematicId: parsed.cloudSchematicId ?? null,
         cloudSavedAt: parsed.cloudSavedAt ?? null,
+        gitRef: (parsed as { gitRef?: string }).gitRef ?? null,
         loadSeq: get().loadSeq + 1,
       });
       if (data.pages?.length) syncRackCounters(data.pages);
@@ -5983,6 +5992,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       // File imports and shared schematics always start as local-only
       cloudSchematicId: null,
       cloudSavedAt: null,
+      gitRef: null,
       fileHandle: null,
       loadSeq: get().loadSeq + 1,
     });
@@ -6030,6 +6040,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         isDemo: false,
         cloudSchematicId: null,
         cloudSavedAt: null,
+        gitRef: null,
         fileHandle: null,
         undoSize: 0,
         redoSize: 0,
@@ -6044,6 +6055,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         ownedGear: [],
         cloudSchematicId: null,
         cloudSavedAt: null,
+        gitRef: null,
         fileHandle: null,
         revision: { major: 1, minor: 0 },
         revisionHistory: [],

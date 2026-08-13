@@ -120,11 +120,13 @@ export interface SupersededMessage {
  *  e.g. "Save to Git", where the app asks the local server to write the export
  *  into a repository and commit it. Servers predating this message silently
  *  ignore it; the app times out with an "update the MCP server" hint. */
+export type ClientRequestCommand = "saveToGit" | "listGitFiles" | "openGitFile";
+
 export interface ClientRequestMessage {
   type: "request";
   requestId: string;
-  command: "saveToGit";
-  params: SaveToGitParams;
+  command: ClientRequestCommand;
+  params: Record<string, unknown>;
 }
 
 /** Server -> app: the correlated result of a ClientRequestMessage. */
@@ -137,8 +139,12 @@ export interface RequestResultMessage {
 }
 
 export interface SaveToGitParams {
-  /** Bare file name (no directories) — the server sanitizes and pins it inside
-   *  the configured repository; ".json" is appended when missing. */
+  /** Root-relative path of a file previously opened via openGitFile — saves
+   *  target that exact file, committing in ITS repository. Absent = first-time
+   *  save: the file lands in the root by fileName. */
+  ref?: string;
+  /** Bare file name (no directories) used when `ref` is absent — the server
+   *  sanitizes and pins it inside the configured root; ".json" appended. */
   fileName: string;
   /** Full pretty-printed SchematicFile JSON. */
   json: string;
@@ -149,8 +155,36 @@ export interface SaveToGitParams {
 export interface SaveToGitResult {
   /** Absolute path the file was written to. */
   path: string;
+  /** Root-relative ref of the saved file — bind this so later saves target it. */
+  ref: string;
   /** Short commit hash, or null when the file was identical (nothing to commit). */
   commit: string | null;
+}
+
+/** One schematic file discovered under the server's configured git root. */
+export interface GitFileEntry {
+  /** Root-relative path — the opaque handle for openGitFile / saveToGit. */
+  ref: string;
+  /** Root-relative path of the repository the file lives in ("." = root itself). */
+  repo: string;
+  /** Display name (file name without .json). */
+  name: string;
+  /** ISO mtime, newest-first ordering hint. */
+  modifiedAt: string;
+}
+
+export interface ListGitFilesResult {
+  root: string;
+  files: GitFileEntry[];
+}
+
+export interface OpenGitFileParams {
+  ref: string;
+}
+
+export interface OpenGitFileResult {
+  ref: string;
+  json: string;
 }
 
 /** Messages the app may send to the server. */

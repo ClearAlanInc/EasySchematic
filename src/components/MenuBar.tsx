@@ -20,7 +20,8 @@ import SchematicBrowser from "./SchematicBrowser";
 import LoginDialog from "./LoginDialog";
 import { checkSession, saveSchematicToCloud, updateSchematicInCloud } from "../templateApi";
 import { queueCloudSave } from "../cloudSync";
-import { mcpBridge } from "../mcpBridge";
+import { bridgeSaveToGit } from "../mcpBridge";
+import GitBrowserDialog from "./GitBrowserDialog";
 import { CLOUD_ENABLED, DEVICES_URL, DOCS_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
@@ -162,6 +163,7 @@ export default function MenuBar() {
   const [showTitleBlockDialog, setShowTitleBlockDialog] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showRevisionHistory, setShowRevisionHistory] = useState(false);
+  const [showGitBrowser, setShowGitBrowser] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [showRoomDistances, setShowRoomDistances] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
@@ -386,11 +388,16 @@ export default function MenuBar() {
     const fileName = `${s2.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic"}.json`;
     const message = `${s2.schematicName} v${s2.revision.major}.${s2.revision.minor}`;
     try {
-      const result = await mcpBridge.request("saveToGit", {
+      const result = await bridgeSaveToGit({
+        // A document opened via Open from Git saves back to ITS file, in ITS
+        // project repository; otherwise this is a first-time save into the root.
+        ...(s2.gitRef ? { ref: s2.gitRef } : {}),
         fileName,
         json: JSON.stringify(data, null, 2),
         message,
       });
+      // Bind first-time saves so the next save targets the same file.
+      if (!s2.gitRef && result.ref) useSchematicStore.getState().setGitRef(result.ref);
       store.addToast(
         result.commit
           ? `Committed ${result.commit} — ${message}`
@@ -709,6 +716,15 @@ export default function MenuBar() {
         onClick: handleSaveToGit,
       },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
+      {
+        type: "item",
+        label: "Open from Git...",
+        disabled: mcpBridgeStatus !== "connected",
+        title: mcpBridgeStatus === "connected"
+          ? "Browse schematics in the bridge's git repositories"
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with EASYSCHEMATIC_GIT_ROOT",
+        onClick: () => setShowGitBrowser(true),
+      },
       { type: "item", label: "Revision History...", onClick: () => setShowRevisionHistory(true) },
       { type: "separator" },
       // Cloud items are hidden entirely (not just disabled) in a self-hosted build
@@ -1181,6 +1197,9 @@ export default function MenuBar() {
       )}
       {showRevisionHistory && (
         <RevisionHistoryDialog onClose={() => setShowRevisionHistory(false)} />
+      )}
+      {showGitBrowser && (
+        <GitBrowserDialog onClose={() => setShowGitBrowser(false)} />
       )}
       {showAboutDialog && (
         <AboutDialog onClose={() => setShowAboutDialog(false)} />
