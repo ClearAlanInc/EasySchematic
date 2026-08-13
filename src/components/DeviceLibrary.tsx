@@ -1157,6 +1157,15 @@ export default function DeviceLibrary() {
     loadLibrary();
   }, [loadLibrary]);
 
+  // Offline is expected on job sites — the degraded banner only appears when
+  // the library server SHOULD be reachable but isn't. Reconnecting retries
+  // automatically, so the banner self-heals (or shows, honestly) on its own.
+  const isOnline = useSchematicStore((s) => s.isOnline);
+  useEffect(() => {
+    if (isOnline && libraryDegraded && !libraryRetrying) loadLibrary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- retry only on reconnect, not on every degraded/retrying flip
+  }, [isOnline]);
+
   const handleAddToOwned = useCallback((template: DeviceTemplate) => {
     addOwnedGear(template, 1);
   }, [addOwnedGear]);
@@ -1281,7 +1290,7 @@ export default function DeviceLibrary() {
 
       {/* Degraded-library notice: the API fetch failed and we're on cache/bundled,
           so server-side devices may be missing. Replaces the old silent fallback. (#181) */}
-      {libraryDegraded && (
+      {libraryDegraded && isOnline && (
         <div className="px-3 py-2 border-b border-amber-300 bg-amber-50 text-[11px] text-amber-800">
           <div className="leading-snug">
             Couldn't reach the ClearAlan device library — some devices may be missing.
