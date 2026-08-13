@@ -86,6 +86,15 @@ function MenuItem({
   );
 }
 
+/** True when the environment refuses File System Access API writes. Embedded /
+ *  sandboxed browsers (in-app preview panes, some kiosk shells) can show the
+ *  save picker but auto-deny the write-permission prompt, so createWritable
+ *  throws NotAllowedError. Saving falls back to a normal download there. */
+function isFsWriteDenied(e: unknown): boolean {
+  if (e instanceof DOMException) return e.name === "NotAllowedError" || e.name === "SecurityError";
+  return /not allowed by the user agent/i.test(String(e));
+}
+
 /** A parsed object is an importable schematic only if it's an object carrying a `nodes`
  *  array. Guards every import path so junk/non-schematic JSON is rejected with a clear
  *  alert instead of being silently loaded as an empty schematic that wipes the canvas. (#176) */
@@ -238,9 +247,10 @@ export default function MenuBar() {
     await writable.close();
   }, [exportToJSON]);
 
-  // Legacy download fallback (always triggers browser download)
-  const downloadFile = useCallback(() => {
-    useSchematicStore.getState().bumpMinorRevision();
+  // Download without a revision bump — used both by downloadFile and as the
+  // fallback when the platform denies direct file writes (the caller already
+  // bumped for this save action).
+  const downloadFileRaw = useCallback(() => {
     const data = exportToJSON();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json; charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -250,6 +260,12 @@ export default function MenuBar() {
     a.click();
     URL.revokeObjectURL(url);
   }, [exportToJSON]);
+
+  // Legacy download fallback (always triggers browser download)
+  const downloadFile = useCallback(() => {
+    useSchematicStore.getState().bumpMinorRevision();
+    downloadFileRaw();
+  }, [downloadFileRaw]);
 
   // Show the native file picker and return the chosen handle
   const pickFileHandle = useCallback(async (): Promise<FileSystemFileHandle | null> => {
@@ -315,6 +331,11 @@ export default function MenuBar() {
         store.addToast("Saved", "success", 1500);
         return;
       } catch (e: unknown) {
+        if (isFsWriteDenied(e)) {
+          downloadFileRaw();
+          store.addToast("This browser can't write files directly — downloaded a copy to your Downloads folder instead", "info", 10000);
+          return;
+        }
         // Handle went stale (file moved/deleted) — fall through to picker
         console.warn("Existing file handle failed, re-prompting for location:", e);
         store.setFileHandle(null);
@@ -339,13 +360,18 @@ export default function MenuBar() {
         // leaving a misleading 0-byte artifact on disk. (#0-byte-save)
         await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
         store.setFileHandle(null);
+        if (isFsWriteDenied(e)) {
+          downloadFileRaw();
+          store.addToast("This browser can't write files directly — downloaded a copy to your Downloads folder instead", "info", 10000);
+          return;
+        }
         console.error("Save to file failed:", e);
         store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 30000);
       }
     } else {
       downloadFile();
     }
-  }, [writeToFileHandle, downloadFile, pickFileHandle]);
+  }, [writeToFileHandle, downloadFile, downloadFileRaw, pickFileHandle]);
 
   // Save As: always show picker, optionally switch from cloud to local
   const handleSaveAs = useCallback(async () => {
@@ -365,13 +391,18 @@ export default function MenuBar() {
         // Remove the picker's empty file instead of leaving a 0-byte artifact.
         await (handle as { remove?: () => Promise<void> }).remove?.().catch(() => {});
         store.setFileHandle(null);
+        if (isFsWriteDenied(e)) {
+          downloadFileRaw();
+          store.addToast("This browser can't write files directly — downloaded a copy to your Downloads folder instead", "info", 10000);
+          return;
+        }
         console.error("Save As failed:", e);
         store.addToast(`Save failed — nothing was written: ${e instanceof Error ? e.message : String(e)}`, "error", 30000);
       }
     } else {
       downloadFile();
     }
-  }, [pickFileHandle, writeToFileHandle, downloadFile]);
+  }, [pickFileHandle, writeToFileHandle, downloadFile, downloadFileRaw]);
 
   const handleOpen = useCallback(async () => {
     if ("showOpenFilePicker" in window) {
