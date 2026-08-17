@@ -250,6 +250,23 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
   // target-side stubs originate the line (they're the SOURCE).
   const handleType = data.side === "source" ? "target" : "source";
 
+  // Click the tag badge (or double-click the label) to jump to the partner
+  // tag — switching pages if needed. App.tsx owns the viewport and handles
+  // the easyschematic:focus-node event (#wire-tags).
+  const goToPartner = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const st = useSchematicStore.getState();
+    const partner = st.nodes.find(
+      (n) =>
+        n.type === "stub-label" &&
+        n.id !== id &&
+        (n.data as StubLabelData).linkedConnectionId === data.linkedConnectionId,
+    );
+    if (partner) {
+      window.dispatchEvent(new CustomEvent("easyschematic:focus-node", { detail: { nodeId: partner.id } }));
+    }
+  };
+
   return (
     <>
       <Handle type={handleType} position={Position.Top} id="t" isConnectable={false} style={{ opacity: 0, width: 6, height: 6 }} />
@@ -257,6 +274,8 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       <Handle type={handleType} position={Position.Bottom} id="b" isConnectable={false} style={{ opacity: 0, width: 6, height: 6 }} />
       <Handle type={handleType} position={Position.Left} id="l" isConnectable={false} style={{ opacity: 0, width: 6, height: 6 }} />
       <div
+        onDoubleClick={goToPartner}
+        title="Double-click to go to the other end"
         style={{
           // Pin to STUB_H_EST so the box's geometric center (where handles sit
           // via top:50%) actually lands at position.y + STUB_H_EST/2. Without
@@ -282,12 +301,16 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
       >
         {data.tag && (
           <span
+            className="nodrag"
+            onClick={goToPartner}
+            title="Go to the other end"
             style={{
               fontWeight: 700,
               marginRight: 4,
               paddingRight: 4,
               borderRight: `1px solid ${selected ? "#1a73e8" : color}`,
               color: selected ? "#1a73e8" : color,
+              cursor: "pointer",
             }}
           >
             {data.tag}

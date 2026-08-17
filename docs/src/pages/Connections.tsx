@@ -347,6 +347,12 @@ export default function ConnectionsPage() {
         <li><strong>Go to Other End</strong> — jumps to the partner tag, switching pages if needed, and centers it</li>
       </ul>
       <p>
+        Faster navigation: <strong>click the tag code badge</strong> (e.g. the <code>T1</code> chip) or{" "}
+        <strong>double-click anywhere on the tag label</strong> to jump straight to the other end — the same
+        page-switch-and-center behavior without opening a menu. A plain click elsewhere on the label still
+        selects it, and dragging still repositions it.
+      </p>
+      <p>
         The connection stays <strong>logically intact</strong> through the pair: cable IDs, the cable schedule,
         pack list, network report, and VLAN propagation all treat it as one wire.
       </p>
