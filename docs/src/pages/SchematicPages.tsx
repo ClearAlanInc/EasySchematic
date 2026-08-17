@@ -21,6 +21,9 @@ export default function SchematicPagesPage() {
         <li>Right-click a device → <strong>Move to Page</strong> and pick a destination, or <strong>New Page…</strong> to create and move in one step.</li>
         <li>If the device is part of a multi-selection, the whole selection moves.</li>
         <li>Anything inside a room moves with its room — a device can't leave its container behind.</li>
+        <li>Right-click a <strong>room</strong> → <strong>Move to New Page…</strong> moves the room and everything
+          in it to a fresh page named after the room — the quickest way to split a large drawing into a
+          room-per-page package. Existing pages are offered in the same menu.</li>
       </ul>
 
       <h2>Wires that cross pages</h2>

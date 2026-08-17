@@ -5,6 +5,10 @@ import { useContextMenuPosition } from "../hooks/useContextMenuPosition";
 
 export default function RoomContextMenu() {
   const menu = useSchematicStore((s) => s.roomContextMenu);
+  const schematicSheets = useSchematicStore((s) => s.schematicSheets);
+  const activeSheetId = useSchematicStore((s) => s.activeSheetId);
+  const moveNodesToSheet = useSchematicStore((s) => s.moveNodesToSheet);
+  const addSchematicSheet = useSchematicStore((s) => s.addSchematicSheet);
   const { ref: menuRef, pos: menuPos } = useContextMenuPosition(
     menu?.screenX ?? 0,
     menu?.screenY ?? 0,
@@ -60,6 +64,28 @@ export default function RoomContextMenu() {
     useSchematicStore.getState().deleteNodeAndChildren(menu.nodeId);
   }, [menu]);
 
+  const moveToPage = useCallback((sheetId: string, sheetLabel: string) => {
+    if (!menu) return;
+    const state = useSchematicStore.getState();
+    const label = ((state.nodes.find((n) => n.id === menu.nodeId)?.data as RoomData | undefined)?.label) ?? "Room";
+    moveNodesToSheet([menu.nodeId], sheetId);
+    state.addToast(`Moved ${label} to ${sheetLabel} — wires between pages became tags`, "success");
+    useSchematicStore.setState({ roomContextMenu: null });
+  }, [menu, moveNodesToSheet]);
+
+  const moveToNewPage = useCallback(() => {
+    if (!menu) return;
+    const state = useSchematicStore.getState();
+    const label = ((state.nodes.find((n) => n.id === menu.nodeId)?.data as RoomData | undefined)?.label) ?? "Room";
+    // The new page takes the room's name — a room-per-page split reads like a
+    // drawing package's sheet list. addSchematicSheet also switches to it, so
+    // the user lands on the page their room just arrived on.
+    const sheetId = addSchematicSheet(label);
+    moveNodesToSheet([menu.nodeId], sheetId);
+    state.addToast(`Moved ${label} to its own page — wires between pages became tags`, "success");
+    useSchematicStore.setState({ roomContextMenu: null });
+  }, [menu, addSchematicSheet, moveNodesToSheet]);
+
   if (!menu) return null;
 
   const node = useSchematicStore.getState().nodes.find((n) => n.id === menu.nodeId);
@@ -86,6 +112,14 @@ export default function RoomContextMenu() {
         label={isEquipmentRack ? "Remove Equipment Rack" : "Mark as Equipment Rack"}
         onClick={toggleEquipmentRack}
       />
+      <div className="border-t border-gray-200 my-1" />
+      <div className="px-3 py-1 text-neutral-400 text-[10px] uppercase tracking-wider">
+        Move to Page
+      </div>
+      {schematicSheets.filter((sh) => sh.id !== activeSheetId).map((sh) => (
+        <MenuItem key={sh.id} label={sh.label} onClick={() => moveToPage(sh.id, sh.label)} />
+      ))}
+      <MenuItem label="Move to New Page…" onClick={moveToNewPage} />
       <div className="border-t border-gray-200 my-1" />
       <MenuItem label="Delete Room" onClick={deleteRoom} danger />
       <MenuItem label="Delete Room & Contents" onClick={deleteRoomAndContents} danger />

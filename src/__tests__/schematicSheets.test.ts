@@ -168,6 +168,30 @@ describe("moveNodesToSheet", () => {
     }
   });
 
+  it("moving a room to a new page splits its external wires into cross-page tags", () => {
+    // BOOTH room contains device "a"; "a" is wired to "b" which stays behind.
+    const room = { id: "r1", type: "room", position: { x: 0, y: 0 }, data: { label: "BOOTH" } } as SchematicNode;
+    const child = { ...device("a"), parentId: "r1" } as SchematicNode;
+    store.setState({ nodes: [room, child, device("b")], edges: [wire("e1", "a", "b")] });
+
+    const id = store.getState().addSchematicSheet("BOOTH");
+    store.getState().moveNodesToSheet(["r1"], id);
+
+    const s = store.getState();
+    const map = new Map(s.nodes.map((n) => [n.id, n] as const));
+    // Room and its child are on the new page; "b" stayed on page 1.
+    expect(sheets.resolveNodeSheet(map.get("r1")!, map, s.edges, "sheet-1")).toBe(id);
+    expect(sheets.resolveNodeSheet(map.get("a")!, map, s.edges, "sheet-1")).toBe(id);
+    expect(sheets.resolveNodeSheet(map.get("b")!, map, s.edges, "sheet-1")).toBe("sheet-1");
+    // The wire became a tag pair, one end per page, still one logical link.
+    expect(s.edges).toHaveLength(2);
+    expect(s.edges[0].data?.linkedConnectionId).toBe(s.edges[1].data?.linkedConnectionId);
+    const srcStub = map.get("stub-e1-src")!;
+    const tgtStub = map.get("stub-e1-tgt")!;
+    expect(sheets.resolveNodeSheet(srcStub, map, s.edges, "sheet-1")).toBe(id);
+    expect(sheets.resolveNodeSheet(tgtStub, map, s.edges, "sheet-1")).toBe("sheet-1");
+  });
+
   it("moving a room-child moves the whole room", () => {
     const room = { id: "r1", type: "room", position: { x: 0, y: 0 }, data: { label: "R" } } as SchematicNode;
     const child = { ...device("d1"), parentId: "r1" } as SchematicNode;
