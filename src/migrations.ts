@@ -4,10 +4,13 @@
  * Each migration takes a raw JSON object at version N and returns version N+1.
  * Migrations run sequentially from the file's version up to CURRENT_SCHEMA_VERSION.
  *
- * When bumping the schema version (middle number in 0.x.y):
+ * When bumping the schema version:
  *   1. Increment CURRENT_SCHEMA_VERSION
  *   2. Add a migration function: migrations[oldVersion] = (data) => { ... return data; }
- *   3. Update package.json version to 0.<new schema version>.0
+ *
+ * Note: the app version in package.json historically mirrored the schema
+ * version (0.<schema>.0) but advanced independently from v0.55.0 — bump it
+ * for releases; only CURRENT_SCHEMA_VERSION governs file migrations.
  */
 
 import { createDefaultLayout } from "./titleBlockLayout";
