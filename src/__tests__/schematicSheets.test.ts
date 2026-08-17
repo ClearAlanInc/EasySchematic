@@ -169,10 +169,12 @@ describe("moveNodesToSheet", () => {
   });
 
   it("moving a room to a new page splits its external wires into cross-page tags", () => {
-    // BOOTH room contains device "a"; "a" is wired to "b" which stays behind.
+    // BOOTH room contains device "a"; "a" is wired to "b" which stays behind
+    // (placed outside the room's bounds so the geometric sweep ignores it).
     const room = { id: "r1", type: "room", position: { x: 0, y: 0 }, data: { label: "BOOTH" } } as SchematicNode;
     const child = { ...device("a"), parentId: "r1" } as SchematicNode;
-    store.setState({ nodes: [room, child, device("b")], edges: [wire("e1", "a", "b")] });
+    const external = { ...device("b"), position: { x: 900, y: 100 } } as SchematicNode;
+    store.setState({ nodes: [room, child, external], edges: [wire("e1", "a", "b")] });
 
     const id = store.getState().addSchematicSheet("BOOTH");
     store.getState().moveNodesToSheet(["r1"], id);
@@ -190,6 +192,28 @@ describe("moveNodesToSheet", () => {
     const tgtStub = map.get("stub-e1-tgt")!;
     expect(sheets.resolveNodeSheet(srcStub, map, s.edges, "sheet-1")).toBe(id);
     expect(sheets.resolveNodeSheet(tgtStub, map, s.edges, "sheet-1")).toBe("sheet-1");
+  });
+
+  it("moving a room takes unparented devices sitting inside its bounds", () => {
+    // Imported files often place devices INSIDE a room without parentId.
+    const room = {
+      id: "r1", type: "room", position: { x: 0, y: 0 },
+      style: { width: 600, height: 400 }, data: { label: "BOOTH" },
+    } as SchematicNode;
+    const inside = { ...device("in1"), position: { x: 100, y: 100 } } as SchematicNode;   // center in bounds
+    const outside = { ...device("out1"), position: { x: 900, y: 100 } } as SchematicNode; // center out of bounds
+    store.setState({ nodes: [room, inside, outside], edges: [wire("e1", "in1", "out1")] });
+
+    const id = store.getState().addSchematicSheet("BOOTH");
+    store.getState().moveNodesToSheet(["r1"], id);
+
+    const s = store.getState();
+    const map = new Map(s.nodes.map((n) => [n.id, n] as const));
+    expect(sheets.resolveNodeSheet(map.get("in1")!, map, s.edges, "sheet-1")).toBe(id);
+    expect(sheets.resolveNodeSheet(map.get("out1")!, map, s.edges, "sheet-1")).toBe("sheet-1");
+    // The wire from inside->outside became a cross-page tag pair.
+    expect(s.edges).toHaveLength(2);
+    expect(s.edges[0].data?.linkedConnectionId).toBe(s.edges[1].data?.linkedConnectionId);
   });
 
   it("moving a room-child moves the whole room", () => {

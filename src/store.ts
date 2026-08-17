@@ -4813,6 +4813,43 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       if (n) rootIds.add(n.id);
     }
     if (rootIds.size === 0) return;
+
+    // A room takes its GEOMETRIC contents too: imported files often place
+    // devices inside a room's bounds without parenting them, and "move the
+    // room" must mean everything the user sees inside it. Uses the same
+    // center-point containment rule as drag-reparenting.
+    const rectOf = (n: SchematicNode) => {
+      const style = (n.style ?? {}) as { width?: number; height?: number };
+      return {
+        x: n.position.x,
+        y: n.position.y,
+        w: (n.measured?.width as number | undefined) ?? (n.width as number | undefined) ?? style.width ?? 144,
+        h: (n.measured?.height as number | undefined) ?? (n.height as number | undefined) ?? style.height ?? 48,
+      };
+    };
+    const roomRects = [...rootIds]
+      .map((id) => nodeMap.get(id))
+      .filter((n): n is SchematicNode => !!n && n.type === "room")
+      .map((n) => {
+        const style = (n.style ?? {}) as { width?: number; height?: number };
+        return {
+          x: n.position.x,
+          y: n.position.y,
+          w: (n.measured?.width as number | undefined) ?? (n.width as number | undefined) ?? style.width ?? 400,
+          h: (n.measured?.height as number | undefined) ?? (n.height as number | undefined) ?? style.height ?? 300,
+        };
+      });
+    if (roomRects.length > 0) {
+      for (const n of state.nodes) {
+        if (rootIds.has(n.id) || n.parentId) continue; // children follow their own root
+        const r = rectOf(n);
+        const cx = r.x + r.w / 2;
+        const cy = r.y + r.h / 2;
+        if (roomRects.some((rr) => cx >= rr.x && cx <= rr.x + rr.w && cy >= rr.y && cy <= rr.y + rr.h)) {
+          rootIds.add(n.id);
+        }
+      }
+    }
     pushUndo({ nodes: state.nodes, edges: state.edges });
     set({
       nodes: state.nodes.map((n) =>
