@@ -1,14 +1,14 @@
 services:
-  easyschematic:
+  cadesign:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
     ports:
       - "5173:5173"
     volumes:
-      - easyschematic-dev:/app
+      - cadesign-dev:/app
     environment:
-      REPO_URL: https://github.com/duremovich/EasySchematic.git
+      REPO_URL: https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
       BRANCH: master
     env_file:
       - path: .env
@@ -16,4 +16,4 @@ services:
     restart: "no"
 
 volumes:
-  easyschematic-dev:
+  cadesign-dev:

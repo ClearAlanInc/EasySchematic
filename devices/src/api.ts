@@ -10,7 +10,7 @@ import {
   getFullLibraryMeta,
 } from "./templateCache";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://api.easyschematic.live";
+const API_URL = import.meta.env.VITE_API_URL || "https://api.cadesign.clearalan.ca";
 
 /**
  * Error carrying an HTTP status, so callers can tell a real server response
@@ -268,7 +268,7 @@ export async function deleteTemplate(id: string, token: string | null): Promise<
   if (!res.ok) throw new Error(`Failed to delete template: ${res.status}`);
 }
 
-const TOKEN_KEY = "easyschematic_admin_token";
+const TOKEN_KEY = "cadesign_admin_token";
 export function getAdminToken(): string | null { return localStorage.getItem(TOKEN_KEY); }
 export function setAdminToken(token: string): void { localStorage.setItem(TOKEN_KEY, token); }
 export function clearAdminToken(): void { localStorage.removeItem(TOKEN_KEY); }

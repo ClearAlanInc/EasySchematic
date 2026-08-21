@@ -7,7 +7,7 @@ const NETWORK_SIGNAL_TYPES = new Set(["ethernet", "ndi", "dante", "avb", "srt", 
 import PortRow from "./PortRow";
 import SearchableSelect from "./SearchableSelect";
 
-const MIME = "application/easyschematic-port";
+const MIME = "application/cadesign-port";
 
 interface PortEditorProps {
   ports: Port[];

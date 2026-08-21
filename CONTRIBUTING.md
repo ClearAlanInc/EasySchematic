@@ -1,6 +1,6 @@
-# Contributing to EasySchematic
+# Contributing to caDesign
 
-Thanks for your interest in contributing! EasySchematic is an open-source AV signal flow diagram tool, and contributions of all kinds are welcome.
+Thanks for your interest in contributing! caDesign is an open-source AV signal flow diagram tool, and contributions of all kinds are welcome.
 
 ## Getting Started
 
@@ -14,8 +14,8 @@ Thanks for your interest in contributing! EasySchematic is an open-source AV sig
 
 ```bash
 # Clone the repo
-git clone https://github.com/duremovich/EasySchematic.git
-cd EasySchematic
+git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
+cd caDesign
 
 # Install dependencies
 npm install
@@ -50,7 +50,7 @@ Both must pass before merging.
 
 The easiest way to contribute — add devices to the community database:
 
-1. Go to [devices.easyschematic.live](https://devices.easyschematic.live)
+1. Go to [devices.cadesign.clearalan.ca](https://devices.cadesign.clearalan.ca)
 2. Click "Submit a Device"
 3. Fill in the manufacturer, model, category, and port configuration
 4. Submit for moderation
@@ -63,7 +63,7 @@ For **patch panels**, set `deviceType` to `patch-panel` — the editor will rela
 
 ### Bug Reports
 
-[Open an issue](https://github.com/duremovich/EasySchematic/issues) with:
+[Open an issue](https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_workitems) with:
 - What you expected to happen
 - What actually happened
 - Steps to reproduce
@@ -87,7 +87,7 @@ If possible, export your schematic (File > Save as JSON) and attach it — this 
 - **Schema**: JSON files use versioned schemas with forward migrations in `src/migrations.ts`. Bumping the schema version requires a migration.
 - **Styling**: Tailwind CSS v4
 
-For a browsable reference of types, functions, and modules, see the **[Developer Reference](https://docs.easyschematic.live/dev/)** (auto-generated from the TypeScript source via TypeDoc). The curated public surface is defined in `src/devApi.ts` — anything re-exported there shows up in the reference. Regenerate locally with `npm run build:dev-reference` from the repo root.
+For a browsable reference of types, functions, and modules, see the **[Developer Reference](https://docs.cadesign.clearalan.ca/dev/)** (auto-generated from the TypeScript source via TypeDoc). The curated public surface is defined in `src/devApi.ts` — anything re-exported there shows up in the reference. Regenerate locally with `npm run build:dev-reference` from the repo root.
 
 #### Terminology
 

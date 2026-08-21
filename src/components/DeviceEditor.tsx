@@ -128,7 +128,7 @@ function newPortDraft(direction: PortDirection): PortDraft {
   };
 }
 
-const MIME = "application/easyschematic-port";
+const MIME = "application/cadesign-port";
 
 export default function DeviceEditor() {
   const editingNodeId = useSchematicStore((s) => s.editingNodeId);
@@ -699,7 +699,7 @@ export default function DeviceEditor() {
     const user = await checkSession();
     if (!user) {
       // Save to localStorage and show login dialog
-      localStorage.setItem("easyschematic-pending-submission", JSON.stringify({
+      localStorage.setItem("cadesign-pending-submission", JSON.stringify({
         data: draftData,
         timestamp: Date.now(),
       }));

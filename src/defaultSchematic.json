@@ -3868,7 +3868,7 @@
     "widthIn": 3
   },
   "reportLayouts": {
-    "easyschematic-packlist-layout": {
+    "cadesign-packlist-layout": {
       "headerLayout": {
         "columns": [
           0.6,
@@ -4117,7 +4117,7 @@
       "orientation": "portrait",
       "paperSize": "letter"
     },
-    "easyschematic-network-report-layout": {
+    "cadesign-network-report-layout": {
       "headerLayout": {
         "columns": [
           0.6,

@@ -88,7 +88,7 @@ export default function StubLabelContextMenu() {
     useSchematicStore.setState({ stubLabelContextMenu: null });
     if (!partner) return;
     // App owns the viewport + sheet switching — hand off via event.
-    window.dispatchEvent(new CustomEvent("easyschematic:focus-node", { detail: { nodeId: partner.id } }));
+    window.dispatchEvent(new CustomEvent("cadesign:focus-node", { detail: { nodeId: partner.id } }));
   }, [menu]);
 
   const collapseStubs = useCallback(() => {

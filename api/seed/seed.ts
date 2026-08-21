@@ -64,21 +64,21 @@ const isRemote = process.argv.includes("--remote");
 const flag = isRemote ? "--remote" : "--local";
 
 console.log(`Applying migrations (${flag})...`);
-execSync(`npx wrangler d1 migrations apply easyschematic-db ${flag}`, {
+execSync(`npx wrangler d1 migrations apply cadesign-db ${flag}`, {
   cwd: apiDir,
   stdio: "inherit",
 });
 
 console.log(`Seeding data (${flag})...`);
 execSync(
-  `npx wrangler d1 execute easyschematic-db ${flag} --file=seed/seed-data.sql`,
+  `npx wrangler d1 execute cadesign-db ${flag} --file=seed/seed-data.sql`,
   { cwd: apiDir, stdio: "inherit" }
 );
 
 // --- Drift check: detect orphan templates in DB ---
 console.log("\nChecking for drift...");
 const result = execSync(
-  `npx wrangler d1 execute easyschematic-db ${flag} --json --command="SELECT id, label, submitted_by FROM templates"`,
+  `npx wrangler d1 execute cadesign-db ${flag} --json --command="SELECT id, label, submitted_by FROM templates"`,
   { cwd: apiDir, encoding: "utf-8" }
 );
 

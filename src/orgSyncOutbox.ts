@@ -9,7 +9,7 @@
 
 import { CLOUD_ENABLED } from "./selfHosted";
 
-const OUTBOX_KEY = "easyschematic-org-sync";
+const OUTBOX_KEY = "cadesign-org-sync";
 
 export interface OrgOutboxEntry {
   op: "upsert" | "delete";

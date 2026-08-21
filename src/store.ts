@@ -101,14 +101,14 @@ function resolveEdgeStroke(data: ConnectionData | undefined): string {
   return `var(--color-${data.signalType ?? "custom"})`;
 }
 
-const STORAGE_KEY = "easyschematic-autosave";
-const TEMPLATES_KEY = "easyschematic-custom-templates";
-const TEMPLATE_META_KEY = "easyschematic-custom-template-meta";
-const CATEGORY_ORDER_KEY = "easyschematic-category-order";
-const MINIMAP_PREF_KEY = "easyschematic-show-minimap";
-const MCP_ENABLED_KEY = "easyschematic-mcp-enabled";
-const MCP_TOKEN_KEY = "easyschematic-mcp-token";
-const MCP_PORT_KEY = "easyschematic-mcp-port";
+const STORAGE_KEY = "cadesign-autosave";
+const TEMPLATES_KEY = "cadesign-custom-templates";
+const TEMPLATE_META_KEY = "cadesign-custom-template-meta";
+const CATEGORY_ORDER_KEY = "cadesign-category-order";
+const MINIMAP_PREF_KEY = "cadesign-show-minimap";
+const MCP_ENABLED_KEY = "cadesign-mcp-enabled";
+const MCP_TOKEN_KEY = "cadesign-mcp-token";
+const MCP_PORT_KEY = "cadesign-mcp-port";
 
 /** Minimap visibility is an editor preference (not document data), persisted to
  *  localStorage and shared across schematics/sessions. Default visible. (#210) */
@@ -7030,7 +7030,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         get().confirmAutoRouteOff(true);
         return;
       }
-      const pref = localStorage.getItem("easyschematic-autoroute-pref");
+      const pref = localStorage.getItem("cadesign-autoroute-pref");
       if (pref === "keep") {
         pushUndo({ nodes: state.nodes, edges: state.edges, autoRoute: state.autoRoute });
         get().confirmAutoRouteOff(true);

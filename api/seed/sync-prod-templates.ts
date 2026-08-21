@@ -45,7 +45,7 @@ function refreshSnapshot(): boolean {
   try {
     process.stdout.write("Refreshing prod templates from Cloudflare D1... ");
     execSync(
-      `npx wrangler d1 export easyschematic-db --remote --table=templates --no-schema --output="${SNAPSHOT_PATH}"`,
+      `npx wrangler d1 export cadesign-db --remote --table=templates --no-schema --output="${SNAPSHOT_PATH}"`,
       { cwd: apiDir, stdio: ["ignore", "pipe", "pipe"] },
     );
     process.stdout.write("done.\n");

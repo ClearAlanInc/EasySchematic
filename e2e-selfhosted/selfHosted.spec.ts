@@ -20,7 +20,7 @@ test("makes zero external requests and hides cloud UI", async ({ page }) => {
     void route.continue();
   });
 
-  await page.addInitScript(() => localStorage.setItem("easyschematic-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
   await page.goto("/");
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });
   await expect(page.locator(".react-flow__node").first()).toBeVisible({ timeout: 30_000 });
@@ -61,7 +61,7 @@ test("device library is populated from the bundled fallback", async ({ page }) =
     void route.continue();
   });
 
-  await page.addInitScript(() => localStorage.setItem("easyschematic-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
   await page.goto("/");
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });
 

@@ -79,7 +79,7 @@ export const DEFAULT_SIGNAL_COLORS: Record<SignalType, string> = {
   custom: "#64748b",
 };
 
-const STORAGE_KEY = "easyschematic-signal-colors";
+const STORAGE_KEY = "cadesign-signal-colors";
 
 /** Apply signal colors to CSS custom properties. */
 export function applySignalColors(colors: Partial<Record<SignalType, string>>) {

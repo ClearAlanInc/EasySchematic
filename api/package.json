@@ -1,5 +1,5 @@
 {
-  "name": "easyschematic-api",
+  "name": "cadesign-api",
   "private": true,
   "type": "module",
   "scripts": {

@@ -4,7 +4,7 @@
   "out": "docs/public/dev",
   "cleanOutputDir": false,
   "tsconfig": "tsconfig.app.json",
-  "name": "EasySchematic Developer Reference",
+  "name": "caDesign Developer Reference",
   "readme": "none",
   "customCss": "typedoc-overrides.css",
   "customJs": "typedoc-overrides.js",

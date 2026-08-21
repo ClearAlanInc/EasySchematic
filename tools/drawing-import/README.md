@@ -1,6 +1,6 @@
 # Drawing Import Tooling
 
-Recreate a consultant's PDF schematic package as an EasySchematic file. Proven
+Recreate a consultant's PDF schematic package as an caDesign file. Proven
 end-to-end on a 5-sheet functional package (111 devices, 380 wires): every
 device resolved, zero unresolved port mappings, audited against the source.
 
@@ -52,7 +52,7 @@ python3 tools/drawing-import/build_schematic.py trace.json project_config.py out
 ```
 
 Open `out.json` via File → Open. For iterative work you can inject it into the
-running dev app: write the JSON string into the `easyschematic-autosave`
+running dev app: write the JSON string into the `cadesign-autosave`
 localStorage key and reload (back up the existing value first).
 
 ## Field notes (learned the hard way)

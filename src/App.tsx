@@ -199,7 +199,7 @@ function AutoRouteConfirmDialog() {
 
   const handleChoice = (preserve: boolean) => {
     if (remember) {
-      localStorage.setItem("easyschematic-autoroute-pref", preserve ? "keep" : "revert");
+      localStorage.setItem("cadesign-autoroute-pref", preserve ? "keep" : "revert");
     }
     confirm(preserve);
   };
@@ -712,7 +712,7 @@ function SchematicCanvas() {
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion, activeSheetId]);
 
   // Cross-page navigation (#wire-tags): "Go to Other End" and friends dispatch
-  // easyschematic:focus-node; we switch sheets when needed, then select and
+  // cadesign:focus-node; we switch sheets when needed, then select and
   // center the target once it has rendered.
   useEffect(() => {
     const onFocusNode = (e: Event) => {
@@ -754,8 +754,8 @@ function SchematicCanvas() {
         }
       }, 120);
     };
-    window.addEventListener("easyschematic:focus-node", onFocusNode);
-    return () => window.removeEventListener("easyschematic:focus-node", onFocusNode);
+    window.addEventListener("cadesign:focus-node", onFocusNode);
+    return () => window.removeEventListener("cadesign:focus-node", onFocusNode);
   }, [rfInstance]);
 
   // Fit the view to the newly-active sheet's content on page switch.
@@ -956,7 +956,7 @@ function SchematicCanvas() {
       event.preventDefault();
 
       // Handle note drops
-      const noteData = event.dataTransfer.getData("application/easyschematic-note");
+      const noteData = event.dataTransfer.getData("application/cadesign-note");
       if (noteData) {
         const position = screenToFlowPosition({
           x: event.clientX,
@@ -967,7 +967,7 @@ function SchematicCanvas() {
       }
 
       // Handle room drops
-      const roomData = event.dataTransfer.getData("application/easyschematic-room");
+      const roomData = event.dataTransfer.getData("application/cadesign-room");
       if (roomData) {
         const { label } = JSON.parse(roomData) as { label: string };
         const position = screenToFlowPosition({
@@ -979,7 +979,7 @@ function SchematicCanvas() {
       }
 
       // Handle device drops
-      const raw = event.dataTransfer.getData("application/easyschematic-device");
+      const raw = event.dataTransfer.getData("application/cadesign-device");
       if (!raw) return;
 
       const template = JSON.parse(raw) as DeviceTemplate;
@@ -1889,7 +1889,7 @@ function PrintTitleBlock() {
 function DemoBanner() {
   const isDemo = useSchematicStore((s) => s.isDemo);
   const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem("easyschematic-demo-dismissed") === "1",
+    () => localStorage.getItem("cadesign-demo-dismissed") === "1",
   );
 
   if (!isDemo || dismissed) return null;
@@ -1904,7 +1904,7 @@ function DemoBanner() {
         className="text-slate-400 hover:text-white shrink-0"
         onClick={() => {
           setDismissed(true);
-          localStorage.setItem("easyschematic-demo-dismissed", "1");
+          localStorage.setItem("cadesign-demo-dismissed", "1");
         }}
       >
         ✕
@@ -1974,13 +1974,13 @@ export default function App() {
         useSchematicStore.getState().toggleDebugEdges();
       } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "s") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:save-as"));
+        window.dispatchEvent(new CustomEvent("cadesign:save-as"));
       } else if ((e.ctrlKey || e.metaKey) && k === "s") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:save"));
+        window.dispatchEvent(new CustomEvent("cadesign:save"));
       } else if ((e.ctrlKey || e.metaKey) && k === "o") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("easyschematic:open"));
+        window.dispatchEvent(new CustomEvent("cadesign:open"));
       } else if (e.key === "F9") {
         e.preventDefault();
         const s = useSchematicStore.getState();

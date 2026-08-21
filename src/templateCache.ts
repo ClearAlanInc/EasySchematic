@@ -8,7 +8,7 @@
 
 import type { DeviceTemplate } from "./types";
 
-const DB_NAME = "easyschematic-template-cache";
+const DB_NAME = "cadesign-template-cache";
 const DB_VERSION = 1;
 const STORE = "templates";
 const KEY = "library";

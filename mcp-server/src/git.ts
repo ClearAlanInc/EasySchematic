@@ -1,7 +1,7 @@
 /**
  * Per-project git integration for the MCP bridge.
  *
- * The server is started with a ROOT directory (EASYSCHEMATIC_GIT_ROOT — e.g.
+ * The server is started with a ROOT directory (CADESIGN_GIT_ROOT — e.g.
  * ~/repos) under which each project keeps its own repository. The app can:
  *   - list schematic .json files found inside git repos under the root,
  *   - open one (the server then knows exactly which repo/path it came from),

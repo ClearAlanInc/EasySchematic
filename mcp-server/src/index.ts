@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * EasySchematic MCP server (Beta).
+ * caDesign MCP server (Beta).
  *
  * Speaks MCP to Claude over stdio, and hosts a localhost WebSocket the running
  * editor connects to. Tool calls from Claude are relayed to the bound tab, which
@@ -24,27 +24,27 @@ import { TOOLS } from "./tools.js";
 import { PROMPTS, getPrompt, SERVER_INSTRUCTIONS } from "./prompts.js";
 import { DEFAULT_BRIDGE_PORT } from "./protocol.generated.js";
 
-const log = (msg: string) => process.stderr.write(`[easyschematic-mcp] ${msg}\n`);
+const log = (msg: string) => process.stderr.write(`[cadesign-mcp] ${msg}\n`);
 
-const port = Number(process.env.EASYSCHEMATIC_MCP_PORT) || DEFAULT_BRIDGE_PORT;
-const token = process.env.EASYSCHEMATIC_MCP_TOKEN || randomBytes(16).toString("hex");
-const allowedOrigins = (process.env.EASYSCHEMATIC_MCP_ORIGINS || "")
+const port = Number(process.env.CADESIGN_MCP_PORT) || DEFAULT_BRIDGE_PORT;
+const token = process.env.CADESIGN_MCP_TOKEN || randomBytes(16).toString("hex");
+const allowedOrigins = (process.env.CADESIGN_MCP_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-// Git integration: set EASYSCHEMATIC_GIT_ROOT to the directory holding your
+// Git integration: set CADESIGN_GIT_ROOT to the directory holding your
 // project repositories (each project = its own repo). Enables the app's
-// File > Open from Git and File > Save to Git. EASYSCHEMATIC_GIT_REPO is
-// accepted as a legacy alias; EASYSCHEMATIC_GIT_SUBDIR applies to ref-less
+// File > Open from Git and File > Save to Git. CADESIGN_GIT_REPO is
+// accepted as a legacy alias; CADESIGN_GIT_SUBDIR applies to ref-less
 // first-time saves only.
-const gitRoot = (process.env.EASYSCHEMATIC_GIT_ROOT || process.env.EASYSCHEMATIC_GIT_REPO)?.trim();
-const gitSubdir = process.env.EASYSCHEMATIC_GIT_SUBDIR?.trim() || undefined;
+const gitRoot = (process.env.CADESIGN_GIT_ROOT || process.env.CADESIGN_GIT_REPO)?.trim();
+const gitSubdir = process.env.CADESIGN_GIT_SUBDIR?.trim() || undefined;
 const gitConfig = gitRoot ? { root: gitRoot, subdir: gitSubdir } : null;
 
 const requireGit = () => {
   if (!gitConfig) {
-    throw new Error("Git features are not configured — start the MCP server with EASYSCHEMATIC_GIT_ROOT=/path/to/repos.");
+    throw new Error("Git features are not configured — start the MCP server with CADESIGN_GIT_ROOT=/path/to/repos.");
   }
   return gitConfig;
 };
@@ -73,11 +73,11 @@ log("");
 log(`WebSocket bridge listening on ws://127.0.0.1:${port}`);
 log(`Pairing token: ${token}`);
 if (gitRoot) log(`Git root: ${gitRoot} (Open from Git / Save to Git enabled)`);
-log("Paste this token into EasySchematic → Preferences → AI (Beta), then turn the toggle on.");
+log("Paste this token into caDesign → Preferences → AI (Beta), then turn the toggle on.");
 log("");
 
 const server = new Server(
-  { name: "easyschematic", version: "0.1.0" },
+  { name: "cadesign", version: "0.1.0" },
   { capabilities: { tools: {}, prompts: {} }, instructions: SERVER_INSTRUCTIONS },
 );
 

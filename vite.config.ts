@@ -7,7 +7,7 @@ import { readFileSync } from 'fs'
 import { execSync } from 'child_process'
 
 // Use temp dir for cache to avoid file-locking issues
-const cacheDir = path.join(os.tmpdir(), 'vite-easyschematic')
+const cacheDir = path.join(os.tmpdir(), 'vite-cadesign')
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 

@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
  */
 
 async function boot(page: import("@playwright/test").Page) {
-  await page.addInitScript(() => localStorage.setItem("easyschematic-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
   await page.goto("/");
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });
   // Let the default schematic mount + routing settle.
@@ -44,7 +44,7 @@ test("#179 caps-lock: uppercase Ctrl+A/C/V still copies and pastes", async ({ pa
 // silently dropping to the bundled subset.
 test("#181 degraded device library shows a retry banner instead of failing silently", async ({ page }) => {
   await page.route("**/templates", (r) => r.abort());
-  await page.addInitScript(() => localStorage.setItem("easyschematic-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
   await page.goto("/");
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });
 
@@ -86,7 +86,7 @@ test("#176 valid file with a malformed page does not trigger a false 'Invalid sc
   expect(await page.locator(".react-flow__node").count()).toBe(0);
 
   // #174 — the browser tab title tracks the loaded schematic's name.
-  await expect.poll(() => page.title()).toBe("es176-probe — EasySchematic");
+  await expect.poll(() => page.title()).toBe("es176-probe — caDesign");
 });
 
 // #176 (other half) — random JSON that ISN'T a schematic (no `nodes` array) must be

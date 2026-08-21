@@ -16,7 +16,7 @@ function shouldShowLanding(): boolean {
   // Shared schematic links, or any non-root path — go straight to editor
   if (path !== "/") return false;
   // Returning user who opted to skip the landing page
-  if (localStorage.getItem("easyschematic-skip-landing")) return false;
+  if (localStorage.getItem("cadesign-skip-landing")) return false;
   return true;
 }
 

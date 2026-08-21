@@ -1,17 +1,17 @@
 {
-  "name": "easyschematic",
+  "name": "cadesign",
   "private": true,
   "license": "AGPL-3.0",
   "version": "0.55.0",
   "type": "module",
   "description": "Browser-based AV signal flow diagram tool for designing audio/video system schematics",
-  "homepage": "https://easyschematic.live",
+  "homepage": "https://cadesign.clearalan.ca",
   "repository": {
     "type": "git",
-    "url": "https://github.com/duremovich/EasySchematic.git"
+    "url": "https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign"
   },
   "bugs": {
-    "url": "https://github.com/duremovich/EasySchematic/issues"
+    "url": "https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_workitems"
   },
   "author": "duremovich",
   "keywords": [

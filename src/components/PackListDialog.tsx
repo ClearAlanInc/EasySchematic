@@ -19,7 +19,7 @@ interface PackListDialogProps {
   onClose: () => void;
 }
 
-const REPORT_LAYOUT_KEY = "easyschematic-packlist-layout";
+const REPORT_LAYOUT_KEY = "cadesign-packlist-layout";
 
 function PackListDialog({ onClose }: PackListDialogProps) {
   const nodes = useSchematicStore((s) => s.nodes);

@@ -60,7 +60,7 @@ const signalSamples = [
 ];
 
 function openEditor() {
-  localStorage.setItem("easyschematic-skip-landing", "1");
+  localStorage.setItem("cadesign-skip-landing", "1");
   window.location.href = "/";
 }
 
@@ -242,7 +242,7 @@ export default function LandingPage() {
           <a href="https://discord.gg/dxXn3Jk2a6" className="hover:text-white transition-colors">
             Discord
           </a>
-          <a href="mailto:support@easyschematic.live" className="hover:text-white transition-colors">
+          <a href="mailto:support@cadesign.clearalan.ca" className="hover:text-white transition-colors">
             Support
           </a>
         </div>

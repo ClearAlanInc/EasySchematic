@@ -10,7 +10,7 @@ interface EmailMessage {
 }
 
 interface EmailEnv {
-  easyschematic_db: D1Database;
+  cadesign_db: D1Database;
   SUPPORT_FORWARD_EMAIL: string;
 }
 
@@ -35,7 +35,7 @@ export async function handleEmail(message: EmailMessage, env: EmailEnv) {
     headerObj[key] = value;
   }
 
-  await env.easyschematic_db
+  await env.cadesign_db
     .prepare(
       `INSERT INTO support_emails (id, message_id, from_email, from_name, to_email, subject, body_text, body_html, headers)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,

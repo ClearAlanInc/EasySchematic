@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Use temp dir for cache to avoid file-locking issues
-const cacheDir = path.join(os.tmpdir(), "vite-easyschematic-docs");
+const cacheDir = path.join(os.tmpdir(), "vite-cadesign-docs");
 
 // In dev, Vite's SPA fallback eats /dev/ (no file-extension match → serves the
 // docs SPA index instead of the TypeDoc index). Production Cloudflare auto-

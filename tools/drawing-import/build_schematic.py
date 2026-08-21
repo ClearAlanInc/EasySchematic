@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an EasySchematic .json file from a wire trace + project config.
+"""Build an caDesign .json file from a wire trace + project config.
 
 Consumes the trace produced by extract_wiretrace.py, a customs spec (drawing-
 local devices that should not enter the library), and the built-in library

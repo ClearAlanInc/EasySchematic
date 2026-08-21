@@ -6,7 +6,7 @@
  *   - savedAt timestamps so the UI can say "library as of <date>" and so the
  *     background prefetch knows when the full library is stale.
  *
- * Distinct DB name from the main app's `easyschematic-template-cache` — different
+ * Distinct DB name from the main app's `cadesign-template-cache` — different
  * origin anyway, but kept clear on purpose.
  */
 

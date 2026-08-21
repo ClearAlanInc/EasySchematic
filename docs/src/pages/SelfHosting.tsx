@@ -32,7 +32,7 @@ export default function SelfHostingPage() {
       </p>
 
       <pre>
-        <code>{`git clone https://github.com/duremovich/EasySchematic.git
+        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
 cd caDesign
 docker compose up -d`}</code>
       </pre>
@@ -109,7 +109,7 @@ docker compose up -d`}</code>
       </p>
 
       <pre>
-        <code>{`git clone https://github.com/duremovich/EasySchematic.git
+        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
 cd caDesign
 make dev`}</code>
       </pre>
@@ -243,7 +243,7 @@ make dev`}</code>
       </p>
 
       <pre>
-        <code>docker build --build-arg VITE_TEMPLATE_API_URL=https://api.example.test -t easyschematic .</code>
+        <code>docker build --build-arg VITE_TEMPLATE_API_URL=https://api.example.test -t cadesign .</code>
       </pre>
 
       <p>
@@ -346,7 +346,7 @@ make dev`}</code>
       <p>Example Caddy config (production on port 8080):</p>
 
       <pre>
-        <code>{`easyschematic.example.com {
+        <code>{`cadesign.example.com {
     reverse_proxy localhost:8080
 }`}</code>
       </pre>

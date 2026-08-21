@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import os from "os";
 
-const cacheDir = path.join(os.tmpdir(), "vite-easyschematic-devices");
+const cacheDir = path.join(os.tmpdir(), "vite-cadesign-devices");
 
 export default defineConfig({
   cacheDir,
@@ -34,7 +34,7 @@ export default defineConfig({
         navigateFallback: "/index.html",
       },
       manifest: {
-        name: "EasySchematic Device Library",
+        name: "caDesign Device Library",
         short_name: "ES Devices",
         description: "Browse professional AV device templates with detailed port and signal type specifications.",
         theme_color: "#0f172a",

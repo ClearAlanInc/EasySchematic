@@ -72,7 +72,7 @@ node dist/index.js`}</code>
       </p>
 
       <pre>
-        <code>{`claude mcp add easyschematic -- node /absolute/path/to/EasySchematic/mcp-server/dist/index.js`}</code>
+        <code>{`claude mcp add cadesign -- node /absolute/path/to/caDesign/mcp-server/dist/index.js`}</code>
       </pre>
 
       <p>
@@ -85,7 +85,7 @@ node dist/index.js`}</code>
         The same bridge powers version control. Start the server with the directory that holds your project
         repositories — <strong>each project keeps its own repo</strong>:
       </p>
-      <pre><code>{`EASYSCHEMATIC_GIT_ROOT=~/repos node mcp-server/dist/index.js`}</code></pre>
+      <pre><code>{`CADESIGN_GIT_ROOT=~/repos node mcp-server/dist/index.js`}</code></pre>
       <ul>
         <li><strong>File → Open from Git…</strong> lists schematic files found inside git repositories under the root, grouped by repo. Opening one binds the document to that file.</li>
         <li><strong>File → Save to Git</strong> writes the export back to the bound file and commits it in <strong>that file's repository</strong> as <code>{`"<name> v<major>.<minor>"`}</code> — one commit per save, matched to the document's revision number.</li>
@@ -197,7 +197,7 @@ node dist/index.js`}</code>
         <strong>Security:</strong> the connection never leaves your computer, is
         off until you enable it, and requires the pairing token. If you self-host
         caDesign on a non-localhost address, set{" "}
-        <code>EASYSCHEMATIC_MCP_ORIGINS</code> on the server to allow that origin.
+        <code>CADESIGN_MCP_ORIGINS</code> on the server to allow that origin.
       </div>
     </>
   );

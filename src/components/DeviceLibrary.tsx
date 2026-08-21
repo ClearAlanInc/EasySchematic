@@ -13,7 +13,7 @@ const BUILD_HASH = __BUILD_HASH__;
 
 function onDragStart(event: DragEvent, template: DeviceTemplate) {
   event.dataTransfer.setData(
-    "application/easyschematic-device",
+    "application/cadesign-device",
     JSON.stringify(template),
   );
   event.dataTransfer.effectAllowed = "move";
@@ -186,11 +186,11 @@ function CategorySection({
         ref={headerRef}
         draggable={!!isDraggable}
         onDragStart={isDraggable ? (e) => {
-          e.dataTransfer.setData("application/easyschematic-category-reorder", label);
+          e.dataTransfer.setData("application/cadesign-category-reorder", label);
           e.dataTransfer.effectAllowed = "move";
         } : undefined}
         onDragOver={isDraggable ? (e) => {
-          if (!e.dataTransfer.types.includes("application/easyschematic-category-reorder")) return;
+          if (!e.dataTransfer.types.includes("application/cadesign-category-reorder")) return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "move";
           const rect = headerRef.current!.getBoundingClientRect();
@@ -198,9 +198,9 @@ function CategorySection({
         } : undefined}
         onDragLeave={isDraggable ? () => setDropLine(null) : undefined}
         onDrop={isDraggable ? (e) => {
-          if (!e.dataTransfer.types.includes("application/easyschematic-category-reorder")) return;
+          if (!e.dataTransfer.types.includes("application/cadesign-category-reorder")) return;
           e.preventDefault();
-          const cat = e.dataTransfer.getData("application/easyschematic-category-reorder");
+          const cat = e.dataTransfer.getData("application/cadesign-category-reorder");
           if (cat !== label) {
             const targetIdx = dropLine === "above" ? categoryIndex! : categoryIndex! + 1;
             onCategoryReorder!(cat, targetIdx);
@@ -285,7 +285,7 @@ function DraggableTemplateItem({
       className="relative"
       onDragOver={(e) => {
         const types = Array.from(e.dataTransfer.types);
-        if (!types.includes("application/easyschematic-template-reorder")) return;
+        if (!types.includes("application/cadesign-template-reorder")) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
         const rect = rowRef.current!.getBoundingClientRect();
@@ -293,9 +293,9 @@ function DraggableTemplateItem({
       }}
       onDragLeave={() => setDropLine(null)}
       onDrop={(e) => {
-        if (!e.dataTransfer.types.includes("application/easyschematic-template-reorder")) return;
+        if (!e.dataTransfer.types.includes("application/cadesign-template-reorder")) return;
         e.preventDefault();
-        const dt = e.dataTransfer.getData("application/easyschematic-template-reorder");
+        const dt = e.dataTransfer.getData("application/cadesign-template-reorder");
         const targetIdx = dropLine === "above" ? index : index + 1;
         onReorder(dt, targetIdx);
         setDropLine(null);
@@ -307,8 +307,8 @@ function DraggableTemplateItem({
         draggable
         onDragStart={(e) => {
           // Set both MIME types: reorder for the panel, device for canvas drops
-          e.dataTransfer.setData("application/easyschematic-template-reorder", template.id ?? template.deviceType);
-          e.dataTransfer.setData("application/easyschematic-device", JSON.stringify(template));
+          e.dataTransfer.setData("application/cadesign-template-reorder", template.id ?? template.deviceType);
+          e.dataTransfer.setData("application/cadesign-device", JSON.stringify(template));
           e.dataTransfer.effectAllowed = "move";
         }}
       >
@@ -434,16 +434,16 @@ function GroupHeader({
         className={`flex items-center gap-1 w-full px-1 mb-0.5 group/grp rounded transition-colors ${dragOver ? "bg-blue-100/60" : ""}`}
         draggable
         onDragStart={(e) => {
-          e.dataTransfer.setData("application/easyschematic-group-reorder", group.id);
+          e.dataTransfer.setData("application/cadesign-group-reorder", group.id);
           e.dataTransfer.effectAllowed = "move";
         }}
         onDragOver={(e) => {
           const types = Array.from(e.dataTransfer.types);
-          if (types.includes("application/easyschematic-template-reorder")) {
+          if (types.includes("application/cadesign-template-reorder")) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             setDragOver(true);
-          } else if (types.includes("application/easyschematic-group-reorder")) {
+          } else if (types.includes("application/cadesign-group-reorder")) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             const rect = rowRef.current!.getBoundingClientRect();
@@ -453,14 +453,14 @@ function GroupHeader({
         onDragLeave={() => { setDragOver(false); setGroupDropLine(null); }}
         onDrop={(e) => {
           const types = Array.from(e.dataTransfer.types);
-          if (types.includes("application/easyschematic-template-reorder")) {
+          if (types.includes("application/cadesign-template-reorder")) {
             e.preventDefault();
-            const dt = e.dataTransfer.getData("application/easyschematic-template-reorder");
+            const dt = e.dataTransfer.getData("application/cadesign-template-reorder");
             onTemplateDrop(dt);
             setDragOver(false);
-          } else if (types.includes("application/easyschematic-group-reorder")) {
+          } else if (types.includes("application/cadesign-group-reorder")) {
             e.preventDefault();
-            const gid = e.dataTransfer.getData("application/easyschematic-group-reorder");
+            const gid = e.dataTransfer.getData("application/cadesign-group-reorder");
             if (gid !== group.id) {
               const targetIdx = groupDropLine === "above" ? groupIndex : groupIndex + 1;
               onGroupReorder(gid, targetIdx);
@@ -517,7 +517,7 @@ function UngroupedHeader({
       onClick={onToggle}
       className={`flex items-center gap-1 w-full px-1 mb-0.5 cursor-pointer group/cat rounded transition-colors ${dragOver ? "bg-blue-100/60" : ""}`}
       onDragOver={(e) => {
-        if (e.dataTransfer.types.includes("application/easyschematic-template-reorder")) {
+        if (e.dataTransfer.types.includes("application/cadesign-template-reorder")) {
           e.preventDefault();
           e.dataTransfer.dropEffect = "move";
           setDragOver(true);
@@ -525,9 +525,9 @@ function UngroupedHeader({
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
-        if (e.dataTransfer.types.includes("application/easyschematic-template-reorder")) {
+        if (e.dataTransfer.types.includes("application/cadesign-template-reorder")) {
           e.preventDefault();
-          const dt = e.dataTransfer.getData("application/easyschematic-template-reorder");
+          const dt = e.dataTransfer.getData("application/cadesign-template-reorder");
           onTemplateDrop(dt);
           setDragOver(false);
         }
@@ -1508,7 +1508,7 @@ export default function DeviceLibrary() {
           <div
             draggable
             onDragStart={(e) => {
-              e.dataTransfer.setData("application/easyschematic-note", "1");
+              e.dataTransfer.setData("application/cadesign-note", "1");
               e.dataTransfer.effectAllowed = "move";
             }}
             className="flex items-center gap-2 px-2 py-1.5 rounded border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/15 cursor-grab active:cursor-grabbing transition-colors"
@@ -1529,7 +1529,7 @@ export default function DeviceLibrary() {
             draggable
             onDragStart={(e) => {
               e.dataTransfer.setData(
-                "application/easyschematic-room",
+                "application/cadesign-room",
                 JSON.stringify({ label: "Room" }),
               );
               e.dataTransfer.effectAllowed = "move";

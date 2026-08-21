@@ -11,7 +11,7 @@ export interface SessionUser {
 
 export type Env = {
   Bindings: {
-    easyschematic_db: D1Database;
+    cadesign_db: D1Database;
     SCHEMATIC_STORAGE: R2Bucket;
     ADMIN_TOKEN: string;
     RESEND_API_KEY: string;
@@ -43,7 +43,7 @@ export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
     const match = cookie.match(/(?:^|;\s*)session=([^\s;]+)/);
     if (match) {
       const sessionId = match[1];
-      const row = await c.env.easyschematic_db
+      const row = await c.env.cadesign_db
         .prepare(
           `SELECT u.id, u.email, u.name, u.role, u.banned
            FROM sessions s JOIN users u ON s.user_id = u.id

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
-const DISMISS_KEY = 'easyschematic-mobile-dismissed';
+const DISMISS_KEY = 'cadesign-mobile-dismissed';
 
 export default function MobileGate() {
   const [show, setShow] = useState(false);

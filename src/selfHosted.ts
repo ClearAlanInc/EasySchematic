@@ -6,7 +6,7 @@
  *
  * | VITE_SELF_HOSTED | VITE_TEMPLATE_API_URL | Behavior                                        |
  * |------------------|-----------------------|-------------------------------------------------|
- * | unset            | unset                 | Hosted default (api.easyschematic.live)         |
+ * | unset            | unset                 | Hosted default (api.cadesign.clearalan.ca)         |
  * | unset            | set                   | Cloud UI against the custom API                 |
  * | "true" / "1"     | unset                 | Fully offline: no automatic external contact,   |
  * |                  |                       | cloud + community-submit UI hidden              |
@@ -34,14 +34,14 @@ const envDocsUrl = import.meta.env?.VITE_DOCS_URL || undefined;
  * so the empty sentinel is never fetched.
  */
 export const API_URL: string =
-  envApiUrl ?? (IS_SELF_HOSTED ? "" : "https://api.easyschematic.live");
+  envApiUrl ?? (IS_SELF_HOSTED ? "" : "https://api.cadesign.clearalan.ca");
 
 /**
  * Base URL of the community device-database site (links + submission hand-off
  * target only — never fetched). Empty string hides those links entirely.
  */
 export const DEVICES_URL: string =
-  envDevicesUrl ?? (IS_SELF_HOSTED ? "" : "https://devices.easyschematic.live");
+  envDevicesUrl ?? (IS_SELF_HOSTED ? "" : "https://devices.cadesign.clearalan.ca");
 
 /**
  * Base URL of the documentation site (links only — never fetched). Empty
@@ -49,7 +49,7 @@ export const DEVICES_URL: string =
  * external references.
  */
 export const DOCS_URL: string =
-  envDocsUrl ?? (IS_SELF_HOSTED ? "" : "https://docs.easyschematic.live");
+  envDocsUrl ?? (IS_SELF_HOSTED ? "" : "https://docs.cadesign.clearalan.ca");
 
 /**
  * Master gate for everything that talks to the API: auth, cloud schematics,

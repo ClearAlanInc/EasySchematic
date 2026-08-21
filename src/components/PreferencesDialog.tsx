@@ -3,7 +3,7 @@ import { useSchematicStore } from "../store";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE, PROJECT_STATUS_LABELS } from "../types";
 import type { LabelCaseMode, PanMode, ProjectStatus, ScrollAction, ScrollConfig, StubLabelPageMode } from "../types";
 
-const AUTOROUTE_PREF_KEY = "easyschematic-autoroute-pref";
+const AUTOROUTE_PREF_KEY = "cadesign-autoroute-pref";
 
 const ACTION_LABELS: Record<ScrollAction, string> = {
   "zoom": "Zoom",

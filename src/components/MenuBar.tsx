@@ -182,8 +182,8 @@ export default function MenuBar() {
   // via this event — the dialog's open state lives here.
   useEffect(() => {
     const open = (e: Event) => setReportsTab(((e as CustomEvent).detail as ReportsTab) ?? "cableSchedule");
-    window.addEventListener("easyschematic:open-reports", open);
-    return () => window.removeEventListener("easyschematic:open-reports", open);
+    window.addEventListener("cadesign:open-reports", open);
+    return () => window.removeEventListener("cadesign:open-reports", open);
   }, []);
 
   const cloudSchematicId = useSchematicStore((s) => s.cloudSchematicId);
@@ -605,13 +605,13 @@ export default function MenuBar() {
     const onSave = () => { handleSave(); };
     const onSaveAs = () => { handleSaveAs(); };
     const onOpen = () => { handleOpen(); };
-    window.addEventListener("easyschematic:save", onSave);
-    window.addEventListener("easyschematic:save-as", onSaveAs);
-    window.addEventListener("easyschematic:open", onOpen);
+    window.addEventListener("cadesign:save", onSave);
+    window.addEventListener("cadesign:save-as", onSaveAs);
+    window.addEventListener("cadesign:open", onOpen);
     return () => {
-      window.removeEventListener("easyschematic:save", onSave);
-      window.removeEventListener("easyschematic:save-as", onSaveAs);
-      window.removeEventListener("easyschematic:open", onOpen);
+      window.removeEventListener("cadesign:save", onSave);
+      window.removeEventListener("cadesign:save-as", onSaveAs);
+      window.removeEventListener("cadesign:open", onOpen);
     };
   }, [handleSave, handleSaveAs, handleOpen]);
 
@@ -712,7 +712,7 @@ export default function MenuBar() {
         disabled: mcpBridgeStatus !== "connected",
         title: mcpBridgeStatus === "connected"
           ? "Write the file into the bridge's git repository and commit"
-          : "Requires the MCP bridge (Preferences → AI Assistant) started with EASYSCHEMATIC_GIT_REPO",
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with CADESIGN_GIT_REPO",
         onClick: handleSaveToGit,
       },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
@@ -722,7 +722,7 @@ export default function MenuBar() {
         disabled: mcpBridgeStatus !== "connected",
         title: mcpBridgeStatus === "connected"
           ? "Browse schematics in the bridge's git repositories"
-          : "Requires the MCP bridge (Preferences → AI Assistant) started with EASYSCHEMATIC_GIT_ROOT",
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with CADESIGN_GIT_ROOT",
         onClick: () => setShowGitBrowser(true),
       },
       { type: "item", label: "Revision History...", onClick: () => setShowRevisionHistory(true) },
@@ -844,7 +844,7 @@ export default function MenuBar() {
         type: "item",
         label: "Landing Page",
         onClick: () => {
-          localStorage.removeItem("easyschematic-skip-landing");
+          localStorage.removeItem("cadesign-skip-landing");
           window.location.href = "/";
         },
       },

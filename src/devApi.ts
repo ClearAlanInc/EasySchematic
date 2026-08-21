@@ -1,5 +1,5 @@
 /**
- * Curated public surface for the EasySchematic developer API reference.
+ * Curated public surface for the caDesign developer API reference.
  *
  * TypeDoc reads this file as its entry point and documents whatever's
  * re-exported here. Anything *not* re-exported through this module is

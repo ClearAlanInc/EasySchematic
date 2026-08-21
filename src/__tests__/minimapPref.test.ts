@@ -2,7 +2,7 @@
  * Unit tests for the minimap visibility preference (#210).
  *
  * The minimap can be dismissed with its ✕ button and toggled from the View menu; the
- * choice is an editor preference persisted to localStorage under `easyschematic-show-minimap`
+ * choice is an editor preference persisted to localStorage under `cadesign-show-minimap`
  * ("1" = visible, "0" = hidden), defaulting to visible when unset. Both the ✕ button and the
  * View-menu item drive the same `showMinimap` store flag via `setShowMinimap`.
  *
@@ -11,7 +11,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-const MINIMAP_PREF_KEY = "easyschematic-show-minimap";
+const MINIMAP_PREF_KEY = "cadesign-show-minimap";
 
 class MemStorage {
   private m = new Map<string, string>();
