@@ -24,7 +24,7 @@ import { normalizeShortcutKey } from "./keyUtils";
 import { warmupRoutingWorker } from "./routing/routingClient";
 import { useMcpBridge } from "./mcpBridge";
 import { nodeTypes, edgeTypes } from "./nodeTypes";
-import { nodesOnSheet } from "./sheets";
+import { nodesOnSheet, resolveNodeSheet } from "./sheets";
 
 /** Scope a node list to the active sheet for drag-time geometry (snap, overlap,
  *  spacing, room reparenting). Sheets share one coordinate plane, so nodes on
@@ -723,12 +723,11 @@ function SchematicCanvas() {
       if (!target) return;
       const first = state.schematicSheets[0]?.id ?? "sheet-1";
       const map = new Map(state.nodes.map((n) => [n.id, n] as const));
-      const targetSheet = nodesOnSheet([target], state.edges, state.activeSheetId, first).length > 0
-        ? state.activeSheetId
-        : state.schematicSheets.find((sh) =>
-            nodesOnSheet(state.nodes, state.edges, sh.id, first).some((n) => n.id === nodeId),
-          )?.id;
-      if (targetSheet && targetSheet !== state.activeSheetId) {
+      // Resolve against the FULL node map: a tag parented to a room takes the
+      // room's page, which a single-node lookup can't see (it fell back to the
+      // first page and skipped the switch).
+      const targetSheet = resolveNodeSheet(target, map, state.edges, first);
+      if (targetSheet !== state.activeSheetId) {
         state.setActiveSheet(targetSheet);
       }
       // Wait for the sheet's nodes to mount before selecting/centering.
