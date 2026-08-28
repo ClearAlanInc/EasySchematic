@@ -74,6 +74,16 @@ export default function PrintingPage() {
 
       <h2>PDF export</h2>
       <p>
+        The PDF is <strong>interactive</strong>: a device with a management interface defined gets a clickable
+        name — opening the PDF in any viewer and clicking the device header launches its management URL in the
+        browser. Wire-tag fly-offs are clickable too: clicking a tag jumps to the page holding its other end,
+        so cross-page signals can be chased through the document like sheet references in a paper package.
+      </p>
+      <p>
+        Multi-page projects export as <strong>one document</strong> — every schematic page's print grid, appended
+        in page order, with document-wide page numbering in the title block.
+      </p>
+      <p>
         Open the <strong>Export</strong> menu in the menu bar, then choose <strong>Export PDF</strong> to generate a multi-page PDF
         document matching your Print View settings. Each page includes the title block.
       </p>

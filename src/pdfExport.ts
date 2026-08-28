@@ -15,6 +15,9 @@ import { useSchematicStore } from "./store";
 import { DEFAULT_SIGNAL_COLORS } from "./signalColors";
 import { transformLabelNow } from "./labelCaseUtils";
 import { collectColorKeyEntries, layoutColorKey, type ColorKeyEntry } from "./colorKeyLayout";
+import { nodesOnSheet, resolveNodeSheet } from "./sheets";
+import { buildManagementTarget } from "./managementUrl";
+import type { StubLabelData } from "./types";
 
 const DPI = 96;
 // 5 × 96 = 480 DPI — well above the 300 DPI print standard, sharp even at high
@@ -627,13 +630,62 @@ export async function exportPdf(
   titleBlock: TitleBlock,
   layout: TitleBlockLayout,
 ): Promise<void> {
-  const nodes = rfInstance.getNodes();
-  if (nodes.length === 0) return;
+  const store0 = useSchematicStore.getState();
+  const { printOriginOffsetX, printOriginOffsetY } = store0;
+  const allNodes = store0.nodes;
+  const allEdges = store0.edges;
+  if (allNodes.length === 0) return;
 
-  const { printOriginOffsetX, printOriginOffsetY } = useSchematicStore.getState();
-  const pages = computePageGrid(paperSize, orientation, scale, nodes, layout.heightIn, printOriginOffsetX, printOriginOffsetY);
+  // Multi-page documents (#multi-page): the PDF covers EVERY schematic page,
+  // one page-grid per sheet, appended in sheet order — so a drawing package
+  // exports as one document and fly-off links can jump between its pages.
+  const sheetsList = store0.schematicSheets;
+  const firstSheetId = sheetsList[0]?.id ?? "sheet-1";
+  const multiSheet = sheetsList.length > 1;
+  const savedSheetId = store0.activeSheetId;
 
-  if (pages.length === 0) return;
+  interface PdfPageEntry {
+    sheetId: string;
+    page: PageRect;
+    sheetPages: PageRect[];
+    sheetNodes: SchematicNode[];
+    sheetEdges: ConnectionEdge[];
+    pdfPageNo: number;
+    isSheetFirst: boolean;
+  }
+  const entries: PdfPageEntry[] = [];
+  for (const sh of sheetsList) {
+    const sheetNodes = multiSheet ? nodesOnSheet(allNodes, allEdges, sh.id, firstSheetId) : allNodes;
+    if (sheetNodes.length === 0) continue;
+    const idSet = new Set(sheetNodes.map((n) => n.id));
+    const sheetEdges = allEdges.filter((e) => idSet.has(e.source) && idSet.has(e.target));
+    const grid = computePageGrid(paperSize, orientation, scale, sheetNodes, layout.heightIn, printOriginOffsetX, printOriginOffsetY);
+    grid.forEach((page, gi) => {
+      entries.push({ sheetId: sh.id, page, sheetPages: grid, sheetNodes, sheetEdges, pdfPageNo: entries.length + 1, isSheetFirst: gi === 0 });
+    });
+  }
+  if (entries.length === 0) return;
+
+  /** Absolute canvas position of a node (walks room parent chains). */
+  const nodeMapAll = new Map(allNodes.map((n) => [n.id, n] as const));
+  const absPosOf = (n: SchematicNode): { x: number; y: number } => {
+    let x = n.position.x, y = n.position.y, pid = n.parentId;
+    let guard = 0;
+    while (pid && guard++ < 8) {
+      const par = nodeMapAll.get(pid);
+      if (!par) break;
+      x += par.position.x; y += par.position.y; pid = par.parentId;
+    }
+    return { x, y };
+  };
+
+  /** PDF page number showing the given canvas point of a given sheet. */
+  const pdfPageAt = (sheetId: string, cx: number, cy: number): number | undefined =>
+    entries.find(
+      (e) => e.sheetId === sheetId &&
+        cx >= e.page.x && cx < e.page.x + e.page.widthPx &&
+        cy >= e.page.y && cy < e.page.y + e.page.heightPx,
+    )?.pdfPageNo;
 
   showLoadingOverlay();
 
@@ -670,13 +722,14 @@ export async function exportPdf(
   const savedHeight = container.style.height;
 
   // Save selection state
-  const selectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id);
-  const edges = rfInstance.getEdges();
-  const selectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id);
+  const rfNodes = rfInstance.getNodes();
+  const selectedNodeIds = rfNodes.filter((n) => n.selected).map((n) => n.id);
+  const rfEdges = rfInstance.getEdges();
+  const selectedEdgeIds = rfEdges.filter((e) => e.selected).map((e) => e.id);
 
   // Deselect all
-  rfInstance.setNodes(nodes.map((n) => ({ ...n, selected: false })));
-  rfInstance.setEdges(edges.map((e) => ({ ...e, selected: false })));
+  rfInstance.setNodes(rfNodes.map((n) => ({ ...n, selected: false })));
+  rfInstance.setEdges(rfEdges.map((e) => ({ ...e, selected: false })));
 
   // Add capturing attribute to hide overlays
   document.documentElement.setAttribute("data-export-capturing", "");
@@ -691,9 +744,16 @@ export async function exportPdf(
   const fileName = (titleBlock.drawingTitle || titleBlock.showName || "Schematic").replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic";
 
   try {
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
-      updateProgress(`Capturing page ${i + 1} of ${pages.length}...`);
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const page = entry.page;
+      updateProgress(`Capturing page ${i + 1} of ${entries.length}...`);
+
+      // Bring this entry's schematic page onto the canvas before capturing.
+      if (multiSheet && useSchematicStore.getState().activeSheetId !== entry.sheetId) {
+        useSchematicStore.getState().setActiveSheet(entry.sheetId);
+        await waitForRender(450);
+      }
 
       if (i > 0) {
         doc.addPage([pageWIn, pageHIn], orientation === "landscape" ? "landscape" : "portrait");
@@ -761,22 +821,76 @@ export async function exportPdf(
 
       // Draw content border and title block with vector graphics
       drawContentBorder(doc, pageWIn, pageHIn);
-      await drawTitleBlock(doc, pageWIn, pageHIn, titleBlock, layout, i + 1, pages.length);
+      await drawTitleBlock(doc, pageWIn, pageHIn, titleBlock, layout, i + 1, entries.length);
 
-      // Draw crossing labels
+      // Draw crossing labels — computed within this sheet's own grid, with the
+      // referenced page numbers shifted into the document-wide numbering.
       const storeState = useSchematicStore.getState();
+      const sheetPageOffset = entries.find((e) => e.sheetId === entry.sheetId)!.pdfPageNo - 1;
       const pdfLabels = computePdfCrossingLabels(
-        page, pages, storeState.routedEdges, storeState.edges, storeState.nodes, scale,
+        page, entry.sheetPages, storeState.routedEdges, entry.sheetEdges, entry.sheetNodes, scale,
       );
+      for (const l of pdfLabels) {
+        l.text = l.text.replace(/ Pg (\d+)$/, (_m, num) => ` Pg ${Number(num) + sheetPageOffset}`);
+      }
       drawCrossingLabels(doc, pdfLabels);
 
       // Draw color key / signal legend
       if (storeState.colorKeyEnabled) {
         const ckPage = storeState.colorKeyPage;
-        const showOnThis = ckPage === "all" || (ckPage === "first" && i === 0) || (ckPage === "last" && i === pages.length - 1);
+        const showOnThis = ckPage === "all" || (ckPage === "first" && i === 0) || (ckPage === "last" && i === entries.length - 1);
         if (showOnThis) {
           const ckEntries = collectColorKeyEntries(storeState.edges, storeState.signalColors, storeState.signalLineStyles, storeState.colorKeyOverrides);
           drawColorKey(doc, pageWIn, pageHIn, ckEntries, storeState.colorKeyCorner, storeState.colorKeyColumns);
+        }
+      }
+
+      // ── Interactive link annotations (#pdf-links) ──────────────────────
+      // Coordinates: canvas px -> inches on this PDF page.
+      const toPdfX = (cx: number) => PAGE_MARGIN_IN + ((cx - page.contentX) * scale) / DPI;
+      const toPdfY = (cy: number) => PAGE_MARGIN_IN + ((cy - page.contentY) * scale) / DPI;
+      const onThisPage = (cx: number, cy: number) =>
+        cx >= page.x && cx < page.x + page.widthPx && cy >= page.y && cy < page.y + page.heightPx;
+      // Measured sizes are freshest AFTER this sheet rendered for capture.
+      const liveNodes = new Map(useSchematicStore.getState().nodes.map((n) => [n.id, n] as const));
+
+      for (const n of entry.sheetNodes) {
+        const live = liveNodes.get(n.id) ?? n;
+
+        // 1. Device name -> management interface URL.
+        if (n.type === "device") {
+          const data = n.data as DeviceData;
+          if (data.offCanvas) continue;
+          const target = buildManagementTarget(data);
+          if (target) {
+            const abs = absPosOf(live);
+            const w = (live.measured?.width as number | undefined) ?? 144;
+            const headerH = 34; // the name band at the top of the device box
+            if (onThisPage(abs.x + w / 2, abs.y + headerH / 2)) {
+              doc.link(toPdfX(abs.x), toPdfY(abs.y), (w * scale) / DPI, (headerH * scale) / DPI, { url: target.url });
+            }
+          }
+        }
+
+        // 2. Wire-tag fly-off -> the partner tag's PDF page.
+        if (n.type === "stub-label") {
+          const link = (n.data as StubLabelData).linkedConnectionId;
+          const partner = allNodes.find(
+            (m) => m.type === "stub-label" && m.id !== n.id && (m.data as StubLabelData).linkedConnectionId === link,
+          );
+          if (!partner) continue;
+          const partnerSheet = resolveNodeSheet(partner, nodeMapAll, allEdges, firstSheetId);
+          const pAbs = absPosOf(partner);
+          const pW = (liveNodes.get(partner.id)?.measured?.width as number | undefined) ?? 80;
+          const pH = (liveNodes.get(partner.id)?.measured?.height as number | undefined) ?? 14;
+          const targetPage = pdfPageAt(partnerSheet, pAbs.x + pW / 2, pAbs.y + pH / 2);
+          if (!targetPage || targetPage === entry.pdfPageNo) continue;
+          const abs = absPosOf(live);
+          const w = (live.measured?.width as number | undefined) ?? 80;
+          const h = (live.measured?.height as number | undefined) ?? 14;
+          if (onThisPage(abs.x + w / 2, abs.y + h / 2)) {
+            doc.link(toPdfX(abs.x), toPdfY(abs.y), (w * scale) / DPI, (h * scale) / DPI, { pageNumber: targetPage });
+          }
         }
       }
     }
@@ -786,6 +900,9 @@ export async function exportPdf(
     doc.save(`${fileName}.pdf`);
   } finally {
     // Restore everything
+    if (multiSheet && useSchematicStore.getState().activeSheetId !== savedSheetId) {
+      useSchematicStore.getState().setActiveSheet(savedSheetId);
+    }
     document.documentElement.removeAttribute("data-export-capturing");
     container.style.width = savedWidth;
     container.style.height = savedHeight;
