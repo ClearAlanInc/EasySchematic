@@ -12,8 +12,8 @@ export default function DeviceLibraryPage() {
       </p>
       <p>
         Browse the full live library — including category breakdowns and search — at{" "}
-        <a href="https://devices.cadesign.clearalan.ca" target="_blank" rel="noopener noreferrer">
-          devices.cadesign.clearalan.ca
+        <a href="https://devices.maestroconnect.clearalan.ca" target="_blank" rel="noopener noreferrer">
+          devices.maestroconnect.clearalan.ca
         </a>
         .
       </p>
@@ -96,7 +96,7 @@ export default function DeviceLibraryPage() {
 
       <h2>Auto-numbering</h2>
       <p>
-        When you place multiple instances of the same device template, caDesign automatically numbers them:
+        When you place multiple instances of the same device template, Maestro Connect automatically numbers them:
         "Camera 1", "Camera 2", etc. Renaming a device manually removes it from auto-numbering.
       </p>
 
@@ -127,7 +127,7 @@ export default function DeviceLibraryPage() {
 
       <h2>Community device database</h2>
       <p>
-        The <a href="https://devices.cadesign.clearalan.ca" target="_blank" rel="noopener noreferrer">community device database</a> lets
+        The <a href="https://devices.maestroconnect.clearalan.ca" target="_blank" rel="noopener noreferrer">community device database</a> lets
         anyone browse, search, and contribute device templates.
       </p>
       <ul>
@@ -154,7 +154,7 @@ export default function DeviceLibraryPage() {
           connection: browsing, search, filters, and every device page are served from a locally saved copy of the
           library. An "offline" banner shows when you're seeing the saved copy, and it refreshes automatically the
           next time you're online. You can also install the site as an app from your browser, same as the main
-          caDesign app</li>
+          Maestro Connect app</li>
       </ul>
     </>
   );

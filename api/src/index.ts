@@ -75,8 +75,8 @@ const NO_CACHE_HEADERS = {
 const SCHEMA_VERSION = "29";
 
 function sessionCookie(sessionId: string, maxAge: number): string {
-  // No Domain attribute — host-only cookie for api.cadesign.clearalan.ca.
-  // Both frontends fetch from api.cadesign.clearalan.ca directly, so domain scoping is unnecessary.
+  // No Domain attribute — host-only cookie for api.maestroconnect.clearalan.ca.
+  // Both frontends fetch from api.maestroconnect.clearalan.ca directly, so domain scoping is unnecessary.
   // Omitting Domain also avoids a Firefox bug where domain-scoped cookies aren't sent.
   return `session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=${maxAge}`;
 }
@@ -84,17 +84,17 @@ function sessionCookie(sessionId: string, maxAge: number): string {
 /** Expire the legacy domain-scoped cookie from before cd89a31.
  *  Browsers treat host-only and domain-scoped cookies as separate entries,
  *  so the old one lingers and shadows the new one until explicitly cleared. */
-const LEGACY_COOKIE_CLEAR = "session=; Path=/; HttpOnly; SameSite=Lax; Secure; Domain=cadesign.clearalan.ca; Max-Age=0";
+const LEGACY_COOKIE_CLEAR = "session=; Path=/; HttpOnly; SameSite=Lax; Secure; Domain=maestroconnect.clearalan.ca; Max-Age=0";
 
 function getClientIP(c: { req: { header: (name: string) => string | undefined } }): string {
   return c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() || "unknown";
 }
 
 const STATIC_ALLOWED_ORIGINS = [
-  "https://cadesign.clearalan.ca",
-  "https://www.cadesign.clearalan.ca",
-  "https://beta.cadesign.clearalan.ca",
-  "https://devices.cadesign.clearalan.ca",
+  "https://maestroconnect.clearalan.ca",
+  "https://www.maestroconnect.clearalan.ca",
+  "https://beta.maestroconnect.clearalan.ca",
+  "https://devices.maestroconnect.clearalan.ca",
 ];
 
 // Any loopback origin, on any port. Self-hosters run the Docker image on arbitrary
@@ -105,7 +105,7 @@ const STATIC_ALLOWED_ORIGINS = [
 const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 
 /** Extra allowed origins for self-hosted deployments, from the ALLOWED_ORIGINS
- *  env var (comma-separated full origins, e.g. "https://cadesign.clearalan.ca").
+ *  env var (comma-separated full origins, e.g. "https://maestroconnect.clearalan.ca").
  *  Lets a company host the app at its own domain without editing code. */
 function envAllowedOrigins(c?: Context<Env>): string[] {
   const raw = c?.env?.ALLOWED_ORIGINS;
@@ -158,7 +158,7 @@ app.post("/auth/login", async (c) => {
     return c.json({ error: "Valid email is required" }, 400);
   }
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   // Rate limit: 20 per email per hour, 50 per IP per hour
   const ip = getClientIP(c);
@@ -183,8 +183,8 @@ app.post("/auth/login", async (c) => {
 
   // Send magic link email via Resend
   const verifyUrl = returnTo
-    ? `https://api.cadesign.clearalan.ca/auth/verify?token=${token}&returnTo=${encodeURIComponent(returnTo)}`
-    : `https://api.cadesign.clearalan.ca/auth/verify?token=${token}`;
+    ? `https://api.maestroconnect.clearalan.ca/auth/verify?token=${token}&returnTo=${encodeURIComponent(returnTo)}`
+    : `https://api.maestroconnect.clearalan.ca/auth/verify?token=${token}`;
 
   const emailRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -193,13 +193,13 @@ app.post("/auth/login", async (c) => {
       Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "caDesign <login@cadesign.clearalan.ca>",
+      from: "Maestro Connect <login@maestroconnect.clearalan.ca>",
       to: email,
-      reply_to: "support@cadesign.clearalan.ca",
-      subject: "caDesign — Log in to your account",
+      reply_to: "support@maestroconnect.clearalan.ca",
+      subject: "Maestro Connect — Log in to your account",
       headers: { "X-Entity-Ref-ID": id },
       text: [
-        "Log in to caDesign",
+        "Log in to Maestro Connect",
         "",
         `We received a login request for ${email}. Visit the link below to sign in:`,
         "",
@@ -207,18 +207,18 @@ app.post("/auth/login", async (c) => {
         "",
         "This link expires in 30 minutes. If you didn't request this, you can safely ignore this email.",
         "",
-        "— caDesign · AV System Design Tool · https://cadesign.clearalan.ca",
+        "— Maestro Connect · AV System Design Tool · https://maestroconnect.clearalan.ca",
       ].join("\n"),
       html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px">
-<h2 style="font-size:18px;color:#0f172a;margin:0 0 16px">Log in to caDesign</h2>
+<h2 style="font-size:18px;color:#0f172a;margin:0 0 16px">Log in to Maestro Connect</h2>
 <p style="color:#334155;font-size:14px;line-height:1.6;margin:0 0 8px">We received a login request for <strong>${escapeHtml(email)}</strong>.</p>
 <p style="color:#334155;font-size:14px;line-height:1.6;margin:0 0 24px">Click the button below to sign in:</p>
-<p style="margin:0 0 24px"><a href="${verifyUrl}" style="display:inline-block;padding:12px 24px;background:#1e293b;color:white;text-decoration:none;border-radius:8px;font-weight:600;">Log in to caDesign</a></p>
+<p style="margin:0 0 24px"><a href="${verifyUrl}" style="display:inline-block;padding:12px 24px;background:#1e293b;color:white;text-decoration:none;border-radius:8px;font-weight:600;">Log in to Maestro Connect</a></p>
 <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0 0 4px">Or copy and paste this URL into your browser:</p>
 <p style="color:#64748b;font-size:12px;word-break:break-all;margin:0 0 16px">${verifyUrl}</p>
 <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0 0 24px">This link expires in 30 minutes. If you didn't request this, you can safely ignore this email.</p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 16px">
-<p style="color:#94a3b8;font-size:12px;margin:0">caDesign · AV System Design Tool<br><a href="https://cadesign.clearalan.ca" style="color:#94a3b8">cadesign.clearalan.ca</a></p>
+<p style="color:#94a3b8;font-size:12px;margin:0">Maestro Connect · AV System Design Tool<br><a href="https://maestroconnect.clearalan.ca" style="color:#94a3b8">maestroconnect.clearalan.ca</a></p>
 </div>`,
     }),
   });
@@ -235,7 +235,7 @@ app.post("/auth/login", async (c) => {
 function authPage(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title} — caDesign</title>
+<title>${title} — Maestro Connect</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;
@@ -251,7 +251,7 @@ function authPage(title: string, body: string): string {
   .link{color:#60a5fa;text-decoration:none;font-size:.9rem}
   .link:hover{text-decoration:underline}
 </style></head><body><div class="card">
-<div class="logo">caDesign</div>
+<div class="logo">Maestro Connect</div>
 ${body}
 </div></body></html>`;
 }
@@ -263,10 +263,10 @@ app.get("/auth/verify", async (c) => {
 
   if (!token) {
     return c.html(authPage("Invalid Link", `<h1>Invalid Link</h1><p>This login link is missing a token.</p>
-      <a class="link" href="https://devices.cadesign.clearalan.ca/#/login">Back to login</a>`));
+      <a class="link" href="https://devices.maestroconnect.clearalan.ca/#/login">Back to login</a>`));
   }
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const ua = c.req.header("User-Agent") ?? "unknown";
   const ip = getClientIP(c);
 
@@ -283,7 +283,7 @@ app.get("/auth/verify", async (c) => {
   if (!isValid) {
     const loginUrl = validReturnTo
       ? `${new URL(validReturnTo).origin}/#/login`
-      : "https://devices.cadesign.clearalan.ca/#/login";
+      : "https://devices.maestroconnect.clearalan.ca/#/login";
     return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
       <p>This login link has already been used or has expired. Please request a new one.</p>
       <a class="btn" href="${loginUrl}">Back to Login</a>`));
@@ -319,10 +319,10 @@ app.post("/auth/verify", async (c) => {
 
   if (!token) {
     return c.html(authPage("Invalid Request", `<h1>Invalid Request</h1><p>No token provided.</p>
-      <a class="link" href="https://devices.cadesign.clearalan.ca/#/login">Back to login</a>`));
+      <a class="link" href="https://devices.maestroconnect.clearalan.ca/#/login">Back to login</a>`));
   }
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const ip = getClientIP(c);
   const ua = c.req.header("User-Agent") ?? "unknown";
 
@@ -336,7 +336,7 @@ app.post("/auth/verify", async (c) => {
     console.log(`[auth/verify POST] ip=${ip} ua=${ua} token_consumed=false (already used or expired)`);
     const loginUrl = validReturnTo
       ? `${new URL(validReturnTo).origin}/#/login`
-      : "https://devices.cadesign.clearalan.ca/#/login";
+      : "https://devices.maestroconnect.clearalan.ca/#/login";
     return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
       <p>This login link has already been used or has expired. Please request a new one.</p>
       <a class="btn" href="${loginUrl}">Back to Login</a>`));
@@ -351,7 +351,7 @@ app.post("/auth/verify", async (c) => {
   if (!link) {
     const loginUrl = validReturnTo
       ? `${new URL(validReturnTo).origin}/#/login`
-      : "https://devices.cadesign.clearalan.ca/#/login";
+      : "https://devices.maestroconnect.clearalan.ca/#/login";
     return c.html(authPage("Link Expired", `<h1>Link Expired</h1>
       <p>This login link has already been used or has expired. Please request a new one.</p>
       <a class="btn" href="${loginUrl}">Back to Login</a>`));
@@ -381,7 +381,7 @@ app.post("/auth/verify", async (c) => {
 
   console.log(`[auth/verify POST] ip=${ip} ua=${ua} email=${link.email} session=${sessionId.slice(0, 8)}… created`);
 
-  const dest = validReturnTo || "https://devices.cadesign.clearalan.ca/#/";
+  const dest = validReturnTo || "https://devices.maestroconnect.clearalan.ca/#/";
   return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
 });
 
@@ -390,7 +390,7 @@ app.post("/auth/logout", async (c) => {
   const match = cookie?.match(/(?:^|;\s*)session=([^\s;]+)/);
 
   if (match) {
-    await c.env.cadesign_db.prepare("DELETE FROM sessions WHERE id = ?").bind(match[1]).run();
+    await c.env.maestro_db.prepare("DELETE FROM sessions WHERE id = ?").bind(match[1]).run();
   }
 
   c.header("Set-Cookie", sessionCookie("", 0));
@@ -404,7 +404,7 @@ app.get("/auth/google/start", async (c) => {
   const returnTo = c.req.query("returnTo");
   const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   // Rate limit by IP
   const ip = getClientIP(c);
@@ -424,7 +424,7 @@ app.get("/auth/google/start", async (c) => {
   const isLocalhost = new URL(c.req.url).hostname === "localhost";
   const redirectUri = isLocalhost
     ? "http://localhost:8787/auth/google/callback"
-    : "https://api.cadesign.clearalan.ca/auth/google/callback";
+    : "https://api.maestroconnect.clearalan.ca/auth/google/callback";
 
   const params = new URLSearchParams({
     client_id: c.env.GOOGLE_CLIENT_ID,
@@ -439,7 +439,7 @@ app.get("/auth/google/start", async (c) => {
 });
 
 app.get("/auth/google/callback", async (c) => {
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const code = c.req.query("code");
   const state = c.req.query("state");
   const error = c.req.query("error");
@@ -465,7 +465,7 @@ app.get("/auth/google/callback", async (c) => {
     if (returnOrigin) {
       return c.redirect(`${returnOrigin}/?error=${err}`);
     }
-    return c.redirect(`https://devices.cadesign.clearalan.ca/#/login?error=${err}`);
+    return c.redirect(`https://devices.maestroconnect.clearalan.ca/#/login?error=${err}`);
   };
 
   // User denied consent
@@ -481,7 +481,7 @@ app.get("/auth/google/callback", async (c) => {
   const isLocalhost = new URL(c.req.url).hostname === "localhost";
   const redirectUri = isLocalhost
     ? "http://localhost:8787/auth/google/callback"
-    : "https://api.cadesign.clearalan.ca/auth/google/callback";
+    : "https://api.maestroconnect.clearalan.ca/auth/google/callback";
 
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -555,7 +555,7 @@ app.get("/auth/google/callback", async (c) => {
     .bind(sessionId, user.id, sessionExpires)
     .run();
 
-  const dest = stateRow.return_to || "https://devices.cadesign.clearalan.ca/#/";
+  const dest = stateRow.return_to || "https://devices.maestroconnect.clearalan.ca/#/";
   return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
 });
 
@@ -591,7 +591,7 @@ app.get("/auth/microsoft/start", async (c) => {
   const returnTo = c.req.query("returnTo");
   const validReturnTo = returnTo && isAllowedOrigin(returnTo, c) ? returnTo : undefined;
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const ip = getClientIP(c);
   const ipLimit = await checkRateLimit(db, `login:ip:${ip}`, 10);
@@ -619,7 +619,7 @@ app.get("/auth/microsoft/start", async (c) => {
 });
 
 app.get("/auth/microsoft/callback", async (c) => {
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const code = c.req.query("code");
   const state = c.req.query("state");
   const error = c.req.query("error");
@@ -643,7 +643,7 @@ app.get("/auth/microsoft/callback", async (c) => {
     if (returnOrigin) {
       return c.redirect(`${returnOrigin}/?error=${err}`);
     }
-    return c.redirect(`https://devices.cadesign.clearalan.ca/#/login?error=${err}`);
+    return c.redirect(`https://devices.maestroconnect.clearalan.ca/#/login?error=${err}`);
   };
 
   if (error) return redirectWithError("oauth_denied");
@@ -725,7 +725,7 @@ app.get("/auth/microsoft/callback", async (c) => {
     .bind(sessionId, user.id, sessionExpires)
     .run();
 
-  const dest = stateRow.return_to || "https://devices.cadesign.clearalan.ca/#/";
+  const dest = stateRow.return_to || "https://devices.maestroconnect.clearalan.ca/#/";
   return cookieRedirect(c, sessionCookie(sessionId, 30 * 24 * 60 * 60), dest);
 });
 
@@ -738,7 +738,7 @@ app.get("/auth/me", async (c) => {
   }
 
   // Fetch submission stats
-  const stats = await c.env.cadesign_db
+  const stats = await c.env.maestro_db
     .prepare(
       `SELECT
          COUNT(*) as total,
@@ -770,7 +770,7 @@ app.put("/auth/me", async (c) => {
     if (name.length > 50) {
       return c.json({ error: "Name must be 50 characters or fewer" }, 400);
     }
-    await c.env.cadesign_db
+    await c.env.maestro_db
       .prepare("UPDATE users SET name = ? WHERE id = ?")
       .bind(name || null, user.id)
       .run();
@@ -785,7 +785,7 @@ app.post("/auth/handoff", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const limit = await checkRateLimit(db, `handoff:user:${user.id}`, 10);
   if (!limit.allowed) {
@@ -807,7 +807,7 @@ app.post("/auth/claim", async (c) => {
   const body = await c.req.json<{ token?: string }>();
   if (!body.token) return c.json({ error: "Token required" }, 400);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const handoff = await db
     .prepare("SELECT * FROM auth_handoffs WHERE id = ? AND used = 0 AND expires_at > datetime('now')")
@@ -850,7 +850,7 @@ app.post("/drafts", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const limit = await checkRateLimit(db, `draft:user:${user.id}`, 20);
   if (!limit.allowed) {
@@ -882,7 +882,7 @@ app.get("/drafts/:id", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
   const id = c.req.param("id");
-  const draft = await c.env.cadesign_db
+  const draft = await c.env.maestro_db
     .prepare("SELECT * FROM drafts WHERE id = ? AND expires_at > datetime('now')")
     .bind(id)
     .first<{ user_id: string; data: string }>();
@@ -901,7 +901,7 @@ app.post("/submissions", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   // Rate limit: 30 submissions per user per hour
   const limit = await checkRateLimit(db, `submit:user:${user.id}`, 30);
@@ -1011,7 +1011,7 @@ app.get("/submissions/mine", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT * FROM submissions WHERE user_id = ? ORDER BY created_at DESC")
     .bind(user.id)
     .all();
@@ -1023,7 +1023,7 @@ app.get("/submissions/pending", async (c) => {
   const auth = requireModeratorOrToken(c);
   if (!auth) return c.json({ error: "Moderator access required" }, 403);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(
       `SELECT s.*, u.email as submitter_email, u.name as submitter_name,
               c.email as claimer_email, c.name as claimer_name
@@ -1043,7 +1043,7 @@ app.get("/submissions/:id", async (c) => {
   if (!auth && !user) return c.json({ error: "Not authenticated" }, 401);
 
   const id = c.req.param("id");
-  const row = await c.env.cadesign_db.prepare(
+  const row = await c.env.maestro_db.prepare(
     `SELECT s.*, c.email as claimer_email, c.name as claimer_name
      FROM submissions s LEFT JOIN users c ON s.claimed_by = c.id
      WHERE s.id = ?`
@@ -1069,7 +1069,7 @@ app.patch("/submissions/:id", async (c) => {
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
   const id = c.req.param("id");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const row = await db.prepare("SELECT * FROM submissions WHERE id = ?").bind(id).first();
   if (!row) return c.json({ error: "Submission not found" }, 404);
@@ -1153,7 +1153,7 @@ app.post("/submissions/:id/claim", async (c) => {
   if (auth === "token") return c.json({ error: "Token auth cannot claim" }, 400);
 
   const id = c.req.param("id");
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare("UPDATE submissions SET claimed_by = ?, claimed_at = datetime('now') WHERE id = ? AND status IN ('pending', 'deferred')")
     .bind(auth.id, id)
     .run();
@@ -1167,7 +1167,7 @@ app.post("/submissions/:id/approve", async (c) => {
   const reviewerId = auth === "token" ? null : auth.id;
 
   const id = c.req.param("id");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const row = await db.prepare("SELECT * FROM submissions WHERE id = ? AND status IN ('pending', 'deferred')").bind(id).first();
   if (!row) return c.json({ error: "Submission not found or already resolved" }, 404);
@@ -1322,14 +1322,14 @@ app.post("/submissions/:id/reject", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json<{ note?: string }>();
 
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT id FROM submissions WHERE id = ? AND status IN ('pending', 'deferred')")
     .bind(id)
     .first();
 
   if (!row) return c.json({ error: "Submission not found or already resolved" }, 404);
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare(
       "UPDATE submissions SET status = 'rejected', reviewer_id = ?, reviewer_note = ?, reviewed_at = datetime('now'), claimed_by = NULL, claimed_at = NULL WHERE id = ?",
     )
@@ -1338,7 +1338,7 @@ app.post("/submissions/:id/reject", async (c) => {
 
   if (reviewerId) {
     try {
-      await c.env.cadesign_db
+      await c.env.maestro_db
         .prepare("INSERT INTO mod_actions (moderator_id, action, submission_id, note) VALUES (?, 'reject', ?, ?)")
         .bind(reviewerId, id, body.note ?? null)
         .run();
@@ -1359,14 +1359,14 @@ app.post("/submissions/:id/defer", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json<{ note?: string }>();
 
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT id FROM submissions WHERE id = ? AND status IN ('pending', 'deferred')")
     .bind(id)
     .first();
 
   if (!row) return c.json({ error: "Submission not found or already resolved" }, 404);
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare(
       "UPDATE submissions SET status = 'deferred', reviewer_id = ?, reviewer_note = ?, reviewed_at = datetime('now'), claimed_by = NULL, claimed_at = NULL WHERE id = ?",
     )
@@ -1375,7 +1375,7 @@ app.post("/submissions/:id/defer", async (c) => {
 
   if (reviewerId) {
     try {
-      await c.env.cadesign_db
+      await c.env.maestro_db
         .prepare("INSERT INTO mod_actions (moderator_id, action, submission_id, note) VALUES (?, 'defer', ?, ?)")
         .bind(reviewerId, id, body.note ?? null)
         .run();
@@ -1393,7 +1393,7 @@ app.get("/users", async (c) => {
   const admin = requireAdmin(c);
   if (!admin) return c.json({ error: "Admin access required" }, 403);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT id, email, name, role, banned, created_at, last_login_at FROM users ORDER BY created_at DESC")
     .all();
 
@@ -1411,7 +1411,7 @@ app.put("/users/:id/role", async (c) => {
     return c.json({ error: "role must be 'contributor', 'moderator', or 'admin'" }, 400);
   }
 
-  await c.env.cadesign_db.prepare("UPDATE users SET role = ? WHERE id = ?").bind(body.role, id).run();
+  await c.env.maestro_db.prepare("UPDATE users SET role = ? WHERE id = ?").bind(body.role, id).run();
   return c.json({ ok: true });
 });
 
@@ -1422,7 +1422,7 @@ app.put("/users/:id/ban", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json<{ banned?: boolean }>();
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare("UPDATE users SET banned = ? WHERE id = ?")
     .bind(body.banned ? 1 : 0, id)
     .run();
@@ -1462,7 +1462,7 @@ app.get("/admin/mod-activity", async (c) => {
   query += " ORDER BY m.created_at DESC LIMIT ? OFFSET ?";
   binds.push(limit, offset);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(query)
     .bind(...binds)
     .all();
@@ -1475,7 +1475,7 @@ app.get("/admin/moderators", async (c) => {
   if (!mod) return c.json({ error: "Moderator access required" }, 403);
 
   // Email intentionally omitted — mods see peers by display name only.
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT id, name, role FROM users WHERE role IN ('moderator', 'admin') ORDER BY name")
     .all();
 
@@ -1485,7 +1485,7 @@ app.get("/admin/moderators", async (c) => {
 // ==================== CONTRIBUTORS (public) ====================
 
 app.get("/contributors", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(
       `SELECT u.id, u.name, u.email,
               COUNT(*) as approved_count,
@@ -1526,7 +1526,7 @@ app.get("/contributors", async (c) => {
 
 app.get("/contributors/:id/templates", async (c) => {
   const userId = c.req.param("id");
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(
       `SELECT t.id, t.label, t.device_type, t.category,
               MAX(CASE WHEN t.submitted_by = ? THEN 1 ELSE 0 END) as is_creator,
@@ -1555,28 +1555,28 @@ app.get("/contributors/:id/templates", async (c) => {
 // ==================== TEMPLATE ENDPOINTS ====================
 
 app.get("/templates/categories", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT DISTINCT category FROM templates WHERE flagged_for_deletion = 0 ORDER BY category")
     .all();
   return c.json(results.map((r) => (r as { category: string }).category), 200, CACHE_HEADERS);
 });
 
 app.get("/templates/device-types", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT DISTINCT device_type FROM templates WHERE flagged_for_deletion = 0 ORDER BY device_type")
     .all();
   return c.json(results.map((r) => (r as { device_type: string }).device_type), 200, CACHE_HEADERS);
 });
 
 app.get("/templates/manufacturers", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT DISTINCT manufacturer FROM templates WHERE manufacturer IS NOT NULL AND flagged_for_deletion = 0 ORDER BY manufacturer")
     .all();
   return c.json(results.map((r) => (r as { manufacturer: string }).manufacturer), 200, CACHE_HEADERS);
 });
 
 app.get("/templates/search-terms", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT search_terms FROM templates WHERE search_terms IS NOT NULL AND flagged_for_deletion = 0")
     .all();
   const allTerms = new Set<string>();
@@ -1595,7 +1595,7 @@ app.get("/templates/search-terms", async (c) => {
 });
 
 app.get("/templates/summary", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT id, label, short_name, device_type, category, manufacturer, model_number, color, search_terms, ports, slots FROM templates WHERE flagged_for_deletion = 0 ORDER BY sort_order, label")
     .all();
 
@@ -1604,7 +1604,7 @@ app.get("/templates/summary", async (c) => {
 });
 
 app.get("/templates", async (c) => {
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT * FROM templates WHERE flagged_for_deletion = 0 ORDER BY sort_order, label")
     .all();
 
@@ -1614,7 +1614,7 @@ app.get("/templates", async (c) => {
 
 app.get("/templates/:id", async (c) => {
   const id = c.req.param("id");
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare(
       `SELECT t.*,
               su.name as submitter_name, su.email as submitter_email,
@@ -1679,7 +1679,7 @@ app.post("/templates", async (c) => {
   const id = crypto.randomUUID();
   const row = templateToRow({ ...result.data, id });
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare(
       `INSERT INTO templates (id, version, device_type, category, label, short_name, manufacturer, model_number, color, image_url, reference_url, search_terms, ports, slots, slot_family, power_draw_w, power_capacity_w, voltage, thermal_btuh, poe_budget_w, poe_draw_w, is_venue_provided, height_mm, width_mm, depth_mm, weight_kg, auxiliary_data, sort_order)
      VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1715,7 +1715,7 @@ app.post("/templates", async (c) => {
     )
     .run();
 
-  const created = await c.env.cadesign_db
+  const created = await c.env.maestro_db
     .prepare("SELECT * FROM templates WHERE id = ?")
     .bind(id)
     .first();
@@ -1726,7 +1726,7 @@ app.post("/templates", async (c) => {
 app.put("/templates/:id", async (c) => {
   const id = c.req.param("id");
 
-  const existing = await c.env.cadesign_db
+  const existing = await c.env.maestro_db
     .prepare("SELECT * FROM templates WHERE id = ?")
     .bind(id)
     .first();
@@ -1750,7 +1750,7 @@ app.put("/templates/:id", async (c) => {
   const beforeData = JSON.stringify(rowToTemplate(existing as never));
   const row = templateToRow({ ...result.data, id });
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare(
       `UPDATE templates
      SET device_type = ?, category = ?, label = ?, short_name = ?, manufacturer = ?, model_number = ?,
@@ -1793,7 +1793,7 @@ app.put("/templates/:id", async (c) => {
     )
     .run();
 
-  const updated = await c.env.cadesign_db
+  const updated = await c.env.maestro_db
     .prepare("SELECT * FROM templates WHERE id = ?")
     .bind(id)
     .first();
@@ -1802,7 +1802,7 @@ app.put("/templates/:id", async (c) => {
   if (editorId) {
     try {
       const afterData = JSON.stringify(rowToTemplate(updated as never));
-      await c.env.cadesign_db
+      await c.env.maestro_db
         .prepare(
           "INSERT INTO mod_actions (moderator_id, action, template_id, before_data, after_data) VALUES (?, 'edit', ?, ?, ?)",
         )
@@ -1831,7 +1831,7 @@ app.post("/templates/:id/send-back", async (c) => {
     return c.json({ error: "reason is required" }, 400);
   }
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const existing = await db.prepare("SELECT * FROM templates WHERE id = ?").bind(id).first();
   if (!existing) return c.json({ error: "Template not found" }, 404);
 
@@ -1885,7 +1885,7 @@ app.post("/templates/:id/flag-delete", async (c) => {
   const reason = (body.reason ?? "").trim();
   if (!reason) return c.json({ error: "reason is required" }, 400);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const existing = await db.prepare("SELECT * FROM templates WHERE id = ?").bind(id).first();
   if (!existing) return c.json({ error: "Template not found" }, 404);
 
@@ -1906,7 +1906,7 @@ app.post("/templates/:id/flag-delete", async (c) => {
   }
 
   try {
-    await c.env.cadesign_db
+    await c.env.maestro_db
       .prepare(
         "INSERT INTO mod_actions (moderator_id, action, template_id, before_data, note) VALUES (?, 'flag-delete', ?, ?, ?)",
       )
@@ -1925,7 +1925,7 @@ app.post("/templates/:id/unflag-delete", async (c) => {
   if (!admin) return c.json({ error: "Admin access required" }, 403);
 
   const id = c.req.param("id");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const existing = await db.prepare("SELECT * FROM templates WHERE id = ?").bind(id).first();
   if (!existing) return c.json({ error: "Template not found" }, 404);
 
@@ -1965,7 +1965,7 @@ app.get("/admin/pending-deletions", async (c) => {
   const admin = requireAdmin(c);
   if (!admin) return c.json({ error: "Admin access required" }, 403);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(
       `SELECT t.id, t.label, t.device_type, t.category, t.manufacturer, t.model_number,
               t.flagged_for_deletion_reason, t.flagged_for_deletion_at, t.flagged_for_deletion_by,
@@ -2004,7 +2004,7 @@ app.get("/templates/:id/notes", async (c) => {
   if (!mod) return c.json({ error: "Moderator access required" }, 403);
 
   const id = c.req.param("id");
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare(
       `SELECT n.id, n.body, n.author_id, n.created_at, n.updated_at, u.name AS author_name
        FROM template_notes n
@@ -2036,7 +2036,7 @@ app.post("/templates/:id/notes", async (c) => {
   const text = (body.body ?? "").trim();
   if (!text) return c.json({ error: "body is required" }, 400);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const template = await db.prepare("SELECT id FROM templates WHERE id = ?").bind(id).first();
   if (!template) return c.json({ error: "Template not found" }, 404);
 
@@ -2092,7 +2092,7 @@ app.patch("/templates/:id/notes/:noteId", async (c) => {
   const text = (body.body ?? "").trim();
   if (!text) return c.json({ error: "body is required" }, 400);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const existing = await db
     .prepare("SELECT id FROM template_notes WHERE id = ? AND template_id = ?")
     .bind(noteId, id)
@@ -2126,7 +2126,7 @@ app.delete("/templates/:id/notes/:noteId", async (c) => {
 
   const id = c.req.param("id");
   const noteId = c.req.param("noteId");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const existing = await db
     .prepare("SELECT body FROM template_notes WHERE id = ? AND template_id = ?")
@@ -2156,7 +2156,7 @@ app.get("/templates/:id/admin", async (c) => {
   if (!mod) return c.json({ error: "Moderator access required" }, 403);
 
   const id = c.req.param("id");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const row = await db
     .prepare(
@@ -2257,7 +2257,7 @@ app.delete("/templates/:id", async (c) => {
   }
   const id = c.req.param("id");
 
-  const existing = await c.env.cadesign_db
+  const existing = await c.env.maestro_db
     .prepare("SELECT * FROM templates WHERE id = ?")
     .bind(id)
     .first();
@@ -2282,7 +2282,7 @@ app.delete("/templates/:id", async (c) => {
   // from migration 0027 then nulls the FK as part of the subsequent delete.
   if (adminUser) {
     try {
-      await c.env.cadesign_db
+      await c.env.maestro_db
         .prepare(
           "INSERT INTO mod_actions (moderator_id, action, template_id, before_data, note) VALUES (?, 'confirm-delete', ?, ?, ?)",
         )
@@ -2298,7 +2298,7 @@ app.delete("/templates/:id", async (c) => {
     }
   }
 
-  await c.env.cadesign_db.prepare("DELETE FROM templates WHERE id = ?").bind(id).run();
+  await c.env.maestro_db.prepare("DELETE FROM templates WHERE id = ?").bind(id).run();
 
   return c.body(null, 204);
 });
@@ -2323,7 +2323,7 @@ app.get("/support-emails", async (c) => {
   query += " ORDER BY received_at DESC LIMIT ?";
   binds.push(String(limit));
 
-  const stmt = c.env.cadesign_db.prepare(query);
+  const stmt = c.env.maestro_db.prepare(query);
   const { results } = await stmt.bind(...binds).all();
 
   return c.json(results, 200, NO_CACHE_HEADERS);
@@ -2334,7 +2334,7 @@ app.get("/support-emails/:id", async (c) => {
   if (!auth) return c.json({ error: "Admin access required" }, 403);
 
   const id = c.req.param("id");
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT * FROM support_emails WHERE id = ?")
     .bind(id)
     .first();
@@ -2354,14 +2354,14 @@ app.put("/support-emails/:id/status", async (c) => {
     return c.json({ error: "status must be 'read', 'resolved', or 'spam'" }, 400);
   }
 
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT id FROM support_emails WHERE id = ?")
     .bind(id)
     .first();
 
   if (!row) return c.json({ error: "Email not found" }, 404);
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare("UPDATE support_emails SET status = ? WHERE id = ?")
     .bind(body.status, id)
     .run();
@@ -2374,7 +2374,7 @@ app.post("/support-emails/:id/reply", async (c) => {
   if (!auth) return c.json({ error: "Admin access required" }, 403);
 
   const replyKey = auth === "token" ? "support-reply:token" : `support-reply:${auth.id}`;
-  const limit = await checkRateLimit(c.env.cadesign_db, replyKey, 30);
+  const limit = await checkRateLimit(c.env.maestro_db, replyKey, 30);
   if (!limit.allowed) return c.json({ error: "Too many replies. Try again later." }, 429);
 
   const id = c.req.param("id");
@@ -2384,7 +2384,7 @@ app.post("/support-emails/:id/reply", async (c) => {
     return c.json({ error: "Reply text is required" }, 400);
   }
 
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT * FROM support_emails WHERE id = ?")
     .bind(id)
     .first<{ id: string; from_email: string; from_name: string | null; subject: string | null; message_id: string | null }>();
@@ -2405,11 +2405,11 @@ app.post("/support-emails/:id/reply", async (c) => {
     `<br><br>` +
     `<table cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;font-size:13px;color:#334155">` +
     `<tr><td style="padding-right:12px;vertical-align:middle">` +
-    `<img src="https://cadesign.clearalan.ca/email-logo.png" width="48" height="48" alt="caDesign" style="border-radius:8px">` +
+    `<img src="https://maestroconnect.clearalan.ca/email-logo.png" width="48" height="48" alt="Maestro Connect" style="border-radius:8px">` +
     `</td><td style="vertical-align:middle">` +
-    `<strong style="font-size:14px;color:#0f172a">caDesign</strong><br>` +
+    `<strong style="font-size:14px;color:#0f172a">Maestro Connect</strong><br>` +
     `<span style="color:#64748b">AV System Design Tool</span><br>` +
-    `<a href="https://cadesign.clearalan.ca" style="color:#0ea5e9;text-decoration:none">cadesign.clearalan.ca</a>` +
+    `<a href="https://maestroconnect.clearalan.ca" style="color:#0ea5e9;text-decoration:none">maestroconnect.clearalan.ca</a>` +
     `</td></tr></table>`;
 
   const emailRes = await fetch("https://api.resend.com/emails", {
@@ -2419,7 +2419,7 @@ app.post("/support-emails/:id/reply", async (c) => {
       Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "caDesign Support <support@cadesign.clearalan.ca>",
+      from: "Maestro Connect Support <support@maestroconnect.clearalan.ca>",
       to: row.from_email,
       bcc: c.env.SUPPORT_FORWARD_EMAIL,
       subject: replySubject,
@@ -2435,7 +2435,7 @@ app.post("/support-emails/:id/reply", async (c) => {
     return c.json({ error: "Failed to send reply" }, 500);
   }
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare("UPDATE support_emails SET status = 'replied', reply_text = ?, replied_at = datetime('now') WHERE id = ?")
     .bind(body.text, id)
     .run();
@@ -2502,7 +2502,7 @@ app.post("/schematics", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
   if (!limit.allowed) {
@@ -2563,7 +2563,7 @@ app.get("/schematics", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const { results } = await c.env.cadesign_db
+  const { results } = await c.env.maestro_db
     .prepare("SELECT id, name, size_bytes, shared, share_token, is_template, created_at, updated_at FROM schematics WHERE user_id = ? ORDER BY updated_at DESC")
     .bind(user.id)
     .all();
@@ -2575,7 +2575,7 @@ app.get("/schematics/template", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT id FROM schematics WHERE user_id = ? AND is_template = 1")
     .bind(user.id)
     .first<{ id: string }>();
@@ -2592,7 +2592,7 @@ app.get("/schematics/:id", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
   const id = c.req.param("id");
-  const row = await c.env.cadesign_db
+  const row = await c.env.maestro_db
     .prepare("SELECT id FROM schematics WHERE id = ? AND user_id = ?")
     .bind(id, user.id)
     .first();
@@ -2609,7 +2609,7 @@ app.put("/schematics/:id", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const id = c.req.param("id");
 
   const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
@@ -2666,7 +2666,7 @@ app.delete("/schematics/template", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  await c.env.cadesign_db
+  await c.env.maestro_db
     .prepare("UPDATE schematics SET is_template = 0 WHERE user_id = ? AND is_template = 1")
     .bind(user.id)
     .run();
@@ -2678,7 +2678,7 @@ app.delete("/schematics/:id", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const id = c.req.param("id");
 
   const existing = await db
@@ -2697,7 +2697,7 @@ app.post("/schematics/:id/share", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const limit = await checkRateLimit(db, `share:user:${user.id}`, 30);
   if (!limit.allowed) return c.json({ error: "Too many share requests. Try again later." }, 429);
@@ -2736,7 +2736,7 @@ app.post("/schematics/:id/share", async (c) => {
 
 app.get("/shared/:token", async (c) => {
   const token = c.req.param("token");
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const ip = getClientIP(c);
   const limit = await checkRateLimit(db, `shared:ip:${ip}`, 60);
@@ -2760,7 +2760,7 @@ app.put("/schematics/:id/rename", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
 
   const limit = await checkRateLimit(db, `save:user:${user.id}`, 30);
   if (!limit.allowed) return c.json({ error: "Too many requests. Try again later." }, 429);
@@ -2797,7 +2797,7 @@ app.put("/schematics/:id/set-template", async (c) => {
   const user = requireSession(c);
   if (!user) return c.json({ error: "Not authenticated" }, 401);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const id = c.req.param("id");
 
   const existing = await db
@@ -2853,10 +2853,10 @@ app.get("/org-templates", async (c) => {
   const serverTime = new Date().toISOString();
 
   const stmt = since
-    ? c.env.cadesign_db
+    ? c.env.maestro_db
         .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates WHERE updated_at > ? ORDER BY updated_at")
         .bind(since)
-    : c.env.cadesign_db
+    : c.env.maestro_db
         .prepare("SELECT id, data, deleted, updated_at, updated_by FROM org_templates ORDER BY updated_at");
 
   const { results } = await stmt.all<OrgTemplateRow>();
@@ -2868,7 +2868,7 @@ app.put("/org-templates/:id", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const id = c.req.param("id");
 
   const limit = await checkRateLimit(db, `org-tpl:user:${user.id}`, 120);
@@ -2920,7 +2920,7 @@ app.delete("/org-templates/:id", async (c) => {
   if (!user) return c.json({ error: "Not authenticated" }, 401);
   if (user.banned) return c.json({ error: "Account suspended" }, 403);
 
-  const db = c.env.cadesign_db;
+  const db = c.env.maestro_db;
   const id = c.req.param("id");
 
   const limit = await checkRateLimit(db, `org-tpl:user:${user.id}`, 120);
@@ -2962,11 +2962,11 @@ app.delete("/org-templates/:id", async (c) => {
 
 app.get("/health", async (c) => {
   // Opportunistically clean up expired rate limits, drafts, sessions, and magic links
-  await cleanupExpiredRateLimits(c.env.cadesign_db).catch(() => {});
-  await c.env.cadesign_db.prepare("DELETE FROM drafts WHERE expires_at < datetime('now')").run().catch(() => {});
-  await c.env.cadesign_db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run().catch(() => {});
-  await c.env.cadesign_db.prepare("DELETE FROM magic_links WHERE expires_at < datetime('now')").run().catch(() => {});
-  await c.env.cadesign_db.prepare("DELETE FROM oauth_states WHERE expires_at < datetime('now')").run().catch(() => {});
+  await cleanupExpiredRateLimits(c.env.maestro_db).catch(() => {});
+  await c.env.maestro_db.prepare("DELETE FROM drafts WHERE expires_at < datetime('now')").run().catch(() => {});
+  await c.env.maestro_db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run().catch(() => {});
+  await c.env.maestro_db.prepare("DELETE FROM magic_links WHERE expires_at < datetime('now')").run().catch(() => {});
+  await c.env.maestro_db.prepare("DELETE FROM oauth_states WHERE expires_at < datetime('now')").run().catch(() => {});
   return c.json({ ok: true });
 });
 

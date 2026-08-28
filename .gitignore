@@ -45,7 +45,7 @@ edge-debug.log
 src/__tests__/fixtures/routing/reports/
 
 # Real user/client schematic exports are local-only (contain client names, IPs,
-# device labels, topology) — caDesign is a public repo. Synthetic fixtures live
+# device labels, topology) — Maestro Connect is a public repo. Synthetic fixtures live
 # in code; the default schematic ships with the app. Whitelist only public baselines.
 src/__tests__/fixtures/routing/*.json
 src/__tests__/fixtures/routing/baselines/*

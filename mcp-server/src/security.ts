@@ -14,7 +14,7 @@ export function tokensMatch(provided: string, expected: string): boolean {
  * Origin allowlist — defense-in-depth on top of the token. Browsers always send
  * an Origin header on a WebSocket handshake, so a missing Origin is rejected.
  * localhost / 127.0.0.1 (any port) are allowed by default for the dev & preview
- * servers; self-hosters on another domain add it via CADESIGN_MCP_ORIGINS.
+ * servers; self-hosters on another domain add it via MAESTRO_MCP_ORIGINS.
  */
 export function isOriginAllowed(origin: string | undefined, allowed: string[]): boolean {
   if (!origin) return false;

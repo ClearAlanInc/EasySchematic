@@ -78,7 +78,7 @@ export class AppBridge {
         // Single active binding: supersede any previously bound tab.
         if (this.active && this.active !== ws) {
           try {
-            this.active.send(JSON.stringify({ type: "superseded", reason: "Another caDesign tab took the AI connection." }));
+            this.active.send(JSON.stringify({ type: "superseded", reason: "Another Maestro Connect tab took the AI connection." }));
             this.active.close();
           } catch {
             /* ignore */
@@ -87,7 +87,7 @@ export class AppBridge {
         }
         this.active = ws;
         ws.send(JSON.stringify({ type: "hello_ack", ok: true }));
-        this.opts.log(`caDesign connected (schematic: ${String(msg.schematicName ?? "untitled")}).`);
+        this.opts.log(`Maestro Connect connected (schematic: ${String(msg.schematicName ?? "untitled")}).`);
         return;
       }
 
@@ -125,8 +125,8 @@ export class AppBridge {
     ws.on("close", () => {
       if (this.active === ws) {
         this.active = null;
-        this.rejectAllPending(new Error("caDesign disconnected."));
-        this.opts.log("caDesign disconnected.");
+        this.rejectAllPending(new Error("Maestro Connect disconnected."));
+        this.opts.log("Maestro Connect disconnected.");
       }
     });
     ws.on("error", () => {
@@ -146,7 +146,7 @@ export class AppBridge {
   call(command: string, params: Record<string, unknown>): Promise<unknown> {
     if (!this.connected || !this.active) {
       return Promise.reject(
-        new Error("No caDesign app is connected. Open the editor and turn on AI Assistant (MCP) in Preferences."),
+        new Error("No Maestro Connect app is connected. Open the editor and turn on AI Assistant (MCP) in Preferences."),
       );
     }
     const requestId = `req-${++this.seq}`;
@@ -155,7 +155,7 @@ export class AppBridge {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
-        reject(new Error(`Timed out waiting for caDesign to handle "${command}".`));
+        reject(new Error(`Timed out waiting for Maestro Connect to handle "${command}".`));
       }, timeoutMs);
       this.pending.set(requestId, { resolve, reject, timer });
       socket.send(JSON.stringify({ type: "command", requestId, command, params }));

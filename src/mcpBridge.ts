@@ -1,5 +1,5 @@
 /**
- * In-app side of the caDesign MCP bridge (Beta).
+ * In-app side of the Maestro Connect MCP bridge (Beta).
  *
  * A small WebSocket *client* that connects to the standalone MCP server
  * (`mcp-server/`) running on localhost. It receives tool commands from Claude

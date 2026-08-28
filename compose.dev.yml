@@ -1,14 +1,14 @@
 services:
-  cadesign:
+  maestro:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
     ports:
       - "5173:5173"
     volumes:
-      - cadesign-dev:/app
+      - maestro-dev:/app
     environment:
-      REPO_URL: https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
+      REPO_URL: https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect
       BRANCH: master
     env_file:
       - path: .env
@@ -16,4 +16,4 @@ services:
     restart: "no"
 
 volumes:
-  cadesign-dev:
+  maestro-dev:

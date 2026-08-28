@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cadesign.clearalan.ca/sitemap.xml
+Sitemap: https://maestroconnect.clearalan.ca/sitemap.xml

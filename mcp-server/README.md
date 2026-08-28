@@ -1,7 +1,7 @@
-# caDesign MCP server (Beta)
+# Maestro Connect MCP server (Beta)
 
 A small local program that lets an AI assistant (Claude) **read and edit a schematic
-live** in your running caDesign editor. It speaks [MCP](https://modelcontextprotocol.io)
+live** in your running Maestro Connect editor. It speaks [MCP](https://modelcontextprotocol.io)
 to the assistant over stdio, and connects to the editor over a localhost WebSocket.
 
 > Beta — supported actions: read the schematic, search the device library, add and
@@ -14,7 +14,7 @@ to the assistant over stdio, and connects to the editor over a localhost WebSock
 ## How it fits together
 
 ```
-Claude (MCP client)  ──stdio──▶  cadesign-mcp  ──ws://127.0.0.1──▶  caDesign tab
+Claude (MCP client)  ──stdio──▶  maestro-mcp  ──ws://127.0.0.1──▶  Maestro Connect tab
 ```
 
 The server never listens on the public network — the WebSocket binds to
@@ -45,7 +45,7 @@ Start the server with the directory that holds your project repositories —
 **File → Save to Git** in the editor:
 
 ```bash
-CADESIGN_GIT_ROOT=~/repos node mcp-server/dist/index.js
+MAESTRO_GIT_ROOT=~/repos node mcp-server/dist/index.js
 ```
 
 - *Open from Git* lists schematic `.json` files found inside git repositories
@@ -53,14 +53,14 @@ CADESIGN_GIT_ROOT=~/repos node mcp-server/dist/index.js
 - *Save to Git* writes the export back to the bound file and commits it in
   **that file's repository** as `"<name> v<major>.<minor>"`. A document that
   wasn't opened from git saves into the root on first use and binds from then
-  on (`CADESIGN_GIT_SUBDIR` picks a subdirectory for those).
+  on (`MAESTRO_GIT_SUBDIR` picks a subdirectory for those).
 
 Different users clone repos wherever they like — each runs the server with
 their own root, and file references stay root-relative. The app never sees or
 supplies an absolute path; every reference is sanitized and pinned inside the
 root, and only files inside git working trees are listed. This gives Safari
 and other browsers without direct file-write support a first-class
-save-plus-version-control flow. (`CADESIGN_GIT_REPO` still works as an
+save-plus-version-control flow. (`MAESTRO_GIT_REPO` still works as an
 alias for the root.)
 
 On startup it prints (to stderr) a **pairing token** and the port it is listening
@@ -68,13 +68,13 @@ on. Configure with environment variables if needed:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `CADESIGN_MCP_PORT` | `8765` | WebSocket port (must match the app's setting). |
-| `CADESIGN_MCP_TOKEN` | random | Fixed pairing token (otherwise a new one each run). |
-| `CADESIGN_MCP_ORIGINS` | — | Comma-separated extra allowed Origins for self-hosted editors on a non-localhost domain. |
+| `MAESTRO_MCP_PORT` | `8765` | WebSocket port (must match the app's setting). |
+| `MAESTRO_MCP_TOKEN` | random | Fixed pairing token (otherwise a new one each run). |
+| `MAESTRO_MCP_ORIGINS` | — | Comma-separated extra allowed Origins for self-hosted editors on a non-localhost domain. |
 
 ## Connect the editor
 
-1. Open caDesign and go to **Preferences → AI (Beta)**.
+1. Open Maestro Connect and go to **Preferences → AI (Beta)**.
 2. Paste the **pairing token** the server printed.
 3. Make sure the **port** matches (default 8765).
 4. Turn on **“Let Claude read & edit this schematic.”** The status should read *Connected*.
@@ -87,7 +87,7 @@ connection; an earlier tab shows *Not connected*.
 Add the server to your MCP config so Claude can attach to it, e.g.:
 
 ```bash
-claude mcp add cadesign -- node /absolute/path/to/caDesign/mcp-server/dist/index.js
+claude mcp add maestro -- node /absolute/path/to/Maestro Connect/mcp-server/dist/index.js
 ```
 
 Then ask Claude things like *“search for a 4K display, add it, and connect the

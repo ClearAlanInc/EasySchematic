@@ -2,19 +2,19 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in caDesign, please report it responsibly:
+If you discover a security vulnerability in Maestro Connect, please report it responsibly:
 
-1. **GitHub Security Advisories**: [Report a vulnerability](https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign/security/advisories/new)
+1. **GitHub Security Advisories**: [Report a vulnerability](https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect/security/advisories/new)
 
 Please do **not** open a public issue for security vulnerabilities.
 
 ## Scope
 
-caDesign runs entirely in the browser. The attack surface includes:
+Maestro Connect runs entirely in the browser. The attack surface includes:
 
-- The client-side application at [cadesign.clearalan.ca](https://cadesign.clearalan.ca)
-- The public REST API at `api.cadesign.clearalan.ca`
-- The community device database at `devices.cadesign.clearalan.ca`
+- The client-side application at [maestroconnect.clearalan.ca](https://maestroconnect.clearalan.ca)
+- The public REST API at `api.maestroconnect.clearalan.ca`
+- The community device database at `devices.maestroconnect.clearalan.ca`
 
 ## Response
 

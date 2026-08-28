@@ -54,7 +54,7 @@ export default function RacksPage() {
         where the device will land — green for valid, red for blocked.
       </p>
       <p>
-        caDesign uses each device&apos;s physical dimensions (<strong>widthMm</strong>,{" "}
+        Maestro Connect uses each device&apos;s physical dimensions (<strong>widthMm</strong>,{" "}
         <strong>heightMm</strong>, <strong>depthMm</strong>, set in the device editor or on the
         community template) to decide how it fits:
       </p>
@@ -199,7 +199,7 @@ export default function RacksPage() {
         Connector icons are drawn at real-world millimeter dimensions from manufacturer specs. The
         rack view picks an appropriate level of detail based on zoom: dots far out, silhouettes at
         mid-zoom, and detailed icons (with pin patterns, slot orientations, etc.) when zoomed in
-        close. caDesign ships with 59 connector types covering virtually every connector
+        close. Maestro Connect ships with 59 connector types covering virtually every connector
         you&apos;d find on AV gear.
       </p>
 
@@ -207,7 +207,7 @@ export default function RacksPage() {
       <p>
         If you&apos;ve been hitting the &quot;but this device isn&apos;t rack-mountable&quot; wall —
         DI boxes, half-width DSPs, line drivers, lavalier receivers, anything desktop-sized — drop
-        it on an empty slot anyway. caDesign creates a 1U shelf and centers the device on it
+        it on an empty slot anyway. Maestro Connect creates a 1U shelf and centers the device on it
         at its real width. No more 90 mm boxes painted as full 19&quot; panels.
       </p>
 

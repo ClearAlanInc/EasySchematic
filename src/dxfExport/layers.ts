@@ -36,16 +36,16 @@ export function rgbToAci(r: number, g: number, b: number): number {
 
 export const CANONICAL_LAYERS = {
   DEFAULT: "0",
-  ROOMS: "caDesign-Rooms",
-  ROOMS_FILL: "caDesign-Rooms-Fill",
-  DEVICES: "caDesign-Devices",
-  DEVICES_HEADER: "caDesign-Devices-Header",
-  LABELS: "caDesign-Labels",
-  PORTS: "caDesign-Ports",
-  ANNOTATIONS: "caDesign-Annotations",
-  ANNOTATIONS_FILL: "caDesign-Annotations-Fill",
-  TITLE_BLOCK: "caDesign-TitleBlock",
-  LEGEND: "caDesign-Legend",
+  ROOMS: "Maestro-Rooms",
+  ROOMS_FILL: "Maestro-Rooms-Fill",
+  DEVICES: "Maestro-Devices",
+  DEVICES_HEADER: "Maestro-Devices-Header",
+  LABELS: "Maestro-Labels",
+  PORTS: "Maestro-Ports",
+  ANNOTATIONS: "Maestro-Annotations",
+  ANNOTATIONS_FILL: "Maestro-Annotations-Fill",
+  TITLE_BLOCK: "Maestro-TitleBlock",
+  LEGEND: "Maestro-Legend",
 } as const;
 
 export type LineStyleName = "CONTINUOUS" | "ES_DASHED" | "ES_DOTTED" | "ES_DASHDOT" | "ES_MISMATCH";
@@ -71,7 +71,7 @@ export const LTYPE_DEFS: LtypeDef[] = [
 /** Layer name for a specific signal-type connection. */
 export function signalLayerName(sig: SignalType): string {
   const sanitized = sanitizeName(sig);
-  return `caDesign-Connections-${sanitized}`;
+  return `Maestro-Connections-${sanitized}`;
 }
 
 /**

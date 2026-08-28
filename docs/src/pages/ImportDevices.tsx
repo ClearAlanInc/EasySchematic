@@ -24,7 +24,7 @@ export default function ImportDevicesPage() {
       <h1>Import Devices</h1>
 
       <p>
-        caDesign can bulk-import device templates from JSON or CSV. Use this when you have
+        Maestro Connect can bulk-import device templates from JSON or CSV. Use this when you have
         more than two or three devices to add — a manufacturer catalog, a vendor's price list,
         a spreadsheet of every piece of gear in your venue, or anything else that would be tedious
         to enter one device at a time through the device editor.
@@ -159,7 +159,7 @@ export default function ImportDevicesPage() {
         <li>You can submit a <strong>single object</strong> or an <strong>array of objects</strong>. Both work.</li>
         <li>
           Unknown fields are <strong>silently ignored</strong>. Safe to include extra metadata your tools
-          track that caDesign doesn't know about.
+          track that Maestro Connect doesn't know about.
         </li>
         <li><code>id</code> fields (template and port) are <strong>auto-generated</strong> if omitted.</li>
         <li>
@@ -225,7 +225,7 @@ export default function ImportDevicesPage() {
         They are <strong>not</strong> automatically shared with anyone — not other users, not other
         devices you log in from. To back them up or move them, use{" "}
         <a href="/import-export">File → Export Templates</a>. To make a template available to all
-        caDesign users, submit it to the community library (next section).
+        Maestro Connect users, submit it to the community library (next section).
       </p>
 
       <h2>Submitting to the community library</h2>
@@ -233,7 +233,7 @@ export default function ImportDevicesPage() {
       <p>
         From the import dialog, the <strong>Add &amp; Submit</strong> button does two things in one click:
         adds selected templates to your library <em>and</em> queues them for review in the community
-        library. Approved templates become available to every caDesign user.
+        library. Approved templates become available to every Maestro Connect user.
       </p>
 
       <p>Things to know:</p>

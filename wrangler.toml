@@ -1,17 +1,17 @@
-# caDesign — deployed as a static assets Worker on Cloudflare
-name = "cadesign"
+# Maestro Connect — deployed as a static assets Worker on Cloudflare
+name = "maestro"
 compatibility_date = "2025-04-01"
 
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
 
-# Beta channel — same bundle, served from beta.cadesign.clearalan.ca.
+# Beta channel — same bundle, served from beta.maestroconnect.clearalan.ca.
 # Push to master auto-deploys here; prod is a manual workflow_dispatch promotion.
 [env.beta]
-name = "cadesign-beta"
+name = "maestro-beta"
 routes = [
-  { pattern = "beta.cadesign.clearalan.ca", custom_domain = true },
+  { pattern = "beta.maestroconnect.clearalan.ca", custom_domain = true },
 ]
 
 [env.beta.assets]

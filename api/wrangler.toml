@@ -1,4 +1,4 @@
-name = "cadesign-api"
+name = "maestro-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
@@ -6,11 +6,11 @@ compatibility_date = "2025-04-01"
 # Origins (comma-separated, no trailing slash) allowed to make credentialed
 # requests and be used as login redirect targets, in addition to the official
 # hosts and loopback. Set to wherever the app itself is served from.
-ALLOWED_ORIGINS = "https://cadesign.clearalan.ca,https://www.cadesign.clearalan.ca,https://devices.cadesign.clearalan.ca"
+ALLOWED_ORIGINS = "https://maestroconnect.clearalan.ca,https://www.maestroconnect.clearalan.ca,https://devices.maestroconnect.clearalan.ca"
 
 # Microsoft Entra ID sign-in (the ClearAlan login provider). To enable:
 #   1. Create an app registration in the Entra admin center with redirect URI
-#      https://api.cadesign.clearalan.ca/auth/microsoft/callback (type "Web").
+#      https://api.maestroconnect.clearalan.ca/auth/microsoft/callback (type "Web").
 #   2. Set MS_CLIENT_ID here to the Application (client) ID, and MS_TENANT to
 #      the Directory (tenant) ID so ONLY ClearAlan accounts can sign in
 #      ("common" would allow any Microsoft account).
@@ -25,10 +25,10 @@ port = 8787
 persist_to = ".wrangler/state"
 
 [[d1_databases]]
-binding = "cadesign_db"
-database_name = "cadesign-db"
+binding = "maestro_db"
+database_name = "maestro-db"
 database_id = "26615646-10b7-4af7-86ed-c5f57d1b4243"
 
 [[r2_buckets]]
 binding = "SCHEMATIC_STORAGE"
-bucket_name = "cadesign-schematics"
+bucket_name = "maestro-schematics"

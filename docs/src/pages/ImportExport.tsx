@@ -5,7 +5,7 @@ export default function ImportExportPage() {
 
       <h2>Cloud storage</h2>
       <p>
-        Cloud storage is separate from file export — it saves the full schematic to caDesign's servers so you
+        Cloud storage is separate from file export — it saves the full schematic to Maestro Connect's servers so you
         can access it from any browser.
       </p>
       <ul>
@@ -38,7 +38,7 @@ export default function ImportExportPage() {
 
 <h2>JSON (native format)</h2>
       <p>
-        The JSON format is caDesign's native file format. It contains the complete schematic — all devices,
+        The JSON format is Maestro Connect's native file format. It contains the complete schematic — all devices,
         connections, rooms, and configuration.
       </p>
 
@@ -169,10 +169,10 @@ export default function ImportExportPage() {
           </tr>
         </thead>
         <tbody>
-          <tr><td><code>caDesign-Devices</code></td><td>Device rectangles and labels</td></tr>
-          <tr><td><code>caDesign-Rooms</code></td><td>Room container outlines and labels</td></tr>
-          <tr><td><code>caDesign-Connections-SDI</code></td><td>SDI connections (one layer per signal type)</td></tr>
-          <tr><td><code>caDesign-Connections-HDMI</code></td><td>HDMI connections</td></tr>
+          <tr><td><code>Maestro-Devices</code></td><td>Device rectangles and labels</td></tr>
+          <tr><td><code>Maestro-Rooms</code></td><td>Room container outlines and labels</td></tr>
+          <tr><td><code>Maestro-Connections-SDI</code></td><td>SDI connections (one layer per signal type)</td></tr>
+          <tr><td><code>Maestro-Connections-HDMI</code></td><td>HDMI connections</td></tr>
           <tr><td>...</td><td>One layer per signal type in use</td></tr>
         </tbody>
       </table>

@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Debug info**
-Paste the output from **Help > About caDesign > Copy Debug Info** here:
+Paste the output from **Help > About Maestro Connect > Copy Debug Info** here:
 ```
 
 ```

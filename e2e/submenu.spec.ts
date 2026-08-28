@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 // must stay open while the mouse travels into it. Uses stepped mouse movement
 // (not Playwright's teleport hover) so a hover-gap close would actually fire.
 test("#177 line-style submenu stays open when moused into", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("maestro-skip-landing", "1"));
   await page.goto("/");
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });
   await expect(page.locator(".react-flow__edge").first()).toBeVisible({ timeout: 30_000 });

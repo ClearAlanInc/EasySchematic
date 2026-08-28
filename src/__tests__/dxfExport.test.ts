@@ -101,17 +101,17 @@ describe("layers helpers", () => {
     const layers = buildLayerDefs(sigs as Set<never>, undefined);
     const names = layers.map((l) => l.name);
     expect(names).toContain("0");
-    expect(names).toContain("caDesign-Rooms");
-    expect(names).toContain("caDesign-Rooms-Fill");
-    expect(names).toContain("caDesign-Devices");
-    expect(names).toContain("caDesign-Connections-HDMI");
-    expect(names).toContain("caDesign-Connections-SDI");
+    expect(names).toContain("Maestro-Rooms");
+    expect(names).toContain("Maestro-Rooms-Fill");
+    expect(names).toContain("Maestro-Devices");
+    expect(names).toContain("Maestro-Connections-HDMI");
+    expect(names).toContain("Maestro-Connections-SDI");
   });
 
   it("sanitizes signal layer names — never spaces", () => {
-    expect(signalLayerName("analog-audio")).toBe("caDesign-Connections-ANALOG-AUDIO");
-    expect(signalLayerName("power-l1")).toBe("caDesign-Connections-POWER-L1");
-    expect(signalLayerName("s-video")).toBe("caDesign-Connections-S-VIDEO");
+    expect(signalLayerName("analog-audio")).toBe("Maestro-Connections-ANALOG-AUDIO");
+    expect(signalLayerName("power-l1")).toBe("Maestro-Connections-POWER-L1");
+    expect(signalLayerName("s-video")).toBe("Maestro-Connections-S-VIDEO");
     for (const sig of ["analog-audio", "power-l1", "s-video"] as const) {
       expect(signalLayerName(sig)).not.toContain(" ");
     }

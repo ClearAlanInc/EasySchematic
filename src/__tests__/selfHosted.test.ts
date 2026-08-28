@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 describe("selfHosted flag semantics", () => {
-  it("hosted default: cloud enabled against api.cadesign.clearalan.ca", async () => {
+  it("hosted default: cloud enabled against api.maestroconnect.clearalan.ca", async () => {
     const m = await importSelfHosted({
       VITE_SELF_HOSTED: undefined,
       VITE_TEMPLATE_API_URL: undefined,
@@ -30,9 +30,9 @@ describe("selfHosted flag semantics", () => {
     expect(m.IS_SELF_HOSTED).toBe(false);
     expect(m.CLOUD_ENABLED).toBe(true);
     expect(m.SUBMIT_ENABLED).toBe(true);
-    expect(m.API_URL).toBe("https://api.cadesign.clearalan.ca");
-    expect(m.DEVICES_URL).toBe("https://devices.cadesign.clearalan.ca");
-    expect(m.DOCS_URL).toBe("https://docs.cadesign.clearalan.ca");
+    expect(m.API_URL).toBe("https://api.maestroconnect.clearalan.ca");
+    expect(m.DEVICES_URL).toBe("https://devices.maestroconnect.clearalan.ca");
+    expect(m.DOCS_URL).toBe("https://docs.maestroconnect.clearalan.ca");
   });
 
   it("custom API URL without the flag: unchanged cloud behavior", async () => {
@@ -80,8 +80,8 @@ describe("selfHosted flag semantics", () => {
     });
     expect(m.IS_SELF_HOSTED).toBe(false);
     expect(m.CLOUD_ENABLED).toBe(true);
-    expect(m.API_URL).toBe("https://api.cadesign.clearalan.ca");
-    expect(m.DEVICES_URL).toBe("https://devices.cadesign.clearalan.ca");
+    expect(m.API_URL).toBe("https://api.maestroconnect.clearalan.ca");
+    expect(m.DEVICES_URL).toBe("https://devices.maestroconnect.clearalan.ca");
   });
 
   it("self-hosted app + self-hosted API: cloud enabled against that URL, submit still off without a devices site", async () => {
@@ -175,6 +175,6 @@ describe("templateApi chokepoints in fully-offline mode", () => {
     // checkSession swallows network errors and resolves null — but it must TRY.
     await expect(api.checkSession()).resolves.toBeNull();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(String(fetchSpy.mock.calls[0][0])).toContain("api.cadesign.clearalan.ca");
+    expect(String(fetchSpy.mock.calls[0][0])).toContain("api.maestroconnect.clearalan.ca");
   });
 });

@@ -3,7 +3,7 @@ import { useSchematicStore } from "../store";
 import { DEFAULT_SCROLL_CONFIG, DEFAULT_STUB_LABEL_SHOW_PORT, DEFAULT_STUB_LABEL_PAGE_MODE, PROJECT_STATUS_LABELS } from "../types";
 import type { LabelCaseMode, PanMode, ProjectStatus, ScrollAction, ScrollConfig, StubLabelPageMode } from "../types";
 
-const AUTOROUTE_PREF_KEY = "cadesign-autoroute-pref";
+const AUTOROUTE_PREF_KEY = "maestro-autoroute-pref";
 
 const ACTION_LABELS: Record<ScrollAction, string> = {
   "zoom": "Zoom",
@@ -511,7 +511,7 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                   />
                 </label>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
-                  Connects this tab to the caDesign MCP server running on your computer, so an AI assistant (Claude) can add devices, set properties, and make connections live. Off by default; your drawing is only reachable while this is on.
+                  Connects this tab to the Maestro Connect MCP server running on your computer, so an AI assistant (Claude) can add devices, set properties, and make connections live. Off by default; your drawing is only reachable while this is on.
                 </p>
 
                 <div className="flex items-center justify-between py-1 mt-3">

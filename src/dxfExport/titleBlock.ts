@@ -6,7 +6,7 @@ import { cssFontPxToDxfHeight, rgbToTrueColor } from "./units";
 
 /**
  * Draw the schematic's title block as DXF geometry near the bottom-right
- * of the drawing extents. Users can freeze the caDesign-TitleBlock layer
+ * of the drawing extents. Users can freeze the Maestro-TitleBlock layer
  * in AutoCAD if they want to substitute their own.
  *
  * All input/output coordinates are in inches (DXF units).

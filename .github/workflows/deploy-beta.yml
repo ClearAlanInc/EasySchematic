@@ -1,7 +1,7 @@
 name: Deploy beta
 
 # Every push to master auto-deploys the main app bundle to
-# https://beta.cadesign.clearalan.ca. Backend (API, D1, R2, devices, docs)
+# https://beta.maestroconnect.clearalan.ca. Backend (API, D1, R2, devices, docs)
 # is NOT touched here — that's deploy-prod.yml's job, triggered manually.
 
 on:

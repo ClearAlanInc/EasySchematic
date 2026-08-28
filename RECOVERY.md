@@ -1,6 +1,6 @@
 # D1 Recovery Runbook
 
-Operational guide for recovering the caDesign devices database (`cadesign-db`) from an R2 backup. The DB is on Cloudflare D1 free tier, so **Time Travel is not available** — daily R2 exports are the only recovery path.
+Operational guide for recovering the Maestro Connect devices database (`maestro-db`) from an R2 backup. The DB is on Cloudflare D1 free tier, so **Time Travel is not available** — daily R2 exports are the only recovery path.
 
 ## When to use this
 
@@ -11,8 +11,8 @@ Operational guide for recovering the caDesign devices database (`cadesign-db`) f
 
 ## Backup location
 
-- **Bucket:** `cadesign-backups` (private R2 bucket in same Cloudflare account).
-- **Path:** `db/YYYY/MM/DD/cadesign-YYYYMMDD-HHMMSS.sql`
+- **Bucket:** `maestro-backups` (private R2 bucket in same Cloudflare account).
+- **Path:** `db/YYYY/MM/DD/maestro-YYYYMMDD-HHMMSS.sql`
 - **Cadence:** Daily at 09:00 UTC via `.github/workflows/backup-d1.yml`.
 - **Retention:** 365 days (configured via R2 lifecycle rule).
 
@@ -22,20 +22,20 @@ List recent backups for a given month:
 
 ```bash
 cd api
-npx wrangler r2 object list cadesign-backups --prefix=db/2026/04/ --remote
+npx wrangler r2 object list maestro-backups --prefix=db/2026/04/ --remote
 ```
 
 Pick the most recent backup **before** the bad event. If you're not sure when the bad event happened, query `mod_actions` to see suspicious moderator activity:
 
 ```bash
-npx wrangler d1 execute cadesign-db --remote --command="SELECT id, moderator_id, action, submission_id, datetime(created_at) FROM mod_actions ORDER BY id DESC LIMIT 50;"
+npx wrangler d1 execute maestro-db --remote --command="SELECT id, moderator_id, action, submission_id, datetime(created_at) FROM mod_actions ORDER BY id DESC LIMIT 50;"
 ```
 
 ## Step 2 — Download the backup
 
 ```bash
 cd api
-npx wrangler r2 object get cadesign-backups/db/2026/04/15/cadesign-20260415-090000.sql \
+npx wrangler r2 object get maestro-backups/db/2026/04/15/maestro-20260415-090000.sql \
   --file=../backups/restore.sql --remote
 ```
 
@@ -47,10 +47,10 @@ Apply the restore to your local D1 (NOT production), then sanity-check counts:
 cd api
 # Reset local DB and apply the backup
 rm -rf .wrangler/state/v3/d1
-npx wrangler d1 execute cadesign-db --local --file=../backups/restore.sql
+npx wrangler d1 execute maestro-db --local --file=../backups/restore.sql
 
 # Confirm row counts look sane
-npx wrangler d1 execute cadesign-db --local \
+npx wrangler d1 execute maestro-db --local \
   --command="SELECT 'templates' AS t, COUNT(*) FROM templates UNION ALL SELECT 'submissions', COUNT(*) FROM submissions UNION ALL SELECT 'users', COUNT(*) FROM users UNION ALL SELECT 'mod_actions', COUNT(*) FROM mod_actions;"
 ```
 
@@ -60,7 +60,7 @@ A restore is destructive. Always snapshot the current (broken) prod state first 
 
 ```bash
 cd api
-npx wrangler d1 export cadesign-db --remote \
+npx wrangler d1 export maestro-db --remote \
   --output=../backups/pre-restore-$(date +%Y%m%d-%H%M%S).sql
 ```
 
@@ -73,12 +73,12 @@ D1 doesn't have a single "restore from SQL" command — `wrangler d1 execute --f
 The safest pattern:
 
 1. Note the migration version your backup corresponds to (check the most recent migration file at the time of the backup).
-2. Drop and recreate the database via the Cloudflare dashboard (D1 → cadesign-db → Settings → Delete). This is the nuclear option but cleanest.
+2. Drop and recreate the database via the Cloudflare dashboard (D1 → maestro-db → Settings → Delete). This is the nuclear option but cleanest.
 3. Re-create the database with the same name, get the new database_id, update `api/wrangler.toml`.
 4. Apply the SQL backup:
    ```bash
    cd api
-   npx wrangler d1 execute cadesign-db --remote --file=../backups/restore.sql
+   npx wrangler d1 execute maestro-db --remote --file=../backups/restore.sql
    ```
 5. Re-deploy the API worker with the new database_id (`cd api && npx wrangler deploy`).
 
@@ -88,25 +88,25 @@ The safest pattern:
 
 ```bash
 cd api
-npx wrangler d1 execute cadesign-db --remote \
+npx wrangler d1 execute maestro-db --remote \
   --command="SELECT 'templates' AS t, COUNT(*) FROM templates UNION ALL SELECT 'submissions', COUNT(*) FROM submissions UNION ALL SELECT 'users', COUNT(*) FROM users;"
 ```
 
-Open `devices.cadesign.clearalan.ca` in a browser and confirm devices load correctly. Check a few specific recently-edited templates against your expectations.
+Open `devices.maestroconnect.clearalan.ca` in a browser and confirm devices load correctly. Check a few specific recently-edited templates against your expectations.
 
 ## Step 7 — Investigate root cause via mod_actions
 
 Every approve/reject/defer is logged in the `mod_actions` table with before/after JSON snapshots. To find what a specific moderator did in a time window:
 
 ```bash
-npx wrangler d1 execute cadesign-db --remote \
+npx wrangler d1 execute maestro-db --remote \
   --command="SELECT id, action, submission_id, template_id, datetime(created_at), substr(before_data, 1, 80) FROM mod_actions WHERE moderator_id = '<USER_ID>' AND created_at > datetime('now', '-7 days') ORDER BY id DESC;"
 ```
 
 To revoke moderator access if you've identified a bad actor:
 
 ```bash
-npx wrangler d1 execute cadesign-db --remote \
+npx wrangler d1 execute maestro-db --remote \
   --command="UPDATE users SET role = 'contributor', banned = 1 WHERE id = '<USER_ID>';"
 ```
 
@@ -124,6 +124,6 @@ Or do it locally:
 ```bash
 cd api
 mkdir -p ../backups
-npx wrangler d1 export cadesign-db --remote \
-  --output=../backups/cadesign-$(date +%Y%m%d-%H%M%S).sql
+npx wrangler d1 export maestro-db --remote \
+  --output=../backups/maestro-$(date +%Y%m%d-%H%M%S).sql
 ```

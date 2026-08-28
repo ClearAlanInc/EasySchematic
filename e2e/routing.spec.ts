@@ -14,7 +14,7 @@ test("app boots and routes the canvas without console errors", async ({ page }) 
   page.on("pageerror", (e) => errors.push(String(e)));
 
   // Skip the first-visit landing page so we land directly in the editor.
-  await page.addInitScript(() => localStorage.setItem("cadesign-skip-landing", "1"));
+  await page.addInitScript(() => localStorage.setItem("maestro-skip-landing", "1"));
   await page.goto("/");
 
   await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30_000 });

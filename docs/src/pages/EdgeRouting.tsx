@@ -5,7 +5,7 @@ export default function EdgeRoutingPage() {
 
       <h2>Smart routing</h2>
       <p>
-        caDesign uses an <strong>A* pathfinding algorithm</strong> to route connections around
+        Maestro Connect uses an <strong>A* pathfinding algorithm</strong> to route connections around
         devices. Instead of simple straight lines or basic smooth-step paths, connections find intelligent paths that:
       </p>
       <ul>

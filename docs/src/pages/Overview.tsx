@@ -1,10 +1,10 @@
 export default function OverviewPage() {
   return (
     <>
-      <h1>caDesign</h1>
+      <h1>Maestro Connect</h1>
 
       <p>
-        caDesign is a browser-based tool for designing <strong>AV signal flow diagrams</strong> (hook-up
+        Maestro Connect is a browser-based tool for designing <strong>AV signal flow diagrams</strong> (hook-up
         sheets). It's built for broadcast engineers, live production teams, and AV integrators who need to quickly map
         out how devices connect.
       </p>
@@ -14,7 +14,7 @@ export default function OverviewPage() {
       </p>
       <p>
         <strong>
-          <a href="https://cadesign.clearalan.ca/">Open caDesign &rarr;</a>
+          <a href="https://maestroconnect.clearalan.ca/">Open Maestro Connect &rarr;</a>
         </strong>
       </p>
 

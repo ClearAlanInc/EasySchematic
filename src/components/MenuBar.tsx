@@ -182,8 +182,8 @@ export default function MenuBar() {
   // via this event — the dialog's open state lives here.
   useEffect(() => {
     const open = (e: Event) => setReportsTab(((e as CustomEvent).detail as ReportsTab) ?? "cableSchedule");
-    window.addEventListener("cadesign:open-reports", open);
-    return () => window.removeEventListener("cadesign:open-reports", open);
+    window.addEventListener("maestro:open-reports", open);
+    return () => window.removeEventListener("maestro:open-reports", open);
   }, []);
 
   const cloudSchematicId = useSchematicStore((s) => s.cloudSchematicId);
@@ -277,7 +277,7 @@ export default function MenuBar() {
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: `${store.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")}.json`,
-        types: [{ description: "caDesign files", accept: { "application/json": [".json"] } }],
+        types: [{ description: "Maestro Connect files", accept: { "application/json": [".json"] } }],
       });
       return handle;
     } catch {
@@ -446,7 +446,7 @@ export default function MenuBar() {
       let handle: FileSystemFileHandle;
       try {
         [handle] = await window.showOpenFilePicker({
-          types: [{ description: "caDesign files", accept: { "application/json": [".json"] } }],
+          types: [{ description: "Maestro Connect files", accept: { "application/json": [".json"] } }],
           multiple: false,
         });
       } catch {
@@ -605,13 +605,13 @@ export default function MenuBar() {
     const onSave = () => { handleSave(); };
     const onSaveAs = () => { handleSaveAs(); };
     const onOpen = () => { handleOpen(); };
-    window.addEventListener("cadesign:save", onSave);
-    window.addEventListener("cadesign:save-as", onSaveAs);
-    window.addEventListener("cadesign:open", onOpen);
+    window.addEventListener("maestro:save", onSave);
+    window.addEventListener("maestro:save-as", onSaveAs);
+    window.addEventListener("maestro:open", onOpen);
     return () => {
-      window.removeEventListener("cadesign:save", onSave);
-      window.removeEventListener("cadesign:save-as", onSaveAs);
-      window.removeEventListener("cadesign:open", onOpen);
+      window.removeEventListener("maestro:save", onSave);
+      window.removeEventListener("maestro:save-as", onSaveAs);
+      window.removeEventListener("maestro:open", onOpen);
     };
   }, [handleSave, handleSaveAs, handleOpen]);
 
@@ -712,7 +712,7 @@ export default function MenuBar() {
         disabled: mcpBridgeStatus !== "connected",
         title: mcpBridgeStatus === "connected"
           ? "Write the file into the bridge's git repository and commit"
-          : "Requires the MCP bridge (Preferences → AI Assistant) started with CADESIGN_GIT_REPO",
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with MAESTRO_GIT_REPO",
         onClick: handleSaveToGit,
       },
       { type: "item", label: "Open...", shortcut: "Ctrl+O", onClick: handleOpen },
@@ -722,7 +722,7 @@ export default function MenuBar() {
         disabled: mcpBridgeStatus !== "connected",
         title: mcpBridgeStatus === "connected"
           ? "Browse schematics in the bridge's git repositories"
-          : "Requires the MCP bridge (Preferences → AI Assistant) started with CADESIGN_GIT_ROOT",
+          : "Requires the MCP bridge (Preferences → AI Assistant) started with MAESTRO_GIT_ROOT",
         onClick: () => setShowGitBrowser(true),
       },
       { type: "item", label: "Revision History...", onClick: () => setShowRevisionHistory(true) },
@@ -844,13 +844,13 @@ export default function MenuBar() {
         type: "item",
         label: "Landing Page",
         onClick: () => {
-          localStorage.removeItem("cadesign-skip-landing");
+          localStorage.removeItem("maestro-skip-landing");
           window.location.href = "/";
         },
       },
       {
         type: "item",
-        label: "About caDesign",
+        label: "About Maestro Connect",
         onClick: () => setShowAboutDialog(true),
       },
     ],
@@ -915,7 +915,7 @@ export default function MenuBar() {
           <div className="flex items-center gap-2 px-3 shrink-0">
             <img src="/favicon.svg" alt="" className="w-5 h-5" />
             <span className="text-xs font-semibold text-[var(--color-text-heading)] tracking-tight">
-              caDesign
+              Maestro Connect
             </span>
           </div>
           <div className="w-px h-5 bg-[var(--color-border)]" />

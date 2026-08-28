@@ -60,7 +60,7 @@ export default function ConnectionsPage() {
 
       <h3>Estimated cable length</h3>
       <p>
-        When both endpoints of a connection live inside <strong>placed rooms</strong>, caDesign estimates a cable
+        When both endpoints of a connection live inside <strong>placed rooms</strong>, Maestro Connect estimates a cable
         length from the geometry between the two rooms (room-to-room distance, plus a small slack allowance). The
         estimate appears in a separate <strong>Est. Length</strong> column in both the cable schedule and the patch
         panel schedule, so you can compare it against the manual <strong>Cable Length</strong> column or use it as a
@@ -79,7 +79,7 @@ export default function ConnectionsPage() {
 
       <h2>Multicable connections</h2>
       <p>
-        caDesign supports <strong>multicable accessories</strong> — cable snakes, socapex, and similar bundled
+        Maestro Connect supports <strong>multicable accessories</strong> — cable snakes, socapex, and similar bundled
         cable assemblies. These use special device templates with <strong>trunk ports</strong> that carry multiple
         signals over a single physical cable.
       </p>
@@ -130,7 +130,7 @@ export default function ConnectionsPage() {
       </p>
       <p>
         Bundling is the deliberate opposite of the auto-router's usual job: instead of keeping connections separable,
-        you're telling caDesign that these specific cables <em>should</em> share one physical path.
+        you're telling Maestro Connect that these specific cables <em>should</em> share one physical path.
       </p>
 
       <h2>Multi-connect ports</h2>
@@ -161,7 +161,7 @@ export default function ConnectionsPage() {
 
       <h2>Adapters</h2>
       <p>
-        When you connect ports with incompatible signal types or different connector types, caDesign
+        When you connect ports with incompatible signal types or different connector types, Maestro Connect
         can automatically insert an <strong>adapter</strong> device between them.
       </p>
 
@@ -273,7 +273,7 @@ export default function ConnectionsPage() {
 
       <h2>Cable IDs &amp; labels</h2>
       <p>
-        Every connection can have a <strong>cable ID</strong> label displayed on the canvas. caDesign offers two
+        Every connection can have a <strong>cable ID</strong> label displayed on the canvas. Maestro Connect offers two
         naming schemes:
       </p>
       <ul>
@@ -297,7 +297,7 @@ export default function ConnectionsPage() {
 
       <h2>Line jump arcs</h2>
       <p>
-        When connections cross over each other, caDesign can render small <strong>arc markers</strong> at each
+        When connections cross over each other, Maestro Connect can render small <strong>arc markers</strong> at each
         crossing point. This makes it much easier to trace individual paths through a dense schematic. Toggle line
         jump arcs on or off from the <strong>View</strong> menu.
       </p>
@@ -394,7 +394,7 @@ export default function ConnectionsPage() {
       <h2>Connector compatibility</h2>
       <p>
         Ports have a <strong>connector type</strong> (XLR-3, RJ45, HDMI, etc.) in addition to their signal type.
-        caDesign automatically handles connector compatibility:
+        Maestro Connect automatically handles connector compatibility:
       </p>
       <ul>
         <li>
@@ -403,7 +403,7 @@ export default function ConnectionsPage() {
         </li>
         <li>
           <strong>Adapter required</strong> — when two ports have the same signal type but different connectors
-          (e.g., IEC to Edison, USB-C to USB-A), caDesign will prompt you to insert an adapter device
+          (e.g., IEC to Edison, USB-C to USB-A), Maestro Connect will prompt you to insert an adapter device
           or auto-insert one if there's a single match.
         </li>
         <li>

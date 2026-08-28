@@ -4,7 +4,7 @@
   "out": "docs/public/dev",
   "cleanOutputDir": false,
   "tsconfig": "tsconfig.app.json",
-  "name": "caDesign Developer Reference",
+  "name": "Maestro Connect Developer Reference",
   "readme": "none",
   "customCss": "typedoc-overrides.css",
   "customJs": "typedoc-overrides.js",

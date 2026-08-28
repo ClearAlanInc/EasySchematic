@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
-const DISMISS_KEY = 'cadesign-mobile-dismissed';
+const DISMISS_KEY = 'maestro-mobile-dismissed';
 
 export default function MobileGate() {
   const [show, setShow] = useState(false);
@@ -33,7 +33,7 @@ export default function MobileGate() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-6">
       <div className="max-w-sm rounded-lg bg-white p-8 text-center shadow-xl">
         <h1 className="mb-4 text-xl font-bold text-gray-900">
-          caDesign is designed for desktop browsers.
+          Maestro Connect is designed for desktop browsers.
         </h1>
         <p className="mb-6 text-sm leading-relaxed text-gray-600">
           This tool works best with a keyboard, mouse, and a screen wide enough

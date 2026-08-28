@@ -1,5 +1,5 @@
 /**
- * Companion guidance for the caDesign MCP server.
+ * Companion guidance for the Maestro Connect MCP server.
  *
  * Two things ship here, both available to ANY paired MCP client (Claude Desktop,
  * claude.ai, Claude Code) — not just Claude Code:
@@ -14,7 +14,7 @@
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import type { GetPromptResult, Prompt } from "@modelcontextprotocol/sdk/types.js";
 
-export const SERVER_INSTRUCTIONS = `caDesign lets you read and edit an AV signal-flow schematic live in the user's editor. The boxes are Devices, the links between their Ports are Connections — always use those AV terms with the user (never node/edge/handle).
+export const SERVER_INSTRUCTIONS = `Maestro Connect lets you read and edit an AV signal-flow schematic live in the user's editor. The boxes are Devices, the links between their Ports are Connections — always use those AV terms with the user (never node/edge/handle).
 
 Golden rules:
 - Call get_schematic first to see what already exists before you change anything.
@@ -49,7 +49,7 @@ export const PROMPTS: Prompt[] = [
   },
 ];
 
-const BUILD_SCHEMATIC = `You are building or extending an AV signal-flow schematic in caDesign through the live MCP bridge. Work in this order:
+const BUILD_SCHEMATIC = `You are building or extending an AV signal-flow schematic in Maestro Connect through the live MCP bridge. Work in this order:
 
 1. Call get_schematic FIRST to see the Devices, Connections, rooms and notes that already exist. Never assume an empty canvas.
 2. Find each Device you need with search_templates and use the templateId it returns — never invent a templateId.
@@ -59,7 +59,7 @@ const BUILD_SCHEMATIC = `You are building or extending an AV signal-flow schemat
 6. After any structural change that adds Ports (e.g. installing a card) re-read get_device before wiring the new Ports.
 7. In anything you say to the user, use the AV terms Device, Connection and Port.`;
 
-const RACK_ELEVATION = `You are creating or populating an equipment rack elevation in caDesign through the live MCP bridge. Rack elevations are a separate view from the schematic canvas. Work in this order:
+const RACK_ELEVATION = `You are creating or populating an equipment rack elevation in Maestro Connect through the live MCP bridge. Rack elevations are a separate view from the schematic canvas. Work in this order:
 
 1. Call list_racks FIRST to see existing rack-elevation pages, racks and placements, and to get the pageId / rackId / placementId values the other rack tools need.
 2. Create a rack with create_rack. Omit pageId to start a new rack-elevation page; pass an existing pageId to add the rack to one. Height (U) and depth (mm) are clamped to the editor's ranges.
@@ -67,7 +67,7 @@ const RACK_ELEVATION = `You are creating or populating an equipment rack elevati
 4. uPosition is 1-based from the bottom of the rack. Batch placements apply in array order and consume the U span / half-rack side they land on, so order them so they do not overlap, and put heavy or deep gear low.
 5. A Device's height in U is inferred from its dimensions; half-rack gear is auto-placed on a free side, and gear too small to rack-mount is put on an auto-created 1U shelf (the response carries that shelfId).`;
 
-const MODULAR_CHASSIS = `You are configuring a modular Device — a chassis with card slots — in caDesign through the live MCP bridge. Work in this order:
+const MODULAR_CHASSIS = `You are configuring a modular Device — a chassis with card slots — in Maestro Connect through the live MCP bridge. Work in this order:
 
 1. Call get_device on the chassis to read its slots (each slot has an id and a slot family).
 2. For an empty slot, call list_slot_cards(deviceId, slotId) to get compatible card templateIds. If the full community library has not loaded this session, call search_templates once first so live-library cards are included.

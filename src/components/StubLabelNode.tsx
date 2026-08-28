@@ -252,7 +252,7 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
 
   // Click the tag badge (or double-click the label) to jump to the partner
   // tag — switching pages if needed. App.tsx owns the viewport and handles
-  // the cadesign:focus-node event (#wire-tags).
+  // the maestro:focus-node event (#wire-tags).
   const goToPartner = (e: React.MouseEvent) => {
     e.stopPropagation();
     const st = useSchematicStore.getState();
@@ -263,7 +263,7 @@ function StubLabelNodeComponent({ id, data, selected }: NodeProps<StubLabelNodeT
         (n.data as StubLabelData).linkedConnectionId === data.linkedConnectionId,
     );
     if (partner) {
-      window.dispatchEvent(new CustomEvent("cadesign:focus-node", { detail: { nodeId: partner.id } }));
+      window.dispatchEvent(new CustomEvent("maestro:focus-node", { detail: { nodeId: partner.id } }));
     }
   };
 

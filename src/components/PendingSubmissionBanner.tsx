@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { checkSession, createDraft, createHandoff } from "../templateApi";
 import { DEVICES_URL, SUBMIT_ENABLED } from "../selfHosted";
 
-const STORAGE_KEY = "cadesign-pending-submission";
+const STORAGE_KEY = "maestro-pending-submission";
 const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
 
 export default function PendingSubmissionBanner() {

@@ -26,7 +26,7 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
 
   const copyDebugInfo = async () => {
     const info = [
-      `caDesign v${version} (${shortHash}) \u00b7 ${env}`,
+      `Maestro Connect v${version} (${shortHash}) \u00b7 ${env}`,
       `UA: ${navigator.userAgent}`,
       `Viewport: ${window.innerWidth}\u00d7${window.innerHeight}`,
       `Date: ${new Date().toISOString().split("T")[0]}`,
@@ -59,7 +59,7 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)]">
           <span className="text-sm font-semibold text-[var(--color-text-heading)]">
-            About caDesign
+            About Maestro Connect
           </span>
           <button
             onClick={onClose}
@@ -74,7 +74,7 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
           <img src="/favicon.svg" alt="" className="w-12 h-12" />
           <div>
             <div className="text-base font-semibold text-[var(--color-text-heading)]">
-              caDesign
+              Maestro Connect
             </div>
             <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
               Version {version} ({shortHash}) ·{" "}
@@ -106,7 +106,7 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
 
           <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
             {[
-              { label: "Website", href: "https://cadesign.clearalan.ca" },
+              { label: "Website", href: "https://maestroconnect.clearalan.ca" },
               ...(DOCS_URL ? [{ label: "Docs", href: DOCS_URL }] : []),
               { label: "GitHub", href: "https://github.com/ClearAlanInc/EasySchematic" },
               ...(DEVICES_URL ? [{ label: "Device Database", href: DEVICES_URL }] : []),

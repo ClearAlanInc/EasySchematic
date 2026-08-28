@@ -46,11 +46,11 @@ interface ReportsDialogProps {
   onClose: () => void;
 }
 
-const PACKLIST_LAYOUT_KEY = "cadesign-packlist-layout";
-const NETWORK_LAYOUT_KEY = "cadesign-network-report-layout";
-const CABLE_SCHEDULE_LAYOUT_KEY = "cadesign-cable-schedule-layout";
-const PATCH_PANEL_LAYOUT_KEY = "cadesign-patch-panel-layout";
-const POWER_LAYOUT_KEY = "cadesign-power-report-layout";
+const PACKLIST_LAYOUT_KEY = "maestro-packlist-layout";
+const NETWORK_LAYOUT_KEY = "maestro-network-report-layout";
+const CABLE_SCHEDULE_LAYOUT_KEY = "maestro-cable-schedule-layout";
+const PATCH_PANEL_LAYOUT_KEY = "maestro-patch-panel-layout";
+const POWER_LAYOUT_KEY = "maestro-power-report-layout";
 
 function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const [tab, setTab] = useState<ReportsTab>(initialTab);

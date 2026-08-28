@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 # Free-tier D1 has no Time Travel — this workflow is the only recovery path.
-# Bucket: cadesign-backups (private R2). Lifecycle deletes objects after 365 days.
+# Bucket: maestro-backups (private R2). Lifecycle deletes objects after 365 days.
 jobs:
   backup:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
           echo "path=$(date -u +%Y/%m/%d)" >> "$GITHUB_OUTPUT"
 
       - name: Export D1 database to SQL
-        run: cd api && npx wrangler d1 export cadesign-db --remote --output=../backup.sql
+        run: cd api && npx wrangler d1 export maestro-db --remote --output=../backup.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -48,7 +48,7 @@ jobs:
       - name: Upload backup to R2
         run: |
           cd api && npx wrangler r2 object put \
-            "cadesign-backups/db/${{ steps.ts.outputs.path }}/cadesign-${{ steps.ts.outputs.iso }}.sql" \
+            "maestro-backups/db/${{ steps.ts.outputs.path }}/maestro-${{ steps.ts.outputs.iso }}.sql" \
             --file=../backup.sql \
             --remote
         env:
@@ -56,7 +56,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Confirm upload
-        run: cd api && npx wrangler r2 object get "cadesign-backups/db/${{ steps.ts.outputs.path }}/cadesign-${{ steps.ts.outputs.iso }}.sql" --file=/tmp/verify.sql --remote && ls -lh /tmp/verify.sql
+        run: cd api && npx wrangler r2 object get "maestro-backups/db/${{ steps.ts.outputs.path }}/maestro-${{ steps.ts.outputs.iso }}.sql" --file=/tmp/verify.sql --remote && ls -lh /tmp/verify.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

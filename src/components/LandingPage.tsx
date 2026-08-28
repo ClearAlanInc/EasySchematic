@@ -60,7 +60,7 @@ const signalSamples = [
 ];
 
 function openEditor() {
-  localStorage.setItem("cadesign-skip-landing", "1");
+  localStorage.setItem("maestro-skip-landing", "1");
   window.location.href = "/";
 }
 
@@ -83,7 +83,7 @@ export default function LandingPage() {
       <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
           <img src="/favicon.svg" alt="" className="w-10 h-10 rounded-lg" />
-          <span className="text-xl font-bold tracking-tight text-white">caDesign</span>
+          <span className="text-xl font-bold tracking-tight text-white">Maestro Connect</span>
         </div>
       </nav>
 
@@ -115,7 +115,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 py-12">
           <img
             src="/landing-screenshot.png"
-            alt="caDesign editor showing a signal flow diagram with Thunderbolt, HDMI, SDI, and USB connections between Mac Studios, adapters, video wall controllers, and converters"
+            alt="Maestro Connect editor showing a signal flow diagram with Thunderbolt, HDMI, SDI, and USB connections between Mac Studios, adapters, video wall controllers, and converters"
             className="w-full rounded-lg shadow-lg border border-slate-200"
             loading="eager"
           />
@@ -177,7 +177,7 @@ export default function LandingPage() {
           <p className="text-center text-gray-600 max-w-2xl mx-auto mb-10">
             Whether you're drawing a broadcast truck block diagram, documenting a
             corporate AV install, or building hook-up sheets for a live event,
-            caDesign helps you create clean, readable AV schematics.
+            Maestro Connect helps you create clean, readable AV schematics.
           </p>
           <div className="grid md:grid-cols-3 gap-6 text-center">
             {[
@@ -236,13 +236,13 @@ export default function LandingPage() {
               Device Database
             </a>
           )}
-          <a href="https://github.com/duremovich/caDesign" className="hover:text-white transition-colors">
+          <a href="https://github.com/duremovich/Maestro Connect" className="hover:text-white transition-colors">
             GitHub
           </a>
           <a href="https://discord.gg/dxXn3Jk2a6" className="hover:text-white transition-colors">
             Discord
           </a>
-          <a href="mailto:support@cadesign.clearalan.ca" className="hover:text-white transition-colors">
+          <a href="mailto:support@maestroconnect.clearalan.ca" className="hover:text-white transition-colors">
             Support
           </a>
         </div>

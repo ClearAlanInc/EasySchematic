@@ -1,5 +1,5 @@
 /**
- * Shared wire protocol for the caDesign MCP bridge (Beta).
+ * Shared wire protocol for the Maestro Connect MCP bridge (Beta).
  *
  * This is the single source of truth for the messages exchanged between:
  *   - the standalone MCP server (`mcp-server/`, a Node process Claude attaches to), and

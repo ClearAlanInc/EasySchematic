@@ -202,7 +202,7 @@ export default function PatchPanelRenderer() {
           </button>
           <button
             className="bg-blue-600 text-white rounded px-2.5 py-1 hover:bg-blue-700"
-            onClick={() => window.dispatchEvent(new CustomEvent("cadesign:open-reports", { detail: "patchPanel" }))}
+            onClick={() => window.dispatchEvent(new CustomEvent("maestro:open-reports", { detail: "patchPanel" }))}
           >
             Schedule report…
           </button>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const DISMISS_KEY = "cadesign-beta-banner-dismissed";
+const DISMISS_KEY = "maestro-beta-banner-dismissed";
 
 function isBetaHost(): boolean {
   if (typeof window === "undefined") return false;

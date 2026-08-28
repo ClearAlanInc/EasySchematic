@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const STORAGE_KEY = "cadesign-theme";
+const STORAGE_KEY = "maestro-theme";
 
 export function useTheme() {
   const [isDark, setIsDark] = useState(() => {

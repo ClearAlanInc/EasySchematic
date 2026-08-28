@@ -1,11 +1,11 @@
 {
-  "name": "cadesign-mcp-server",
+  "name": "maestro-mcp-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local MCP server that bridges Claude to a running caDesign editor (Beta).",
+  "description": "Local MCP server that bridges Claude to a running Maestro Connect editor (Beta).",
   "bin": {
-    "cadesign-mcp": "dist/index.js"
+    "maestro-mcp": "dist/index.js"
   },
   "scripts": {
     "sync": "node scripts/sync-protocol.mjs",

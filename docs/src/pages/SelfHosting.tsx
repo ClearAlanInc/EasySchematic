@@ -4,12 +4,12 @@ export default function SelfHostingPage() {
       <h1>Self-Hosting</h1>
 
       <p>
-        caDesign can be self-hosted using Docker. Two compose profiles are
+        Maestro Connect can be self-hosted using Docker. Two compose profiles are
         available: a <strong>production</strong> image that builds the frontend
         and serves it with nginx, and a <strong>development</strong> image that
         clones the repo at container start and runs the Vite dev server with hot
         reload. All offline canvas features work the same as the hosted version
-        at <a href="https://cadesign.clearalan.ca">cadesign.clearalan.ca</a>.
+        at <a href="https://maestroconnect.clearalan.ca">maestroconnect.clearalan.ca</a>.
       </p>
 
       <div
@@ -18,7 +18,7 @@ export default function SelfHostingPage() {
       >
         <strong>Note:</strong> Cloud features — save to cloud, device
         submissions, shared links — communicate with the hosted API at{" "}
-        <code>api.cadesign.clearalan.ca</code>. The API runs on Cloudflare Workers
+        <code>api.maestroconnect.clearalan.ca</code>. The API runs on Cloudflare Workers
         and is not included in the Docker image. No account or API key is
         required for read-only access (browsing the device library, loading
         shared schematics).
@@ -32,8 +32,8 @@ export default function SelfHostingPage() {
       </p>
 
       <pre>
-        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
-cd caDesign
+        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect
+cd Maestro Connect
 docker compose up -d`}</code>
       </pre>
 
@@ -109,8 +109,8 @@ docker compose up -d`}</code>
       </p>
 
       <pre>
-        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign
-cd caDesign
+        <code>{`git clone https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect
+cd Maestro Connect
 make dev`}</code>
       </pre>
 
@@ -193,7 +193,7 @@ make dev`}</code>
 
       <p>
         By default the app talks to the hosted API at{" "}
-        <code>https://api.cadesign.clearalan.ca</code>. For the dev container you
+        <code>https://api.maestroconnect.clearalan.ca</code>. For the dev container you
         can override this with a <code>.env</code> file in the repository root
         (the same directory as <code>compose.yml</code>). The file is listed in{" "}
         <code>.gitignore</code> and is never committed.
@@ -201,7 +201,7 @@ make dev`}</code>
 
       <ol>
         <li>
-          In the cloned caDesign directory, create a file named{" "}
+          In the cloned Maestro Connect directory, create a file named{" "}
           <code>.env</code>.
         </li>
         <li>
@@ -217,7 +217,7 @@ make dev`}</code>
       <p>Example — use the hosted API (explicit default):</p>
 
       <pre>
-        <code>VITE_TEMPLATE_API_URL=https://api.cadesign.clearalan.ca</code>
+        <code>VITE_TEMPLATE_API_URL=https://api.maestroconnect.clearalan.ca</code>
       </pre>
 
       <p>Example — point at a local API (e.g. Wrangler on port 8787):</p>
@@ -243,7 +243,7 @@ make dev`}</code>
       </p>
 
       <pre>
-        <code>docker build --build-arg VITE_TEMPLATE_API_URL=https://api.example.test -t cadesign .</code>
+        <code>docker build --build-arg VITE_TEMPLATE_API_URL=https://api.example.test -t maestro .</code>
       </pre>
 
       <p>
@@ -259,7 +259,7 @@ make dev`}</code>
       </p>
       <ol>
         <li>Create an <strong>app registration</strong> in the Entra admin center with a Web redirect URI of{" "}
-          <code>https://api.cadesign.clearalan.ca/auth/microsoft/callback</code>.</li>
+          <code>https://api.maestroconnect.clearalan.ca/auth/microsoft/callback</code>.</li>
         <li>Set <code>MS_CLIENT_ID</code> (Application ID) and <code>MS_TENANT</code> (Directory ID) in{" "}
           <code>api/wrangler.toml</code>. Setting the tenant ID means <strong>only that organization's accounts
           can sign in</strong>; <code>"common"</code> would allow any Microsoft account.</li>
@@ -336,7 +336,7 @@ make dev`}</code>
       <h2>Reverse proxy</h2>
 
       <p>
-        To serve caDesign behind a reverse proxy (nginx, Caddy, Traefik),
+        To serve Maestro Connect behind a reverse proxy (nginx, Caddy, Traefik),
         point the proxy at the container port. For the production container, a
         simple HTTP proxy is sufficient since it serves static files only. For
         the dev server, the proxy must support WebSocket upgrades if you use
@@ -346,7 +346,7 @@ make dev`}</code>
       <p>Example Caddy config (production on port 8080):</p>
 
       <pre>
-        <code>{`cadesign.example.com {
+        <code>{`maestroconnect.example.com {
     reverse_proxy localhost:8080
 }`}</code>
       </pre>

@@ -1,5 +1,5 @@
 {
-  "name": "cadesign-api",
+  "name": "maestro-api",
   "private": true,
   "type": "module",
   "scripts": {

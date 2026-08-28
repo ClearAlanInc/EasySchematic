@@ -5,7 +5,7 @@ export default function DevicesAndPortsPage() {
 
       <h2>Devices</h2>
       <p>
-        Each device in caDesign is a box on the canvas with labeled{" "}
+        Each device in Maestro Connect is a box on the canvas with labeled{" "}
         <strong>ports</strong> on its left and right sides:
       </p>
       <ul>
@@ -23,7 +23,7 @@ export default function DevicesAndPortsPage() {
         only connect ports of the <strong>same signal type</strong>, with exceptions where the real hardware
         interoperates: an Allen &amp; Heath <strong>SLink</strong> port connects directly to <strong>dSnake</strong>,
         <strong> DX5</strong>, and <strong>GigaACE</strong> ports, since SLink auto-senses all three protocols.
-        caDesign includes 72 built-in signal types covering video, audio, data, power, and control:
+        Maestro Connect includes 72 built-in signal types covering video, audio, data, power, and control:
       </p>
       <table>
         <thead>
@@ -158,7 +158,7 @@ export default function DevicesAndPortsPage() {
       <p>
         Each port can have a <strong>connector type</strong> (XLR-3, HDMI, RJ45, etc.) that determines physical
         cable compatibility. Some connectors are <strong>combo types</strong> — for example, an XLR/TRS Combo jack
-        accepts both XLR-3 and 1/4" TRS plugs. caDesign handles these automatically: connecting a TRS cable
+        accepts both XLR-3 and 1/4" TRS plugs. Maestro Connect handles these automatically: connecting a TRS cable
         to a combo jack shows no mismatch and the cable schedule labels it correctly.
       </p>
       <table>
@@ -261,12 +261,12 @@ export default function DevicesAndPortsPage() {
       <p>
         <strong>Bare wire connectors</strong> — Phoenix and Terminal Block ports are universally compatible with any
         other connector type, since there's no physical connector at the panel — the cable lands straight in the
-        block. caDesign skips the adapter prompt for these connections.
+        block. Maestro Connect skips the adapter prompt for these connections.
       </p>
 
       <h2>Connector gender</h2>
       <p>
-        Most connectors have a <strong>gender</strong> (male or female) that affects what cable you actually need. caDesign
+        Most connectors have a <strong>gender</strong> (male or female) that affects what cable you actually need. Maestro Connect
         infers gender automatically from the connector type and direction — for example, an XLR-3 input is female and
         an XLR-3 output is male, while powerCON inlets are male and outlets are female. Fixed-gender connectors
         (RJ45, HDMI, USB-C, etc.) are always the same regardless of direction.
@@ -293,7 +293,7 @@ export default function DevicesAndPortsPage() {
       <h2>Patch panels</h2>
       <p>
         Patch panels (RJ45 panels, BNC video bays, XLR audio bays, fiber panels, TT bantam patch bays) are bidirectional
-        pass-throughs with ports on two physical faces. caDesign models them as a special device type:
+        pass-throughs with ports on two physical faces. Maestro Connect models them as a special device type:
       </p>
       <ul>
         <li>The port editor shows the two sides as <strong>Rear</strong> and <strong>Front</strong> instead of "Inputs" and "Outputs"</li>
@@ -405,7 +405,7 @@ export default function DevicesAndPortsPage() {
           <strong>Auto-classification</strong> — a heuristic looks at width and height to decide
           whether a device is full-rack (≈482 mm panel), half-rack (≈220 mm), shelf-only (small
           desktop gear), or oversize (won&apos;t fit a 19&quot; rack). Drop a small device on an
-          empty slot and caDesign creates a 1U shelf and centers it at natural width.
+          empty slot and Maestro Connect creates a 1U shelf and centers it at natural width.
         </li>
         <li>
           <strong>Side-view depth conflicts</strong> surface when a deeper device extends past the
@@ -425,7 +425,7 @@ export default function DevicesAndPortsPage() {
 
       <h2>Face-plate editor</h2>
       <p>
-        caDesign renders each device&apos;s front panel with real connector icons in the
+        Maestro Connect renders each device&apos;s front panel with real connector icons in the
         <a href="/racks"> rack view</a>. Right-click a device on a rack and choose{" "}
         <strong>Edit Face-Plate</strong> to fine-tune the layout — drag ports to custom positions,
         snap-to-grid, multi-select for align / distribute, add custom labels, and reset to

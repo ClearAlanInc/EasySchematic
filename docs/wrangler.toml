@@ -1,5 +1,5 @@
-# caDesign Docs — deployed as a static assets Worker on Cloudflare
-name = "cadesign-docs"
+# Maestro Connect Docs — deployed as a static assets Worker on Cloudflare
+name = "maestro-docs"
 compatibility_date = "2025-04-01"
 workers_dev = true
 

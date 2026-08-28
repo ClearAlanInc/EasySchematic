@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="public/favicon.svg" width="128" alt="caDesign logo"/>
+  <img src="public/favicon.svg" width="128" alt="Maestro Connect logo"/>
 </p>
 
-<h1 align="center">caDesign</h1>
+<h1 align="center">Maestro Connect</h1>
 
 <p align="center">A drag-and-drop AV signal flow diagram tool for designing and documenting AV system hook-ups.<br>Built for broadcast, live production, and AV integration workflows.</p>
 
-<p align="center"><b><a href="https://cadesign.clearalan.ca">Try it live →</a></b> · <b><a href="https://docs.cadesign.clearalan.ca">Documentation →</a></b> · <b><a href="https://docs.cadesign.clearalan.ca/dev/">Developer Reference →</a></b> · <b><a href="https://devices.cadesign.clearalan.ca">Device Database →</a></b> · <b><a href="https://discord.gg/dxXn3Jk2a6">Discord →</a></b> · <b><a href="https://ko-fi.com/duremovich">Support the project →</a></b></p>
+<p align="center"><b><a href="https://maestroconnect.clearalan.ca">Try it live →</a></b> · <b><a href="https://docs.maestroconnect.clearalan.ca">Documentation →</a></b> · <b><a href="https://docs.maestroconnect.clearalan.ca/dev/">Developer Reference →</a></b> · <b><a href="https://devices.maestroconnect.clearalan.ca">Device Database →</a></b> · <b><a href="https://discord.gg/dxXn3Jk2a6">Discord →</a></b> · <b><a href="https://ko-fi.com/duremovich">Support the project →</a></b></p>
 
 <h3 align="center">Supported by</h3>
 
@@ -22,7 +22,7 @@
 
 ### Canvas & Devices
 
-- **2,000+ device templates** drawn from the [community device library](https://devices.cadesign.clearalan.ca) — fetched live when you're online, with a bundled offline fallback so the app stays usable without a connection
+- **2,000+ device templates** drawn from the [community device library](https://devices.maestroconnect.clearalan.ca) — fetched live when you're online, with a bundled offline fallback so the app stays usable without a connection
 - **User templates** — save modified devices as reusable templates
 - **Favorite devices** — star templates in the library for quick access; favorites pin to the top and sort first in search
 - **Template presets** — save a device configuration as the project default for that template; new placements auto-apply the preset
@@ -155,23 +155,23 @@ Paper-based layout pages for composing rack viewports into a printable drawing.
 
 ### Community Device Database
 
-- **[devices.cadesign.clearalan.ca](https://devices.cadesign.clearalan.ca)** — browse, search, and submit device templates
+- **[devices.maestroconnect.clearalan.ca](https://devices.maestroconnect.clearalan.ca)** — browse, search, and submit device templates
 - **Works offline** — the devices site is an installable PWA; visit once online and browsing, search, and every device page keep working without a connection, with the saved library refreshing automatically when you're back online
 - **Community submissions** — submit new devices or suggest edits to existing templates via magic-link email auth
 - **Submit from the canvas** — right-click any device and choose "Submit to Community" to seed a submission with all the fields you've already filled in, instead of re-entering them on the devices site
 - **Moderation workflow** — submissions are reviewed by moderators before going live
 - **Reference URLs** — branded devices link to manufacturer product pages for spec verification
 - **Contributor attribution** — approved submissions credit the contributor on the device page and the hall of fame
-- **REST API** at `api.cadesign.clearalan.ca` backed by Cloudflare D1 (SQLite) — open for read access, no auth required
+- **REST API** at `api.maestroconnect.clearalan.ca` backed by Cloudflare D1 (SQLite) — open for read access, no auth required
 
 #### Public API
 
 If you're building AV tooling and need a structured database of professional audiovisual equipment with port definitions, signal types, and connector types, help yourself:
 
-- `GET https://api.cadesign.clearalan.ca/templates` — all device templates
-- `GET https://api.cadesign.clearalan.ca/templates/:id` — single template with contributor attribution
+- `GET https://api.maestroconnect.clearalan.ca/templates` — all device templates
+- `GET https://api.maestroconnect.clearalan.ca/templates/:id` — single template with contributor attribution
 
-Responses are JSON, cached for 5 minutes. See the [full API reference](https://docs.cadesign.clearalan.ca/#/api) for additional endpoints.
+Responses are JSON, cached for 5 minutes. See the [full API reference](https://docs.maestroconnect.clearalan.ca/#/api) for additional endpoints.
 
 ### Save & Export
 
@@ -184,7 +184,7 @@ Responses are JSON, cached for 5 minutes. See the [full API reference](https://d
 - **Print** — configurable paper size (Standard, ISO A0–A4, ANSI, Architectural, or custom dimensions), orientation, scale, title block
 - **PNG** — 4x resolution raster export
 - **SVG** — vector export
-- **DXF** — AutoCAD R2000 (AC1015) export with canvas-faithful visuals and organized layer hierarchy (`caDesign-Devices`, `caDesign-Connections-SDI`, etc.) for Vectorworks, AutoCAD, and similar CAD tools
+- **DXF** — AutoCAD R2000 (AC1015) export with canvas-faithful visuals and organized layer hierarchy (`Maestro-Devices`, `Maestro-Connections-SDI`, etc.) for Vectorworks, AutoCAD, and similar CAD tools
 - **Template import/export** — export and import user device templates as JSON
 - **Bulk device-template import** — import many templates at once from a JSON or CSV file (e.g. a vendor catalog dump) straight into your user-template library
 - **Google OAuth** — sign in with Google as an alternative to magic-link email
@@ -218,7 +218,7 @@ Output goes to `dist/` — deploy as a static site anywhere.
 
 ## Self-Hosting with Docker
 
-Run caDesign locally with Docker:
+Run Maestro Connect locally with Docker:
 
 ```bash
 docker compose up -d
@@ -226,7 +226,7 @@ docker compose up -d
 
 Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-This builds the frontend from source and serves it with nginx. Cloud features (save to cloud, device submissions, sharing) still communicate with the hosted API at `api.cadesign.clearalan.ca` — no account or API key required for read access.
+This builds the frontend from source and serves it with nginx. Cloud features (save to cloud, device submissions, sharing) still communicate with the hosted API at `api.maestroconnect.clearalan.ca` — no account or API key required for read access.
 
 ### Docker commands
 
@@ -250,13 +250,13 @@ ports:
   - "3000:80"  # now available at localhost:3000
 ```
 
-See the [Self-Hosting docs](https://docs.cadesign.clearalan.ca/self-hosting) for reverse proxy setup and more details.
+See the [Self-Hosting docs](https://docs.maestroconnect.clearalan.ca/self-hosting) for reverse proxy setup and more details.
 
 ## Install as Desktop App
 
-caDesign can be installed as a standalone app that works offline — no download page, no account, no app store. Just visit [cadesign.clearalan.ca](https://cadesign.clearalan.ca) and install from your browser:
+Maestro Connect can be installed as a standalone app that works offline — no download page, no account, no app store. Just visit [maestroconnect.clearalan.ca](https://maestroconnect.clearalan.ca) and install from your browser:
 
-- **Chrome / Edge** — click the install icon in the address bar, or Menu → "Install caDesign"
+- **Chrome / Edge** — click the install icon in the address bar, or Menu → "Install Maestro Connect"
 - **Safari (macOS Sonoma+)** — File → Add to Dock
 - **Safari (iOS / iPadOS)** — Share → Add to Home Screen
 - **Android** — the browser will prompt you automatically, or Menu → "Install app"
@@ -317,7 +317,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, architecture note
 
 ### Community Contributors
 
-The device library grows through community submissions — see the full [Contributors hall of fame](https://devices.cadesign.clearalan.ca/contributors). Special thanks to:
+The device library grows through community submissions — see the full [Contributors hall of fame](https://devices.maestroconnect.clearalan.ca/contributors). Special thanks to:
 
 - **HI-T3C** — Alfatron and Atlona device templates (PTZ camera, HDBaseT switchers, touch panel)
 

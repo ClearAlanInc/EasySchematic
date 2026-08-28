@@ -101,14 +101,14 @@ function resolveEdgeStroke(data: ConnectionData | undefined): string {
   return `var(--color-${data.signalType ?? "custom"})`;
 }
 
-const STORAGE_KEY = "cadesign-autosave";
-const TEMPLATES_KEY = "cadesign-custom-templates";
-const TEMPLATE_META_KEY = "cadesign-custom-template-meta";
-const CATEGORY_ORDER_KEY = "cadesign-category-order";
-const MINIMAP_PREF_KEY = "cadesign-show-minimap";
-const MCP_ENABLED_KEY = "cadesign-mcp-enabled";
-const MCP_TOKEN_KEY = "cadesign-mcp-token";
-const MCP_PORT_KEY = "cadesign-mcp-port";
+const STORAGE_KEY = "maestro-autosave";
+const TEMPLATES_KEY = "maestro-custom-templates";
+const TEMPLATE_META_KEY = "maestro-custom-template-meta";
+const CATEGORY_ORDER_KEY = "maestro-category-order";
+const MINIMAP_PREF_KEY = "maestro-show-minimap";
+const MCP_ENABLED_KEY = "maestro-mcp-enabled";
+const MCP_TOKEN_KEY = "maestro-mcp-token";
+const MCP_PORT_KEY = "maestro-mcp-port";
 
 /** Minimap visibility is an editor preference (not document data), persisted to
  *  localStorage and shared across schematics/sessions. Default visible. (#210) */
@@ -7030,7 +7030,7 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
         get().confirmAutoRouteOff(true);
         return;
       }
-      const pref = localStorage.getItem("cadesign-autoroute-pref");
+      const pref = localStorage.getItem("maestro-autoroute-pref");
       if (pref === "keep") {
         pushUndo({ nodes: state.nodes, edges: state.edges, autoRoute: state.autoRoute });
         get().confirmAutoRouteOff(true);

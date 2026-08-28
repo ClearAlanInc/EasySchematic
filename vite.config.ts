@@ -7,7 +7,7 @@ import { readFileSync } from 'fs'
 import { execSync } from 'child_process'
 
 // Use temp dir for cache to avoid file-locking issues
-const cacheDir = path.join(os.tmpdir(), 'vite-cadesign')
+const cacheDir = path.join(os.tmpdir(), 'vite-maestro')
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
@@ -49,8 +49,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'caDesign — AV Signal Flow Diagram Tool',
-        short_name: 'caDesign',
+        name: 'Maestro Connect — AV Signal Flow Diagram Tool',
+        short_name: 'Maestro Connect',
         description: 'Design audio/video signal flow diagrams for broadcast, live production, and AV integration.',
         theme_color: '#0f172a',
         background_color: '#0f172a',

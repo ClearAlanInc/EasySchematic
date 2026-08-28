@@ -199,7 +199,7 @@ function AutoRouteConfirmDialog() {
 
   const handleChoice = (preserve: boolean) => {
     if (remember) {
-      localStorage.setItem("cadesign-autoroute-pref", preserve ? "keep" : "revert");
+      localStorage.setItem("maestro-autoroute-pref", preserve ? "keep" : "revert");
     }
     confirm(preserve);
   };
@@ -712,7 +712,7 @@ function SchematicCanvas() {
   }, [isDragging, nodeDigest, edgeDigest, nodeCount, edgeCount, rfInstance, hiddenSignalTypesStr, hideVirtualConnections, hidePhysicalConnections, hideAdapters, adapterVisibilityDigest, autoRoute, routingParamVersion, activeSheetId]);
 
   // Cross-page navigation (#wire-tags): "Go to Other End" and friends dispatch
-  // cadesign:focus-node; we switch sheets when needed, then select and
+  // maestro:focus-node; we switch sheets when needed, then select and
   // center the target once it has rendered.
   useEffect(() => {
     const onFocusNode = (e: Event) => {
@@ -754,8 +754,8 @@ function SchematicCanvas() {
         }
       }, 120);
     };
-    window.addEventListener("cadesign:focus-node", onFocusNode);
-    return () => window.removeEventListener("cadesign:focus-node", onFocusNode);
+    window.addEventListener("maestro:focus-node", onFocusNode);
+    return () => window.removeEventListener("maestro:focus-node", onFocusNode);
   }, [rfInstance]);
 
   // Fit the view to the newly-active sheet's content on page switch.
@@ -956,7 +956,7 @@ function SchematicCanvas() {
       event.preventDefault();
 
       // Handle note drops
-      const noteData = event.dataTransfer.getData("application/cadesign-note");
+      const noteData = event.dataTransfer.getData("application/maestro-note");
       if (noteData) {
         const position = screenToFlowPosition({
           x: event.clientX,
@@ -967,7 +967,7 @@ function SchematicCanvas() {
       }
 
       // Handle room drops
-      const roomData = event.dataTransfer.getData("application/cadesign-room");
+      const roomData = event.dataTransfer.getData("application/maestro-room");
       if (roomData) {
         const { label } = JSON.parse(roomData) as { label: string };
         const position = screenToFlowPosition({
@@ -979,7 +979,7 @@ function SchematicCanvas() {
       }
 
       // Handle device drops
-      const raw = event.dataTransfer.getData("application/cadesign-device");
+      const raw = event.dataTransfer.getData("application/maestro-device");
       if (!raw) return;
 
       const template = JSON.parse(raw) as DeviceTemplate;
@@ -1880,7 +1880,7 @@ function PrintTitleBlock() {
       <div className="text-[10px] text-gray-400 text-right leading-relaxed">
         <div>{titleBlock.designer && `Designer: ${titleBlock.designer}`}</div>
         <div>{titleBlock.date || today}</div>
-        <div>caDesign</div>
+        <div>Maestro Connect</div>
       </div>
     </div>
   );
@@ -1889,7 +1889,7 @@ function PrintTitleBlock() {
 function DemoBanner() {
   const isDemo = useSchematicStore((s) => s.isDemo);
   const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem("cadesign-demo-dismissed") === "1",
+    () => localStorage.getItem("maestro-demo-dismissed") === "1",
   );
 
   if (!isDemo || dismissed) return null;
@@ -1898,13 +1898,13 @@ function DemoBanner() {
     <div className="bg-slate-700 text-slate-200 text-sm px-4 py-2 flex items-center justify-between gap-4" data-print-hide>
       <span>
         You&apos;re viewing a demo schematic. Start fresh with{" "}
-        <strong>File &gt; New</strong>, or explore to see what caDesign can do.
+        <strong>File &gt; New</strong>, or explore to see what Maestro Connect can do.
       </span>
       <button
         className="text-slate-400 hover:text-white shrink-0"
         onClick={() => {
           setDismissed(true);
-          localStorage.setItem("cadesign-demo-dismissed", "1");
+          localStorage.setItem("maestro-demo-dismissed", "1");
         }}
       >
         ✕
@@ -1932,8 +1932,8 @@ export default function App() {
   const schematicName = useSchematicStore((s) => s.schematicName);
   useEffect(() => {
     document.title = schematicName
-      ? `${schematicName} — caDesign`
-      : "caDesign — AV Signal Flow Diagram Tool";
+      ? `${schematicName} — Maestro Connect`
+      : "Maestro Connect — AV Signal Flow Diagram Tool";
   }, [schematicName]);
 
   // Handle /s/{token} URLs for shared schematics
@@ -1974,13 +1974,13 @@ export default function App() {
         useSchematicStore.getState().toggleDebugEdges();
       } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "s") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("cadesign:save-as"));
+        window.dispatchEvent(new CustomEvent("maestro:save-as"));
       } else if ((e.ctrlKey || e.metaKey) && k === "s") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("cadesign:save"));
+        window.dispatchEvent(new CustomEvent("maestro:save"));
       } else if ((e.ctrlKey || e.metaKey) && k === "o") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("cadesign:open"));
+        window.dispatchEvent(new CustomEvent("maestro:open"));
       } else if (e.key === "F9") {
         e.preventDefault();
         const s = useSchematicStore.getState();

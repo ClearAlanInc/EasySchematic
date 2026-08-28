@@ -107,9 +107,9 @@ export default function App() {
   // Update JSON-LD structured data
   useEffect(() => {
     const jsonLd = route.page === "browse"
-      ? { "@context": "https://schema.org", "@type": "ItemList", "name": "caDesign Device Database", "url": "https://devices.cadesign.clearalan.ca/" }
+      ? { "@context": "https://schema.org", "@type": "ItemList", "name": "Maestro Connect Device Database", "url": "https://devices.maestroconnect.clearalan.ca/" }
       : route.page === "contributors"
-      ? { "@context": "https://schema.org", "@type": "WebPage", "name": "caDesign Contributors", "url": "https://devices.cadesign.clearalan.ca/contributors" }
+      ? { "@context": "https://schema.org", "@type": "WebPage", "name": "Maestro Connect Contributors", "url": "https://devices.maestroconnect.clearalan.ca/contributors" }
       : null;
     let script = document.querySelector<HTMLScriptElement>('script[data-jsonld]');
     if (jsonLd) {
@@ -171,10 +171,10 @@ export default function App() {
       <a href="/contributors" onClick={linkClick} className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
         Contributors
       </a>
-      <a href="https://cadesign.clearalan.ca" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
+      <a href="https://maestroconnect.clearalan.ca" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
         Main App
       </a>
-      <a href="mailto:support@cadesign.clearalan.ca" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
+      <a href="mailto:support@maestroconnect.clearalan.ca" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
         Support
       </a>
       {!authLoading && user && (
@@ -217,7 +217,7 @@ export default function App() {
         <div className="flex items-center justify-between">
           <a href="/" onClick={linkClick} className="flex items-center gap-2 text-lg font-semibold tracking-tight hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
             <img src="/favicon.svg" alt="" className="w-6 h-6" />
-            caDesign <span className="text-gray-400 dark:text-slate-500 font-normal">Devices</span>
+            Maestro Connect <span className="text-gray-400 dark:text-slate-500 font-normal">Devices</span>
           </a>
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-4">

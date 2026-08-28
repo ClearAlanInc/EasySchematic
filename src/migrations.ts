@@ -1,5 +1,5 @@
 /**
- * Schema migrations for caDesign save files.
+ * Schema migrations for Maestro Connect save files.
  *
  * Each migration takes a raw JSON object at version N and returns version N+1.
  * Migrations run sequentially from the file's version up to CURRENT_SCHEMA_VERSION.

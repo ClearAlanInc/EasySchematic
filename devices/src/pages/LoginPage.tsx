@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { requestMagicLink } from "../api";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://api.cadesign.clearalan.ca";
+const API_URL = import.meta.env.VITE_API_URL || "https://api.maestroconnect.clearalan.ca";
 
 const ERROR_MESSAGES: Record<string, string> = {
   expired: "Login link expired or already used. Please request a new one.",

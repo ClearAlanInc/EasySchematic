@@ -71,7 +71,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <div className="mt-8 px-3 flex flex-col gap-2">
         <a
-          href="https://cadesign.clearalan.ca/"
+          href="https://maestroconnect.clearalan.ca/"
           target="_blank"
           rel="noopener noreferrer"
           className="block text-sm text-blue-600 hover:text-blue-800"
@@ -79,7 +79,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           Open App &rarr;
         </a>
         <a
-          href="https://devices.cadesign.clearalan.ca/"
+          href="https://devices.maestroconnect.clearalan.ca/"
           target="_blank"
           rel="noopener noreferrer"
           className="block text-sm text-blue-600 hover:text-blue-800"
@@ -125,7 +125,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4 px-3"
         >
           <img src="/favicon.svg" alt="" className="w-6 h-6" />
-          caDesign
+          Maestro Connect
         </a>
         <SearchBar />
         <NavContent />
@@ -154,7 +154,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           className="flex items-center gap-2 text-base font-bold text-gray-900 ml-2"
         >
           <img src="/favicon.svg" alt="" className="w-5 h-5" />
-          caDesign
+          Maestro Connect
         </a>
       </div>
 

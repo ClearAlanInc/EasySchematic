@@ -6,7 +6,7 @@
 
 import type { CloudSchematic } from "./templateApi";
 
-const DB_NAME = "cadesign-cloud-cache";
+const DB_NAME = "maestro-cloud-cache";
 const DB_VERSION = 2;
 const SCHEMATICS_STORE = "schematics";
 const OUTBOX_STORE = "outbox";
@@ -32,10 +32,10 @@ export interface CachedSchematic extends CloudSchematic {
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
-// Database name used before the product rename. Its contents (cached cloud
-// schematics and, critically, any queued offline saves) are copied into the
-// new database once, then the old one is deleted.
-const LEGACY_DB_NAME = "easyschematic-cloud-cache";
+// Database names used before product renames (oldest first). Their contents
+// (cached cloud schematics and, critically, any queued offline saves) are
+// copied into the current database once, then the old ones are deleted.
+const LEGACY_DB_NAMES = ["easyschematic-cloud-cache", "cadesign-cloud-cache"];
 
 function openNamed(name: string, version?: number, upgrade?: (db: IDBDatabase) => void): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -55,34 +55,41 @@ function readAll(db: IDBDatabase, store: string): Promise<unknown[]> {
   });
 }
 
-/** Best-effort one-time copy of the legacy database into `db`. Never throws. */
+/** Best-effort one-time copy of the legacy databases into `db`. Never throws. */
 async function migrateLegacyDb(db: IDBDatabase): Promise<void> {
+  let known: (string | undefined)[] | null = null;
   try {
     if (typeof indexedDB.databases === "function") {
-      const names = (await indexedDB.databases()).map((d) => d.name);
-      if (!names.includes(LEGACY_DB_NAME)) return;
+      known = (await indexedDB.databases()).map((d) => d.name);
     }
-    const old = await openNamed(LEGACY_DB_NAME);
-    if (old.objectStoreNames.length === 0) {
-      old.close();
-      indexedDB.deleteDatabase(LEGACY_DB_NAME);
-      return;
-    }
-    const [schematics, outbox] = await Promise.all([readAll(old, SCHEMATICS_STORE), readAll(old, OUTBOX_STORE)]);
-    old.close();
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction([SCHEMATICS_STORE, OUTBOX_STORE], "readwrite");
-      const sStore = tx.objectStore(SCHEMATICS_STORE);
-      const oStore = tx.objectStore(OUTBOX_STORE);
-      // Don't clobber anything already written under the new name.
-      for (const row of schematics) sStore.add(row).onerror = (e) => e.preventDefault();
-      for (const row of outbox) oStore.add(row).onerror = (e) => e.preventDefault();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    indexedDB.deleteDatabase(LEGACY_DB_NAME);
   } catch {
-    // Migration is best-effort; the app works fine from an empty cache.
+    known = null;
+  }
+  for (const legacyName of LEGACY_DB_NAMES) {
+    try {
+      if (known && !known.includes(legacyName)) continue;
+      const old = await openNamed(legacyName);
+      if (old.objectStoreNames.length === 0) {
+        old.close();
+        indexedDB.deleteDatabase(legacyName);
+        continue;
+      }
+      const [schematics, outbox] = await Promise.all([readAll(old, SCHEMATICS_STORE), readAll(old, OUTBOX_STORE)]);
+      old.close();
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction([SCHEMATICS_STORE, OUTBOX_STORE], "readwrite");
+        const sStore = tx.objectStore(SCHEMATICS_STORE);
+        const oStore = tx.objectStore(OUTBOX_STORE);
+        // Don't clobber anything already written under the new name.
+        for (const row of schematics) sStore.add(row).onerror = (e) => e.preventDefault();
+        for (const row of outbox) oStore.add(row).onerror = (e) => e.preventDefault();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      indexedDB.deleteDatabase(legacyName);
+    } catch {
+      // Migration is best-effort; the app works fine from an empty cache.
+    }
   }
 }
 

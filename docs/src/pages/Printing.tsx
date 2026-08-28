@@ -4,7 +4,7 @@ export default function PrintingPage() {
       <h1>Printing &amp; Title Block</h1>
 
       <p>
-        caDesign has a full print workflow: page setup, a configurable title block, and multi-page PDF export.
+        Maestro Connect has a full print workflow: page setup, a configurable title block, and multi-page PDF export.
         This page covers printing the <strong>signal flow schematic</strong>. For paper-based rack
         elevation drawings — multiple rack viewports composed onto a sheet, vector PDF export — see{" "}
         <a href="/print-sheets">Print Sheets</a>.

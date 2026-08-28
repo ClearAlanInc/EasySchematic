@@ -1,14 +1,14 @@
 {
-  "name": "cadesign",
+  "name": "maestro",
   "private": true,
   "license": "AGPL-3.0",
   "version": "0.55.0",
   "type": "module",
   "description": "Browser-based AV signal flow diagram tool for designing audio/video system schematics",
-  "homepage": "https://cadesign.clearalan.ca",
+  "homepage": "https://maestroconnect.clearalan.ca",
   "repository": {
     "type": "git",
-    "url": "https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/caDesign"
+    "url": "https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_git/Maestro Connect"
   },
   "bugs": {
     "url": "https://dev.azure.com/ClearAlanInc/ClearAlan%20Inc/_workitems"

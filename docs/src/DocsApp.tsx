@@ -67,7 +67,7 @@ export default function DocsApp() {
   const Page = route.component;
 
   useEffect(() => {
-    document.title = `${route.title} — caDesign Docs`;
+    document.title = `${route.title} — Maestro Connect Docs`;
     document.querySelector("main")?.scrollTo(0, 0);
 
     // Update JSON-LD structured data per page
@@ -75,9 +75,9 @@ export default function DocsApp() {
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "TechArticle",
-      "headline": `${route.title} — caDesign Docs`,
-      "url": `https://docs.cadesign.clearalan.ca/${slug}`,
-      "isPartOf": { "@type": "WebSite", "name": "caDesign Docs", "url": "https://docs.cadesign.clearalan.ca" },
+      "headline": `${route.title} — Maestro Connect Docs`,
+      "url": `https://docs.maestroconnect.clearalan.ca/${slug}`,
+      "isPartOf": { "@type": "WebSite", "name": "Maestro Connect Docs", "url": "https://docs.maestroconnect.clearalan.ca" },
     };
     let script = document.querySelector<HTMLScriptElement>('script[data-jsonld]');
     if (!script) {

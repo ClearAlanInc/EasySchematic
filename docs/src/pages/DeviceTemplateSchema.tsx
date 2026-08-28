@@ -47,7 +47,7 @@ export default function DeviceTemplateSchemaPage() {
     <>
       <h1>Device Template Schema</h1>
       <p>
-        This is the canonical reference for the caDesign device template format.
+        This is the canonical reference for the Maestro Connect device template format.
         Use it to convert from any external source (manufacturer Visio stencils,
         spreadsheets, scraped catalog data) into a format that can be bulk-imported
         through <strong>Device Library → Import</strong>.
