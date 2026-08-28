@@ -82,7 +82,7 @@ export default function LandingPage() {
       {/* Top bar */}
       <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
-          <img src="/favicon.svg" alt="" className="w-10 h-10 rounded-lg" />
+          <img src="/logo-mark.svg" alt="" className="w-10 h-10 rounded-lg" />
           <span className="text-xl font-bold tracking-tight text-white">Maestro Connect</span>
         </div>
       </nav>

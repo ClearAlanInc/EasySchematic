@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white px-6">
-        <img src="/favicon.svg" alt="Maestro Connect" className="w-16 h-16 mb-6" />
+        <img src="/logo-mark.svg" alt="Maestro Connect" className="w-16 h-16 mb-6" />
         <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
         <p className="text-slate-400 mb-1 text-center max-w-md">
           Maestro Connect hit an unexpected error. Your schematic is saved in your

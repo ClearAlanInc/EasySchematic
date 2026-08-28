@@ -913,7 +913,7 @@ export default function MenuBar() {
         {/* Left: logo + brand + menus */}
         <div className="flex items-center">
           <div className="flex items-center gap-2 px-3 shrink-0">
-            <img src="/favicon.svg" alt="" className="w-5 h-5" />
+            <img src="/logo-mark.svg" alt="" className="w-5 h-5" />
             <span className="text-xs font-semibold text-[var(--color-text-heading)] tracking-tight">
               Maestro Connect
             </span>
@@ -1048,7 +1048,7 @@ export default function MenuBar() {
 
       {/* Mobile header bar */}
       <div className="flex md:hidden h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] items-center px-3 shrink-0 select-none justify-between">
-        <img src="/favicon.svg" alt="" className="w-5 h-5" />
+        <img src="/logo-mark.svg" alt="" className="w-5 h-5" />
         <span className="text-sm font-semibold text-[var(--color-text-heading)] truncate mx-3 flex-1 text-center">
           {schematicName}
         </span>
