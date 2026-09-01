@@ -92,6 +92,11 @@ export const ROUTING_DEFAULTS = {
   SEPARATION_PX: 1,       // overlap penalty zone width (grid cells)
   CROSS_TYPE_SEPARATION: 0,
   OVERLAP_PENALTY: 20,    // full cost for overlapping an existing edge corridor
+  /** Extra multiplier when the overlapped corridor carries a DIFFERENT signal type.
+   *  Collinear same-type runs read as a bus; a collinear run over a foreign type reads
+   *  as a wrong connection (e.g. LAN riding a power wire), so it must lose to any
+   *  detour and to same-type sharing whenever either is available. */
+  CROSS_TYPE_OVERLAP_MULT: 8,
   SAME_SIGNAL_GAP: 0,
   CROSSING_PENALTY: 12,
   NESTING_BIAS: 0,         // disabled — needs topology-aware direction, revisiting later
@@ -364,6 +369,7 @@ export function astarOrthogonal(
   excludeEndDir?: number,
   sourceExitsRight?: boolean,
   penaltySpatialIndex?: PenaltySpatialIndex,
+  currentSignalType?: string,
 ): { path: { gx: number; gy: number }[]; arrivalDir: number } | null {
   const { cols, rows, originX, originY, blocked } = grid;
 
@@ -371,6 +377,7 @@ export function astarOrthogonal(
   const TURN_PENALTY = ROUTING_PARAMS.TURN_PENALTY;
   const SEPARATION_PX = ROUTING_PARAMS.SEPARATION_PX;
   const OVERLAP_PENALTY = ROUTING_PARAMS.OVERLAP_PENALTY;
+  const CROSS_TYPE_MULT = ROUTING_PARAMS.CROSS_TYPE_OVERLAP_MULT;
   const CROSSING_PENALTY = ROUTING_PARAMS.CROSSING_PENALTY;
   const NESTING_BIAS = ROUTING_PARAMS.NESTING_BIAS;
 
@@ -519,6 +526,12 @@ export function astarOrthogonal(
         const bucket = penaltyGrid.get(bc * 100003 + br);
         if (bucket) {
           for (const pz of bucket) {
+            // Unknown types on either side keep the base cost — only a definite
+            // type mismatch triggers the cross-type multiplier.
+            const typeMult =
+              pz.signalType && currentSignalType && pz.signalType !== currentSignalType
+                ? CROSS_TYPE_MULT
+                : 1;
             if (pz.axis === "v" && (d === 1 || d === 3)) {
               const dist = Math.abs(ngx - pz.coordinate);
               if (dist < SEPARATION_PX) {
@@ -526,7 +539,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgy, ngy);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1) * typeMult;
                 }
               }
             } else if (pz.axis === "h" && (d === 0 || d === 2)) {
@@ -536,7 +549,7 @@ export function astarOrthogonal(
                 const segMax = Math.max(cgx, ngx);
                 if (segMax > pz.rangeMin && segMin < pz.rangeMax) {
                   const closeness = 1 - dist / SEPARATION_PX;
-                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1);
+                  g += OVERLAP_PENALTY * closeness * closeness * (pz.weight ?? 1) * typeMult;
                 }
               }
             }
@@ -1098,7 +1111,7 @@ export function computeEdgePath(
   offset: number,
   _stubSpread: number = 0,
   penalties?: PenaltyZone[],
-  _currentSignalType?: string,
+  currentSignalType?: string,
   noSourceStub?: boolean,
   noTargetStub?: boolean,
   excludeStartDir?: number,
@@ -1163,6 +1176,7 @@ export function computeEdgePath(
     penalties,
     noSourceStub, freeEndDir ?? false, excludeStartDir, excludeEndDir, sourceExitsRight,
     penaltySpatialIndex,
+    currentSignalType,
   );
 
   // Restore temporarily unblocked cells on global grid

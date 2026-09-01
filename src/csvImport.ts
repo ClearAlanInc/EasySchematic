@@ -523,6 +523,8 @@ let importCounter = 0;
 export function buildImportResult(
   connections: ParsedConnection[],
   deviceMatches: Map<string, DeviceMatch>,
+  /** Optional cable IDs parallel to `connections` (AI PDF import supplies these). */
+  cableIds?: (string | undefined)[],
 ): { nodes: SchematicNode[]; edges: ConnectionEdge[] } {
   importCounter = Date.now();
   const nodes: SchematicNode[] = [];
@@ -750,7 +752,8 @@ export function buildImportResult(
   const usedPorts = new Map<string, Set<string>>(); // nodeId → set of used port IDs
   let edgeCounter = importCounter;
 
-  for (const c of connections) {
+  for (let ci = 0; ci < connections.length; ci++) {
+    const c = connections[ci];
     const srcNode = deviceNodeMap.get(c.sourceDevice);
     const dstNode = deviceNodeMap.get(c.destDevice);
     if (!srcNode || !dstNode) continue;
@@ -784,7 +787,7 @@ export function buildImportResult(
       target: dstNode.id,
       sourceHandle,
       targetHandle,
-      data: { signalType: sig },
+      data: { signalType: sig, ...(cableIds?.[ci] ? { cableId: cableIds[ci] } : {}) },
       style: {
         stroke: SIGNAL_COLORS[sig] ?? "var(--color-custom)",
         strokeWidth: 2,

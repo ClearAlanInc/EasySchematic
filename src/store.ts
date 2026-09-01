@@ -726,6 +726,12 @@ interface SchematicState {
   setCableIdLabelMode: (mode: "endpoint" | "midpoint") => void;
   stubLabelShowPort: boolean;
   setStubLabelShowPort: (show: boolean) => void;
+  /** App-level preference: show the signal-colors side rail (default hidden). */
+  showColorsPanel: boolean;
+  setShowColorsPanel: (show: boolean) => void;
+  /** Anthropic API key for in-app AI features (Import PDF). Stored locally only. */
+  anthropicApiKey: string;
+  setAnthropicApiKey: (key: string) => void;
   stubLabelShowRoom: boolean;
   setStubLabelShowRoom: (show: boolean) => void;
   stubLabelPageMode: StubLabelPageMode;
@@ -849,6 +855,12 @@ interface SchematicState {
   exportToJSON: () => SchematicFile;
   importFromJSON: (data: SchematicFile) => void;
   importCsvData: (newNodes: SchematicNode[], newEdges: ConnectionEdge[]) => void;
+  /** AI PDF import: add one new schematic sheet per page and register any
+   *  custom templates created for unrecognized devices. */
+  importAiPdfData: (
+    pages: { name: string; nodes: SchematicNode[]; edges: ConnectionEdge[] }[],
+    newTemplates: DeviceTemplate[],
+  ) => void;
   newSchematic: (templateData?: SchematicFile) => void;
   setSchematicName: (name: string) => void;
 }
@@ -1621,6 +1633,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   cableIdMidOffset: 0,
   cableIdLabelMode: "endpoint" as "endpoint" | "midpoint",
   stubLabelShowPort: DEFAULT_STUB_LABEL_SHOW_PORT,
+  showColorsPanel: typeof localStorage !== "undefined" && localStorage.getItem("maestro-show-colors-panel") === "1",
+  anthropicApiKey: (typeof localStorage !== "undefined" && localStorage.getItem("maestro-anthropic-key")) || "",
   stubLabelShowRoom: DEFAULT_STUB_LABEL_SHOW_ROOM,
   stubLabelPageMode: DEFAULT_STUB_LABEL_PAGE_MODE,
   useShortNames: false,
@@ -4464,6 +4478,19 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     get().saveToLocalStorage();
   },
 
+  setShowColorsPanel: (show) => {
+    set({ showColorsPanel: show });
+    try { localStorage.setItem("maestro-show-colors-panel", show ? "1" : "0"); } catch { /* fine */ }
+  },
+
+  setAnthropicApiKey: (key) => {
+    set({ anthropicApiKey: key });
+    try {
+      if (key) localStorage.setItem("maestro-anthropic-key", key);
+      else localStorage.removeItem("maestro-anthropic-key");
+    } catch { /* fine */ }
+  },
+
   setStubLabelShowPort: (show) => {
     set({ stubLabelShowPort: show });
     get().saveToLocalStorage();
@@ -6062,6 +6089,44 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     set({
       nodes: renumberNodes(mergedNodes),
       edges: mergedEdges,
+    });
+    get().saveToLocalStorage();
+  },
+
+  importAiPdfData: (pages, newTemplates) => {
+    if (pages.length === 0) return;
+    const state = get();
+    pushUndo({ nodes: state.nodes, edges: state.edges });
+
+    for (const tpl of newTemplates) get().addCustomTemplate(tpl);
+
+    const sheets = [...get().schematicSheets];
+    let mergedNodes = [...state.nodes];
+    let mergedEdges = [...state.edges];
+    let firstNewSheet: string | null = null;
+
+    for (const page of pages) {
+      const id = newSheetId();
+      if (!firstNewSheet) firstNewSheet = id;
+      sheets.push({ id, label: page.name.trim() || `Page ${sheets.length + 1}` });
+      // Stamp page roots with the new sheet; parented nodes follow their root.
+      const stamped = page.nodes.map((n) =>
+        n.parentId ? n : ({ ...n, data: { ...n.data, sheetId: id } } as SchematicNode),
+      );
+      mergedNodes = [...mergedNodes, ...stamped];
+      mergedEdges = [...mergedEdges, ...page.edges];
+    }
+
+    mergedEdges = ensureUniqueEdgeIds(mergedEdges);
+    syncCounters(mergedNodes, mergedEdges);
+    snapNodesToGrid(mergedNodes);
+
+    set({
+      nodes: renumberNodes(mergedNodes),
+      edges: mergedEdges,
+      schematicSheets: sheets,
+      activeSheetId: firstNewSheet ?? get().activeSheetId,
+      activePage: "schematic",
     });
     get().saveToLocalStorage();
   },

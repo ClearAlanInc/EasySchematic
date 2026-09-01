@@ -109,6 +109,10 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
   const setUseShortNames = useSchematicStore((s) => s.setUseShortNames);
   const wrapDeviceLabels = useSchematicStore((s) => s.wrapDeviceLabels);
   const setWrapDeviceLabels = useSchematicStore((s) => s.setWrapDeviceLabels);
+  const showColorsPanel = useSchematicStore((s) => s.showColorsPanel);
+  const setShowColorsPanel = useSchematicStore((s) => s.setShowColorsPanel);
+  const anthropicApiKey = useSchematicStore((s) => s.anthropicApiKey);
+  const setAnthropicApiKey = useSchematicStore((s) => s.setAnthropicApiKey);
   const mcpEnabled = useSchematicStore((s) => s.mcpBridgeEnabled);
   const setMcpEnabled = useSchematicStore((s) => s.setMcpBridgeEnabled);
   const mcpToken = useSchematicStore((s) => s.mcpBridgeToken);
@@ -386,6 +390,25 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
                 </p>
               </div>
 
+              {/* Panels */}
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Panels
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-[var(--color-text)]">Show signal colors panel</span>
+                  <input
+                    type="checkbox"
+                    checked={showColorsPanel}
+                    onChange={(e) => setShowColorsPanel(e.target.checked)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Shows the Colors side rail with the signal-type legend and per-type color overrides. Signal colors still apply to wires either way.
+                </p>
+              </div>
+
               {/* Stub labels */}
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
@@ -496,6 +519,27 @@ export default function PreferencesDialog({ onClose }: { onClose: () => void }) 
 
           {activeTab === "ai" && (
             <>
+              {/* Claude API */}
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Claude API
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-[var(--color-text)]">Anthropic API key</span>
+                  <input
+                    type="password"
+                    value={anthropicApiKey}
+                    onChange={(e) => setAnthropicApiKey(e.target.value)}
+                    placeholder="sk-ant-..."
+                    autoComplete="off"
+                    className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none w-[220px]"
+                  />
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  Used by File → Import PDF (AI) to read drawings with Claude. The key is stored only in this browser and sent only to Anthropic. Create one at console.anthropic.com.
+                </p>
+              </div>
+
               {/* AI Assistant (MCP) — Beta */}
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">

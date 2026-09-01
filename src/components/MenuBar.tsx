@@ -26,6 +26,7 @@ import { CLOUD_ENABLED, DEVICES_URL, DOCS_URL } from "../selfHosted";
 import ViewOptionsPanel from "./ViewOptionsPanel";
 import ShowInfoPanel from "./ShowInfoPanel";
 import CsvImportWizard from "./CsvImportWizard";
+import ImportPdfDialog from "./ImportPdfDialog";
 import SignalColorPanel from "./SignalColorPanel";
 import { useTheme } from "../hooks/useTheme";
 
@@ -142,6 +143,7 @@ export default function MenuBar() {
   } = useSchematicStore();
 
   const printView = useSchematicStore((s) => s.printView);
+  const showColorsPanel = useSchematicStore((s) => s.showColorsPanel);
   const showOwnedGearPane = useSchematicStore((s) => s.showOwnedGearPane);
   const undoSize = useSchematicStore((s) => s.undoSize);
   const redoSize = useSchematicStore((s) => s.redoSize);
@@ -167,6 +169,7 @@ export default function MenuBar() {
   const [showPreferences, setShowPreferences] = useState(false);
   const [showRoomDistances, setShowRoomDistances] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
+  const [showPdfImport, setShowPdfImport] = useState(false);
   const [showSchematicBrowser, setShowSchematicBrowser] = useState(false);
   const [showCloudLogin, setShowCloudLogin] = useState(false);
   const [cloudSaving, setCloudSaving] = useState(false);
@@ -736,6 +739,7 @@ export default function MenuBar() {
       { type: "item", label: "Save Device Archive", onClick: handleSaveArchive },
       { type: "item", label: "Import Device Archive...", onClick: handleOpenArchive },
       { type: "item", label: "Import Cable Schedule...", onClick: () => setShowCsvImport(true) },
+      { type: "item", label: "Import PDF (AI)...", onClick: () => setShowPdfImport(true) },
       { type: "separator" },
       { type: "item", label: "Preferences...", onClick: () => setShowPreferences(true) },
     ],
@@ -1135,7 +1139,7 @@ export default function MenuBar() {
               {[
                 { key: "viewOptions", label: "View Options" },
                 { key: "showInfo", label: "Show Info" },
-                { key: "signalColors", label: "Signal Colors" },
+                ...(showColorsPanel ? [{ key: "signalColors", label: "Signal Colors" }] : []),
               ].map(({ key, label }) => (
                 <button
                   key={key}
@@ -1209,6 +1213,9 @@ export default function MenuBar() {
       )}
       {showRoomDistances && (
         <RoomDistancesDialog onClose={() => setShowRoomDistances(false)} />
+      )}
+      {showPdfImport && (
+        <ImportPdfDialog onClose={() => setShowPdfImport(false)} />
       )}
       {showCsvImport && (
         <CsvImportWizard onClose={() => setShowCsvImport(false)} />

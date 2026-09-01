@@ -277,3 +277,43 @@ describe("computeEdgePath", () => {
     expect(result!.waypoints.length).toBeGreaterThan(2);
   });
 });
+
+// ---------- Cross-type overlap avoidance ----------
+
+describe("cross-type overlap rule", () => {
+  // The direct column (5) is blocked, so the route must descend through one of the
+  // side columns — and every reachable column carries an existing corridor: col 6 is
+  // ethernet, the rest are contact-closure. When lane sharing is forced, the edge must
+  // ride the corridor of its OWN signal type — a wire drawn collinear with a different
+  // signal type reads as a wrong connection (LAN-on-power confusion).
+  const centerBlock = [{ left: 5, top: 2, right: 5, bottom: 18 }];
+  const zones = [
+    { axis: "v" as const, coordinate: 3, rangeMin: -2, rangeMax: 22, signalType: "contact-closure" },
+    { axis: "v" as const, coordinate: 4, rangeMin: -2, rangeMax: 22, signalType: "contact-closure" },
+    { axis: "v" as const, coordinate: 6, rangeMin: -2, rangeMax: 22, signalType: "ethernet" },
+    { axis: "v" as const, coordinate: 7, rangeMin: -2, rangeMax: 22, signalType: "contact-closure" },
+  ];
+
+  function laneUsed(signalType: string): number {
+    const grid = buildGrid(5, 0, 5, 20, centerBlock);
+    const result = astarOrthogonal(
+      grid, 5, 0, 5, 20, zones,
+      true, true, undefined, undefined, undefined, undefined,
+      signalType,
+    );
+    expect(result).not.toBeNull();
+    const mid = result!.path.filter((p) => p.gy >= 6 && p.gy <= 14);
+    expect(mid.length).toBeGreaterThan(0);
+    const cols = new Set(mid.map((p) => p.gx));
+    expect(cols.size).toBe(1);
+    return [...cols][0];
+  }
+
+  it("an ethernet edge shares the ethernet corridor, not a contact-closure one", () => {
+    expect(laneUsed("ethernet")).toBe(6);
+  });
+
+  it("a contact-closure edge avoids the ethernet corridor", () => {
+    expect(laneUsed("contact-closure")).not.toBe(6);
+  });
+});

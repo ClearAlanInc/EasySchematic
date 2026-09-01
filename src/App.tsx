@@ -1915,6 +1915,7 @@ function DemoBanner() {
 
 export default function App() {
   const printView = useSchematicStore((s) => s.printView);
+  const showColorsPanel = useSchematicStore((s) => s.showColorsPanel);
   const activePage = useSchematicStore((s) => s.activePage);
   const activePgType = useSchematicStore((s) => {
     if (!s.activePage || s.activePage === "schematic") return null;
@@ -2014,7 +2015,7 @@ export default function App() {
           <div data-print-hide className="hidden md:flex">
             <ViewOptionsPanel />
             <ShowInfoPanel />
-            <SignalColorPanel />
+            {showColorsPanel && <SignalColorPanel />}
           </div>
         </div>
       ) : activePgType === "print-sheet" ? (
