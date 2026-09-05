@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState, useCallback, useEffect } from "react";
 import { useSchematicStore } from "../store";
-import { computeNetworkReport, computeDhcpServerSummary, computePoeBudget, buildNetworkReportCsv, type NetworkReportRow } from "../networkReport";
+import { computeNetworkReport, computeDhcpServerSummary, computePoeBudget, buildNetworkReportCsv, maskSecret, type NetworkReportRow } from "../networkReport";
 import { isValidIpv4, isValidSubnetMask, isValidVlan, findDuplicateIps, computeDhcpWarnings, computeSubnetConflicts, computeVlanConflicts, type DhcpWarning } from "../networkValidation";
 import {
   computePackList,
@@ -60,6 +60,9 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const [showCableSchedulePreview, setShowCableSchedulePreview] = useState(false);
   const [showPatchPanelPreview, setShowPatchPanelPreview] = useState(false);
   const [showPowerPreview, setShowPowerPreview] = useState(false);
+  // Network-tab view options — lifted here so CSV and PDF exports honor them.
+  const [networkMgmtOnly, setNetworkMgmtOnly] = useState(false);
+  const [networkRevealSecrets, setNetworkRevealSecrets] = useState(false);
 
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
@@ -79,7 +82,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
   const handleCsvExport = useCallback(() => {
     const ownedGear = useSchematicStore.getState().ownedGear;
     if (tab === "network") {
-      exportNetworkCsv(nodes, edges, schematicName);
+      exportNetworkCsv(nodes, edges, schematicName, networkMgmtOnly, networkRevealSecrets);
     } else if (tab === "devices") {
       exportDevicesCsv(nodes, ownedGear, schematicName);
     } else if (tab === "cableSchedule") {
@@ -105,7 +108,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
       const cableCosts = useSchematicStore.getState().cableCosts;
       exportPackListCsv(data, schematicName, cableCosts, computeDocumentSummary(nodes, edges, pages));
     }
-  }, [tab, nodes, edges, schematicName]);
+  }, [tab, nodes, edges, schematicName, networkMgmtOnly, networkRevealSecrets]);
 
   const defaultLayout = useMemo(() => createDefaultPackListLayout(), []);
   const networkDefaultLayout = useMemo(() => createDefaultNetworkReportLayout(), []);
@@ -117,7 +120,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
     devices: "Devices",
     cableSchedule: "Cable Schedule",
     patchPanel: "Patch Panels",
-    packList: "Pack List",
+    packList: "Bill of Materials",
     network: "Network",
     power: "Power",
   };
@@ -205,7 +208,14 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
 
           {/* Body */}
           <div className="overflow-auto flex-1 p-4">
-            {tab === "network" && <NetworkReportTab />}
+            {tab === "network" && (
+              <NetworkReportTab
+                mgmtOnly={networkMgmtOnly}
+                setMgmtOnly={setNetworkMgmtOnly}
+                revealSecrets={networkRevealSecrets}
+                setRevealSecrets={setNetworkRevealSecrets}
+              />
+            )}
             {tab === "devices" && <DeviceReportTab />}
             {tab === "packList" && <PackListTabInline />}
             {tab === "cableSchedule" && <CableScheduleTabInline />}
@@ -220,9 +230,11 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
           reportKey={NETWORK_LAYOUT_KEY}
           defaultLayout={networkDefaultLayout}
           titleBlock={titleBlock}
-          getTableData={(layout) =>
-            getNetworkReportTableData(computeNetworkReport(nodes, edges), layout)
-          }
+          getTableData={(layout) => {
+            let rows = computeNetworkReport(nodes, edges);
+            if (networkMgmtOnly) rows = rows.filter((r) => r.isManagement);
+            return getNetworkReportTableData(rows, layout, networkRevealSecrets);
+          }}
           onClose={() => setShowNetworkPreview(false)}
           filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Network Report.pdf`}
         />
@@ -237,7 +249,7 @@ function ReportsDialog({ initialTab, onClose }: ReportsDialogProps) {
             getPackListTableData(computePackList(nodes, edges, useSchematicStore.getState().pages), layout, useSchematicStore.getState().cableCosts)
           }
           onClose={() => setShowPreview(false)}
-          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Pack List.pdf`}
+          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Bill of Materials.pdf`}
         />
       )}
 
@@ -333,7 +345,7 @@ const CABLE_COLUMNS: { id: string; label: string }[] = [
 
 // ─── Network Report Tab ────────────────────────────────────────
 
-type SortKey = "deviceLabel" | "portLabel" | "room" | "signalType" | "hostname" | "ip" | "subnetMask" | "gateway" | "vlan" | "linkSpeed" | "poeDrawW" | "dhcp" | "dhcpServerLabel" | "notes";
+type SortKey = "deviceLabel" | "portLabel" | "room" | "signalType" | "hostname" | "ip" | "subnetMask" | "gateway" | "vlan" | "linkSpeed" | "poeDrawW" | "dhcp" | "dhcpServerLabel" | "username" | "notes";
 
 const networkColumns: SpreadsheetColumn<NetworkReportRow>[] = [
   { id: "deviceLabel", header: "Device", getValue: (r) => r.deviceLabel },
@@ -347,6 +359,8 @@ const networkColumns: SpreadsheetColumn<NetworkReportRow>[] = [
   { id: "vlan", header: "VLAN", getValue: (r) => r.vlan, editable: (r) => !r.dhcp, fillType: "vlan" },
   { id: "linkSpeed", header: "Speed", getValue: (r) => r.linkSpeed },
   { id: "poeDrawW", header: "PoE (W)", getValue: (r) => r.poeDrawW },
+  // Username/password are deliberately NOT spreadsheet columns: the spreadsheet's
+  // copy path reads raw values, which would bypass the credential mask.
   { id: "notes", header: "Notes", getValue: (r) => r.notes, editable: true },
 ];
 
@@ -361,7 +375,17 @@ const COLUMN_LABELS: Record<string, string> = {
   notes: "Notes",
 };
 
-function NetworkReportTab() {
+function NetworkReportTab({
+  mgmtOnly,
+  setMgmtOnly,
+  revealSecrets,
+  setRevealSecrets,
+}: {
+  mgmtOnly: boolean;
+  setMgmtOnly: (v: boolean) => void;
+  revealSecrets: boolean;
+  setRevealSecrets: (v: boolean) => void;
+}) {
   const nodes = useSchematicStore((s) => s.nodes);
   const edges = useSchematicStore((s) => s.edges);
   const patchDeviceData = useSchematicStore((s) => s.patchDeviceData);
@@ -370,7 +394,11 @@ function NetworkReportTab() {
   const [sortKey, setSortKey] = useState<SortKey>("deviceLabel");
   const [sortAsc, setSortAsc] = useState(true);
 
-  const rows = useMemo(() => computeNetworkReport(nodes, edges), [nodes, edges]);
+  const allRows = useMemo(() => computeNetworkReport(nodes, edges), [nodes, edges]);
+  const rows = useMemo(
+    () => (mgmtOnly ? allRows.filter((r) => r.isManagement) : allRows),
+    [allRows, mgmtOnly],
+  );
   const duplicateIps = useMemo(() => findDuplicateIps(nodes), [nodes]);
   const dhcpServers = useMemo(() => computeDhcpServerSummary(nodes), [nodes]);
   const poeBudgets = useMemo(() => computePoeBudget(nodes, edges), [nodes, edges]);
@@ -563,9 +591,9 @@ function NetworkReportTab() {
   useEffect(() => {
     spreadsheet.clearSelection();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortKey, sortAsc, filter]);
+  }, [sortKey, sortAsc, filter, mgmtOnly]);
 
-  if (rows.length === 0) {
+  if (allRows.length === 0) {
     return (
       <div className="text-sm text-[var(--color-text-muted)] text-center py-8">
         No addressable ports in this schematic.
@@ -670,14 +698,35 @@ function NetworkReportTab() {
         </div>
       )}
 
-      <div className="mb-3">
+      <div className="mb-3 flex items-center gap-4">
         <input
-          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+          className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
           placeholder="Filter by device, port, room, or IP..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           onKeyDown={(e) => e.stopPropagation()}
         />
+        <label className="flex items-center gap-1.5 text-xs text-[var(--color-text)] cursor-pointer whitespace-nowrap">
+          <input
+            type="checkbox"
+            checked={mgmtOnly}
+            onChange={(e) => setMgmtOnly(e.target.checked)}
+            className="cursor-pointer accent-blue-600"
+          />
+          Management ports only
+        </label>
+        <label
+          className="flex items-center gap-1.5 text-xs text-[var(--color-text)] cursor-pointer whitespace-nowrap"
+          title="Applies to this table and to CSV/PDF exports"
+        >
+          <input
+            type="checkbox"
+            checked={revealSecrets}
+            onChange={(e) => setRevealSecrets(e.target.checked)}
+            className="cursor-pointer accent-blue-600"
+          />
+          Show credentials in plain text
+        </label>
       </div>
       <div {...spreadsheet.getContainerProps()}>
         <table className="w-full border-collapse">
@@ -722,6 +771,11 @@ function NetworkReportTab() {
               <th className={thClass} onClick={() => toggleSort("dhcpServerLabel")}>
                 DHCP Server{sortArrow("dhcpServerLabel")}
               </th>
+              <th className={thClass}>Mgmt</th>
+              <th className={thClass} onClick={() => toggleSort("username")}>
+                Username{sortArrow("username")}
+              </th>
+              <th className={thClass}>Password</th>
               <th className={thClass} onClick={() => toggleSort("notes")}>
                 Notes{sortArrow("notes")}
               </th>
@@ -738,6 +792,7 @@ function NetworkReportTab() {
                 dhcpWarning={dhcpWarnings.get(`${row.nodeId}:${row.portId}`)}
                 onUpdateField={(field, value) => updatePortNetworkField(row, field, value)}
                 spreadsheet={spreadsheet}
+                revealSecrets={revealSecrets}
               />
             ))}
           </tbody>
@@ -765,6 +820,7 @@ const NetworkRow = memo(function NetworkRow({
   dhcpWarning,
   onUpdateField,
   spreadsheet,
+  revealSecrets,
 }: {
   row: NetworkReportRow;
   rowIndex: number;
@@ -773,6 +829,7 @@ const NetworkRow = memo(function NetworkRow({
   dhcpWarning?: DhcpWarning;
   onUpdateField: (field: string, value: string | number | boolean | undefined) => void;
   spreadsheet: ReturnType<typeof useSpreadsheetSelection<NetworkReportRow>>;
+  revealSecrets: boolean;
 }) {
   // Check if any cell in this row is selected for row-level highlight
   const hasSelection = networkColumns.some((col) => {
@@ -949,6 +1006,13 @@ const NetworkRow = memo(function NetworkRow({
 
       {/* DHCP Server: read-only coverage column */}
       {dhcpServerCell}
+
+      {/* Management interface marker */}
+      <td className={`${tdClass} text-center`}>{row.isManagement ? "\u2713" : ""}</td>
+
+      {/* Credentials — masked unless the user opted into plain text */}
+      <td className={tdClass}>{maskSecret(row.username, revealSecrets) || "\u2014"}</td>
+      <td className={`${tdClass} font-mono`}>{maskSecret(row.password, revealSecrets) || "\u2014"}</td>
 
       {/* Editable: Notes */}
       <SpreadsheetCell
@@ -2788,9 +2852,16 @@ function renderGroupedDevices(devices: PackListDevice[], currency = "USD") {
 
 // ─── CSV export helpers ────────────────────────────────────────
 
-function exportNetworkCsv(nodes: SchematicNode[], edges: import("../types").ConnectionEdge[], schematicName: string) {
-  const rows = computeNetworkReport(nodes, edges);
-  downloadCsv(buildNetworkReportCsv(rows), `${schematicName} - Network Report.csv`);
+function exportNetworkCsv(
+  nodes: SchematicNode[],
+  edges: import("../types").ConnectionEdge[],
+  schematicName: string,
+  mgmtOnly = false,
+  revealSecrets = false,
+) {
+  let rows = computeNetworkReport(nodes, edges);
+  if (mgmtOnly) rows = rows.filter((r) => r.isManagement);
+  downloadCsv(buildNetworkReportCsv(rows, revealSecrets), `${schematicName} - Network Report.csv`);
 }
 
 function exportDevicesCsv(nodes: SchematicNode[], ownedGear: OwnedGearItem[], schematicName: string) {

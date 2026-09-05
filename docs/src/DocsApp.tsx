@@ -36,7 +36,7 @@ const routes: Record<string, { title: string; component: React.FC }> = {
   "print-sheets": { title: "Print Sheets", component: PrintSheetsPage },
   notes: { title: "Notes & Annotations", component: NotesPage },
   "device-library": { title: "Device Library", component: DeviceLibraryPage },
-  "pack-list": { title: "Pack List & Reports", component: PackListPage },
+  "pack-list": { title: "Bill of Materials & Reports", component: PackListPage },
   printing: { title: "Printing & Title Block", component: PrintingPage },
   "import-export": { title: "Files & Exports", component: ImportExportPage },
   "import-devices": { title: "Import Devices", component: ImportDevicesPage },

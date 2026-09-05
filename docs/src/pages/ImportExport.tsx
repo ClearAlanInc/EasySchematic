@@ -9,7 +9,7 @@ export default function ImportExportPage() {
         can access it from any browser.
       </p>
       <ul>
-        <li>Create a free account via magic-link email or Google sign-in (no password needed)</li>
+        <li>Create a free account via magic-link email or Microsoft 365 sign-in (no password needed)</li>
         <li>Save via <strong>File → Save to Cloud</strong> or manage all saved schematics via <strong>File → My Schematics</strong></li>
         <li>Up to 10 schematics per account</li>
         <li>Cloud schematics are cached to IndexedDB for <strong>offline access</strong> — recently opened cloud files are available even without internet</li>
@@ -57,7 +57,7 @@ export default function ImportExportPage() {
         <li>Signal color customizations (if any)</li>
         <li>Print settings (paper size, orientation, scale)</li>
         <li>Title block data and layout</li>
-        <li>Report layout preferences (pack list column visibility, sorting, header/footer layout)</li>
+        <li>Report layout preferences (bill of materials column visibility, sorting, header/footer layout)</li>
       </ul>
 
       <h3>Import</h3>

@@ -98,7 +98,7 @@ export function createDefaultPackListHeaderLayout(): TitleBlockLayout {
     widthIn: 8,
     heightIn: 0.8,
     cells: [
-      layoutCell(0, 0, { type: "static", text: "Pack List" }, { fontSize: 14, fontWeight: "bold" }),
+      layoutCell(0, 0, { type: "static", text: "Bill of Materials" }, { fontSize: 14, fontWeight: "bold" }),
       layoutCell(0, 1, { type: "logo" }, { align: "right" }),
       layoutCell(1, 0, { type: "field", field: "showName" }, { fontSize: 8 }),
       layoutCell(1, 1, { type: "field", field: "date" }, { fontSize: 8, align: "right", color: "#666666" }),
@@ -161,6 +161,9 @@ export function createDefaultNetworkReportLayout(): ReportLayout {
           { key: "linkSpeed",   header: "Speed",    widthMm: 14, visible: false },
           { key: "poeDrawW",    header: "PoE (W)",  widthMm: 16, visible: false },
           { key: "dhcp",        header: "DHCP",     widthMm: 14, visible: true },
+          { key: "isManagement", header: "Mgmt",    widthMm: 12, visible: false },
+          { key: "username",    header: "Username", widthMm: 24, visible: true },
+          { key: "password",    header: "Password", widthMm: 24, visible: true },
           { key: "notes",       header: "Notes",    widthMm: 30, visible: false },
         ],
         groupBy: null,

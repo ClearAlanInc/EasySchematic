@@ -280,7 +280,7 @@ export default function DevicesAndPortsPage() {
       <p>
         Gender flows into the <strong>cable schedule</strong>. A cable plug is always the <em>opposite</em> gender of the port it
         mates with — a male plug fits a female socket. For a normal device-to-device run (female input, male output),
-        that's a standard M-F cable, and the pack list shows the plain cable name.
+        that's a standard M-F cable, and the bill of materials shows the plain cable name.
       </p>
       <p>
         When both endpoints share a gender, the cable label gets a suffix reflecting the cable's own ends:
@@ -299,7 +299,7 @@ export default function DevicesAndPortsPage() {
         <li>The port editor shows the two sides as <strong>Rear</strong> and <strong>Front</strong> instead of "Inputs" and "Outputs"</li>
         <li>The device on the canvas shows <strong>Rear</strong> on the left and <strong>Front</strong> on the right with a header above each column</li>
         <li>Rear and front ports default to the same gender — patch bays typically have female sockets on both faces, so a
-            cable connecting two front ports correctly shows up as <code>M-M</code> (male plugs on both cable ends) in the pack list</li>
+            cable connecting two front ports correctly shows up as <code>M-M</code> (male plugs on both cable ends) in the bill of materials</li>
         <li>Connections work the same way as any other device — drag from one face to wherever the cable physically goes</li>
       </ul>
       <p>

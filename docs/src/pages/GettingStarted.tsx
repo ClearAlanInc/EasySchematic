@@ -163,7 +163,7 @@ export default function GettingStartedPage() {
       <h3>Label case</h3>
       <p>
         Forces the display case of device names, port labels, slot labels, and card labels across
-        the canvas and in all exports (PDF, DXF, pack list, cable schedule, patch panel schedule,
+        the canvas and in all exports (PDF, DXF, bill of materials, cable schedule, patch panel schedule,
         network / power reports):
       </p>
       <ul>
@@ -220,7 +220,7 @@ export default function GettingStartedPage() {
           <strong>Auto-save</strong> — saves to localStorage after every change (always on, no account needed)
         </li>
         <li>
-          <strong>Cloud save</strong> — create a free account (magic-link email or Google sign-in, no password needed) to save up to
+          <strong>Cloud save</strong> — create a free account (magic-link email or Microsoft 365 sign-in, no password needed) to save up to
           10 schematics to the cloud. Access them from any browser via <strong>File → My Schematics</strong>
         </li>
         <li>

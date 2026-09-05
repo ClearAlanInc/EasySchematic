@@ -997,7 +997,7 @@
       ]
     },
     "documentSummary": "This document contains 13 devices, 14 connections (1 patch / 1 field), 2 rooms and 3 racks.",
-    "csv": "﻿Pack List — kitchen-sink\nGenerated 2026-01-01\nThis document contains 13 devices, 14 connections (1 patch / 1 field), 2 rooms and 3 racks.\n\nDEVICE LIST\nQty,Device,Manufacturer,Model #,Type,Room,Unit Cost,Extended Cost,Serial #,Spare,Note\n1,HDMI Panel 8,,,patch-panel,Control Room,,,,,\n1,NetHub 8,NetCo,,custom,Control Room,,,,,\n1,PD-2000,,,power,Control Room,,,,,\n1,Show PC,,,custom,Control Room,,,,,\n1,VS-800,SwitchCorp,VS-800,custom,Control Room,8000.00,8000.00,,,\n1,BigScreen 85,,,custom,Stage,,,,,\n1,Encoder X,,,custom,Stage,,,,,\n2,MixDesk 24,AudioCo,,custom,Stage,3200.00,6400.00,\"SN-MIX-1, SN-MIX-2\",1,\n2,ProCam 4K,CamCo,PC-4K,custom,Stage,1500.00,3000.00,\"SN-001, SN-002\",,Check lens before load-in\n,,,,,,TOTAL,17400.00\n\nCABLE ACCESSORIES\nQty,Accessory,Type,Room\n1,Ramp 5ch,cable-ramp,Stage\n\nADAPTERS\nQty,Adapter,Manufacturer,Model #,Room\n1,SDI2HDMI,AdaptCo,A-100,Control Room\n\nRACKS\nQty,Rack,Type,Height (U),Room,Unit Cost,Extended Cost\n2,Main Rack,\"19\"\" Floor Standing\",42,Control Room,1200.00,2400.00\n1,Stage Rack,Wall Mount,12,Stage,,\n,,,,,TOTAL,2400.00\n\nCABLE LIST\nQty,Cable Type,Signal,Length,Route,Unit Cost,Extended Cost\n3,Cat6 M-M,Ethernet,,Stage > Control Room,,\n2,Cat6 M-M,Ethernet,,Within Control Room,,\n2,HDMI M-M,HDMI,,Within Control Room,,\n2,XLR,Analog,,Stage > Control Room,,\n1,BNC M-M,SDI,25 ft,Stage > Control Room,,\n1,BNC M-M,SDI,50 ft,Stage > Control Room,,\n1,Edison,Power,,Within Control Room,,\n1,HDMI M-M,HDMI,,Control Room > Stage,,\n1,powerCON,Power,,Within Control Room,,",
+    "csv": "﻿Bill of Materials — kitchen-sink\nGenerated 2026-01-01\nThis document contains 13 devices, 14 connections (1 patch / 1 field), 2 rooms and 3 racks.\n\nDEVICE LIST\nQty,Device,Manufacturer,Model #,Type,Room,Unit Cost,Extended Cost,Serial #,Spare,Note\n1,HDMI Panel 8,,,patch-panel,Control Room,,,,,\n1,NetHub 8,NetCo,,custom,Control Room,,,,,\n1,PD-2000,,,power,Control Room,,,,,\n1,Show PC,,,custom,Control Room,,,,,\n1,VS-800,SwitchCorp,VS-800,custom,Control Room,8000.00,8000.00,,,\n1,BigScreen 85,,,custom,Stage,,,,,\n1,Encoder X,,,custom,Stage,,,,,\n2,MixDesk 24,AudioCo,,custom,Stage,3200.00,6400.00,\"SN-MIX-1, SN-MIX-2\",1,\n2,ProCam 4K,CamCo,PC-4K,custom,Stage,1500.00,3000.00,\"SN-001, SN-002\",,Check lens before load-in\n,,,,,,TOTAL,17400.00\n\nCABLE ACCESSORIES\nQty,Accessory,Type,Room\n1,Ramp 5ch,cable-ramp,Stage\n\nADAPTERS\nQty,Adapter,Manufacturer,Model #,Room\n1,SDI2HDMI,AdaptCo,A-100,Control Room\n\nRACKS\nQty,Rack,Type,Height (U),Room,Unit Cost,Extended Cost\n2,Main Rack,\"19\"\" Floor Standing\",42,Control Room,1200.00,2400.00\n1,Stage Rack,Wall Mount,12,Stage,,\n,,,,,TOTAL,2400.00\n\nCABLE LIST\nQty,Cable Type,Signal,Length,Route,Unit Cost,Extended Cost\n3,Cat6 M-M,Ethernet,,Stage > Control Room,,\n2,Cat6 M-M,Ethernet,,Within Control Room,,\n2,HDMI M-M,HDMI,,Within Control Room,,\n2,XLR,Analog,,Stage > Control Room,,\n1,BNC M-M,SDI,25 ft,Stage > Control Room,,\n1,BNC M-M,SDI,50 ft,Stage > Control Room,,\n1,Edison,Power,,Within Control Room,,\n1,HDMI M-M,HDMI,,Control Room > Stage,,\n1,powerCON,Power,,Within Control Room,,",
     "printTables": [
       {
         "id": "devices",
@@ -1280,7 +1280,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": "25"
+        "poeDrawW": "25",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "cam-2",
@@ -1299,7 +1302,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": "25"
+        "poeDrawW": "25",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "switcher",
@@ -1318,7 +1324,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "router",
@@ -1337,7 +1346,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "router",
@@ -1356,7 +1368,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "router",
@@ -1375,7 +1390,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "router",
@@ -1394,7 +1412,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "show-pc",
@@ -1413,7 +1434,10 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "legacy",
@@ -1432,10 +1456,13 @@
         "dhcpCovered": true,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       }
     ],
-    "csv": "Device,Port,Room,Signal,Hostname,IP,Subnet Mask,Gateway,VLAN,Speed,PoE (W),DHCP,DHCP Server,Notes\nCamera 1,LAN,Stage,Ethernet,,,,,,,25,No,Core Router,\nCamera 2,LAN,Stage,Ethernet,,10.10.10.150,,,,,25,No,Core Router,\nVision Switcher,Control,Control Room,Ethernet,vs-800,10.10.10.5,255.255.255.0,10.10.10.1,10,,,No,Core Router,\nCore Router,Port 1,Control Room,Ethernet,core-rt,10.10.10.1,255.255.255.0,,10,,,No,Core Router,\nCore Router,Port 2,Control Room,Ethernet,core-rt,,,,,,,No,Core Router,\nCore Router,Port 3,Control Room,Ethernet,core-rt,,,,,,,No,Core Router,\nCore Router,Port 4,Control Room,Ethernet,core-rt,10.10.10.4,255.255.255.0,,,,,No,Core Router,\nShow PC,LAN,Control Room,Ethernet,,,,,,,,Yes,Core Router,\nLegacy Encoder,LAN,Stage,Ethernet,,10.10.10.150,255.255.0.0,,,,,No,Core Router,",
+    "csv": "Device,Port,Room,Signal,Hostname,IP,Subnet Mask,Gateway,VLAN,Speed,PoE (W),DHCP,DHCP Server,Mgmt,Username,Password,Notes\nCamera 1,LAN,Stage,Ethernet,,,,,,,25,No,Core Router,,,,\nCamera 2,LAN,Stage,Ethernet,,10.10.10.150,,,,,25,No,Core Router,,,,\nVision Switcher,Control,Control Room,Ethernet,vs-800,10.10.10.5,255.255.255.0,10.10.10.1,10,,,No,Core Router,,,,\nCore Router,Port 1,Control Room,Ethernet,core-rt,10.10.10.1,255.255.255.0,,10,,,No,Core Router,,,,\nCore Router,Port 2,Control Room,Ethernet,core-rt,,,,,,,No,Core Router,,,,\nCore Router,Port 3,Control Room,Ethernet,core-rt,,,,,,,No,Core Router,,,,\nCore Router,Port 4,Control Room,Ethernet,core-rt,10.10.10.4,255.255.255.0,,,,,No,Core Router,,,,\nShow PC,LAN,Control Room,Ethernet,,,,,,,,Yes,Core Router,,,,\nLegacy Encoder,LAN,Stage,Ethernet,,10.10.10.150,255.255.0.0,,,,,No,Core Router,,,,",
     "dhcpServers": [
       {
         "nodeId": "router",
@@ -1475,7 +1502,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": "25"
+            "poeDrawW": "25",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Camera 2",
@@ -1491,7 +1521,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": "25"
+            "poeDrawW": "25",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Vision Switcher",
@@ -1507,7 +1540,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Core Router",
@@ -1523,7 +1559,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Core Router",
@@ -1539,7 +1578,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Core Router",
@@ -1555,7 +1597,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Core Router",
@@ -1571,7 +1616,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Show PC",
@@ -1587,7 +1635,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Legacy Encoder",
@@ -1603,7 +1654,10 @@
             "dhcpServer": "Core Router",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           }
         ]
       }

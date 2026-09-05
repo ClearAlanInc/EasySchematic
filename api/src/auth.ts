@@ -16,8 +16,6 @@ export type Env = {
     ADMIN_TOKEN: string;
     RESEND_API_KEY: string;
     SUPPORT_FORWARD_EMAIL: string;
-    GOOGLE_CLIENT_ID: string;
-    GOOGLE_CLIENT_SECRET: string;
     /** Microsoft Entra ID app registration (self-hosted deployments). Unset = provider hidden. */
     MS_CLIENT_ID?: string;
     MS_CLIENT_SECRET?: string;

@@ -5,6 +5,7 @@ import { findReachableDhcpServers } from "./networkValidation";
 import { formatVlanList, isTrunk } from "./vlanPropagation";
 import { getRoomLabel, escapeCsv } from "./packList";
 import { transformLabelNow } from "./labelCaseUtils";
+import { decryptSecret } from "./credentials";
 import type { ReportLayout } from "./reportLayout";
 import type { ReportTableData } from "./reportPdf";
 
@@ -26,6 +27,21 @@ export interface NetworkReportRow {
   notes: string;
   linkSpeed: string;
   poeDrawW: string;
+  /** This port is the device's management interface. */
+  isManagement: boolean;
+  /** Management credentials (plaintext). Carried on the device's management row
+   *  (or its first row when no port is flagged) — mask on display/export unless
+   *  the user opted into plain text. */
+  username: string;
+  password: string;
+}
+
+/** Placeholder shown for a set credential when plain-text display is off. */
+export const MASKED_SECRET = "••••••";
+
+export function maskSecret(value: string, reveal: boolean): string {
+  if (!value) return "";
+  return reveal ? value : MASKED_SECRET;
 }
 
 
@@ -42,6 +58,7 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
     const data = node.data as DeviceData;
     if (data.isCableAccessory) continue;
     const room = getRoomLabel(nodes, node.parentId);
+    const deviceRowStart = rows.length;
 
     for (const port of data.ports) {
       const nc = port.networkConfig;
@@ -80,7 +97,49 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
         notes: port.notes ?? "",
         linkSpeed: port.linkSpeed ?? "",
         poeDrawW: port.poeDrawW != null ? String(port.poeDrawW) : "",
+        isManagement: nc?.isManagement === true,
+        username: "",
+        password: "",
       });
+    }
+
+    // Credentials are device-level; attach them to the management row (or the
+    // device's first row when no port is flagged) so they appear exactly once.
+    // A device with credentials but no addressable ports (e.g. a switch whose
+    // LAN ports are all non-addressable) still gets one row — the report doubles
+    // as the credential inventory, so its login must not silently disappear.
+    if (data.username || data.password) {
+      const deviceRows = rows.slice(deviceRowStart);
+      const credRow = deviceRows.find((r) => r.isManagement) ?? deviceRows[0];
+      const username = data.username ?? "";
+      const password = data.password ? decryptSecret(data.password) : "";
+      if (credRow) {
+        credRow.username = username;
+        credRow.password = password;
+      } else {
+        rows.push({
+          nodeId: node.id,
+          portId: "",
+          deviceLabel: transformLabelNow(data.label),
+          portLabel: "",
+          room,
+          signalType: "",
+          hostname: data.hostname ?? "",
+          ip: "",
+          subnetMask: "",
+          gateway: "",
+          vlan: "",
+          dhcp: false,
+          dhcpServerLabel: "",
+          dhcpCovered: false,
+          notes: "",
+          linkSpeed: "",
+          poeDrawW: "",
+          isManagement: true,
+          username,
+          password,
+        });
+      }
     }
   }
 
@@ -102,9 +161,10 @@ export function computeNetworkReport(nodes: SchematicNode[], edges: ConnectionEd
   return rows;
 }
 
-/** Build the network-report CSV contents (no BOM — the download wrapper adds it). */
-export function buildNetworkReportCsv(rows: NetworkReportRow[]): string {
-  const header = ["Device", "Port", "Room", "Signal", "Hostname", "IP", "Subnet Mask", "Gateway", "VLAN", "Speed", "PoE (W)", "DHCP", "DHCP Server", "Notes"];
+/** Build the network-report CSV contents (no BOM — the download wrapper adds it).
+ *  Credentials are masked unless `revealSecrets` — the export mirrors the screen. */
+export function buildNetworkReportCsv(rows: NetworkReportRow[], revealSecrets = false): string {
+  const header = ["Device", "Port", "Room", "Signal", "Hostname", "IP", "Subnet Mask", "Gateway", "VLAN", "Speed", "PoE (W)", "DHCP", "DHCP Server", "Mgmt", "Username", "Password", "Notes"];
   const lines = [
     header.join(","),
     ...rows.map((r) =>
@@ -122,6 +182,9 @@ export function buildNetworkReportCsv(rows: NetworkReportRow[]): string {
         r.poeDrawW,
         r.dhcp ? "Yes" : "No",
         escapeCsv(r.dhcpServerLabel),
+        r.isManagement ? "Yes" : "",
+        escapeCsv(maskSecret(r.username, revealSecrets)),
+        escapeCsv(maskSecret(r.password, revealSecrets)),
         escapeCsv(r.notes),
       ].join(","),
     ),
@@ -222,6 +285,7 @@ export function computePoeBudget(nodes: SchematicNode[], edges: ConnectionEdge[]
 export function getNetworkReportTableData(
   rows: NetworkReportRow[],
   layout: ReportLayout,
+  revealSecrets = false,
 ): ReportTableData[] {
   const tableDef = layout.tables.find((t) => t.id === "network");
 
@@ -240,6 +304,9 @@ export function getNetworkReportTableData(
     notes:          r.notes,
     linkSpeed:      r.linkSpeed,
     poeDrawW:       r.poeDrawW,
+    isManagement:   r.isManagement ? "Yes" : "",
+    username:       maskSecret(r.username, revealSecrets),
+    password:       maskSecret(r.password, revealSecrets),
   }));
 
   const sortBy  = tableDef?.sortBy ?? null;

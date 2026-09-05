@@ -743,7 +743,7 @@ export default function EdgeContextMenu() {
                 onClick={() => setWireType(st)}
                 title={isVirtualSignal(st)
                   ? "Virtual — a logical stream over the physical run; no cable of its own"
-                  : "Physical — a real cable in the schedule and pack list"}
+                  : "Physical — a real cable in the schedule and bill of materials"}
               >
                 <span
                   className="w-2.5 h-2.5 rounded-full shrink-0 border"

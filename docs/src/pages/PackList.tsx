@@ -1,16 +1,16 @@
 export default function PackListPage() {
   return (
     <>
-      <h1>Pack List &amp; Reports</h1>
+      <h1>Bill of Materials &amp; Reports</h1>
 
       <p>
-        The <strong>Pack List</strong> generates a bill of materials from your schematic — a summary of every device
+        The <strong>Bill of Materials</strong> (BOM) is generated from your schematic — a summary of every device
         and cable you need. Open it from the <strong>Reports</strong> menu in the menu bar.
       </p>
 
-      <h2>Browsing the pack list</h2>
+      <h2>Browsing the bill of materials</h2>
       <p>
-        The pack list dialog has two tabs:
+        The bill of materials dialog has two tabs:
       </p>
       <ul>
         <li><strong>Devices</strong> — every device in your schematic with quantity, manufacturer, model number, model, type, and room</li>
@@ -25,17 +25,17 @@ export default function PackListPage() {
         When grouping is off, identical items are merged into a single row with a combined count.
       </p>
       <p>
-        Adapters always appear in the pack list even when <strong>hidden</strong> on the schematic — the pack
-        list is the complete bill of materials. Connections marked as <strong>direct-attach</strong> (where the
+        Adapters always appear in the bill of materials even when <strong>hidden</strong> on the schematic — the
+        BOM is always the complete picture. Connections marked as <strong>direct-attach</strong> (where the
         adapter plugs directly into a device) are excluded from cable counts since no separate cable is needed.
       </p>
 
       <h2>Cost tracking</h2>
       <p>
         Devices and cables can have an optional <strong>unit cost</strong> field. Set unit
-        cost in the device editor or cable schedule. Costs appear in the pack list and
+        cost in the device editor or cable schedule. Costs appear in the bill of materials and
         can be exported to CSV for budgeting and quoting. Devices flagged
-        as <strong>owner-provided</strong> are distinguished in the pack list so you can
+        as <strong>owner-provided</strong> are distinguished in the bill of materials so you can
         separate house gear from rental gear.
       </p>
 
@@ -62,7 +62,7 @@ export default function PackListPage() {
         as device auto-numbering.
       </p>
       <p>
-        The cable schedule supports the same PDF export, CSV export, and print preview layout as the pack list.
+        The cable schedule supports the same PDF export, CSV export, and print preview layout as the bill of materials.
       </p>
 
       <h2>Patch panel schedule</h2>
@@ -84,10 +84,10 @@ export default function PackListPage() {
         or <strong>Face</strong> from the Group by dropdown. Like other reports, it supports PDF, CSV, and print preview.
       </p>
 
-      <h2>Owned Gear &amp; pack list quantities</h2>
+      <h2>Owned Gear &amp; bill of materials quantities</h2>
       <p>
         The <strong>Owned Gear</strong> library tracks an inventory of devices you own. When you build a schematic,
-        the pack list compares the devices you've placed against your inventory and reports
+        the bill of materials compares the devices you've placed against your inventory and reports
         <strong> used vs. needed</strong> counts — so a single document tells you what to pull off the shelf and what
         to rent or buy.
       </p>
@@ -116,7 +116,7 @@ export default function PackListPage() {
       <p>
         This is useful for generating IP address schedules and verifying network configuration
         before a show. The network report supports the same PDF export, CSV export, and print
-        preview layout as the pack list.
+        preview layout as the bill of materials.
       </p>
 
       <h2>Power report</h2>
@@ -170,7 +170,7 @@ export default function PackListPage() {
       <p>Each cell can display:</p>
       <ul>
         <li><strong>Field</strong> — a value from your show info (show name, venue, designer, date, etc.)</li>
-        <li><strong>Static text</strong> — any custom text (e.g., "Pack List")</li>
+        <li><strong>Static text</strong> — any custom text (e.g., "Bill of Materials")</li>
         <li><strong>Logo</strong> — your uploaded logo image</li>
         <li><strong>Page number</strong> — auto-filled "Page X of Y"</li>
       </ul>
@@ -215,7 +215,7 @@ export default function PackListPage() {
       <p>
         All report layout preferences — paper size, orientation, header/footer layout, column visibility,
         grouping, and sorting — are saved with your schematic file. When you export and re-import a
-        schematic, your pack list layout comes with it.
+        schematic, your bill of materials layout comes with it.
       </p>
     </>
   );

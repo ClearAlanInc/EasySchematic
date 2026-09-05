@@ -63,7 +63,6 @@ export async function checkSession(): Promise<{ id: string; email: string; name:
 }
 
 export interface AuthProviders {
-  google: boolean;
   microsoft: boolean;
   magicLink: boolean;
 }
@@ -72,13 +71,13 @@ export interface AuthProviders {
  *  the historical default (Google + magic link) when the endpoint is missing
  *  or unreachable, so older servers keep their current dialog. */
 export async function fetchAuthProviders(): Promise<AuthProviders> {
-  const fallback: AuthProviders = { google: true, microsoft: false, magicLink: true };
-  if (!CLOUD_ENABLED) return { google: false, microsoft: false, magicLink: false };
+  const fallback: AuthProviders = { microsoft: true, magicLink: true };
+  if (!CLOUD_ENABLED) return { microsoft: false, magicLink: false };
   try {
     const res = await fetch(`${API_URL}/auth/providers`);
     if (!res.ok) return fallback;
     const data = (await res.json()) as Partial<AuthProviders>;
-    return { google: !!data.google, microsoft: !!data.microsoft, magicLink: !!data.magicLink };
+    return { microsoft: !!data.microsoft, magicLink: !!data.magicLink };
   } catch {
     return fallback;
   }

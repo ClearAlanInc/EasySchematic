@@ -387,7 +387,7 @@ make dev`}</code>
             <td>Yes</td>
           </tr>
           <tr>
-            <td>Pack list, cable schedule, reports</td>
+            <td>Bill of materials, cable schedule, reports</td>
             <td>Yes</td>
           </tr>
           <tr>

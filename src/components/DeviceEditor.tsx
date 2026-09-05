@@ -1809,7 +1809,7 @@ export default function DeviceEditor() {
                   onKeyDown={(e) => e.stopPropagation()}
                 />
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
-                  Shows in the pack list / device report.
+                  Shows in the bill of materials / device report.
                 </p>
               </div>
             </div>
@@ -1988,7 +1988,7 @@ export default function DeviceEditor() {
                   onChange={(e) => setIsVenueProvided(e.target.checked)}
                   className="cursor-pointer"
                 />
-                Owner Provided (exclude from pack list)
+                Owner Provided (exclude from bill of materials)
               </label>
             </div>
           </details>

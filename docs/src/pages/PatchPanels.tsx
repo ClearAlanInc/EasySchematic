@@ -22,7 +22,7 @@ export default function PatchPanelsPage() {
       <p>
         Use <strong>+ Add panel</strong> in the Patch Bay sidebar to create a <strong>virtual panel </strong>
         from the device library. Virtual panels never appear on the schematic and never affect
-        connection routing, but they are real project devices: they show up in the pack list, the
+        connection routing, but they are real project devices: they show up in the bill of materials, the
         patch panel schedule, and can be placed in rack elevations. You can convert a virtual panel
         to an on-schematic device (and back) from the sidebar — converting to virtual is only
         possible while the panel has no drawn connections.

@@ -54,8 +54,8 @@ export default function ConnectionsPage() {
       <h2>Cable length</h2>
       <p>
         Each connection has an optional <strong>cable length</strong> field. Set it in the cable schedule
-        report — lengths are stored per-connection and appear in both the cable schedule and pack list.
-        The pack list groups cables by length when summarizing.
+        report — lengths are stored per-connection and appear in both the cable schedule and bill of materials.
+        The bill of materials groups cables by length when summarizing.
       </p>
 
       <h3>Estimated cable length</h3>
@@ -123,7 +123,7 @@ export default function ConnectionsPage() {
       </ul>
       <p>
         Bundling never changes your <strong>cable counts</strong>: every connection in a bundle is still its own row in
-        the cable schedule and its own cable in the pack list. Converting a bundled connection to a{" "}
+        the cable schedule and its own cable in the bill of materials. Converting a bundled connection to a{" "}
         <strong>stub</strong> removes it from the bundle, and a bundle automatically dissolves back into normal
         connections when fewer than two members remain. The cable schedule can also <strong>group by bundle</strong> if
         you want all of a bundle's cables listed together.
@@ -185,7 +185,7 @@ export default function ConnectionsPage() {
       <ul>
         <li>
           <strong>Adapters</strong> are passive devices (dongles, cable adapters, barrels) — they appear
-          in the <strong>cables</strong> section of the pack list
+          in the <strong>cables</strong> section of the bill of materials
         </li>
         <li>
           <strong>Converters</strong> are active devices (e.g., Decimator, BMD Mini Converter) — they appear
@@ -197,7 +197,7 @@ export default function ConnectionsPage() {
       <p>
         Adapter templates include gender labels — e.g., "USB-C (M) → HDMI (F) Adapter".
         <strong> M</strong> = male plug, <strong>F</strong> = female socket. This distinction matters for
-        pack lists so you know exactly which adapter to pull.
+        bills of materials so you know exactly which adapter to pull.
       </p>
 
       <h3>Direct attach</h3>
@@ -208,7 +208,7 @@ export default function ConnectionsPage() {
       <ul>
         <li>Direct-attach connections render as <strong>thin gray lines</strong> instead of colored cable lines</li>
         <li>They don't appear in the cable schedule or get cable ID numbers</li>
-        <li>They're excluded from pack list cable counts</li>
+        <li>They're excluded from bill of materials cable counts</li>
         <li>
           Toggle direct-attach per port in the <strong>device editor</strong> — look for the
           <strong> DA</strong> badge on each port row (only visible on adapter devices)
@@ -250,7 +250,7 @@ export default function ConnectionsPage() {
         <li><strong>Always Hide</strong> — hidden even when "Hide all adapters" is off</li>
       </ul>
       <p>
-        Hidden adapters <strong>still appear in the pack list</strong> — the pack list is always the
+        Hidden adapters <strong>still appear in the bill of materials</strong> — the bill of materials is always the
         complete bill of materials regardless of what's visible on the canvas.
       </p>
 
@@ -354,7 +354,7 @@ export default function ConnectionsPage() {
       </p>
       <p>
         The connection stays <strong>logically intact</strong> through the pair: cable IDs, the cable schedule,
-        pack list, network report, and VLAN propagation all treat it as one wire.
+        bill of materials, network report, and VLAN propagation all treat it as one wire.
       </p>
       <p>
         Each stub end displays a <strong>label</strong> showing where the connection goes — the destination device
@@ -417,7 +417,7 @@ export default function ConnectionsPage() {
         If no adapter template exists for a connector or signal mismatch, you can still force the connection.
         The dialog offers a <strong>Connect Anyway</strong> button, or you can right-click an existing
         connection and select <strong>Allow Incompatible Connectors</strong>. Use this sparingly — forced
-        connections won't accurately reflect your cable needs in the pack list.
+        connections won't accurately reflect your cable needs in the bill of materials.
       </p>
     </>
   );

@@ -20,6 +20,7 @@ import {
   type Connection,
 } from "@xyflow/react";
 import { useSchematicStore, GRID_SIZE, setReconnectingEdgeId } from "./store";
+import { ALIGN_SHORTCUT_CODES, ALIGN_SHORTCUT_KEYS } from "./alignUtils";
 import { normalizeShortcutKey } from "./keyUtils";
 import { warmupRoutingWorker } from "./routing/routingClient";
 import { useMcpBridge } from "./mcpBridge";
@@ -1986,6 +1987,10 @@ export default function App() {
         e.preventDefault();
         const s = useSchematicStore.getState();
         s.setPrintView(!s.printView);
+      } else if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && (ALIGN_SHORTCUT_KEYS[k] ?? ALIGN_SHORTCUT_CODES[e.code])) {
+        // Alignment: Alt/Option + T/B/R/L/H/V (dual lookup — see alignUtils).
+        e.preventDefault();
+        useSchematicStore.getState().alignSelectedNodes(ALIGN_SHORTCUT_KEYS[k] ?? ALIGN_SHORTCUT_CODES[e.code]);
       }
     };
     window.addEventListener("keydown", handleKeyDown);

@@ -60,7 +60,7 @@ function PackListDialog({ onClose }: PackListDialogProps) {
           {/* Header */}
           <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-3">
             <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">
-              Pack List
+              Bill of Materials
             </h2>
             <div className="flex-1" />
             <button
@@ -138,7 +138,7 @@ function PackListDialog({ onClose }: PackListDialogProps) {
           titleBlock={titleBlock}
           getTableData={(layout) => getPackListTableData(data, layout)}
           onClose={() => setShowPreview(false)}
-          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Pack List.pdf`}
+          filename={`${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Bill of Materials.pdf`}
         />
       )}
     </>

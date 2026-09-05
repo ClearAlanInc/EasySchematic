@@ -564,7 +564,7 @@ export function buildPackListCsv(
 ): string {
   const lines: string[] = [];
 
-  lines.push(`Pack List — ${schematicName}`);
+  lines.push(`Bill of Materials — ${schematicName}`);
   lines.push(`Generated ${generatedDate}`);
   if (summary) lines.push(summary);
   lines.push("");
@@ -671,7 +671,7 @@ export function exportPackListCsv(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Pack List.csv`;
+  a.download = `${schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")} - Bill of Materials.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

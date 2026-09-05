@@ -94,14 +94,14 @@ export default function OverviewPage() {
         </li>
         <li>
           <strong>Connector gender</strong> — auto-derived per port, with M-M / F-F suffixes on cables that need
-          like-gendered plugs so the pack list matches what you actually buy
+          like-gendered plugs so the bill of materials matches what you actually buy
         </li>
         <li>
           <strong>Estimated cable length</strong> — auto-populated from room-to-room distances when both endpoints
           live in placed rooms
         </li>
         <li>
-          <strong>Owned Gear library</strong> — maintain an inventory of gear you own; the pack list reports used vs.
+          <strong>Owned Gear library</strong> — maintain an inventory of gear you own; the bill of materials reports used vs.
           needed counts so you know what to pull and what to rent
         </li>
         <li>
@@ -166,7 +166,7 @@ export default function OverviewPage() {
           <strong>Mobile support</strong> — mobile detection with hamburger menu and touch-friendly controls
         </li>
         <li>
-          <strong>Google OAuth</strong> — sign in with Google or magic-link email
+          <strong>Microsoft 365 sign-in</strong> — sign in with your Microsoft account or magic-link email
         </li>
         <li>
           <strong>Offline cloud cache</strong> — cloud schematics cached to IndexedDB for offline access
@@ -181,7 +181,7 @@ export default function OverviewPage() {
           <strong>Auxiliary data</strong> — customizable text lines at the bottom of each device
         </li>
         <li>
-          <strong>Owner-provided gear</strong> — flag devices as owner-provided for pack list distinction
+          <strong>Owner-provided gear</strong> — flag devices as owner-provided for bill of materials distinction
         </li>
         <li>
           <strong>Nested slots</strong> — expansion cards with sub-slots (e.g., SFP transceivers in network cards)

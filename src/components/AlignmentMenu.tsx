@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useSchematicStore } from "../store";
-import type { AlignOperation } from "../alignUtils";
+import { ALIGN_SHORTCUT_LABELS, type AlignOperation } from "../alignUtils";
 
 interface OpDef {
   op: AlignOperation;
@@ -111,9 +111,10 @@ function OpButton({
   disabled,
   onClick,
 }: OpDef & { disabled: boolean; onClick: (op: AlignOperation) => void }) {
+  const shortcut = ALIGN_SHORTCUT_LABELS[op];
   return (
     <button
-      title={label}
+      title={shortcut ? `${label} (${shortcut})` : label}
       disabled={disabled}
       onClick={() => onClick(op)}
       className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer w-full text-left"

@@ -261,3 +261,79 @@ describe("persistence", () => {
     expect(migrated.schematicSheets).toEqual([{ id: "sheet-1", label: "Page 1" }]);
   });
 });
+
+describe("cross-page copy/paste", () => {
+  function roomWithChild(sheetId: string) {
+    const room = {
+      id: "room-orig", type: "room", position: { x: 100, y: 100 },
+      data: { label: "Rack A", sheetId }, style: { width: 400, height: 300 },
+    } as SchematicNode;
+    const child = { ...device("dev-orig"), parentId: "room-orig", position: { x: 40, y: 60 } } as SchematicNode;
+    return { room, child };
+  }
+
+  it("pasting a room-child onto another page detaches it onto the active page", () => {
+    const { room, child } = roomWithChild("sheet-2");
+    store.setState({
+      nodes: [room, child],
+      edges: [],
+      schematicSheets: [{ id: "sheet-1", label: "Page 1" }, { id: "sheet-2", label: "Page 2" }],
+      activeSheetId: "sheet-2",
+    });
+    // Copy just the child on page 2, then paste on page 1
+    store.setState({ nodes: store.getState().nodes.map((n) => n.id === "dev-orig" ? { ...n, selected: true } : n) });
+    store.getState().copySelected();
+    store.getState().setActiveSheet("sheet-1");
+    store.getState().pasteClipboard();
+
+    const st = store.getState();
+    const pasted = st.nodes.filter((n) => n.type === "device" && n.id !== "dev-orig");
+    expect(pasted).toHaveLength(1);
+    expect(pasted[0].parentId).toBeUndefined();
+    const map = new Map(st.nodes.map((n) => [n.id, n]));
+    expect(sheets.resolveNodeSheet(pasted[0], map, st.edges, "sheet-1")).toBe("sheet-1");
+    // Detached at absolute coordinates (room offset applied)
+    expect(pasted[0].position.x).toBe(140);
+  });
+
+  it("pasting on the same page keeps the child inside its original room", () => {
+    const { room, child } = roomWithChild("sheet-2");
+    store.setState({
+      nodes: [room, child],
+      edges: [],
+      schematicSheets: [{ id: "sheet-1", label: "Page 1" }, { id: "sheet-2", label: "Page 2" }],
+      activeSheetId: "sheet-2",
+    });
+    store.setState({ nodes: store.getState().nodes.map((n) => n.id === "dev-orig" ? { ...n, selected: true } : n) });
+    store.getState().copySelected();
+    store.getState().pasteClipboard();
+
+    const pasted = store.getState().nodes.filter((n) => n.type === "device" && n.id !== "dev-orig");
+    expect(pasted).toHaveLength(1);
+    expect(pasted[0].parentId).toBe("room-orig");
+  });
+
+  it("pasting a copied room remaps its child's parentId to the new room", () => {
+    const { room, child } = roomWithChild("sheet-2");
+    store.setState({
+      nodes: [
+        { ...room, selected: true },
+        { ...child, selected: true },
+      ],
+      edges: [],
+      schematicSheets: [{ id: "sheet-1", label: "Page 1" }, { id: "sheet-2", label: "Page 2" }],
+      activeSheetId: "sheet-2",
+    });
+    store.getState().copySelected();
+    store.getState().setActiveSheet("sheet-1");
+    store.getState().pasteClipboard();
+
+    const st = store.getState();
+    const newRoom = st.nodes.find((n) => n.type === "room" && n.id !== "room-orig")!;
+    const newChild = st.nodes.find((n) => n.type === "device" && n.id !== "dev-orig")!;
+    expect(newRoom).toBeDefined();
+    expect(newChild.parentId).toBe(newRoom.id);
+    const map = new Map(st.nodes.map((n) => [n.id, n]));
+    expect(sheets.resolveNodeSheet(newChild, map, st.edges, "sheet-1")).toBe("sheet-1");
+  });
+});

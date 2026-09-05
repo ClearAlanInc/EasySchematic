@@ -34,7 +34,7 @@ export default function SchematicPagesPage() {
         far end's page name — for example <code>T1 | → Amp Rack [CH 1] Pg Amps</code>.
       </p>
       <p>
-        The connection stays <strong>logically intact</strong>: cable numbers, the cable schedule, the pack list,
+        The connection stays <strong>logically intact</strong>: cable numbers, the cable schedule, the bill of materials,
         and VLAN propagation all treat the pair as one wire. Right-click a tag for <strong>Go to Other End</strong>
         (jumps to the partner's page and centers it) and <strong>Rename Tag…</strong>. See{" "}
         <a href="/connections">Connections → Wire tags</a> for the full behavior.
@@ -42,7 +42,7 @@ export default function SchematicPagesPage() {
 
       <h2>Reports and printing</h2>
       <ul>
-        <li>Reports (cable schedule, pack list, network report) always cover the <strong>whole file</strong>, all pages.</li>
+        <li>Reports (cable schedule, bill of materials, network report) always cover the <strong>whole file</strong>, all pages.</li>
         <li>Print View, page guides, and PDF export operate on the <strong>active page's</strong> canvas.</li>
       </ul>
     </>

@@ -23,9 +23,9 @@ const features = [
       "Organize devices into rooms, racks, or logical groups. Move and resize groups freely. Nest rooms to represent control rooms, stages, OB trucks, and equipment closets.",
   },
   {
-    title: "Pack Lists & Cable Schedules",
+    title: "Bills of Materials & Cable Schedules",
     description:
-      "Generate paperwork straight from your schematic — pack lists with every device and its details, cable schedules with signal types, source/destination, and cable IDs. No more maintaining separate spreadsheets.",
+      "Generate paperwork straight from your schematic — bills of materials with every device and its details, cable schedules with signal types, source/destination, and cable IDs. No more maintaining separate spreadsheets.",
   },
   {
     title: "Export to DXF, PDF & PNG",

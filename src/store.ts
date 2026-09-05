@@ -2312,6 +2312,43 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     }
 
     // Pasted content always lands on the ACTIVE sheet, wherever it was copied.
+    // Parent containers need care: nodeIdMap is only complete after the map above,
+    // so remap parentId in a second pass. A child whose container was NOT copied
+    // stays in it only when that container is on the active sheet — otherwise the
+    // paste would silently land back on the source page inside the original room.
+    const stateNodeMap = new Map(state.nodes.map((n) => [n.id, n]));
+    const firstSheetId = state.schematicSheets[0]?.id ?? DEFAULT_SHEET.id;
+    const activeSheet = state.activeSheetId || firstSheetId;
+    for (let i = 0; i < newNodes.length; i++) {
+      const n = newNodes[i];
+      if (!n.parentId) continue;
+      const mappedParent = nodeIdMap.get(n.parentId);
+      if (mappedParent) {
+        newNodes[i] = { ...n, parentId: mappedParent } as SchematicNode;
+        continue;
+      }
+      const parent = stateNodeMap.get(n.parentId);
+      const parentSheet = parent
+        ? resolveNodeSheet(parent, stateNodeMap, state.edges, firstSheetId)
+        : firstSheetId;
+      if (parent && parentSheet === activeSheet) continue;
+      // Cross-page paste (or dangling parent): detach to a root at absolute coordinates.
+      let dx = 0;
+      let dy = 0;
+      let pid: string | undefined = n.parentId;
+      while (pid) {
+        const p = stateNodeMap.get(pid);
+        if (!p) break;
+        dx += p.position.x;
+        dy += p.position.y;
+        pid = p.parentId;
+      }
+      const { parentId: _omitParent, extent: _omitExtent, ...detached } = n;
+      newNodes[i] = {
+        ...detached,
+        position: { x: n.position.x + dx, y: n.position.y + dy },
+      } as SchematicNode;
+    }
     const pasteStamp = activeSheetStamp(state);
     for (let i = 0; i < newNodes.length; i++) {
       const n = newNodes[i];

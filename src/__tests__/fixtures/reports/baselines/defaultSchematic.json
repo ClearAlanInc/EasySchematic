@@ -2450,7 +2450,7 @@
       "racks": []
     },
     "documentSummary": "This document contains 40 devices, 42 connections and 3 rooms.",
-    "csv": "﻿Pack List — defaultSchematic\nGenerated 2026-01-01\nThis document contains 40 devices, 42 connections and 3 rooms.\n\nDEVICE LIST\nQty,Device,Manufacturer,Model #,Type,Room,Unit Cost,Extended Cost,Serial #,Spare,Note\n2,1920x1080 Monitor,,,monitor,Booth,,,,,\n1,BMD HDMI→SDI,Blackmagic Design,Micro Converter HDMI to SDI 3G,converter,Booth,,,,,\n2,Datapath FX4 SDI,Datapath,FX4 SDI,video-wall-controller,Booth,,,,,\n1,Ethernet Switch (8-port),,,network-switch,Booth,,,,,\n1,Keyboard,,,keyboard,Booth,,,,,\n2,Mac Studio (M4),Apple,Mac Studio (M4),computer,Booth,,,,,\n1,Mouse,,,mouse,Booth,,,,,\n8,BMD SDI→HDMI,Blackmagic Design,Micro Converter SDI to HDMI 3G,converter,Stage,,,,,\n1,Panasonic DZ13K,Panasonic,PT-DZ13K,projector,Stage,,,,,\n2,PTZOptics Move SE,PTZOptics,Move SE,ptz-camera,Stage,,,,,\n8,TV,,,tv,Stage,,,,,\n2,1920x1080 Monitor,,,monitor,TECH TABLE,,,,,\n1,Associate Computer,,,computer,TECH TABLE,,,,,\n1,Designer Computer,,,computer,TECH TABLE,,,,,\n1,Ethernet Switch (4-port),,,network-switch,TECH TABLE,,,,,\n1,Lex DB-100,Lex Products,DB-100,power-distribution,Unassigned,,,,,\n\nADAPTERS\nQty,Adapter,Manufacturer,Model #,Room\n1,L5-20 (M) → Edison (F) Adapter,,,Booth\n2,TB (M) → HDMI (F) Adapter,,,Booth\n1,TB (M) → HDMI (F) Adapter 1,,,Booth\n\nCABLE LIST\nQty,Cable Type,Signal,Length,Route,Unit Cost,Extended Cost\n9,BNC M-M,SDI,,Booth > Stage,,\n8,HDMI M-M,HDMI,,Within Stage,,\n4,HDMI M-M,HDMI,,Within Booth,,\n3,Cat6 M-M,Ethernet,,Booth > Stage,,\n2,Cat6 M-M,Ethernet,,Within TECH TABLE,,\n2,HDMI M-M,HDMI,,Within TECH TABLE,,\n2,USB M-M,USB,,Within Booth,,\n1,Cam-Lok,Ground,,Within Unassigned,,\n1,Cam-Lok,L1 (Phase A),,Within Unassigned,,\n1,Cam-Lok,L2 (Phase B),,Within Unassigned,,\n1,Cam-Lok,L3 (Phase C),,Within Unassigned,,\n1,Cam-Lok,Neutral,,Within Unassigned,,\n1,Cat6 M-M,Ethernet,,Booth > TECH TABLE,,\n1,Cat6 M-M,Ethernet,,Within Booth,,\n1,Edison to IEC C13/C14 Adapter,Power,,Within Booth,,\n1,L5-20,Power,,Unassigned > Booth,,",
+    "csv": "﻿Bill of Materials — defaultSchematic\nGenerated 2026-01-01\nThis document contains 40 devices, 42 connections and 3 rooms.\n\nDEVICE LIST\nQty,Device,Manufacturer,Model #,Type,Room,Unit Cost,Extended Cost,Serial #,Spare,Note\n2,1920x1080 Monitor,,,monitor,Booth,,,,,\n1,BMD HDMI→SDI,Blackmagic Design,Micro Converter HDMI to SDI 3G,converter,Booth,,,,,\n2,Datapath FX4 SDI,Datapath,FX4 SDI,video-wall-controller,Booth,,,,,\n1,Ethernet Switch (8-port),,,network-switch,Booth,,,,,\n1,Keyboard,,,keyboard,Booth,,,,,\n2,Mac Studio (M4),Apple,Mac Studio (M4),computer,Booth,,,,,\n1,Mouse,,,mouse,Booth,,,,,\n8,BMD SDI→HDMI,Blackmagic Design,Micro Converter SDI to HDMI 3G,converter,Stage,,,,,\n1,Panasonic DZ13K,Panasonic,PT-DZ13K,projector,Stage,,,,,\n2,PTZOptics Move SE,PTZOptics,Move SE,ptz-camera,Stage,,,,,\n8,TV,,,tv,Stage,,,,,\n2,1920x1080 Monitor,,,monitor,TECH TABLE,,,,,\n1,Associate Computer,,,computer,TECH TABLE,,,,,\n1,Designer Computer,,,computer,TECH TABLE,,,,,\n1,Ethernet Switch (4-port),,,network-switch,TECH TABLE,,,,,\n1,Lex DB-100,Lex Products,DB-100,power-distribution,Unassigned,,,,,\n\nADAPTERS\nQty,Adapter,Manufacturer,Model #,Room\n1,L5-20 (M) → Edison (F) Adapter,,,Booth\n2,TB (M) → HDMI (F) Adapter,,,Booth\n1,TB (M) → HDMI (F) Adapter 1,,,Booth\n\nCABLE LIST\nQty,Cable Type,Signal,Length,Route,Unit Cost,Extended Cost\n9,BNC M-M,SDI,,Booth > Stage,,\n8,HDMI M-M,HDMI,,Within Stage,,\n4,HDMI M-M,HDMI,,Within Booth,,\n3,Cat6 M-M,Ethernet,,Booth > Stage,,\n2,Cat6 M-M,Ethernet,,Within TECH TABLE,,\n2,HDMI M-M,HDMI,,Within TECH TABLE,,\n2,USB M-M,USB,,Within Booth,,\n1,Cam-Lok,Ground,,Within Unassigned,,\n1,Cam-Lok,L1 (Phase A),,Within Unassigned,,\n1,Cam-Lok,L2 (Phase B),,Within Unassigned,,\n1,Cam-Lok,L3 (Phase C),,Within Unassigned,,\n1,Cam-Lok,Neutral,,Within Unassigned,,\n1,Cat6 M-M,Ethernet,,Booth > TECH TABLE,,\n1,Cat6 M-M,Ethernet,,Within Booth,,\n1,Edison to IEC C13/C14 Adapter,Power,,Within Booth,,\n1,L5-20,Power,,Unassigned > Booth,,",
     "printTables": [
       {
         "id": "devices",
@@ -2886,7 +2886,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-38",
@@ -2905,7 +2908,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-47",
@@ -2924,7 +2930,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-47",
@@ -2943,7 +2952,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-48",
@@ -2962,7 +2974,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-48",
@@ -2981,7 +2996,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-61",
@@ -3000,7 +3018,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-62",
@@ -3019,7 +3040,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-64",
@@ -3038,7 +3062,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-65",
@@ -3057,7 +3084,10 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       },
       {
         "nodeId": "device-77",
@@ -3076,10 +3106,13 @@
         "dhcpCovered": false,
         "notes": "",
         "linkSpeed": "",
-        "poeDrawW": ""
+        "poeDrawW": "",
+        "isManagement": false,
+        "username": "",
+        "password": ""
       }
     ],
-    "csv": "Device,Port,Room,Signal,Hostname,IP,Subnet Mask,Gateway,VLAN,Speed,PoE (W),DHCP,DHCP Server,Notes\nMac Studio (M4),Ethernet,Booth,Ethernet,,192.168.0.3,255.255.255.0,,,,,No,,\nPanasonic DZ13K,LAN,Stage,Ethernet,,192.168.0.5,255.255.255.0,,,,,No,,\nDatapath FX4 SDI 1,Ethernet 1,Booth,Ethernet,,,,,,,,No,,\nDatapath FX4 SDI 1,Ethernet 2,Booth,Ethernet,,,,,,,,No,,\nDatapath FX4 SDI 2,Ethernet 1,Booth,Ethernet,,,,,,,,No,,\nDatapath FX4 SDI 2,Ethernet 2,Booth,Ethernet,,,,,,,,No,,\nPTZOptics Move SE 1,Ethernet,Stage,Ethernet,,192.168.0.6,255.255.255.0,,,,,No,,\nPTZOptics Move SE 2,Ethernet,Stage,Ethernet,,192.168.0.7,255.255.255.0,,,,,No,,\nDesigner Computer,Ethernet,TECH TABLE,Ethernet,,192.168.0.2,255.255.255.0,,,,,No,,\nAssociate Computer,Ethernet,TECH TABLE,Ethernet,,192.168.0.1,255.255.255.0,,,,,No,,\nMac Studio (M4),Ethernet,Booth,Ethernet,,192.168.0.4,255.255.255.0,,,,,No,,",
+    "csv": "Device,Port,Room,Signal,Hostname,IP,Subnet Mask,Gateway,VLAN,Speed,PoE (W),DHCP,DHCP Server,Mgmt,Username,Password,Notes\nMac Studio (M4),Ethernet,Booth,Ethernet,,192.168.0.3,255.255.255.0,,,,,No,,,,,\nPanasonic DZ13K,LAN,Stage,Ethernet,,192.168.0.5,255.255.255.0,,,,,No,,,,,\nDatapath FX4 SDI 1,Ethernet 1,Booth,Ethernet,,,,,,,,No,,,,,\nDatapath FX4 SDI 1,Ethernet 2,Booth,Ethernet,,,,,,,,No,,,,,\nDatapath FX4 SDI 2,Ethernet 1,Booth,Ethernet,,,,,,,,No,,,,,\nDatapath FX4 SDI 2,Ethernet 2,Booth,Ethernet,,,,,,,,No,,,,,\nPTZOptics Move SE 1,Ethernet,Stage,Ethernet,,192.168.0.6,255.255.255.0,,,,,No,,,,,\nPTZOptics Move SE 2,Ethernet,Stage,Ethernet,,192.168.0.7,255.255.255.0,,,,,No,,,,,\nDesigner Computer,Ethernet,TECH TABLE,Ethernet,,192.168.0.2,255.255.255.0,,,,,No,,,,,\nAssociate Computer,Ethernet,TECH TABLE,Ethernet,,192.168.0.1,255.255.255.0,,,,,No,,,,,\nMac Studio (M4),Ethernet,Booth,Ethernet,,192.168.0.4,255.255.255.0,,,,,No,,,,,",
     "dhcpServers": [],
     "poeBudget": [
       {
@@ -3119,7 +3152,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Panasonic DZ13K",
@@ -3135,7 +3171,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Datapath FX4 SDI 1",
@@ -3151,7 +3190,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Datapath FX4 SDI 1",
@@ -3167,7 +3209,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Datapath FX4 SDI 2",
@@ -3183,7 +3228,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Datapath FX4 SDI 2",
@@ -3199,7 +3247,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "PTZOptics Move SE 1",
@@ -3215,7 +3266,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "PTZOptics Move SE 2",
@@ -3231,7 +3285,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Designer Computer",
@@ -3247,7 +3304,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Associate Computer",
@@ -3263,7 +3323,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           },
           {
             "deviceLabel": "Mac Studio (M4)",
@@ -3279,7 +3342,10 @@
             "dhcpServer": "",
             "notes": "",
             "linkSpeed": "",
-            "poeDrawW": ""
+            "poeDrawW": "",
+            "isManagement": "",
+            "username": "",
+            "password": ""
           }
         ]
       }

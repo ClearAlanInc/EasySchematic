@@ -10,6 +10,37 @@ export type AlignOperation =
   | "distribute-h"
   | "distribute-v";
 
+/** Alignment shortcuts: hold Alt/Option and press a letter. Two lookups because
+ *  neither event field is reliable alone: macOS Option+letter rewrites e.key to a
+ *  special character (Option+T = "†"), while e.code names the physical key and
+ *  ignores keyboard layout. Prefer the letter (layout-correct), fall back to code. */
+export const ALIGN_SHORTCUT_KEYS: Record<string, AlignOperation> = {
+  t: "top",
+  b: "bottom",
+  r: "right",
+  l: "left",
+  h: "center-h",
+  v: "middle-v",
+};
+export const ALIGN_SHORTCUT_CODES: Record<string, AlignOperation> = {
+  KeyT: "top",
+  KeyB: "bottom",
+  KeyR: "right",
+  KeyL: "left",
+  KeyH: "center-h",
+  KeyV: "middle-v",
+};
+
+/** Display labels for the alignment shortcuts, shown in tooltips. */
+export const ALIGN_SHORTCUT_LABELS: Partial<Record<AlignOperation, string>> = {
+  top: "Alt+T",
+  bottom: "Alt+B",
+  right: "Alt+R",
+  left: "Alt+L",
+  "center-h": "Alt+H",
+  "middle-v": "Alt+V",
+};
+
 const DEFAULT_W = 180;
 const DEFAULT_H = 60;
 const GRID_SIZE = 20;
