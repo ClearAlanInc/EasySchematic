@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { DEVICE_TEMPLATES } from "../deviceLibrary";
 import { forceFullReset } from "../sw-register";
-import { DOCS_URL, DEVICES_URL } from "../selfHosted";
 
 declare const __APP_VERSION__: string;
 declare const __BUILD_HASH__: string;
@@ -104,30 +103,9 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
 
           <div className="w-full h-px bg-[var(--color-border)]" />
 
-          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
-            {[
-              { label: "Website", href: "https://maestroconnect.clearalan.ca" },
-              ...(DOCS_URL ? [{ label: "Docs", href: DOCS_URL }] : []),
-              { label: "GitHub", href: "https://github.com/ClearAlanInc/EasySchematic" },
-              ...(DEVICES_URL ? [{ label: "Device Database", href: DEVICES_URL }] : []),
-              { label: "Report a Bug", href: "https://github.com/ClearAlanInc/EasySchematic/issues" },
-            ].map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-
-          <div className="w-full h-px bg-[var(--color-border)]" />
-
           <div className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-            <div>AGPL-3.0 &middot; &copy; 2025–2026 EasySchematic</div>
+            <div>Forked from: EasySchematic</div>
+            <div className="mt-0.5">AGPL-3.0 &middot; &copy; 2025–2026 EasySchematic</div>
             <div className="mt-0.5">Built with React, React Flow, and Zustand</div>
           </div>
         </div>
