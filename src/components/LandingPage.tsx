@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { DOCS_URL, DEVICES_URL } from "../selfHosted";
+// Footer links hidden for now — restore this import with them.
+// import { DOCS_URL, DEVICES_URL } from "../selfHosted";
 
 const features = [
   {
@@ -33,18 +34,14 @@ const features = [
       "Export your AV schematics as DXF for AutoCAD, PDF for print, or PNG for presentations. Configurable page sizes, title blocks, and print layouts built for AV integration shops.",
   },
   {
-    title: "Community Device Database",
+    title: "Interactive Devices",
     description:
-      "Browse and contribute to a growing library of real-world AV device templates. Search by manufacturer, model, or signal type. Every template includes accurate port layouts and connector specs.",
-  },
-  {
-    title: "Free & Browser-Based",
-    description:
-      "No installs, no accounts, no subscriptions. Your schematics stay in your browser. Share via link, import/export JSON files, or use the public API.",
+      "Devices contain parametric data that enables the software to open the configuration page of your device straight from the drawing or the PDF output.",
   },
 ];
 
-const signalSamples = [
+// Signal badges hidden for now (2026-09-09) — restore with the section below.
+/* const signalSamples = [
   { name: "SDI", color: "var(--color-sdi)" },
   { name: "HDMI", color: "var(--color-hdmi)" },
   { name: "NDI", color: "var(--color-ndi)" },
@@ -57,7 +54,7 @@ const signalSamples = [
   { name: "ST 2110", color: "var(--color-sdi)" },
   { name: "USB", color: "var(--color-usb)" },
   { name: "Ethernet", color: "var(--color-ethernet)" },
-];
+]; */
 
 function openEditor() {
   localStorage.setItem("maestro-skip-landing", "1");
@@ -90,6 +87,7 @@ export default function LandingPage() {
       {/* Hero */}
       <header className="bg-slate-900 text-white">
         <div className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+          {/* Hero copy hidden for now (2026-09-09) — kept for later editing.
           <h1 className="text-2xl md:text-3xl font-semibold leading-tight mb-4 text-slate-300">
             AV Signal Flow Diagram Tool
           </h1>
@@ -101,6 +99,7 @@ export default function LandingPage() {
           <p className="text-slate-500 mb-8">
             68 signal types &middot; Smart edge routing &middot; DXF/PDF/PNG export
           </p>
+          */}
           <button
             onClick={openEditor}
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg text-lg transition-colors cursor-pointer"
@@ -123,7 +122,7 @@ export default function LandingPage() {
       </section>
 
 
-      {/* Signal type badges */}
+      {/* Signal type badges — hidden for now (2026-09-09), kept for later editing.
       <section className="border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-10">
           <h2 className="text-xl font-semibold text-center mb-6 text-gray-800">
@@ -148,6 +147,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* Features */}
       <section className="border-b border-slate-200">
@@ -212,7 +212,7 @@ export default function LandingPage() {
             Start Drawing Your Signal Flow
           </h2>
           <p className="text-slate-400 mb-8">
-            No signup required. Your work is saved locally in your browser.
+            Your work is saved locally in your browser.
           </p>
           <button
             onClick={openEditor}
@@ -226,6 +226,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 text-sm">
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-wrap gap-x-8 gap-y-2 justify-center">
+          {/* Footer links hidden for now (2026-09-09) — kept for later editing.
           {DOCS_URL && (
             <a href={DOCS_URL} className="hover:text-white transition-colors">
               Documentation
@@ -245,6 +246,7 @@ export default function LandingPage() {
           <a href="mailto:support@maestroconnect.clearalan.ca" className="hover:text-white transition-colors">
             Support
           </a>
+          */}
         </div>
       </footer>
     </div>

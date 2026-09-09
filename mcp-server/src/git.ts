@@ -3,7 +3,7 @@
  *
  * The server is started with a ROOT directory (MAESTRO_GIT_ROOT — e.g.
  * ~/repos) under which each project keeps its own repository. The app can:
- *   - list schematic .json files found inside git repos under the root,
+ *   - list schematic .mcd/.json files found inside git repos under the root,
  *   - open one (the server then knows exactly which repo/path it came from),
  *   - save back to an opened file's ref — written in place and committed in
  *     THAT file's repository.
@@ -38,18 +38,18 @@ export function sanitizeFileName(name: string): string {
     .replace(/[^a-zA-Z0-9-_ .]/g, "")
     .replace(/^\.+/, "")
     .trim();
-  const stem = base.replace(/\.json$/i, "") || "schematic";
-  return `${stem}.json`;
+  const stem = base.replace(/\.(json|mcd)$/i, "") || "schematic";
+  return `${stem}.mcd`;
 }
 
 /** Resolve a root-relative ref to an absolute path, refusing anything that
- *  escapes the root or isn't a .json file. */
+ *  escapes the root or isn't a .mcd/.json file. */
 export function safeResolveRef(root: string, ref: string): string {
   const cleaned = String(ref).replace(/\\/g, "/");
   if (!cleaned || cleaned.includes("..") || cleaned.startsWith("/") || /^[a-zA-Z]:/.test(cleaned)) {
     throw new Error("Invalid file reference.");
   }
-  if (!/\.json$/i.test(cleaned)) throw new Error("Only .json schematic files can be opened.");
+  if (!/\.(json|mcd)$/i.test(cleaned)) throw new Error("Only .mcd/.json schematic files can be opened.");
   const abs = resolve(join(root, cleaned));
   if (abs !== root && !abs.startsWith(root + sep)) {
     throw new Error("Refusing to touch a file outside the configured root.");
@@ -124,7 +124,7 @@ export async function listGitSchematics(config: GitConfig): Promise<{ root: stri
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(full, depth + 1);
-      } else if (entry.isFile() && /\.json$/i.test(entry.name)) {
+      } else if (entry.isFile() && /\.(json|mcd)$/i.test(entry.name)) {
         const repo = await repoFor(dir);
         if (!repo) continue; // only version-controlled files appear in the picker
         if (!(await looksLikeSchematicFile(full))) continue;
@@ -132,7 +132,7 @@ export async function listGitSchematics(config: GitConfig): Promise<{ root: stri
         files.push({
           ref: relative(root, full).split(sep).join("/"),
           repo: relative(root, repo).split(sep).join("/") || ".",
-          name: entry.name.replace(/\.json$/i, ""),
+          name: entry.name.replace(/\.(json|mcd)$/i, ""),
           modifiedAt: st ? st.mtime.toISOString() : new Date(0).toISOString(),
         });
       }

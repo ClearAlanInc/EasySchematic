@@ -63,6 +63,17 @@ export default defineConfig({
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
+        // Register the installed PWA as an OS-level handler for .mcd drawings
+        // (Chromium file handling API). Double-clicking a .mcd file launches the
+        // app; src/main.tsx consumes it via window.launchQueue.
+        file_handlers: [
+          {
+            action: '/',
+            accept: { 'application/x-maestro-connect': ['.mcd'] },
+          },
+        ],
+        // Route a file launch into the already-open window instead of a new one.
+        launch_handler: { client_mode: 'focus-existing' },
       },
     }),
   ],

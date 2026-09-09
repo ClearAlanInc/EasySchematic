@@ -263,7 +263,7 @@ export default function MenuBar() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${data.name.replace(/[^a-zA-Z0-9-_ ]/g, "")}.json`;
+    a.download = `${data.name.replace(/[^a-zA-Z0-9-_ ]/g, "")}.mcd`;
     a.click();
     URL.revokeObjectURL(url);
   }, [exportToJSON]);
@@ -279,8 +279,8 @@ export default function MenuBar() {
     const store = useSchematicStore.getState();
     try {
       const handle = await window.showSaveFilePicker({
-        suggestedName: `${store.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")}.json`,
-        types: [{ description: "Maestro Connect files", accept: { "application/json": [".json"] } }],
+        suggestedName: `${store.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "")}.mcd`,
+        types: [{ description: "Maestro Connect drawing", accept: { "application/x-maestro-connect": [".mcd"] } }],
       });
       return handle;
     } catch {
@@ -388,7 +388,7 @@ export default function MenuBar() {
     store.bumpMinorRevision();
     const s2 = useSchematicStore.getState();
     const data = s2.exportToJSON();
-    const fileName = `${s2.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic"}.json`;
+    const fileName = `${s2.schematicName.replace(/[^a-zA-Z0-9-_ ]/g, "") || "Schematic"}.mcd`;
     const message = `${s2.schematicName} v${s2.revision.major}.${s2.revision.minor}`;
     try {
       const result = await bridgeSaveToGit({
@@ -449,7 +449,8 @@ export default function MenuBar() {
       let handle: FileSystemFileHandle;
       try {
         [handle] = await window.showOpenFilePicker({
-          types: [{ description: "Maestro Connect files", accept: { "application/json": [".json"] } }],
+          // .mcd is the native extension; .json opens older saves.
+          types: [{ description: "Maestro Connect files", accept: { "application/x-maestro-connect": [".mcd"], "application/json": [".json"] } }],
           multiple: false,
         });
       } catch {
@@ -1181,7 +1182,7 @@ export default function MenuBar() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json"
+        accept=".mcd,.json"
         className="hidden"
         onChange={handleImport}
       />
