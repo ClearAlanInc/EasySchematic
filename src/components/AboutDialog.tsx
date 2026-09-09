@@ -104,7 +104,19 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
           <div className="w-full h-px bg-[var(--color-border)]" />
 
           <div className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-            <div>Forked from: EasySchematic</div>
+            <div>
+              &copy; 2026{" "}
+              <a
+                href="https://portal.clearalan.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                ClearAlan Inc
+              </a>
+              . All Rights Reserved
+            </div>
+            <div className="mt-2">Forked from: EasySchematic</div>
             <div className="mt-0.5">AGPL-3.0 &middot; &copy; 2025–2026 EasySchematic</div>
             <div className="mt-0.5">Built with React, React Flow, and Zustand</div>
           </div>
